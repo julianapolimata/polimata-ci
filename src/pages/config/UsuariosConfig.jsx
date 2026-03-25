@@ -23,9 +23,10 @@ export default function UsuariosConfig() {
   async function loadDados() {
     setLoading(true)
     const [{ data: us }, { data: cls }, { data: ars }] = await Promise.all([
-      supabase.from('perfis').select('*, clientes(nome)').order('nome'),
-      supabase.from('clientes').select('id, nome').order('nome'),
-      supabase.from('areas').select('id, nome, projeto_id, projetos(cliente_id)').order('nome')
+      // FIX: usar left join explícito para não perder usuários sem cliente
+      supabase.from('perfis').select('*, clientes(id, nome)').order('nome'),
+      supabase.from('clientes').select('id, nome, projetos(id, nome, ativo)').order('nome'),
+      supabase.from('areas').select('id, nome, projeto_id, projetos(id, cliente_id)').order('nome')
     ])
     setUsuarios(us || [])
     setClientes(cls || [])
@@ -67,7 +68,6 @@ export default function UsuariosConfig() {
         />
       )}
 
-      {/* Cards de usuários */}
       <div className="usuarios-grid">
         {usuarios.map(u => {
           const papel = PAPEIS.find(p => p.value === u.papel)
@@ -100,6 +100,7 @@ export default function UsuariosConfig() {
             </div>
           )
         })}
+        {!usuarios.length && <div className="cfg-empty">Nenhum usuário cadastrado.</div>}
       </div>
     </div>
   )
@@ -109,7 +110,10 @@ export default function UsuariosConfig() {
 // FORMULÁRIO NOVO USUÁRIO
 // ══════════════════════════════════════════════════════
 function NovoUsuarioForm({ clientes, areas, onSave, onCancel }) {
-  const [form, setForm] = useState({ nome: '', email: '', papel: 'usuario_cliente', cliente_id: '', acesso_todas_areas: true })
+  const [form, setForm] = useState({
+    nome: '', email: '', papel: 'usuario_cliente',
+    cliente_id: '', projeto_id: '', acesso_todas_areas: true
+  })
   const [areasSel, setAreasSel] = useState([])
   const [saving, setSaving] = useState(false)
   const [erro, setErro] = useState('')
@@ -117,20 +121,35 @@ function NovoUsuarioForm({ clientes, areas, onSave, onCancel }) {
 
   const u = (f, v) => setForm(p => ({...p, [f]: v}))
 
-  const areasDoCliente = areas.filter(a => {
-    if (!form.cliente_id) return false
-    return a.projetos?.cliente_id === form.cliente_id
-  })
+  // projetos do cliente selecionado
+  const clienteSel = clientes.find(c => c.id === form.cliente_id)
+  const projetosDoCliente = clienteSel?.projetos || []
+
+  // áreas do projeto selecionado
+  const areasDoProj = areas.filter(a => a.projeto_id === form.projeto_id)
 
   const precisaCliente = ['gestor_cliente', 'usuario_cliente'].includes(form.papel)
   const precisaAreas = form.papel === 'usuario_cliente' && !form.acesso_todas_areas
 
+  // limpar projeto e áreas ao trocar cliente
+  function handleClienteChange(val) {
+    u('cliente_id', val)
+    u('projeto_id', '')
+    setAreasSel([])
+  }
+
+  // limpar áreas ao trocar projeto
+  function handleProjetoChange(val) {
+    u('projeto_id', val)
+    setAreasSel([])
+  }
+
   async function salvar() {
     if (!form.nome.trim() || !form.email.trim()) { setErro('Nome e email são obrigatórios'); return }
     if (precisaCliente && !form.cliente_id) { setErro('Selecione o cliente'); return }
+    if (precisaCliente && !form.projeto_id) { setErro('Selecione o projeto'); return }
     setSaving(true); setErro('')
     try {
-      // Criar usuário no Supabase Auth via Admin API
       const tempPassword = Math.random().toString(36).slice(-10) + 'A1!'
       const { data: authData, error: authErr } = await supabase.auth.admin.createUser({
         email: form.email.trim(),
@@ -140,22 +159,20 @@ function NovoUsuarioForm({ clientes, areas, onSave, onCancel }) {
       })
       if (authErr) throw new Error(authErr.message)
 
-      // Atualizar perfil
       await supabase.from('perfis').update({
         nome: form.nome.trim(),
         papel: form.papel,
         cliente_id: form.cliente_id || null,
+        projeto_id: form.projeto_id || null,
         acesso_todas_areas: form.acesso_todas_areas
       }).eq('id', authData.user.id)
 
-      // Permissões por área
       if (precisaAreas && areasSel.length > 0) {
         await supabase.from('permissoes_area').insert(
           areasSel.map(aid => ({ perfil_id: authData.user.id, area_id: aid, pode_editar: false }))
         )
       }
 
-      // Enviar email de boas-vindas com senha temporária
       await supabase.auth.resetPasswordForEmail(form.email.trim(), {
         redirectTo: window.location.origin
       })
@@ -183,7 +200,6 @@ function NovoUsuarioForm({ clientes, areas, onSave, onCancel }) {
         <div className="cfg-field"><label>Email <span className="req">*</span></label><input className="input-light" type="email" value={form.email} onChange={e=>u('email',e.target.value)} placeholder="email@empresa.com" /></div>
       </div>
 
-      {/* Seletor de perfil visual */}
       <div className="cfg-field">
         <label>Perfil de Acesso <span className="req">*</span></label>
         <div className="perfil-grid">
@@ -200,17 +216,28 @@ function NovoUsuarioForm({ clientes, areas, onSave, onCancel }) {
 
       {/* Cliente */}
       {precisaCliente && (
-        <div className="cfg-field">
-          <label>Cliente <span className="req">*</span></label>
-          <select className="input-light" value={form.cliente_id} onChange={e=>u('cliente_id',e.target.value)}>
-            <option value="">Selecione o cliente...</option>
-            {clientes.map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}
-          </select>
+        <div className="cfg-row2">
+          <div className="cfg-field">
+            <label>Cliente <span className="req">*</span></label>
+            <select className="input-light" value={form.cliente_id} onChange={e=>handleClienteChange(e.target.value)}>
+              <option value="">Selecione o cliente...</option>
+              {clientes.map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}
+            </select>
+          </div>
+
+          {/* Projeto dentro do cliente */}
+          <div className="cfg-field">
+            <label>Projeto <span className="req">*</span></label>
+            <select className="input-light" value={form.projeto_id} onChange={e=>handleProjetoChange(e.target.value)} disabled={!form.cliente_id}>
+              <option value="">Selecione o projeto...</option>
+              {projetosDoCliente.map(p => <option key={p.id} value={p.id}>{p.nome}{!p.ativo?' (inativo)':''}</option>)}
+            </select>
+          </div>
         </div>
       )}
 
       {/* Acesso por área (só para usuario_cliente) */}
-      {form.papel === 'usuario_cliente' && form.cliente_id && (
+      {form.papel === 'usuario_cliente' && form.projeto_id && (
         <div className="cfg-field">
           <label>Acesso a Áreas</label>
           <div style={{display:'flex', gap:12, marginBottom:10}}>
@@ -225,7 +252,7 @@ function NovoUsuarioForm({ clientes, areas, onSave, onCancel }) {
           </div>
           {!form.acesso_todas_areas && (
             <div className="areas-check-grid">
-              {areasDoCliente.map(a => (
+              {areasDoProj.map(a => (
                 <label key={a.id} className="area-check">
                   <input type="checkbox"
                     checked={areasSel.includes(a.id)}
@@ -234,7 +261,7 @@ function NovoUsuarioForm({ clientes, areas, onSave, onCancel }) {
                   <span>{a.nome}</span>
                 </label>
               ))}
-              {!areasDoCliente.length && <div className="cfg-empty">Nenhuma área cadastrada para este cliente.</div>}
+              {!areasDoProj.length && <div className="cfg-empty">Nenhuma área cadastrada para este projeto.</div>}
             </div>
           )}
         </div>
@@ -256,6 +283,7 @@ function EditarUsuarioForm({ usuario, clientes, areas, onSave, onCancel }) {
     nome: usuario.nome || '',
     papel: usuario.papel || 'usuario_cliente',
     cliente_id: usuario.cliente_id || '',
+    projeto_id: usuario.projeto_id || '',
     acesso_todas_areas: usuario.acesso_todas_areas !== false
   })
   const [areasSel, setAreasSel] = useState([])
@@ -264,7 +292,21 @@ function EditarUsuarioForm({ usuario, clientes, areas, onSave, onCancel }) {
 
   const u = (f, v) => setForm(p => ({...p, [f]: v}))
   const precisaCliente = ['gestor_cliente', 'usuario_cliente'].includes(form.papel)
-  const areasDoCliente = areas.filter(a => a.projetos?.cliente_id === form.cliente_id)
+
+  const clienteSel = clientes.find(c => c.id === form.cliente_id)
+  const projetosDoCliente = clienteSel?.projetos || []
+  const areasDoProj = areas.filter(a => a.projeto_id === form.projeto_id)
+
+  function handleClienteChange(val) {
+    u('cliente_id', val)
+    u('projeto_id', '')
+    setAreasSel([])
+  }
+
+  function handleProjetoChange(val) {
+    u('projeto_id', val)
+    setAreasSel([])
+  }
 
   useEffect(() => {
     supabase.from('permissoes_area').select('area_id').eq('perfil_id', usuario.id)
@@ -278,10 +320,10 @@ function EditarUsuarioForm({ usuario, clientes, areas, onSave, onCancel }) {
         nome: form.nome,
         papel: form.papel,
         cliente_id: form.cliente_id || null,
+        projeto_id: form.projeto_id || null,
         acesso_todas_areas: form.acesso_todas_areas
       }).eq('id', usuario.id)
 
-      // Recriar permissões de área
       await supabase.from('permissoes_area').delete().eq('perfil_id', usuario.id)
       if (form.papel === 'usuario_cliente' && !form.acesso_todas_areas && areasSel.length > 0) {
         await supabase.from('permissoes_area').insert(
@@ -299,7 +341,9 @@ function EditarUsuarioForm({ usuario, clientes, areas, onSave, onCancel }) {
         <button className="btn-cfg-remove" onClick={onCancel}>✕</button>
       </div>
       {erro && <div className="cfg-erro" style={{marginBottom:12}}>{erro}</div>}
+
       <div className="cfg-field"><label>Nome</label><input className="input-light" value={form.nome} onChange={e=>u('nome',e.target.value)} /></div>
+
       <div className="cfg-field">
         <label>Perfil de Acesso</label>
         <div className="perfil-grid">
@@ -313,16 +357,27 @@ function EditarUsuarioForm({ usuario, clientes, areas, onSave, onCancel }) {
           ))}
         </div>
       </div>
+
       {precisaCliente && (
-        <div className="cfg-field">
-          <label>Cliente</label>
-          <select className="input-light" value={form.cliente_id} onChange={e=>u('cliente_id',e.target.value)}>
-            <option value="">Selecione...</option>
-            {clientes.map(c=><option key={c.id} value={c.id}>{c.nome}</option>)}
-          </select>
+        <div className="cfg-row2">
+          <div className="cfg-field">
+            <label>Cliente</label>
+            <select className="input-light" value={form.cliente_id} onChange={e=>handleClienteChange(e.target.value)}>
+              <option value="">Selecione...</option>
+              {clientes.map(c=><option key={c.id} value={c.id}>{c.nome}</option>)}
+            </select>
+          </div>
+          <div className="cfg-field">
+            <label>Projeto</label>
+            <select className="input-light" value={form.projeto_id} onChange={e=>handleProjetoChange(e.target.value)} disabled={!form.cliente_id}>
+              <option value="">Selecione o projeto...</option>
+              {projetosDoCliente.map(p=><option key={p.id} value={p.id}>{p.nome}{!p.ativo?' (inativo)':''}</option>)}
+            </select>
+          </div>
         </div>
       )}
-      {form.papel==='usuario_cliente' && form.cliente_id && (
+
+      {form.papel==='usuario_cliente' && form.projeto_id && (
         <div className="cfg-field">
           <label>Acesso a Áreas</label>
           <div style={{display:'flex',gap:12,marginBottom:10}}>
@@ -331,16 +386,18 @@ function EditarUsuarioForm({ usuario, clientes, areas, onSave, onCancel }) {
           </div>
           {!form.acesso_todas_areas && (
             <div className="areas-check-grid">
-              {areasDoCliente.map(a=>(
+              {areasDoProj.map(a=>(
                 <label key={a.id} className="area-check">
                   <input type="checkbox" checked={areasSel.includes(a.id)} onChange={e=>setAreasSel(prev=>e.target.checked?[...prev,a.id]:prev.filter(id=>id!==a.id))}/>
                   <span>{a.nome}</span>
                 </label>
               ))}
+              {!areasDoProj.length && <div className="cfg-empty">Nenhuma área cadastrada para este projeto.</div>}
             </div>
           )}
         </div>
       )}
+
       <div style={{display:'flex',gap:10,marginTop:8}}>
         <button className="btn-cfg-cancel" onClick={onCancel}>Cancelar</button>
         <button className="btn-cfg-save" onClick={salvar} disabled={saving}>{saving?'Salvando...':'✓ Salvar'}</button>

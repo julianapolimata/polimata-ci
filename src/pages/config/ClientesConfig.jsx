@@ -13,7 +13,7 @@ export default function ClientesConfig() {
     setLoading(true)
     const { data } = await supabase
       .from('clientes')
-      .select('*, projetos(id, nome, ativo)')
+      .select('id, nome, ativo, cnpj, projetos(id, nome, ativo)')
       .order('nome')
     setClientes(data || [])
     setLoading(false)
@@ -61,6 +61,9 @@ export default function ClientesConfig() {
   )
 }
 
+// ══════════════════════════════════════════════════════
+// NOVO CLIENTE
+// ══════════════════════════════════════════════════════
 function NovoClienteForm({ onSave, onCancel }) {
   const [cnpj, setCnpj] = useState('')
   const [cnpjLoading, setCnpjLoading] = useState(false)
@@ -186,26 +189,43 @@ function NovoClienteForm({ onSave, onCancel }) {
   )
 }
 
+// ══════════════════════════════════════════════════════
+// DETALHE CLIENTE
+// ══════════════════════════════════════════════════════
 function DetalheCliente({ cliente, onBack }) {
   const [areas, setAreas] = useState([])
   const [sistemas, setSistemas] = useState([])
+  const [projetos, setProjetos] = useState([])
   const [loading, setLoading] = useState(true)
   const [aba, setAba] = useState('areas')
   const [editandoArea, setEditandoArea] = useState(null)
   const [novaArea, setNovaArea] = useState(false)
   const [novaSisNome, setNovaSisNome] = useState('')
   const [saving, setSaving] = useState(false)
-  const projetoId = cliente.projetos?.[0]?.id
+  const [editandoProj, setEditandoProj] = useState(null)
+  const [novoProj, setNovoProj] = useState(false)
+
+  // usa o primeiro projeto como padrão para áreas
+  const projetoId = projetos[0]?.id || cliente.projetos?.[0]?.id
 
   useEffect(() => { loadDados() }, [])
 
   async function loadDados() {
     setLoading(true)
-    const [{ data: ars }, { data: sis }] = await Promise.all([
-      supabase.from('areas').select('*').eq('projeto_id', projetoId).order('ordem'),
+    const [{ data: projs }, { data: sis }] = await Promise.all([
+      supabase.from('projetos').select('*').eq('cliente_id', cliente.id).order('nome'),
       supabase.from('sistemas').select('*').eq('cliente_id', cliente.id).order('nome')
     ])
-    setAreas(ars || []); setSistemas(sis || []); setLoading(false)
+    const projetosList = projs || []
+    setProjetos(projetosList)
+    setSistemas(sis || [])
+
+    if (projetosList.length > 0) {
+      const { data: ars } = await supabase
+        .from('areas').select('*').eq('projeto_id', projetosList[0].id).order('ordem')
+      setAreas(ars || [])
+    }
+    setLoading(false)
   }
 
   async function salvarArea(area) {
@@ -233,6 +253,21 @@ function DetalheCliente({ cliente, onBack }) {
     await supabase.from('sistemas').delete().eq('id', id); loadDados()
   }
 
+  async function salvarProjeto(proj) {
+    setSaving(true)
+    if (proj.id) {
+      await supabase.from('projetos').update({ nome: proj.nome, ativo: proj.ativo }).eq('id', proj.id)
+    } else {
+      await supabase.from('projetos').insert({ cliente_id: cliente.id, nome: proj.nome, ativo: true })
+    }
+    setEditandoProj(null); setNovoProj(false); await loadDados(); setSaving(false)
+  }
+
+  async function removerProjeto(id) {
+    if (!confirm('Remover este projeto? Esta ação não pode ser desfeita.')) return
+    await supabase.from('projetos').delete().eq('id', id); loadDados()
+  }
+
   return (
     <div className="cfg-detalhe">
       <div className="cfg-form-hdr">
@@ -253,6 +288,7 @@ function DetalheCliente({ cliente, onBack }) {
       </div>
       {loading ? <div className="cfg-loading"><div className="spinner"/></div> : (
         <>
+          {/* ── ABA ÁREAS ── */}
           {aba==='areas' && (
             <div>
               <div style={{display:'flex',justifyContent:'flex-end',marginBottom:12}}>
@@ -276,11 +312,14 @@ function DetalheCliente({ cliente, onBack }) {
                         </tr>
                       )
                     ))}
+                    {!areas.length && <tr><td colSpan={5} style={{textAlign:'center',color:'var(--txt3)',padding:24}}>Nenhuma área cadastrada.</td></tr>}
                   </tbody>
                 </table>
               </div>
             </div>
           )}
+
+          {/* ── ABA SISTEMAS ── */}
           {aba==='sistemas' && (
             <div>
               <div className="cfg-chips" style={{marginBottom:16}}>
@@ -290,6 +329,7 @@ function DetalheCliente({ cliente, onBack }) {
                     <button onClick={()=>removerSistema(s.id)} style={{background:'none',border:'none',color:'var(--txt3)',cursor:'pointer',fontSize:12,padding:0}}>✕</button>
                   </div>
                 ))}
+                {!sistemas.length && <div className="cfg-empty">Nenhum sistema cadastrado.</div>}
               </div>
               <div style={{display:'flex',gap:8,maxWidth:400}}>
                 <input className="input-light" style={{flex:1}} value={novaSisNome} onChange={e=>setNovaSisNome(e.target.value)} placeholder="Nome do sistema..." onKeyDown={e=>e.key==='Enter'&&adicionarSistema()} />
@@ -297,17 +337,51 @@ function DetalheCliente({ cliente, onBack }) {
               </div>
             </div>
           )}
+
+          {/* ── ABA PROJETOS ── */}
           {aba==='projetos' && (
-            <div className="cfg-cards">
-              {cliente.projetos?.map(p => (
-                <div key={p.id} className="cfg-card">
-                  <div className="cfg-card-avatar" style={{background:'rgba(204,145,94,0.15)',color:'var(--gold)'}}>◈</div>
-                  <div className="cfg-card-info">
-                    <div className="cfg-card-nome">{p.nome}</div>
-                    <div className="cfg-card-meta">{p.ativo?<span className="badge-ativo">Ativo</span>:<span className="badge-inativo">Inativo</span>}</div>
-                  </div>
-                </div>
-              ))}
+            <div>
+              <div style={{display:'flex',justifyContent:'flex-end',marginBottom:12}}>
+                <button className="btn-cfg-sm" onClick={()=>setNovoProj(true)}>+ Novo Projeto</button>
+              </div>
+
+              {novoProj && (
+                <ProjetoForm
+                  projeto={{nome:'', ativo: true}}
+                  onSave={salvarProjeto}
+                  onCancel={()=>setNovoProj(false)}
+                  saving={saving}
+                />
+              )}
+
+              <div className="cfg-table-wrap">
+                <table className="cfg-table">
+                  <thead><tr><th>Nome do Projeto</th><th>Status</th><th style={{width:80}}></th></tr></thead>
+                  <tbody>
+                    {projetos.map(p => (
+                      editandoProj?.id === p.id ? (
+                        <tr key={p.id}>
+                          <td colSpan={3}>
+                            <ProjetoForm projeto={editandoProj} onSave={salvarProjeto} onCancel={()=>setEditandoProj(null)} saving={saving} inline />
+                          </td>
+                        </tr>
+                      ) : (
+                        <tr key={p.id}>
+                          <td style={{fontWeight:500}}>{p.nome}</td>
+                          <td>{p.ativo ? <span className="badge-ativo">Ativo</span> : <span className="badge-inativo">Inativo</span>}</td>
+                          <td>
+                            <div style={{display:'flex',gap:6}}>
+                              <button className="btn-tbl-edit" onClick={()=>setEditandoProj({...p})}>✏</button>
+                              <button className="btn-tbl-del" onClick={()=>removerProjeto(p.id)}>✕</button>
+                            </div>
+                          </td>
+                        </tr>
+                      )
+                    ))}
+                    {!projetos.length && <tr><td colSpan={3} style={{textAlign:'center',color:'var(--txt3)',padding:24}}>Nenhum projeto cadastrado.</td></tr>}
+                  </tbody>
+                </table>
+              </div>
             </div>
           )}
         </>
@@ -316,6 +390,9 @@ function DetalheCliente({ cliente, onBack }) {
   )
 }
 
+// ══════════════════════════════════════════════════════
+// FORM ÁREA
+// ══════════════════════════════════════════════════════
 function AreaForm({ area, onSave, onCancel, saving, inline }) {
   const [form, setForm] = useState({...area})
   const u = (f,v) => setForm(p=>({...p,[f]:v}))
@@ -330,6 +407,35 @@ function AreaForm({ area, onSave, onCancel, saving, inline }) {
       <div style={{display:'flex',gap:8,marginTop:10}}>
         <button className="btn-cfg-cancel" onClick={onCancel}>Cancelar</button>
         <button className="btn-cfg-save" onClick={()=>onSave(form)} disabled={saving||!form.nome.trim()}>{saving?'Salvando...':'✓ Salvar'}</button>
+      </div>
+    </div>
+  )
+}
+
+// ══════════════════════════════════════════════════════
+// FORM PROJETO
+// ══════════════════════════════════════════════════════
+function ProjetoForm({ projeto, onSave, onCancel, saving, inline }) {
+  const [form, setForm] = useState({ nome: projeto.nome || '', ativo: projeto.ativo !== false })
+  const u = (f,v) => setForm(p=>({...p,[f]:v}))
+  return (
+    <div className={inline ? 'area-form-inline' : 'cfg-area-block'} style={{marginBottom:12}}>
+      <div className="cfg-row2">
+        <div className="cfg-field">
+          <label>Nome do Projeto <span className="req">*</span></label>
+          <input className="input-light" value={form.nome} onChange={e=>u('nome',e.target.value)} placeholder="Ex: Controles Internos 2025" />
+        </div>
+        <div className="cfg-field">
+          <label>Status</label>
+          <select className="input-light" value={form.ativo ? 'ativo' : 'inativo'} onChange={e=>u('ativo', e.target.value === 'ativo')}>
+            <option value="ativo">Ativo</option>
+            <option value="inativo">Inativo</option>
+          </select>
+        </div>
+      </div>
+      <div style={{display:'flex',gap:8,marginTop:10}}>
+        <button className="btn-cfg-cancel" onClick={onCancel}>Cancelar</button>
+        <button className="btn-cfg-save" onClick={()=>onSave({...projeto, ...form})} disabled={saving||!form.nome.trim()}>{saving?'Salvando...':'✓ Salvar'}</button>
       </div>
     </div>
   )
