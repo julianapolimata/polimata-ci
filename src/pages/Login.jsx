@@ -4,11 +4,11 @@ import { useAuth } from '../contexts/AuthContext'
 
 function Logo() {
   return (
-    <div className="login-logo" style={{ marginBottom: 28 }}>
+    <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 32 }}>
       <img
-        src="/logotipo-2cores.png"
+        src="/logotipo-vertical.png"
         alt="Polímata Consultoria em GRC"
-        style={{ height: 48, width: 'auto', objectFit: 'contain' }}
+        style={{ height: 96, width: 'auto', objectFit: 'contain' }}
       />
     </div>
   )

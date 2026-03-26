@@ -30,11 +30,11 @@ export default function Dashboard() {
   return (
     <div className="app">
       <aside className="sidebar">
-        <div className="sb-brand" style={{ padding: '16px 16px 14px' }}>
+        <div className="sb-brand" style={{ padding: '20px 16px 16px', justifyContent: 'center' }}>
           <img
-            src="/logotipo-branco.png"
+            src="/logotipo-2cores.png"
             alt="Polímata"
-            style={{ height: 30, width: 'auto', objectFit: 'contain' }}
+            style={{ height: 38, width: 'auto', objectFit: 'contain' }}
           />
         </div>
 
