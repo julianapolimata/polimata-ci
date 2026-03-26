@@ -8,7 +8,7 @@ function Logo() {
       <img
         src="/icon.png"
         alt="Polímata"
-        style={{ height: 112, width: 'auto', objectFit: 'contain' }}
+        style={{ height: 80, width: 'auto', objectFit: 'contain' }}
       />
     </div>
   )
