@@ -4,11 +4,11 @@ import { useAuth } from '../contexts/AuthContext'
 
 function Logo() {
   return (
-    <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 20 }}>
+    <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 24 }}>
       <img
-        src="/logotipo-vertical-azul.png"
-        alt="Polímata Consultoria em GRC"
-        style={{ height: 72, width: 'auto', objectFit: 'contain' }}
+        src="/icon.png"
+        alt="Polímata"
+        style={{ height: 64, width: 'auto', objectFit: 'contain' }}
       />
     </div>
   )
@@ -51,11 +51,18 @@ function TelaLogin({ onEsqueci }) {
   return (
     <>
       <h1 className="login-title">Acesse sua conta</h1>
-      <p className="login-subtitle">Sistema de Controles Internos</p>
+      <p className="login-subtitle">Polímata Consultoria em Governança Corporativa</p>
       <form onSubmit={handleSubmit} className="login-form">
         <div className="login-field">
           <label>Email</label>
-          <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="seu@email.com" required autoFocus />
+          <input
+            type="email"
+            value={email}
+            onChange={e => setEmail(e.target.value)}
+            placeholder="seu@email.com"
+            required
+            autoFocus
+          />
         </div>
         <div className="login-field">
           <div style={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
@@ -65,10 +72,21 @@ function TelaLogin({ onEsqueci }) {
               {showSenha ? 'Ocultar' : 'Mostrar'}
             </button>
           </div>
-          <input type={showSenha ? 'text' : 'password'} value={senha} onChange={e => setSenha(e.target.value)} placeholder="••••••••" required />
+          <input
+            type={showSenha ? 'text' : 'password'}
+            value={senha}
+            onChange={e => setSenha(e.target.value)}
+            placeholder="••••••••"
+            required
+          />
+          <div style={{fontSize:10, color:'var(--txt3)', marginTop:4, lineHeight:1.6}}>
+            Mínimo 8 caracteres · letras maiúsculas e minúsculas · pelo menos um número e um caractere especial
+          </div>
         </div>
         {erro && <div className="login-erro">{erro}</div>}
-        <button type="submit" className="login-btn" disabled={loading}>{loading ? 'Entrando...' : 'Entrar'}</button>
+        <button type="submit" className="login-btn" disabled={loading}>
+          {loading ? 'Entrando...' : 'Entrar'}
+        </button>
         <button type="button" onClick={onEsqueci}
           style={{background:'none', border:'none', color:'var(--gold)', fontSize:11, cursor:'pointer', textAlign:'center', padding:'4px 0', letterSpacing:'.3px', textDecoration:'underline', textUnderlineOffset:3}}>
           Esqueci minha senha
