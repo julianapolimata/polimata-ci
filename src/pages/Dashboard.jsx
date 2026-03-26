@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase'
 import { useEffect, useState } from 'react'
 import { Routes, Route, useNavigate, useLocation } from 'react-router-dom'
 import Configuracoes from './Configuracoes'
+import Perfil from './Perfil'
 
 export default function Dashboard() {
   const { perfil, signOut } = useAuth()
@@ -61,16 +62,19 @@ export default function Dashboard() {
           {isAdmin && (
             <>
               <div className="sb-sep">Administração</div>
-              <NavItem icon="◎" label="Clientes" active={location.pathname === '/clientes'} onClick={() => navigate('/clientes')} />
-              <NavItem icon="◈" label="Usuários" active={location.pathname === '/usuarios'} onClick={() => navigate('/usuarios')} />
               <NavItem icon="⚙" label="Configurações" active={location.pathname.startsWith('/configuracoes')} onClick={() => navigate('/configuracoes')} />
             </>
           )}
         </nav>
 
         <div className="sb-footer">
-          <div className="sb-user">
-            <div className="sb-user-avatar">{perfil?.nome?.[0]?.toUpperCase() || '?'}</div>
+          <div className="sb-user" style={{cursor:'pointer'}} onClick={() => navigate('/perfil')}>
+            <div className="sb-user-avatar">
+              {perfil?.avatar_url
+                ? <img src={perfil.avatar_url} alt="" style={{width:'100%',height:'100%',borderRadius:'50%',objectFit:'cover'}} />
+                : perfil?.nome?.[0]?.toUpperCase() || '?'
+              }
+            </div>
             <div>
               <div className="sb-user-nome">{perfil?.nome}</div>
               <div className="sb-user-papel">{papelLabel(perfil?.papel)}</div>
@@ -84,9 +88,8 @@ export default function Dashboard() {
         <Routes>
           <Route path="/" element={<Home projeto={projetoAtivo} />} />
           <Route path="/mrc" element={<MRCPlaceholder projeto={projetoAtivo} />} />
-          <Route path="/clientes" element={<ClientesPlaceholder />} />
-          <Route path="/usuarios" element={<UsuariosPlaceholder />} />
           <Route path="/configuracoes/*" element={<Configuracoes />} />
+          <Route path="/perfil" element={<Perfil />} />
         </Routes>
       </main>
     </div>
@@ -139,32 +142,6 @@ function MRCPlaceholder({ projeto }) {
         <div className="empty-icon">⊟</div>
         <div className="empty-title">Matriz em construção</div>
         <div className="empty-desc">A MRC completa será carregada do Supabase aqui.</div>
-      </div>
-    </div>
-  )
-}
-
-function ClientesPlaceholder() {
-  return (
-    <div className="page-wrap">
-      <div className="page-hdr"><h1 className="page-title">Clientes</h1></div>
-      <div className="empty-state">
-        <div className="empty-icon">◎</div>
-        <div className="empty-title">Gestão de clientes</div>
-        <div className="empty-desc">Cadastro e configuração de clientes em construção.</div>
-      </div>
-    </div>
-  )
-}
-
-function UsuariosPlaceholder() {
-  return (
-    <div className="page-wrap">
-      <div className="page-hdr"><h1 className="page-title">Usuários</h1></div>
-      <div className="empty-state">
-        <div className="empty-icon">◈</div>
-        <div className="empty-title">Gestão de usuários</div>
-        <div className="empty-desc">Cadastro e permissões de usuários em construção.</div>
       </div>
     </div>
   )
