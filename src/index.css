@@ -291,7 +291,7 @@ body {
 }
 .page-title {
   font-size: 20px; font-weight: 300;
-  font-style: italic;
+
   font-family: 'Cormorant Garamond', serif;
   color: var(--txt1); letter-spacing: .5px;
 }
