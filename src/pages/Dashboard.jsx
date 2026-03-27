@@ -200,14 +200,14 @@ function HomeDash({ projeto }) {
           label="Efetivos"
           valor={dist.efetivo}
           sub={totalControles > 0 ? `${((dist.efetivo / totalControles) * 100).toFixed(0)}% do total` : '—'}
-          cor="var(--gold)"
+          cor="#22D4A0"
           icon="✓"
         />
         <KPICard
           label="GAP + Inefetivos"
           valor={dist.gap + dist.inefetivo}
           sub={totalControles > 0 ? `${(((dist.gap + dist.inefetivo) / totalControles) * 100).toFixed(0)}% do total` : '—'}
-          cor="var(--gold-md)"
+          cor="#F05656"
           icon="✕"
         />
       </div>
@@ -269,15 +269,15 @@ function HomeDash({ projeto }) {
             const ef    = areas.reduce((acc, a) => acc + a.controles.filter(c => c.criticidade === crit && c.resultado?.toLowerCase() === 'efetivo').length, 0)
             const inef  = areas.reduce((acc, a) => acc + a.controles.filter(c => c.criticidade === crit && c.resultado?.toLowerCase() === 'inefetivo').length, 0)
             const gap   = areas.reduce((acc, a) => acc + a.controles.filter(c => c.criticidade === crit && c.resultado?.toLowerCase() === 'gap').length, 0)
-            const cor   = { Crítico: '#A6512F', Significativo: '#CC915E', Moderado: '#DFB080', Baixo: '#1D3B5C' }[crit]
+            const cor   = { Crítico: '#EF4444', Significativo: '#F97316', Moderado: '#F5B942', Baixo: '#22D4A0' }[crit]
             return (
               <div key={crit} className="dash-crit-card" style={{ borderColor: cor + '44' }}>
                 <div className="dash-crit-label" style={{ color: cor }}>{crit}</div>
                 <div className="dash-crit-total">{total}</div>
                 <div className="dash-crit-bars">
-                  <span style={{ color: '#CC915E', fontSize: 11 }}>✓ {ef}</span>
-                  <span style={{ color: '#A6512F', fontSize: 11 }}>⚠ {inef}</span>
-                  <span style={{ color: '#6C2D10', fontSize: 11 }}>✕ {gap}</span>
+                  <span style={{ color: '#22D4A0', fontSize: 11 }}>✓ {ef}</span>
+                  <span style={{ color: '#F97316', fontSize: 11 }}>⚠ {inef}</span>
+                  <span style={{ color: '#F05656', fontSize: 11 }}>✕ {gap}</span>
                 </div>
               </div>
             )
@@ -424,8 +424,8 @@ function calcularProgressoFase(areas, faseId) {
 }
 
 function getCorMaturidade(pct) {
-  if (pct >= 0.75) return '#CC915E'   /* dourado */
-  if (pct >= 0.50) return '#DFB080'   /* dourado claro */
-  if (pct >= 0.25) return '#A6512F'   /* terracota */
-  return '#6C2D10'                     /* marrom escuro */
+  if (pct >= 0.75) return '#22D4A0'   /* verde */
+  if (pct >= 0.50) return '#F5B942'   /* amarelo */
+  if (pct >= 0.25) return '#F97316'   /* laranja */
+  return '#F05656'                     /* vermelho */
 }
