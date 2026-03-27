@@ -57,7 +57,7 @@ const COL_GROUPS = [
     { id: 'crit', label: 'Criticidade',   default: true },
   ]},
   { label: 'Resultados', cols: [
-    { id: 'r1',    label: 'Result. F1',   default: true },
+    { id: 'r1',    label: 'Result. F1',   default: false },
     { id: 'r_ader',label: 'Result. F2',   default: false },
     { id: 'r3',    label: 'Result. F3',   default: false },
     { id: 'fase',  label: 'Fase Atual',   default: true },
@@ -102,14 +102,15 @@ function ExpCell({ text, maxLen = 80 }) {
 // ─── MODAL DE DETALHE ────────────────────────────────────────────────────────
 
 function ModalDetalhe({ row, onClose }) {
-  const [tab, setTab] = useState('f1')
+  const [tab, setTab] = useState('ident')
   if (!row) return null
 
   const tabs = [
-    { id: 'f1',   label: 'F1 — Diagnóstico' },
-    { id: 'f2',   label: 'F2 — Redesenho' },
-    { id: 'f3',   label: 'F3 — Teste Final' },
-    { id: 'info', label: 'Informações' },
+    { id: 'ident', label: 'Identificação' },
+    { id: 'f1',    label: 'F1 — Diagnóstico' },
+    { id: 'f2e1',  label: 'F2-E1 — Plano de Ação' },
+    { id: 'f2e2',  label: 'F2-E2 — Aderência' },
+    { id: 'f3',    label: 'F3 — Revisão' },
   ]
 
   const field = (label, value, fullWidth = false) => {
@@ -118,6 +119,16 @@ function ModalDetalhe({ row, onClose }) {
       <div style={fullWidth ? { marginBottom: 12 } : {}}>
         <div className="ml">{label}</div>
         <div className="mv">{value}</div>
+      </div>
+    )
+  }
+
+  const fieldTag = (label, value) => {
+    if (!value || value === 'N/A' || value === '') return null
+    return (
+      <div>
+        <div className="ml">{label}</div>
+        <div style={{ marginTop: 3 }}><span className="tag">{value}</span></div>
       </div>
     )
   }
@@ -132,13 +143,24 @@ function ModalDetalhe({ row, onClose }) {
     )
   }
 
+  // Calcular peso no cálculo
+  const PESO_CRIT = { 4: 0.4, 3: 0.3, 2: 0.2, 1: 0.1 }
+  const pesoPct = ((PESO_CRIT[row.crit] || 0.1) * 100 / 522 * 100).toFixed(3)
+
+  // Fase atual info
+  const faseInfo = getFaseInfo(row)
+
+  // Mini heatmap — posição deste controle
+  const impIdx = HM_IMPS.indexOf(row.imp)
+  const probIdx = HM_PROBS.indexOf(row.prob)
+
   return (
     <div className="overlay open" onClick={e => e.target === e.currentTarget && onClose()}>
       <div className="modal">
         <div className="modal-hdr">
           <div>
-            <div className="modal-ttl">{row.rc}</div>
-            <div className="modal-sub">{row.area} · {row.sub} · {row.rr}</div>
+            <div className="modal-ttl">{row.rc} · {row.area}</div>
+            <div className="modal-sub">{row.sub}</div>
           </div>
           <button className="modal-cls" onClick={onClose}>×</button>
         </div>
@@ -152,38 +174,111 @@ function ModalDetalhe({ row, onClose }) {
         </div>
 
         <div className="modal-body">
+
+          {/* IDENTIFICAÇÃO (v17 style) */}
+          {tab === 'ident' && (
+            <div className="tp active">
+              <div className="ms">
+                <div className="ms-t">Identificação do Controle</div>
+                <div className="mr">
+                  {field('Ref. Risco', row.rr)}
+                  {field('Ref. Controle', row.rc)}
+                </div>
+                <div className="mr">
+                  {field('Área', row.area)}
+                  {field('Subprocesso', row.sub)}
+                </div>
+                <div className="mr">
+                  {field('Gerência', row.ger)}
+                  {field('Responsável Subprocesso', row.resp_sub)}
+                </div>
+              </div>
+
+              <div className="ms">
+                <div className="ms-t">Descrição do Risco</div>
+                {fieldText(null, row.dr)}
+              </div>
+
+              <div className="ms">
+                <div className="ms-t">Descrição do Controle</div>
+                {fieldText(null, row.dc)}
+              </div>
+
+              <div className="ms">
+                <div className="ms-t">Atributos do Controle</div>
+                <div className="mr3">
+                  {fieldTag('Categoria', row.cat)}
+                  {fieldTag('Frequência', row.freq)}
+                  {fieldTag('Natureza', row.nat)}
+                </div>
+                <div className="mr3">
+                  {fieldTag('Característica', row.car)}
+                  {fieldTag('Sistema', row.sis)}
+                  {fieldTag('Controle Chave', row.chave)}
+                </div>
+                <div className="mr" style={{ marginTop: 12 }}>
+                  <div>
+                    <div className="ml">Fase Atual</div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
+                      <span className="fp" style={{ borderLeft: `3px solid ${faseInfo.cor}`, color: faseInfo.cor }}>{faseInfo.label.split(' — ')[0]}</span>
+                      <span className={`bd ${R1_MAP[faseInfo.resultado] || 'b-na'}`}>{faseInfo.resultado}</span>
+                    </div>
+                  </div>
+                  <div>
+                    <div className="ml">Peso no Cálculo</div>
+                    <div style={{ fontSize: 22, fontWeight: 300, fontFamily: "'Montserrat', sans-serif", marginTop: 4 }}>{pesoPct}%</div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Mini heatmap posição */}
+              <div className="ms">
+                <div className="ms-t">Posição no Mapa de Calor</div>
+                <div style={{ display: 'grid', gridTemplateColumns: '60px repeat(4,1fr)', gap: 3, maxWidth: 300 }}>
+                  {HM_IMPS.map((imp, ri) => (
+                    <>
+                      <div key={`lbl-${imp}`} style={{ fontSize: 9, color: 'var(--txt3)', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', paddingRight: 6 }}>{imp}</div>
+                      {HM_PROBS.map((prob, ci) => {
+                        const bg = HM_COLORS[ri][ci]
+                        const isThis = ri === impIdx && ci === probIdx
+                        return (
+                          <div key={`${ri}-${ci}`} style={{
+                            background: bg, borderRadius: 4, aspectRatio: '1',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            opacity: isThis ? 1 : 0.35,
+                            outline: isThis ? '3px solid var(--gold)' : 'none',
+                            outlineOffset: -2,
+                          }}>
+                            {isThis && <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#fff', boxShadow: '0 0 6px rgba(0,0,0,.4)' }} />}
+                          </div>
+                        )
+                      })}
+                    </>
+                  ))}
+                  <div />
+                  {HM_PROBS.map(p => <div key={p} style={{ fontSize: 8, color: 'var(--txt3)', textAlign: 'center', paddingTop: 2 }}>{p}</div>)}
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* F1 — DIAGNÓSTICO */}
           {tab === 'f1' && (
             <div className="tp active">
               <div className="ms">
-                <div className="ms-t">Risco</div>
-                <div className="mr">
-                  {field('Ref. Risco', row.rr)}
-                  {field('Criticidade', row.crit ? critBadge(row.crit) : null)}
-                </div>
-                {fieldText('Descrição do Risco', row.dr)}
-              </div>
-              <div className="ms">
-                <div className="ms-t">Controle</div>
-                <div className="mr">
-                  {field('Ref. Controle', row.rc)}
+                <div className="ms-t">Resultado do Diagnóstico</div>
+                <div className="mr3">
                   {field('Resultado F1', row.r1 ? <span className={`bd ${R1_MAP[row.r1] || 'b-na'}`}>{row.r1}</span> : null)}
+                  {field('Impacto', row.imp ? <span className={`bd ${IMP_MAP[row.imp] || ''}`}>{row.imp}</span> : null)}
+                  {field('Probabilidade', row.prob ? <span className={`bd ${PROB_MAP[row.prob] || ''}`}>{row.prob}</span> : null)}
                 </div>
-                <div className="mr3">
-                  {field('Categoria', row.cat)}
-                  {field('Frequência', row.freq)}
-                  {field('Natureza', row.nat)}
+                <div className="mr">
+                  {field('Criticidade', critBadge(row.crit))}
                 </div>
-                <div className="mr3">
-                  {field('Caráter', row.car)}
-                  {field('Sistema', row.sis)}
-                  {field('Tipo', row.chave)}
-                </div>
-                {fieldText('Descrição do Controle (F1)', row.dc)}
               </div>
               {row.passos_f1 && row.passos_f1 !== 'N/A' && (
                 <div className="ms">
-                  <div className="ms-t">Passos de Teste F1</div>
+                  <div className="ms-t">Passos de Teste</div>
                   {fieldText(null, row.passos_f1)}
                 </div>
               )}
@@ -202,8 +297,8 @@ function ModalDetalhe({ row, onClose }) {
             </div>
           )}
 
-          {/* F2 — REDESENHO */}
-          {tab === 'f2' && (
+          {/* F2-E1 — PLANO DE AÇÃO */}
+          {tab === 'f2e1' && (
             <div className="tp active">
               <div className="ms">
                 <div className="ms-t">Plano de Ação</div>
@@ -216,29 +311,33 @@ function ModalDetalhe({ row, onClose }) {
                 {fieldText('Comentário PA', row.coment_pa)}
               </div>
               <div className="ms">
-                <div className="ms-t">Controle Redesenhado (F2 — E1)</div>
+                <div className="ms-t">Controle Redesenhado</div>
                 {fieldText('Novo Descritivo de Controle', row.dc_novo)}
               </div>
-              {row.r_ader && (
-                <div className="ms">
-                  <div className="ms-t">Resultado Aderência (F2 — E2)</div>
-                  <div className="mr">
-                    {field('Resultado', <span className={`bd ${R1_MAP[row.r_ader] || 'b-na'}`}>{row.r_ader}</span>)}
-                    {row.dt_teste && field('Data Teste', new Date(row.dt_teste).toLocaleDateString('pt-BR'))}
-                  </div>
-                  {row.melhoria === 'Sim' && <div style={{ marginBottom: 8 }}><span className="tag">Oportunidade de Melhoria</span></div>}
-                  {fieldText('Inconsistências F2-E2', row.incons_ader)}
-                  {fieldText('Comentários F2-E2', row.coment_ader)}
-                </div>
-              )}
             </div>
           )}
 
-          {/* F3 — TESTE FINAL */}
+          {/* F2-E2 — ADERÊNCIA */}
+          {tab === 'f2e2' && (
+            <div className="tp active">
+              <div className="ms">
+                <div className="ms-t">Resultado do Teste de Aderência</div>
+                <div className="mr">
+                  {field('Resultado', row.r_ader ? <span className={`bd ${R1_MAP[row.r_ader] || 'b-na'}`}>{row.r_ader}</span> : null)}
+                  {row.dt_teste && field('Data Teste', new Date(row.dt_teste).toLocaleDateString('pt-BR'))}
+                </div>
+                {row.melhoria === 'Sim' && <div style={{ marginBottom: 8 }}><span className="tag">Oportunidade de Melhoria</span></div>}
+                {fieldText('Inconsistências', row.incons_ader)}
+                {fieldText('Comentários', row.coment_ader)}
+              </div>
+            </div>
+          )}
+
+          {/* F3 — REVISÃO */}
           {tab === 'f3' && (
             <div className="tp active">
               <div className="ms">
-                <div className="ms-t">Controle em F3</div>
+                <div className="ms-t">Revisão dos Controles</div>
                 <div className="mr">
                   {field('Status F3', row.st_f3 ? <span className={`bd ${R1_MAP[row.st_f3] || 'b-na'}`}>{row.st_f3}</span> : null)}
                   {field('Resultado F3', row.r3 ? <span className={`bd ${R1_MAP[row.r3] || 'b-na'}`}>{row.r3}</span> : null)}
@@ -249,30 +348,7 @@ function ModalDetalhe({ row, onClose }) {
             </div>
           )}
 
-          {/* INFORMAÇÕES */}
-          {tab === 'info' && (
-            <div className="tp active">
-              <div className="ms">
-                <div className="ms-t">Localização</div>
-                <div className="mr3">
-                  {field('Área', row.area)}
-                  {field('Subprocesso', row.sub)}
-                  {field('Gerente', row.ger)}
-                </div>
-                {field('Resp. Subprocesso', row.resp_sub, true)}
-              </div>
-              <div className="ms">
-                <div className="ms-t">Risco</div>
-                <div className="mr3">
-                  {field('Impacto', row.imp ? <span className={`bd ${IMP_MAP[row.imp] || ''}`}>{row.imp}</span> : null)}
-                  {field('Probabilidade', row.prob ? <span className={`bd ${PROB_MAP[row.prob] || ''}`}>{row.prob}</span> : null)}
-                  {field('Criticidade', critBadge(row.crit))}
-                </div>
-              </div>
-            </div>
-          )}
         </div>
-
         <div className="modal-ftr">
           <button className="btn btn-ghost btn-sm" onClick={onClose}>Fechar</button>
         </div>
@@ -420,16 +496,28 @@ function ColunasPanel({ visCols, setVisCols, open, onClose }) {
   )
 }
 
-// ─── FASE ATUAL ──────────────────────────────────────────────────────────────
+// ─── FASE ATUAL (estilo v17: nome da fase + resultado embaixo) ───────────────
+
+function getFaseInfo(row) {
+  if (row.r3 && row.r3 !== 'Teste Não Realizado')
+    return { label: 'F3 — Revisão', resultado: row.r3, cor: 'var(--f3c)' }
+  if (row.r_ader && row.r_ader !== 'Teste Não Realizado')
+    return { label: 'F2-E2 — Teste de Aderência', resultado: row.r_ader, cor: 'var(--f2e2c)' }
+  if (row.dc_novo && row.dc_novo.trim() !== '')
+    return { label: 'F2-E1 — Plano de Ação', resultado: row.st_pa || '—', cor: 'var(--f2e1c)' }
+  return { label: 'F1 — Diagnóstico', resultado: row.r1 || '—', cor: 'var(--f1c)' }
+}
 
 function FaseAtual({ row }) {
-  if (row.r3 && row.r3 !== 'Teste Não Realizado')
-    return <span className="fp" style={{ color: 'var(--f3c)' }}>F3</span>
-  if (row.r_ader && row.r_ader !== 'Teste Não Realizado')
-    return <span className="fp" style={{ color: 'var(--f2e2c)' }}>F2 — E2</span>
-  if (row.dc_novo && row.dc_novo.trim() !== '')
-    return <span className="fp" style={{ color: 'var(--f2e1c)' }}>F2 — E1</span>
-  return <span className="fp" style={{ color: 'var(--f1c)' }}>F1</span>
+  const { label, resultado, cor } = getFaseInfo(row)
+  return (
+    <div className="fase-atual-cell">
+      <div className="fase-atual-label" style={{ borderLeftColor: cor }}>{label}</div>
+      <div className="fase-atual-resultado">
+        <span className={`bd ${R1_MAP[resultado] || 'b-na'}`}>{resultado}</span>
+      </div>
+    </div>
+  )
 }
 
 // ─── TABELA MRC ──────────────────────────────────────────────────────────────
@@ -459,7 +547,7 @@ function TabelaMRC({ rows, visCols, onOpenModal }) {
             {v('r1')     && <th style={{ width: 90 }}>Result. F1</th>}
             {v('r_ader') && <th style={{ width: 90 }}>Result. F2</th>}
             {v('r3')     && <th style={{ width: 90 }}>Result. F3</th>}
-            {v('fase')   && <th style={{ width: 100 }}>Fase Atual</th>}
+            {v('fase')   && <th style={{ width: 180 }}>Fase Atual</th>}
           </tr>
         </thead>
         <tbody>
