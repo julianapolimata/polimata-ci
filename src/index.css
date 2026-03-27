@@ -27,35 +27,38 @@
   --brd:   rgba(204,145,94,0.12);
   --brd2:  rgba(204,145,94,0.25);
 
-  --ef: #22C55E;
-  --in: #EF4444;
-  --gp: #F97316;
-  --co: #3B82F6;
-  --pa: #A78BFA;
+  /* Resultado: cores on-brand */
+  --ef: #CC915E;              /* Efetivo = dourado (positivo, on-brand) */
+  --in: #A6512F;              /* Inefetivo = dourado escuro/terracota (negativo) */
+  --gp: #6C2D10;              /* GAP = marrom escuro (alerta grave) */
+  --co: #1D3B5C;              /* Concluído = navy claro */
+  --pa: #254D73;              /* Em desenvolvimento = navy médio */
 
-  --ef-bg: rgba(34,212,160,0.10);
-  --in-bg: rgba(240,86,86,0.10);
-  --gp-bg: rgba(245,185,66,0.10);
-  --co-bg: rgba(91,143,249,0.10);
-  --pa-bg: rgba(167,139,250,0.10);
+  --ef-bg: rgba(204,145,94,0.12);
+  --in-bg: rgba(166,81,47,0.12);
+  --gp-bg: rgba(108,45,16,0.15);
+  --co-bg: rgba(29,59,92,0.15);
+  --pa-bg: rgba(37,77,115,0.12);
   --na-bg: rgba(243,238,228,0.05);
   --bar-bg: rgba(243,238,228,0.06);
 
-  --c4-bg: rgba(240,86,86,0.12);
-  --c3-bg: rgba(249,115,22,0.12);
-  --c2-bg: rgba(212,160,48,0.12);
-  --c1-bg: rgba(34,212,160,0.12);
+  /* Criticidade: navy → dourado gradiente */
+  --c4-bg: rgba(166,81,47,0.15);    /* Crítico = terracota */
+  --c3-bg: rgba(204,145,94,0.12);   /* Significativo = dourado */
+  --c2-bg: rgba(204,145,94,0.08);   /* Moderado = dourado sutil */
+  --c1-bg: rgba(29,59,92,0.15);     /* Baixo = navy */
 
-  --n1: #EF4444;
-  --n2: #F97316;
-  --n3: #D4A030;
-  --n4: #5B8FF9;
-  --n5: #22D4A0;
+  --n1: #A6512F;              /* Crítico = terracota */
+  --n2: #CC915E;              /* Significativo = dourado */
+  --n3: #DFB080;              /* Moderado = dourado claro */
+  --n4: #1D3B5C;              /* N4 = navy */
+  --n5: #CC915E;              /* Baixo/Efetivo = dourado */
 
-  --f1c: #5B8FF9;
-  --f2e1c: #7C6CF0;
-  --f2e2c: #A78BFA;
-  --f3c: #22D4A0;
+  /* Fases: variações navy */
+  --f1c: #1D3B5C;             /* F1 = navy claro */
+  --f2e1c: #254D73;           /* F2-E1 = navy médio */
+  --f2e2c: #A6512F;           /* F2-E2 = terracota */
+  --f3c: #CC915E;             /* F3 = dourado */
 
   --sidebar-w: 240px;
   --radius: 10px;
@@ -327,7 +330,7 @@ body {
 .b-na  { background: var(--na-bg); color: var(--txt3); }
 .b-tnr { background: var(--na-bg); color: var(--txt3); }
 
-.cb { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 3px; font-size: 10px; font-weight: 600; }
+.cb { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 3px; font-size: 10px; font-weight: 600; white-space: nowrap; }
 .c4 { background: var(--c4-bg); color: var(--n1); }
 .c3 { background: var(--c3-bg); color: var(--n2); }
 .c2 { background: var(--c2-bg); color: var(--n3); }
@@ -424,11 +427,11 @@ tr:hover td { background: rgba(204,145,94,0.025); }
 .rn { flex: 1; padding: 11px 7px; text-align: center; cursor: pointer; transition: all .15s; }
 .rn-c { font-family: 'Montserrat', sans-serif; font-size: 13px; font-weight: 600; }
 .rn-n { font-size: 9px; margin-top: 2px; opacity: .8; letter-spacing: .4px; }
-.rn1 { background: rgba(239,68,68,.12); color: var(--n1); }
-.rn2 { background: rgba(249,115,22,.12); color: var(--n2); }
+.rn1 { background: rgba(166,81,47,.15); color: #A6512F; }
+.rn2 { background: rgba(108,45,16,.15); color: #6C2D10; }
 .rn3 { background: rgba(212,160,48,.12); color: var(--n3); }
-.rn4 { background: rgba(91,143,249,.12); color: var(--n4); }
-.rn5 { background: rgba(34,212,160,.12); color: var(--n5); }
+.rn4 { background: rgba(29,59,92,.15); color: #1D3B5C; }
+.rn5 { background: rgba(204,145,94,.12); color: #CC915E; }
 .rn.ativo { outline: 2px solid currentColor; outline-offset: -2px; }
 .rn:hover { filter: brightness(1.15); }
 

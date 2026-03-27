@@ -24,11 +24,9 @@ const HM_COLORS = [
 ]
 
 const NIVEIS = [
-  { id: 'N1', label: 'N1', nome: 'Inefetivo',     cls: 'rn1', resultado: 'Inefetivo' },
-  { id: 'N2', label: 'N2', nome: 'GAP',            cls: 'rn2', resultado: 'GAP' },
-  { id: 'N3', label: 'N3', nome: 'Em Desenv.',     cls: 'rn3', resultado: 'Em desenvolvimento' },
-  { id: 'N4', label: 'N4', nome: 'Concluído',      cls: 'rn4', resultado: 'Concluído' },
-  { id: 'N5', label: 'N5', nome: 'Efetivo',        cls: 'rn5', resultado: 'Efetivo' },
+  { id: 'N1', label: 'N1', nome: 'Inefetivo', cls: 'rn1', resultado: 'Inefetivo' },
+  { id: 'N2', label: 'N2', nome: 'GAP',       cls: 'rn2', resultado: 'GAP' },
+  { id: 'N5', label: 'N5', nome: 'Efetivo',   cls: 'rn5', resultado: 'Efetivo' },
 ]
 
 const MAX_ROWS = 200
@@ -195,7 +193,7 @@ function Heatmap({ data, filtroImp, filtroProb, onFilterCell }) {
 
 function Regua({ data, filtroNivel, onToggleNivel }) {
   const c = {}; NIVEIS.forEach(n => { c[n.id] = 0 })
-  data.forEach(r => { const res = r.r1; if (res === 'Inefetivo') c.N1++; else if (res === 'GAP') c.N2++; else if (res === 'Em desenvolvimento') c.N3++; else if (res === 'Concluído') c.N4++; else if (res === 'Efetivo') c.N5++ })
+  data.forEach(r => { const res = r.r1; if (res === 'Inefetivo') c.N1++; else if (res === 'GAP') c.N2++; else if (res === 'Efetivo') c.N5++ })
   return (
     <div className="regua">
       {NIVEIS.map(n => (<div key={n.id} className={`rn ${n.cls} ${filtroNivel === n.id ? 'ativo' : ''}`} onClick={() => onToggleNivel(filtroNivel === n.id ? '' : n.id)}><div className="rn-c">{c[n.id]}</div><div className="rn-n">{n.nome}</div></div>))}
