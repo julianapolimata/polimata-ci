@@ -5,15 +5,22 @@ import { Routes, Route, useNavigate, useLocation } from 'react-router-dom'
 import Configuracoes from './Configuracoes'
 import Perfil from './Perfil'
 import MRCCompleta from '../components/MRCCompleta'
+import {
+  calcularPercentualArea,
+  calcularIndiceEmpresa,
+  getNivelMaturidade,
+  PESO_FASE,
+} from '../lib/calculoMaturidade'
 
 // ── Dados das fases (pesos fixos da metodologia Polímata) ──────────────────
 const FASES = [
-  { id: 'f1',   label: 'F1',      nome: 'Diagnóstico Inicial',              peso: 0.10  },
-  { id: 'f2e1', label: 'F2-E1',   nome: 'Plano de Ação e Teste de Desenho', peso: 0.125 },
-  { id: 'f2e2', label: 'F2-E2',   nome: 'Teste de Aderência',               peso: 0.125 },
-  { id: 'f3',   label: 'F3',      nome: 'Revisão dos Controles Internos',   peso: 0.25  },
-  { id: 'f4',   label: 'F4',      nome: 'Auditoria Contínua',               peso: 0.40  },
-  { id: 'f5',   label: 'F5',      nome: 'Auditoria Externa',                peso: 0.10  },
+  { id: 'F1',   label: 'F1',    nome: 'Diagnóstico Inicial',              peso: PESO_FASE.F1   },
+  { id: 'F2E1', label: 'F2-E1', nome: 'Plano de Ação e Teste de Desenho', peso: PESO_FASE.F2E1 },
+  { id: 'F2E2', label: 'F2-E2', nome: 'Teste de Aderência',               peso: PESO_FASE.F2E2 },
+  { id: 'F3',   label: 'F3',    nome: 'Revisão dos Controles Internos',   peso: PESO_FASE.F3   },
+  { id: 'F4C1', label: 'F4-C1', nome: 'Auditoria Contínua — Ciclo 1',    peso: PESO_FASE.F4C1 },
+  { id: 'F4C2', label: 'F4-C2', nome: 'Auditoria Contínua — Ciclo 2',    peso: PESO_FASE.F4C2 },
+  { id: 'F5',   label: 'F5',    nome: 'Auditoria Independente',           peso: PESO_FASE.F5   },
 ]
 
 export default function Dashboard() {
@@ -113,47 +120,76 @@ function papelLabel(papel) {
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
-// DASHBOARD DE MATURIDADE
+// DASHBOARD DE MATURIDADE — integrado com engine de cálculo (metodologia v3)
 // ══════════════════════════════════════════════════════════════════════════════
+
 function HomeDash({ projeto }) {
-  const [areas, setAreas]   = useState([])
+  const [areasCalc, setAreasCalc] = useState([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    if (projeto?.id) loadAreas(projeto.id)
+    if (projeto?.id) loadDados(projeto.id)
   }, [projeto])
 
-  async function loadAreas(projetoId) {
+  async function loadDados(projetoId) {
     setLoading(true)
-    const { data } = await supabase
+
+    // Buscar áreas com peso
+    const { data: areasData } = await supabase
       .from('areas')
       .select('id, nome, prefixo, peso, gerente, ordem')
       .eq('projeto_id', projetoId)
       .order('ordem')
 
-    const areasComIndice = await Promise.all((data || []).map(async (area) => {
-      const { data: controles } = await supabase
-        .from('mrc')
-        .select('resultado, impacto, probabilidade, criticidade, fase_atual')
-        .eq('area_id', area.id)
+    // Buscar TODOS os controles do projeto (mesma query da MRC)
+    const { data: mrcData } = await supabase
+      .from('mrc')
+      .select('*')
+      .eq('projeto_id', projetoId)
 
-      return { ...area, controles: controles || [], indice: calcularIndiceMaturidade(controles || [], area.peso) }
-    }))
+    const controles = mrcData || []
+    const areas = areasData || []
 
-    setAreas(areasComIndice)
+    // Agrupar controles por área (usando campo 'area' = nome da área)
+    // e também por area_id se disponível
+    const resultado = areas.map(area => {
+      const controlesArea = controles.filter(c =>
+        c.area_id === area.id || c.area === area.nome
+      )
+
+      // Determinar se F1 está concluída (todos controles têm r1 preenchido)
+      const f1Concluida = controlesArea.length > 0 &&
+        controlesArea.every(c => c.r1 && c.r1 !== 'Teste Não Realizado')
+
+      // Calcular com a engine real
+      const calc = calcularPercentualArea(controlesArea, f1Concluida)
+
+      return {
+        ...area,
+        controles: controlesArea,
+        calc,
+      }
+    })
+
+    setAreasCalc(resultado)
     setLoading(false)
   }
 
-  const indiceGeral = areas.reduce((acc, a) => acc + (a.indice?.geral || 0), 0)
-  const totalControles = areas.reduce((acc, a) => acc + a.controles.length, 0)
+  // ── Índice consolidado da empresa (média ponderada) ──
+  const areasParaConsolidado = areasCalc.map(a => ({
+    nome: a.nome,
+    peso: a.peso || 0,
+    percentual: a.calc?.percentual || 0,
+  }))
+  const empresa = calcularIndiceEmpresa(areasParaConsolidado)
 
-  const ranking = [...areas]
-    .filter(a => a.controles.length > 0)
-    .sort((a, b) => (b.indice?.percentual || 0) - (a.indice?.percentual || 0))
+  // ── Totais ──
+  const totalControles = areasCalc.reduce((acc, a) => acc + a.controles.length, 0)
+  const totalAtivos = areasCalc.reduce((acc, a) => acc + (a.calc?.totais?.ativos || 0), 0)
 
-  const dist = areas.reduce((acc, a) => {
+  const dist = areasCalc.reduce((acc, a) => {
     a.controles.forEach(c => {
-      const r = c.resultado?.toLowerCase()
+      const r = (c.r1 || '').toLowerCase()
       if (r === 'efetivo') acc.efetivo++
       else if (r === 'inefetivo') acc.inefetivo++
       else if (r === 'gap') acc.gap++
@@ -161,6 +197,40 @@ function HomeDash({ projeto }) {
     })
     return acc
   }, { efetivo: 0, inefetivo: 0, gap: 0, pendente: 0 })
+
+  const totalRegredidos = areasCalc.reduce((acc, a) => acc + (a.calc?.totais?.regredidos || 0), 0)
+
+  // ── Ranking por área (percentual real da engine) ──
+  const ranking = [...areasCalc]
+    .filter(a => a.controles.length > 0)
+    .sort((a, b) => (b.calc?.percentual || 0) - (a.calc?.percentual || 0))
+
+  // ── Progresso por fase (conta controles que já passaram por cada fase) ──
+  function calcularProgressoFase(faseId) {
+    let total = 0, concluidos = 0
+    areasCalc.forEach(a => {
+      a.calc?.detalhePorControle?.forEach(d => {
+        total++
+        const fases = d.detalheFases || {}
+        if (faseId === 'F1') {
+          if (fases.F1?.resultado) concluidos++
+        } else if (faseId === 'F2E1') {
+          if (fases.F2E1?.resultado && fases.F2E1.resultado !== 'auto→regrediu') concluidos++
+        } else if (faseId === 'F2E2') {
+          if (fases.F2E2?.resultado && fases.F2E2.resultado !== 'auto→regrediu') concluidos++
+        } else if (faseId === 'F3') {
+          if (fases.F3?.resultado) concluidos++
+        } else if (faseId === 'F4C1') {
+          if (fases.F4C1?.resultado && fases.F4C1.resultado !== 'N/A') concluidos++
+        } else if (faseId === 'F4C2') {
+          if (fases.F4C2?.resultado && fases.F4C2.resultado !== 'N/A') concluidos++
+        } else if (faseId === 'F5') {
+          if (fases.F5?.resultado) concluidos++
+        }
+      })
+    })
+    return total > 0 ? concluidos / total : 0
+  }
 
   if (loading) return <div className="loading-screen"><div className="spinner" /></div>
 
@@ -184,15 +254,15 @@ function HomeDash({ projeto }) {
       <div className="dash-kpis">
         <KPICard
           label="Índice de Maturidade"
-          valor={`${(indiceGeral * 100).toFixed(1)}%`}
-          sub="Índice geral ponderado"
+          valor={`${(empresa.indice * 100).toFixed(1)}%`}
+          sub={`${empresa.nivel} — ${empresa.nome}`}
           cor="var(--gold)"
           icon="◎"
         />
         <KPICard
           label="Total de Controles"
           valor={totalControles}
-          sub={`${areas.length} área${areas.length !== 1 ? 's' : ''} mapeadas`}
+          sub={`${areasCalc.length} área${areasCalc.length !== 1 ? 's' : ''} · ${totalAtivos} ativos`}
           cor="var(--navy-700)"
           icon="⊟"
         />
@@ -206,7 +276,7 @@ function HomeDash({ projeto }) {
         <KPICard
           label="GAP + Inefetivos"
           valor={dist.gap + dist.inefetivo}
-          sub={totalControles > 0 ? `${(((dist.gap + dist.inefetivo) / totalControles) * 100).toFixed(0)}% do total` : '—'}
+          sub={totalRegredidos > 0 ? `${totalRegredidos} em regressão` : totalControles > 0 ? `${(((dist.gap + dist.inefetivo) / totalControles) * 100).toFixed(0)}% do total` : '—'}
           cor="#F05656"
           icon="✕"
         />
@@ -215,18 +285,15 @@ function HomeDash({ projeto }) {
       <div className="dash-section">
         <div className="dash-section-title">Progresso por Fase</div>
         <div className="dash-fases">
-          {FASES.map(f => {
-            const progresso = calcularProgressoFase(areas, f.id)
-            return (
-              <FaseBar
-                key={f.id}
-                label={f.label}
-                nome={f.nome}
-                peso={f.peso}
-                progresso={progresso}
-              />
-            )
-          })}
+          {FASES.map(f => (
+            <FaseBar
+              key={f.id}
+              label={f.label}
+              nome={f.nome}
+              peso={f.peso}
+              progresso={calcularProgressoFase(f.id)}
+            />
+          ))}
         </div>
       </div>
 
@@ -234,50 +301,62 @@ function HomeDash({ projeto }) {
         <div className="dash-card">
           <div className="dash-card-title">Ranking por Área</div>
           <div className="dash-ranking">
-            {ranking.map((a, i) => (
-              <div key={a.id} className="dash-rank-row">
-                <div className="dash-rank-pos" style={{ color: i < 3 ? 'var(--gold)' : 'var(--txt3)' }}>
-                  {i + 1}
-                </div>
-                <div className="dash-rank-nome">{a.nome}</div>
-                <div className="dash-rank-bar-wrap">
-                  <div className="dash-rank-bar">
-                    <div className="dash-rank-bar-fill"
-                      style={{ width: `${Math.min((a.indice?.percentual || 0) * 100, 100)}%`, background: getCorMaturidade(a.indice?.percentual || 0) }} />
+            {ranking.map((a, i) => {
+              const pct = a.calc?.percentual || 0
+              const nivel = getNivelMaturidade(pct)
+              return (
+                <div key={a.id} className="dash-rank-row">
+                  <div className="dash-rank-pos" style={{ color: i < 3 ? 'var(--gold)' : 'var(--txt3)' }}>
+                    {i + 1}
+                  </div>
+                  <div className="dash-rank-nome">{a.nome}</div>
+                  <div className="dash-rank-bar-wrap">
+                    <div className="dash-rank-bar">
+                      <div className="dash-rank-bar-fill"
+                        style={{ width: `${Math.min(pct * 100, 100)}%`, background: getCorMaturidade(pct) }} />
+                    </div>
+                  </div>
+                  <div className="dash-rank-nivel" style={{ fontSize: 10, color: 'var(--txt3)', minWidth: 20, textAlign: 'center' }}>
+                    {nivel.nivel}
+                  </div>
+                  <div className="dash-rank-pct" style={{ color: getCorMaturidade(pct) }}>
+                    {(pct * 100).toFixed(1)}%
                   </div>
                 </div>
-                <div className="dash-rank-pct" style={{ color: getCorMaturidade(a.indice?.percentual || 0) }}>
-                  {((a.indice?.percentual || 0) * 100).toFixed(1)}%
-                </div>
-              </div>
-            ))}
+              )
+            })}
             {ranking.length === 0 && <div className="cfg-empty">Sem dados de controles cadastrados.</div>}
           </div>
         </div>
 
         <div className="dash-card">
           <div className="dash-card-title">Mapa de Calor — Risco</div>
-          <HeatMap areas={areas} />
+          <HeatMap areas={areasCalc} />
         </div>
       </div>
 
       <div className="dash-section">
         <div className="dash-section-title">Distribuição por Criticidade</div>
         <div className="dash-crit-grid">
-          {['Crítico', 'Significativo', 'Moderado', 'Baixo'].map(crit => {
-            const total = areas.reduce((acc, a) => acc + a.controles.filter(c => c.criticidade === crit).length, 0)
-            const ef    = areas.reduce((acc, a) => acc + a.controles.filter(c => c.criticidade === crit && c.resultado?.toLowerCase() === 'efetivo').length, 0)
-            const inef  = areas.reduce((acc, a) => acc + a.controles.filter(c => c.criticidade === crit && c.resultado?.toLowerCase() === 'inefetivo').length, 0)
-            const gap   = areas.reduce((acc, a) => acc + a.controles.filter(c => c.criticidade === crit && c.resultado?.toLowerCase() === 'gap').length, 0)
-            const cor   = { Crítico: '#EF4444', Significativo: '#F97316', Moderado: '#F5B942', Baixo: '#22D4A0' }[crit]
+          {[
+            { label: 'Crítico',       valor: 4 },
+            { label: 'Significativo', valor: 3 },
+            { label: 'Moderado',      valor: 2 },
+            { label: 'Baixo',         valor: 1 },
+          ].map(({ label, valor }) => {
+            const total = areasCalc.reduce((acc, a) => acc + a.controles.filter(c => c.crit === valor).length, 0)
+            const ef    = areasCalc.reduce((acc, a) => acc + a.controles.filter(c => c.crit === valor && (c.r1 || '').toLowerCase() === 'efetivo').length, 0)
+            const inef  = areasCalc.reduce((acc, a) => acc + a.controles.filter(c => c.crit === valor && (c.r1 || '').toLowerCase() === 'inefetivo').length, 0)
+            const gap   = areasCalc.reduce((acc, a) => acc + a.controles.filter(c => c.crit === valor && (c.r1 || '').toLowerCase() === 'gap').length, 0)
+            const cor   = { Crítico: '#EF4444', Significativo: '#F97316', Moderado: '#F5B942', Baixo: '#22D4A0' }[label]
             return (
-              <div key={crit} className="dash-crit-card" style={{ borderColor: cor + '44' }}>
-                <div className="dash-crit-label" style={{ color: cor }}>{crit}</div>
+              <div key={label} className="dash-crit-card" style={{ borderColor: cor + '44' }}>
+                <div className="dash-crit-label" style={{ color: cor }}>{label}</div>
                 <div className="dash-crit-total">{total}</div>
                 <div className="dash-crit-bars">
                   <span style={{ color: '#22D4A0', fontSize: 11 }}>✓ {ef}</span>
-                  <span style={{ color: '#F97316', fontSize: 11 }}>⚠ {inef}</span>
-                  <span style={{ color: '#F05656', fontSize: 11 }}>✕ {gap}</span>
+                  <span style={{ color: '#F97316', fontSize: 11 }}>⚠ {gap}</span>
+                  <span style={{ color: '#F05656', fontSize: 11 }}>✕ {inef}</span>
                 </div>
               </div>
             )
@@ -334,17 +413,23 @@ function HeatMap({ areas }) {
     '2,4': '#FF0000', '3,3': '#FF0000', '3,4': '#FF0000', '4,2': '#FF0000', '4,3': '#FF0000', '4,4': '#FF0000',
   }
 
+  // Mapear impacto/probabilidade textual → numérico
+  const impMap  = { 'Baixo': 1, 'Moderado': 2, 'Alto': 3, 'Crítico': 4 }
+  const probMap = { 'Baixa': 1, 'Média': 2, 'Alta': 3, 'Extrema': 4 }
+
   const celulas = {}
   areas.forEach(a => {
     a.controles.forEach(c => {
-      if (c.impacto && c.probabilidade) {
-        const key = `${c.impacto},${c.probabilidade}`
+      const impVal  = impMap[c.imp] || c.impacto
+      const probVal = probMap[c.prob] || c.probabilidade
+      if (impVal && probVal) {
+        const key = `${impVal},${probVal}`
         celulas[key] = (celulas[key] || 0) + 1
       }
     })
   })
 
-  const labels = ['Baixo', 'Moderado', 'Significativo', 'Crítico']
+  const labels = ['Baixo', 'Moderado', 'Alto', 'Crítico']
 
   return (
     <div className="heatmap-wrap">
@@ -376,56 +461,11 @@ function HeatMap({ areas }) {
   )
 }
 
-// ── Funções de cálculo ────────────────────────────────────────────────────────
-function calcularIndiceMaturidade(controles, pesoArea) {
-  if (!controles.length) return { geral: 0, percentual: 0 }
-
-  const PESO_CRIT = { 'Crítico': 0.4, 'Significativo': 0.3, 'Moderado': 0.2, 'Baixo': 0.1 }
-
-  let somaF1 = 0, totalPeso = 0
-  controles.forEach(c => {
-    const p = PESO_CRIT[c.criticidade] || 0.1
-    totalPeso += p
-    const r = c.resultado?.toLowerCase()
-    if (r === 'efetivo')     somaF1 += p * 1
-    else if (r === 'inefetivo') somaF1 += p * -0.75
-    else if (r === 'gap')    somaF1 += p * -1
-  })
-
-  const indiceF1 = totalPeso > 0 ? somaF1 / totalPeso : 0
-  const percentual = Math.max(0, (indiceF1 + 1) / 2)
-  const geral = percentual * 0.10 * (pesoArea || 0.1)
-
-  return { geral, percentual, indiceF1 }
-}
-
-function calcularProgressoFase(areas, faseId) {
-  if (!areas.length) return 0
-  const totalControles = areas.reduce((acc, a) => acc + a.controles.length, 0)
-  if (!totalControles) return 0
-
-  if (faseId === 'f1') {
-    const comResultado = areas.reduce((acc, a) =>
-      acc + a.controles.filter(c => c.resultado && c.resultado !== '').length, 0)
-    return comResultado / totalControles
-  }
-  const faseMap = { f1: 'F1', f2e1: 'F2-E1', f2e2: 'F2-E2', f3: 'F3', f4: 'F4', f5: 'F5' }
-  const fases_ordem = ['F1', 'F2-E1', 'F2-E2', 'F3', 'F4', 'F5']
-  const faseAtual = faseMap[faseId]
-  const faseIdx = fases_ordem.indexOf(faseAtual)
-
-  const concluidos = areas.reduce((acc, a) =>
-    acc + a.controles.filter(c => {
-      const idx = fases_ordem.indexOf(c.fase_atual)
-      return idx >= faseIdx
-    }).length, 0)
-
-  return concluidos / totalControles
-}
-
+// ── Cor por nível de maturidade ──────────────────────────────────────────────
 function getCorMaturidade(pct) {
-  if (pct >= 0.75) return '#22D4A0'   /* verde */
-  if (pct >= 0.50) return '#F5B942'   /* amarelo */
-  if (pct >= 0.25) return '#F97316'   /* laranja */
-  return '#F05656'                     /* vermelho */
+  if (pct >= 0.81) return '#22D4A0'   /* N5 verde */
+  if (pct >= 0.51) return '#66BB6A'   /* N4 verde claro */
+  if (pct >= 0.26) return '#F5B942'   /* N3 amarelo */
+  if (pct >= 0.11) return '#F97316'   /* N2 laranja */
+  return '#F05656'                     /* N1 vermelho */
 }
