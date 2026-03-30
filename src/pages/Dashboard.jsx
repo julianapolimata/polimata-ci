@@ -12,16 +12,9 @@ import {
   PESO_FASE,
 } from '../lib/calculoMaturidade'
 
-// ── Dados das fases (pesos fixos da metodologia Polímata) ──────────────────
-const FASES = [
-  { id: 'F1',   label: 'F1',    nome: 'Diagnóstico Inicial',              peso: PESO_FASE.F1   },
-  { id: 'F2E1', label: 'F2-E1', nome: 'Plano de Ação e Teste de Desenho', peso: PESO_FASE.F2E1 },
-  { id: 'F2E2', label: 'F2-E2', nome: 'Teste de Aderência',               peso: PESO_FASE.F2E2 },
-  { id: 'F3',   label: 'F3',    nome: 'Revisão dos Controles Internos',   peso: PESO_FASE.F3   },
-  { id: 'F4C1', label: 'F4-C1', nome: 'Auditoria Contínua — Ciclo 1',    peso: PESO_FASE.F4C1 },
-  { id: 'F4C2', label: 'F4-C2', nome: 'Auditoria Contínua — Ciclo 2',    peso: PESO_FASE.F4C2 },
-  { id: 'F5',   label: 'F5',    nome: 'Auditoria Independente',           peso: PESO_FASE.F5   },
-]
+// ══════════════════════════════════════════════════════════════════════════════
+// SHELL — Sidebar (dark) + Main (rotas)
+// ══════════════════════════════════════════════════════════════════════════════
 
 export default function Dashboard() {
   const { perfil, signOut } = useAuth()
@@ -67,7 +60,7 @@ export default function Dashboard() {
         )}
 
         <nav className="sb-nav">
-          <NavItem icon="⊞" label="Dashboard"    active={location.pathname === '/'}    onClick={() => navigate('/')} />
+          <NavItem icon="⊞" label="Dashboard" active={location.pathname === '/'} onClick={() => navigate('/')} />
           <NavItem icon="⊟" label="MRC Completa" active={location.pathname === '/mrc'} onClick={() => navigate('/mrc')} />
           {isAdmin && (
             <>
@@ -95,10 +88,10 @@ export default function Dashboard() {
 
       <main className="main">
         <Routes>
-          <Route path="/"              element={<HomeDash projeto={projetoAtivo} />} />
-          <Route path="/mrc"           element={<MRCCompleta projetoId={projetoAtivo?.id} />} />
+          <Route path="/" element={<HomeDash projeto={projetoAtivo} />} />
+          <Route path="/mrc" element={<MRCCompleta projetoId={projetoAtivo?.id} />} />
           <Route path="/configuracoes/*" element={<Configuracoes />} />
-          <Route path="/perfil"        element={<Perfil />} />
+          <Route path="/perfil" element={<Perfil />} />
         </Routes>
       </main>
     </div>
@@ -120,12 +113,43 @@ function papelLabel(papel) {
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
-// DASHBOARD DE MATURIDADE — integrado com engine de cálculo (metodologia v3)
+// CONSTANTES DO DASH MATURIDADE
+// ══════════════════════════════════════════════════════════════════════════════
+
+const NIVEIS = [
+  { id: 'N5', nome: 'Otimizado', faixa: '81% à 100%', cor: '#1B5E20' },
+  { id: 'N4', nome: 'Monitorado', faixa: '51% à 80%', cor: '#558B2F' },
+  { id: 'N3', nome: 'Padronizado', faixa: '26% à 50%', cor: '#F9A825' },
+  { id: 'N2', nome: 'Informal', faixa: '11% à 25%', cor: '#E65100' },
+  { id: 'N1', nome: 'Não confiável', faixa: '0% à 10%', cor: '#B71C1C' },
+]
+
+const FASES_INFO = [
+  { id: 'F1', label: 'Fase 1', nome: 'Diagnóstico Inicial', peso: '10%', cor: '#5C6B7A' },
+  { id: 'F2', label: 'Fase 2', nome: 'Planos de Ação e Teste de Aderência', peso: '25%', cor: '#7A8A5C' },
+  { id: 'F3', label: 'Fase 3', nome: 'Revisão dos Controles Internos', peso: '25%', cor: '#C4A35A' },
+  { id: 'F4', label: 'Fase 4', nome: 'Auditoria Contínua', peso: '30%', cor: '#C47A5A' },
+  { id: 'F5', label: 'Fase 5', nome: 'Auditoria Independente', peso: '10%', cor: '#8B4A5A' },
+]
+
+const GAUGE_GRADIENT = 'linear-gradient(90deg, #B71C1C 0%, #E65100 20%, #F9A825 40%, #558B2F 65%, #1B5E20 100%)'
+
+function getCorNivel(pct) {
+  if (pct >= 0.81) return '#1B5E20'
+  if (pct >= 0.51) return '#558B2F'
+  if (pct >= 0.26) return '#F9A825'
+  if (pct >= 0.11) return '#E65100'
+  return '#B71C1C'
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// DASH MATURIDADE — Réplica da aba Excel
 // ══════════════════════════════════════════════════════════════════════════════
 
 function HomeDash({ projeto }) {
   const [areasCalc, setAreasCalc] = useState([])
   const [loading, setLoading] = useState(true)
+  const [areaSel, setAreaSel] = useState('')
 
   useEffect(() => {
     if (projeto?.id) loadDados(projeto.id)
@@ -133,15 +157,12 @@ function HomeDash({ projeto }) {
 
   async function loadDados(projetoId) {
     setLoading(true)
-
-    // Buscar áreas com peso
     const { data: areasData } = await supabase
       .from('areas')
       .select('id, nome, prefixo, peso, gerente, ordem')
       .eq('projeto_id', projetoId)
       .order('ordem')
 
-    // Buscar TODOS os controles do projeto (mesma query da MRC)
     const { data: mrcData } = await supabase
       .from('mrc')
       .select('*')
@@ -150,32 +171,22 @@ function HomeDash({ projeto }) {
     const controles = mrcData || []
     const areas = areasData || []
 
-    // Agrupar controles por área (usando campo 'area' = nome da área)
-    // e também por area_id se disponível
     const resultado = areas.map(area => {
       const controlesArea = controles.filter(c =>
         c.area_id === area.id || c.area === area.nome
       )
-
-      // Determinar se F1 está concluída (todos controles têm r1 preenchido)
       const f1Concluida = controlesArea.length > 0 &&
         controlesArea.every(c => c.r1 && c.r1 !== 'Teste Não Realizado')
-
-      // Calcular com a engine real
       const calc = calcularPercentualArea(controlesArea, f1Concluida)
-
-      return {
-        ...area,
-        controles: controlesArea,
-        calc,
-      }
+      return { ...area, controles: controlesArea, calc }
     })
 
     setAreasCalc(resultado)
+    if (resultado.length > 0) setAreaSel(resultado[0].nome)
     setLoading(false)
   }
 
-  // ── Índice consolidado da empresa (média ponderada) ──
+  // Índice consolidado empresa
   const areasParaConsolidado = areasCalc.map(a => ({
     nome: a.nome,
     peso: a.peso || 0,
@@ -183,289 +194,525 @@ function HomeDash({ projeto }) {
   }))
   const empresa = calcularIndiceEmpresa(areasParaConsolidado)
 
-  // ── Totais ──
-  const totalControles = areasCalc.reduce((acc, a) => acc + a.controles.length, 0)
-  const totalAtivos = areasCalc.reduce((acc, a) => acc + (a.calc?.totais?.ativos || 0), 0)
+  // Área selecionada
+  const areaAtiva = areasCalc.find(a => a.nome === areaSel)
 
-  const dist = areasCalc.reduce((acc, a) => {
-    a.controles.forEach(c => {
-      const r = (c.r1 || '').toLowerCase()
-      if (r === 'efetivo') acc.efetivo++
-      else if (r === 'inefetivo') acc.inefetivo++
-      else if (r === 'gap') acc.gap++
-      else acc.pendente++
-    })
-    return acc
-  }, { efetivo: 0, inefetivo: 0, gap: 0, pendente: 0 })
-
-  const totalRegredidos = areasCalc.reduce((acc, a) => acc + (a.calc?.totais?.regredidos || 0), 0)
-
-  // ── Ranking por área (percentual real da engine) ──
+  // Ranking ordenado
   const ranking = [...areasCalc]
     .filter(a => a.controles.length > 0)
     .sort((a, b) => (b.calc?.percentual || 0) - (a.calc?.percentual || 0))
 
-  // ── Progresso por fase (conta controles que já passaram por cada fase) ──
-  function calcularProgressoFase(faseId) {
-    let total = 0, concluidos = 0
+  // Contribuição por fase (empresa) — média ponderada das contribuições de cada área
+  function calcContribFaseEmpresa() {
+    const somaPesos = areasCalc.reduce((s, x) => s + (x.peso || 0), 0) || 1
+    let f1 = 0, f2 = 0, f3 = 0, f4 = 0, f5 = 0
     areasCalc.forEach(a => {
-      a.calc?.detalhePorControle?.forEach(d => {
-        total++
-        const fases = d.detalheFases || {}
-        if (faseId === 'F1') {
-          if (fases.F1?.resultado) concluidos++
-        } else if (faseId === 'F2E1') {
-          if (fases.F2E1?.resultado && fases.F2E1.resultado !== 'auto→regrediu') concluidos++
-        } else if (faseId === 'F2E2') {
-          if (fases.F2E2?.resultado && fases.F2E2.resultado !== 'auto→regrediu') concluidos++
-        } else if (faseId === 'F3') {
-          if (fases.F3?.resultado) concluidos++
-        } else if (faseId === 'F4C1') {
-          if (fases.F4C1?.resultado && fases.F4C1.resultado !== 'N/A') concluidos++
-        } else if (faseId === 'F4C2') {
-          if (fases.F4C2?.resultado && fases.F4C2.resultado !== 'N/A') concluidos++
-        } else if (faseId === 'F5') {
-          if (fases.F5?.resultado) concluidos++
-        }
-      })
+      const pesoArea = (a.peso || 0) / somaPesos
+      const ca = calcContribFaseArea(a)
+      f1 += ca.f1 * pesoArea
+      f2 += ca.f2 * pesoArea
+      f3 += ca.f3 * pesoArea
+      f4 += ca.f4 * pesoArea
+      f5 += ca.f5 * pesoArea
     })
-    return total > 0 ? concluidos / total : 0
+    return { f1, f2, f3, f4, f5 }
   }
 
-  if (loading) return <div className="loading-screen"><div className="spinner" /></div>
+  // Contribuição por fase (área)
+  function calcContribFaseArea(area) {
+    if (!area?.calc) return { f1: 0, f2: 0, f3: 0, f4: 0, f5: 0 }
+    const f1 = area.calc.percentual > 0 ? 0.10 : 0
+    let f2 = 0, f3 = 0, f4 = 0, f5 = 0
+    ;(area.calc.detalhePorControle || []).forEach(d => {
+      const fases = d.detalheFases || {}
+      f2 += (fases.F2E1?.contribuicao || 0) + (fases.F2E2?.contribuicao || 0)
+      f3 += fases.F3?.contribuicao || 0
+      f4 += (fases.F4C1?.contribuicao || 0) + (fases.F4C2?.contribuicao || 0)
+      f5 += fases.F5?.contribuicao || 0
+    })
+    return { f1, f2, f3, f4, f5 }
+  }
+
+  const contribEmpresa = calcContribFaseEmpresa()
+  const contribArea = calcContribFaseArea(areaAtiva)
+
+  if (loading) return (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: '#F3EEE4' }}>
+      <div className="spinner" />
+    </div>
+  )
 
   if (!projeto) return (
-    <div className="page-wrap">
-      <div className="empty-state">
-        <div className="empty-icon">⊞</div>
-        <div className="empty-title">Nenhum projeto ativo</div>
-        <div className="empty-desc">Selecione ou cadastre um projeto para visualizar o dashboard.</div>
+    <div style={{ background: '#F3EEE4', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ textAlign: 'center' }}>
+        <div style={{ fontSize: 48, opacity: 0.3 }}>⊞</div>
+        <div style={{ fontSize: 16, fontWeight: 600, color: '#555', marginTop: 12 }}>Nenhum projeto ativo</div>
+        <div style={{ fontSize: 13, color: '#888' }}>Selecione ou cadastre um projeto.</div>
       </div>
     </div>
   )
 
   return (
-    <div className="page-wrap">
-      <div className="page-hdr">
-        <h1 className="page-title">Dashboard</h1>
-        {projeto && <span className="page-badge">{projeto.clientes?.nome} · {projeto.nome}</span>}
+    <div className="dm-page">
+      {/* ─── Título ─── */}
+      <div className="dm-title-bar">
+        <span className="dm-title">Maturidade do Ambiente de Controles Internos</span>
+        <span className="dm-badge">{projeto.clientes?.nome} · {projeto.nome}</span>
       </div>
 
-      <div className="dash-kpis">
-        <KPICard
-          label="Índice de Maturidade"
-          valor={`${(empresa.indice * 100).toFixed(1)}%`}
-          sub={`${empresa.nivel} — ${empresa.nome}`}
-          cor="var(--gold)"
-          icon="◎"
-        />
-        <KPICard
-          label="Total de Controles"
-          valor={totalControles}
-          sub={`${areasCalc.length} área${areasCalc.length !== 1 ? 's' : ''} · ${totalAtivos} ativos`}
-          cor="var(--navy-700)"
-          icon="⊟"
-        />
-        <KPICard
-          label="Efetivos"
-          valor={dist.efetivo}
-          sub={totalControles > 0 ? `${((dist.efetivo / totalControles) * 100).toFixed(0)}% do total` : '—'}
-          cor="#22D4A0"
-          icon="✓"
-        />
-        <KPICard
-          label="GAP + Inefetivos"
-          valor={dist.gap + dist.inefetivo}
-          sub={totalRegredidos > 0 ? `${totalRegredidos} em regressão` : totalControles > 0 ? `${(((dist.gap + dist.inefetivo) / totalControles) * 100).toFixed(0)}% do total` : '—'}
-          cor="#F05656"
-          icon="✕"
-        />
-      </div>
+      {/* ─── Grid 3 colunas ─── */}
+      <div className="dm-grid">
 
-      <div className="dash-section">
-        <div className="dash-section-title">Progresso por Fase</div>
-        <div className="dash-fases">
-          {FASES.map(f => (
-            <FaseBar
-              key={f.id}
-              label={f.label}
-              nome={f.nome}
-              peso={f.peso}
-              progresso={calcularProgressoFase(f.id)}
-            />
-          ))}
-        </div>
-      </div>
-
-      <div className="dash-grid-2">
-        <div className="dash-card">
-          <div className="dash-card-title">Ranking por Área</div>
-          <div className="dash-ranking">
-            {ranking.map((a, i) => {
-              const pct = a.calc?.percentual || 0
-              const nivel = getNivelMaturidade(pct)
-              return (
-                <div key={a.id} className="dash-rank-row">
-                  <div className="dash-rank-pos" style={{ color: i < 3 ? 'var(--gold)' : 'var(--txt3)' }}>
-                    {i + 1}
-                  </div>
-                  <div className="dash-rank-nome">{a.nome}</div>
-                  <div className="dash-rank-bar-wrap">
-                    <div className="dash-rank-bar">
-                      <div className="dash-rank-bar-fill"
-                        style={{ width: `${Math.min(pct * 100, 100)}%`, background: getCorMaturidade(pct) }} />
-                    </div>
-                  </div>
-                  <div className="dash-rank-nivel" style={{ fontSize: 10, color: 'var(--txt3)', minWidth: 20, textAlign: 'center' }}>
-                    {nivel.nivel}
-                  </div>
-                  <div className="dash-rank-pct" style={{ color: getCorMaturidade(pct) }}>
-                    {(pct * 100).toFixed(1)}%
+        {/* ── Coluna Esquerda ── */}
+        <div className="dm-col-left">
+          <div className="dm-card">
+            <div className="dm-meta-label">Última Atualização</div>
+            <div className="dm-meta-value">{new Date().toLocaleDateString('pt-BR')}</div>
+          </div>
+          <div className="dm-card">
+            <div className="dm-meta-label">Métrica de Maturidade</div>
+            <div className="dm-regua">
+              {NIVEIS.map(n => (
+                <div key={n.id} className="dm-regua-item">
+                  <div className="dm-regua-dot" style={{ background: n.cor }} />
+                  <div>
+                    <div className="dm-regua-nome" style={{ color: n.cor }}>{n.id} - {n.nome}</div>
+                    <div className="dm-regua-faixa">{n.faixa}</div>
                   </div>
                 </div>
-              )
-            })}
-            {ranking.length === 0 && <div className="cfg-empty">Sem dados de controles cadastrados.</div>}
+              ))}
+            </div>
           </div>
         </div>
 
-        <div className="dash-card">
-          <div className="dash-card-title">Mapa de Calor — Risco</div>
-          <HeatMap areas={areasCalc} />
-        </div>
-      </div>
+        {/* ── Coluna Central ── */}
+        <div className="dm-col-center">
 
-      <div className="dash-section">
-        <div className="dash-section-title">Distribuição por Criticidade</div>
-        <div className="dash-crit-grid">
-          {[
-            { label: 'Crítico',       valor: 4 },
-            { label: 'Significativo', valor: 3 },
-            { label: 'Moderado',      valor: 2 },
-            { label: 'Baixo',         valor: 1 },
-          ].map(({ label, valor }) => {
-            const total = areasCalc.reduce((acc, a) => acc + a.controles.filter(c => c.crit === valor).length, 0)
-            const ef    = areasCalc.reduce((acc, a) => acc + a.controles.filter(c => c.crit === valor && (c.r1 || '').toLowerCase() === 'efetivo').length, 0)
-            const inef  = areasCalc.reduce((acc, a) => acc + a.controles.filter(c => c.crit === valor && (c.r1 || '').toLowerCase() === 'inefetivo').length, 0)
-            const gap   = areasCalc.reduce((acc, a) => acc + a.controles.filter(c => c.crit === valor && (c.r1 || '').toLowerCase() === 'gap').length, 0)
-            const cor   = { Crítico: '#EF4444', Significativo: '#F97316', Moderado: '#F5B942', Baixo: '#22D4A0' }[label]
-            return (
-              <div key={label} className="dash-crit-card" style={{ borderColor: cor + '44' }}>
-                <div className="dash-crit-label" style={{ color: cor }}>{label}</div>
-                <div className="dash-crit-total">{total}</div>
-                <div className="dash-crit-bars">
-                  <span style={{ color: '#22D4A0', fontSize: 11 }}>✓ {ef}</span>
-                  <span style={{ color: '#F97316', fontSize: 11 }}>⚠ {gap}</span>
-                  <span style={{ color: '#F05656', fontSize: 11 }}>✕ {inef}</span>
-                </div>
+          {/* Visão Empresa */}
+          <div className="dm-card">
+            <div className="dm-visao-header">
+              <span className="dm-visao-label">Visão</span>
+              <span className="dm-visao-nome">{projeto.clientes?.nome || 'Empresa'}</span>
+            </div>
+            <div className="dm-visao-body">
+              <div className="dm-index-big">{(empresa.indice * 100).toFixed(2)}%</div>
+              <div className="dm-fases-row">
+                {[
+                  { label: 'Fase 1', val: contribEmpresa.f1 },
+                  { label: 'Fase 2', val: contribEmpresa.f2 },
+                  { label: 'Fase 3', val: contribEmpresa.f3 },
+                  { label: 'Fase 4', val: contribEmpresa.f4 },
+                  { label: 'Fase 5', val: contribEmpresa.f5 },
+                ].map((f, i) => (
+                  <div key={i} className="dm-fase-box" style={{ background: FASES_INFO[i].cor }}>
+                    <div className="dm-fase-box-label">{f.label}</div>
+                    <div className="dm-fase-box-val">{(f.val * 100).toFixed(2)}%</div>
+                  </div>
+                ))}
               </div>
-            )
-          })}
+            </div>
+            <GaugeBar percentual={empresa.indice} />
+          </div>
+
+          {/* Visão Área */}
+          <div className="dm-card">
+            <div className="dm-visao-header">
+              <span className="dm-visao-label">Visão</span>
+              <select className="dm-area-select" value={areaSel} onChange={e => setAreaSel(e.target.value)}>
+                {areasCalc.map(a => <option key={a.id} value={a.nome}>{a.nome}</option>)}
+              </select>
+            </div>
+            <div className="dm-visao-body">
+              <div className="dm-index-big">{((areaAtiva?.calc?.percentual || 0) * 100).toFixed(2)}%</div>
+              <div className="dm-fases-row">
+                {[
+                  { label: 'Fase 1', val: contribArea.f1 },
+                  { label: 'Fase 2', val: contribArea.f2 },
+                  { label: 'Fase 3', val: contribArea.f3 },
+                  { label: 'Fase 4', val: contribArea.f4 },
+                  { label: 'Fase 5', val: contribArea.f5 },
+                ].map((f, i) => (
+                  <div key={i} className="dm-fase-box" style={{ background: FASES_INFO[i].cor }}>
+                    <div className="dm-fase-box-label">{f.label}</div>
+                    <div className="dm-fase-box-val">{(f.val * 100).toFixed(2)}%</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <GaugeBar percentual={areaAtiva?.calc?.percentual || 0} />
+          </div>
+        </div>
+
+        {/* ── Coluna Direita ── */}
+        <div className="dm-col-right">
+
+          {/* Ranking */}
+          <div className="dm-card">
+            <div className="dm-section-title">Ranking</div>
+            <table className="dm-rank-table">
+              <thead>
+                <tr>
+                  <th className="dm-rank-th" style={{ width: 44 }}>Posição</th>
+                  <th className="dm-rank-th" style={{ textAlign: 'left' }}>Departamento</th>
+                  <th className="dm-rank-th" style={{ width: 60 }}>%</th>
+                  <th className="dm-rank-th" style={{ width: 70 }}></th>
+                </tr>
+              </thead>
+              <tbody>
+                {ranking.map((a, i) => {
+                  const pct = a.calc?.percentual || 0
+                  const cor = getCorNivel(pct)
+                  return (
+                    <tr key={a.id} className="dm-rank-row">
+                      <td className="dm-rank-pos">{i + 1}</td>
+                      <td className="dm-rank-nome">{a.nome}</td>
+                      <td className="dm-rank-pct" style={{ color: cor }}>{(pct * 100).toFixed(2)}%</td>
+                      <td className="dm-rank-bar-cell">
+                        <div className="dm-rank-bar-track">
+                          <div className="dm-rank-bar-fill" style={{ width: `${Math.min(pct * 100, 100)}%`, background: cor }} />
+                        </div>
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Fases Info */}
+          <div className="dm-card">
+            <div className="dm-section-title">Fases</div>
+            {FASES_INFO.map(f => (
+              <div key={f.id} className="dm-fase-info-row" style={{ borderLeftColor: f.cor }}>
+                <span className="dm-fase-info-label" style={{ background: f.cor }}>{f.label}</span>
+                <span className="dm-fase-info-nome">{f.nome}</span>
+                <span className="dm-fase-info-peso">Peso: {f.peso}</span>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
+
+      {/* ─── CSS Scoped ao Dashboard ─── */}
+      <style>{`
+        .dm-page {
+          background: #F3EEE4;
+          min-height: 100vh;
+          padding: 24px 28px;
+          font-family: 'Montserrat', sans-serif;
+          color: #333;
+        }
+        .dm-title-bar {
+          background: #00203E;
+          border-radius: 8px;
+          padding: 16px 24px;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          margin-bottom: 20px;
+        }
+        .dm-title {
+          font-family: 'Cormorant Garamond', serif;
+          font-size: 20px;
+          font-weight: 600;
+          color: #fff;
+          letter-spacing: 0.5px;
+        }
+        .dm-badge {
+          font-size: 11px;
+          font-weight: 500;
+          color: #CC915E;
+          background: rgba(204,145,94,0.12);
+          padding: 4px 12px;
+          border-radius: 20px;
+          border: 1px solid rgba(204,145,94,0.25);
+        }
+        .dm-grid {
+          display: grid;
+          grid-template-columns: 180px 1fr 320px;
+          gap: 16px;
+          align-items: start;
+        }
+        @media (max-width: 1100px) {
+          .dm-grid {
+            grid-template-columns: 1fr;
+          }
+        }
+        .dm-col-left, .dm-col-center, .dm-col-right {
+          display: flex;
+          flex-direction: column;
+          gap: 14px;
+        }
+        .dm-card {
+          background: #fff;
+          border-radius: 8px;
+          padding: 16px 18px;
+          box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+        }
+        .dm-meta-label {
+          font-size: 11px;
+          font-weight: 700;
+          text-transform: uppercase;
+          color: #00203E;
+          letter-spacing: 0.8px;
+          margin-bottom: 6px;
+        }
+        .dm-meta-value {
+          font-size: 14px;
+          color: #555;
+        }
+        .dm-regua {
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+          margin-top: 8px;
+        }
+        .dm-regua-item {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+        }
+        .dm-regua-dot {
+          width: 14px;
+          height: 14px;
+          border-radius: 3px;
+          flex-shrink: 0;
+        }
+        .dm-regua-nome {
+          font-size: 11px;
+          font-weight: 700;
+          line-height: 1.2;
+        }
+        .dm-regua-faixa {
+          font-size: 10px;
+          color: #888;
+          line-height: 1.2;
+        }
+        .dm-visao-header {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          margin-bottom: 14px;
+          border-bottom: 1px solid #eee;
+          padding-bottom: 10px;
+        }
+        .dm-visao-label {
+          font-size: 11px;
+          color: #999;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+        }
+        .dm-visao-nome {
+          font-family: 'Cormorant Garamond', serif;
+          font-size: 18px;
+          font-weight: 700;
+          color: #00203E;
+        }
+        .dm-area-select {
+          font-family: 'Cormorant Garamond', serif;
+          font-size: 18px;
+          font-weight: 700;
+          color: #00203E;
+          background: transparent;
+          border: none;
+          border-bottom: 2px solid #CC915E;
+          outline: none;
+          cursor: pointer;
+          padding-bottom: 2px;
+          padding-right: 8px;
+        }
+        .dm-visao-body {
+          display: flex;
+          align-items: center;
+          gap: 20px;
+          margin-bottom: 16px;
+        }
+        .dm-index-big {
+          font-family: 'Montserrat', sans-serif;
+          font-size: 32px;
+          font-weight: 300;
+          color: #00203E;
+          min-width: 110px;
+        }
+        .dm-fases-row {
+          display: flex;
+          gap: 6px;
+          flex: 1;
+        }
+        .dm-fase-box {
+          flex: 1;
+          border-radius: 6px;
+          padding: 8px 4px;
+          text-align: center;
+          color: #fff;
+        }
+        .dm-fase-box-label {
+          font-size: 9px;
+          font-weight: 700;
+          text-transform: uppercase;
+          letter-spacing: 0.3px;
+          margin-bottom: 2px;
+        }
+        .dm-fase-box-val {
+          font-size: 12px;
+          font-weight: 400;
+        }
+        .dm-section-title {
+          font-size: 13px;
+          font-weight: 700;
+          text-transform: uppercase;
+          color: #00203E;
+          letter-spacing: 0.8px;
+          margin-bottom: 10px;
+          text-align: center;
+        }
+        .dm-rank-table {
+          width: 100%;
+          border-collapse: collapse;
+        }
+        .dm-rank-th {
+          font-size: 10px;
+          font-weight: 700;
+          text-transform: uppercase;
+          color: #888;
+          padding: 4px 6px;
+          border-bottom: 1px solid #ddd;
+          text-align: center;
+        }
+        .dm-rank-row {
+          border-bottom: 1px solid #f0f0f0;
+        }
+        .dm-rank-row:hover {
+          background: #faf8f4;
+        }
+        .dm-rank-pos {
+          text-align: center;
+          padding: 5px 4px;
+          font-weight: 700;
+          color: #00203E;
+          font-size: 11px;
+        }
+        .dm-rank-nome {
+          padding: 5px 6px;
+          font-size: 11px;
+          color: #444;
+        }
+        .dm-rank-pct {
+          text-align: center;
+          padding: 5px 4px;
+          font-weight: 700;
+          font-size: 11px;
+        }
+        .dm-rank-bar-cell {
+          padding: 5px 4px;
+        }
+        .dm-rank-bar-track {
+          width: 100%;
+          height: 6px;
+          background: #eee;
+          border-radius: 3px;
+          overflow: hidden;
+        }
+        .dm-rank-bar-fill {
+          height: 100%;
+          border-radius: 3px;
+          transition: width 0.4s ease;
+        }
+        .dm-fase-info-row {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          padding: 7px 0 7px 10px;
+          border-left: 4px solid;
+          margin-bottom: 4px;
+        }
+        .dm-fase-info-label {
+          font-size: 9px;
+          font-weight: 700;
+          color: #fff;
+          padding: 2px 8px;
+          border-radius: 3px;
+          white-space: nowrap;
+        }
+        .dm-fase-info-nome {
+          font-size: 11px;
+          color: #444;
+          flex: 1;
+        }
+        .dm-fase-info-peso {
+          font-size: 10px;
+          font-weight: 700;
+          color: #888;
+          white-space: nowrap;
+        }
+        /* Gauge */
+        .dm-gauge-wrap {
+          position: relative;
+          height: 50px;
+          margin-top: 4px;
+        }
+        .dm-gauge-indicator {
+          position: absolute;
+          top: 0;
+          transform: translateX(-50%);
+          z-index: 2;
+          transition: left 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .dm-gauge-triangle {
+          width: 0;
+          height: 0;
+          border-left: 8px solid transparent;
+          border-right: 8px solid transparent;
+          border-top: 12px solid #00203E;
+        }
+        .dm-gauge-bar {
+          position: absolute;
+          top: 16px;
+          left: 0;
+          right: 0;
+          height: 16px;
+          border-radius: 8px;
+          overflow: hidden;
+          background: ${GAUGE_GRADIENT};
+        }
+        .dm-gauge-labels {
+          position: absolute;
+          top: 36px;
+          left: 0;
+          right: 0;
+        }
+        .dm-gauge-label {
+          position: absolute;
+          transform: translateX(-50%);
+          font-size: 10px;
+          font-weight: 600;
+          color: #888;
+        }
+      `}</style>
     </div>
   )
 }
 
-// ── KPI Card ─────────────────────────────────────────────────────────────────
-function KPICard({ label, valor, sub, cor, icon }) {
+// ══════════════════════════════════════════════════════════════════════════════
+// GAUGE BAR — Barra gradiente N1→N5 com triângulo indicador
+// ══════════════════════════════════════════════════════════════════════════════
+
+function GaugeBar({ percentual }) {
+  const pct = Math.max(0, Math.min(percentual * 100, 100))
+
   return (
-    <div className="dash-kpi-card">
-      <div className="dash-kpi-icon" style={{ color: cor }}>{icon}</div>
-      <div className="dash-kpi-body">
-        <div className="dash-kpi-label">{label}</div>
-        <div className="dash-kpi-valor" style={{ color: cor }}>{valor}</div>
-        <div className="dash-kpi-sub">{sub}</div>
+    <div className="dm-gauge-wrap">
+      <div className="dm-gauge-indicator" style={{ left: `${pct}%` }}>
+        <div className="dm-gauge-triangle" />
+      </div>
+      <div className="dm-gauge-bar" />
+      <div className="dm-gauge-labels">
+        <span className="dm-gauge-label" style={{ left: '5%' }}>N1</span>
+        <span className="dm-gauge-label" style={{ left: '18%' }}>N2</span>
+        <span className="dm-gauge-label" style={{ left: '38%' }}>N3</span>
+        <span className="dm-gauge-label" style={{ left: '65%' }}>N4</span>
+        <span className="dm-gauge-label" style={{ left: '90%' }}>N5</span>
       </div>
     </div>
   )
-}
-
-// ── Barra de fase ─────────────────────────────────────────────────────────────
-function FaseBar({ label, nome, peso, progresso }) {
-  const pct = Math.min(progresso * 100, 100)
-  const cor = getCorMaturidade(progresso)
-  return (
-    <div className="fase-bar-wrap">
-      <div className="fase-bar-header">
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span className="fase-badge" style={{ background: cor + '22', color: cor, border: `1px solid ${cor}44` }}>{label}</span>
-          <span className="fase-nome">{nome}</span>
-        </div>
-        <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-          <span className="fase-peso">Peso {(peso * 100).toFixed(0)}%</span>
-          <span className="fase-pct" style={{ color: cor }}>{pct.toFixed(1)}%</span>
-        </div>
-      </div>
-      <div className="fase-bar-track">
-        <div className="fase-bar-fill" style={{ width: `${pct}%`, background: cor }} />
-      </div>
-    </div>
-  )
-}
-
-// ── Mapa de Calor ─────────────────────────────────────────────────────────────
-function HeatMap({ areas }) {
-  const cores = {
-    '1,1': '#00B050', '1,2': '#00B050', '2,1': '#00B050',
-    '1,3': '#FFFF00', '2,2': '#FFFF00', '3,1': '#FFFF00',
-    '1,4': '#FFC000', '2,3': '#FFC000', '3,2': '#FFC000', '4,1': '#FFC000',
-    '2,4': '#FF0000', '3,3': '#FF0000', '3,4': '#FF0000', '4,2': '#FF0000', '4,3': '#FF0000', '4,4': '#FF0000',
-  }
-
-  // Mapear impacto/probabilidade textual → numérico
-  const impMap  = { 'Baixo': 1, 'Moderado': 2, 'Alto': 3, 'Crítico': 4 }
-  const probMap = { 'Baixa': 1, 'Média': 2, 'Alta': 3, 'Extrema': 4 }
-
-  const celulas = {}
-  areas.forEach(a => {
-    a.controles.forEach(c => {
-      const impVal  = impMap[c.imp] || c.impacto
-      const probVal = probMap[c.prob] || c.probabilidade
-      if (impVal && probVal) {
-        const key = `${impVal},${probVal}`
-        celulas[key] = (celulas[key] || 0) + 1
-      }
-    })
-  })
-
-  const labels = ['Baixo', 'Moderado', 'Alto', 'Crítico']
-
-  return (
-    <div className="heatmap-wrap">
-      <div className="heatmap-ylabel">← Probabilidade</div>
-      <div className="heatmap-main">
-        <div className="heatmap-grid">
-          {[4,3,2,1].map(prob => (
-            [1,2,3,4].map(imp => {
-              const key = `${imp},${prob}`
-              const count = celulas[key] || 0
-              const cor = cores[key] || '#1a3a5c'
-              return (
-                <div key={key} className="heatmap-cell" style={{ background: cor + '33', border: `1px solid ${cor}66` }}>
-                  {count > 0 && <span style={{ color: cor, fontWeight: 700, fontSize: 13 }}>{count}</span>}
-                </div>
-              )
-            })
-          ))}
-        </div>
-        <div className="heatmap-xlabel">Impacto →</div>
-        <div className="heatmap-xlabels">
-          {labels.map(l => <span key={l} className="heatmap-axis-label">{l}</span>)}
-        </div>
-      </div>
-      <div className="heatmap-ylabels">
-        {[...labels].reverse().map(l => <span key={l} className="heatmap-axis-label">{l}</span>)}
-      </div>
-    </div>
-  )
-}
-
-// ── Cor por nível de maturidade ──────────────────────────────────────────────
-function getCorMaturidade(pct) {
-  if (pct >= 0.81) return '#22D4A0'   /* N5 verde */
-  if (pct >= 0.51) return '#66BB6A'   /* N4 verde claro */
-  if (pct >= 0.26) return '#F5B942'   /* N3 amarelo */
-  if (pct >= 0.11) return '#F97316'   /* N2 laranja */
-  return '#F05656'                     /* N1 vermelho */
 }
