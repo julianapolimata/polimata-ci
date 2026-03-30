@@ -13,7 +13,7 @@ import {
 } from '../lib/calculoMaturidade'
 
 // ══════════════════════════════════════════════════════════════════════════════
-// SHELL — Sidebar (dark) + Main (rotas)
+// SHELL — Sidebar recolhível + Main
 // ══════════════════════════════════════════════════════════════════════════════
 
 export default function Dashboard() {
@@ -22,6 +22,7 @@ export default function Dashboard() {
   const location = useLocation()
   const [projetos, setProjetos] = useState([])
   const [projetoAtivo, setProjetoAtivo] = useState(null)
+  const [sidebarOpen, setSidebarOpen] = useState(true)
 
   useEffect(() => { loadProjetos() }, [])
 
@@ -38,16 +39,25 @@ export default function Dashboard() {
   }
 
   const isAdmin = perfil?.papel === 'admin_polimata'
+  const sw = sidebarOpen ? 240 : 56
 
   return (
-    <div className="app">
-      <aside className="sidebar">
-        <div className="sb-brand" style={{ padding: '12px 12px', display: 'flex', alignItems: 'center', justifyContent: 'center', userSelect: 'none' }}>
-          <img src="/logotipo-2cores.png" alt="Polímata"
-            style={{ width: '100%', maxWidth: 200, height: 'auto', objectFit: 'contain', display: 'block' }} />
+    <div className="app" style={{ display: 'flex', height: '100vh', overflow: 'hidden' }}>
+      {/* ── Sidebar ── */}
+      <aside style={{
+        width: sw, minWidth: sw, background: 'var(--bg1)', borderRight: '1px solid var(--brd)',
+        display: 'flex', flexDirection: 'column', overflow: 'hidden', transition: 'width .25s ease, min-width .25s ease',
+      }}>
+        {/* Brand */}
+        <div style={{ padding: sidebarOpen ? '12px 12px' : '12px 8px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderBottom: '1px solid var(--brd)', minHeight: 56 }}>
+          {sidebarOpen
+            ? <img src="/logotipo-2cores.png" alt="Polímata" style={{ width: '100%', maxWidth: 180, height: 'auto', objectFit: 'contain' }} />
+            : <img src="/logotipo-2cores.png" alt="P" style={{ width: 32, height: 32, objectFit: 'contain' }} />
+          }
         </div>
 
-        {projetos.length > 0 && (
+        {/* Projeto ativo */}
+        {sidebarOpen && projetos.length > 0 && (
           <div className="sb-projeto">
             <div className="sb-projeto-label">Projeto ativo</div>
             <select className="sb-projeto-sel" value={projetoAtivo?.id || ''}
@@ -59,17 +69,31 @@ export default function Dashboard() {
           </div>
         )}
 
-        <nav className="sb-nav">
-          <NavItem icon="⊞" label="Dashboard" active={location.pathname === '/'} onClick={() => navigate('/')} />
-          <NavItem icon="⊟" label="MRC Completa" active={location.pathname === '/mrc'} onClick={() => navigate('/mrc')} />
+        {/* Nav */}
+        <nav style={{ flex: 1, overflowY: 'auto', padding: '8px 0', display: 'flex', flexDirection: 'column', gap: 1 }}>
+          <SideNavItem icon="📊" label="Dashboard" active={location.pathname === '/'} onClick={() => navigate('/')} open={sidebarOpen} />
+          <SideNavItem icon="📋" label="MRC Completa" active={location.pathname === '/mrc'} onClick={() => navigate('/mrc')} open={sidebarOpen} />
           {isAdmin && (
             <>
-              <div className="sb-sep">Administração</div>
-              <NavItem icon="⚙" label="Configurações" active={location.pathname.startsWith('/configuracoes')} onClick={() => navigate('/configuracoes')} />
+              {sidebarOpen && <div className="sb-sep">Administração</div>}
+              <SideNavItem icon="⚙️" label="Configurações" active={location.pathname.startsWith('/configuracoes')} onClick={() => navigate('/configuracoes')} open={sidebarOpen} />
             </>
           )}
         </nav>
 
+        {/* Toggle */}
+        <button onClick={() => setSidebarOpen(o => !o)} style={{
+          background: 'transparent', border: 'none', borderTop: '1px solid var(--brd)',
+          color: 'var(--txt3)', padding: '10px', cursor: 'pointer', fontSize: 14, textAlign: 'center',
+          transition: 'color .15s',
+        }}
+          onMouseEnter={e => e.target.style.color = 'var(--gold)'}
+          onMouseLeave={e => e.target.style.color = 'var(--txt3)'}
+        >
+          {sidebarOpen ? '◂' : '▸'}
+        </button>
+
+        {/* Footer */}
         <div className="sb-footer">
           <div className="sb-user" style={{ cursor: 'pointer' }} onClick={() => navigate('/perfil')}>
             <div className="sb-user-avatar">
@@ -77,16 +101,19 @@ export default function Dashboard() {
                 ? <img src={perfil.avatar_url} alt="" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
                 : perfil?.nome?.[0]?.toUpperCase() || '?'}
             </div>
-            <div>
-              <div className="sb-user-nome">{perfil?.nome}</div>
-              <div className="sb-user-papel">{papelLabel(perfil?.papel)}</div>
-            </div>
+            {sidebarOpen && (
+              <div>
+                <div className="sb-user-nome">{perfil?.nome}</div>
+                <div className="sb-user-papel">{papelLabel(perfil?.papel)}</div>
+              </div>
+            )}
           </div>
-          <button className="sb-sair" onClick={signOut} title="Sair">↩</button>
+          {sidebarOpen && <button className="sb-sair" onClick={signOut} title="Sair">↩</button>}
         </div>
       </aside>
 
-      <main className="main">
+      {/* ── Main ── */}
+      <main className="main" style={{ flex: 1, overflowY: 'auto' }}>
         <Routes>
           <Route path="/" element={<HomeDash projeto={projetoAtivo} />} />
           <Route path="/mrc" element={<MRCCompleta projetoId={projetoAtivo?.id} />} />
@@ -98,11 +125,13 @@ export default function Dashboard() {
   )
 }
 
-function NavItem({ icon, label, active, onClick }) {
+function SideNavItem({ icon, label, active, onClick, open }) {
   return (
-    <button className={`nav-item ${active ? 'active' : ''}`} onClick={onClick}>
+    <button className={`nav-item ${active ? 'active' : ''}`} onClick={onClick}
+      style={open ? {} : { justifyContent: 'center', padding: '9px 0' }}
+      title={open ? undefined : label}>
       <span className="nav-icon">{icon}</span>
-      <span>{label}</span>
+      {open && <span>{label}</span>}
     </button>
   )
 }
@@ -113,26 +142,25 @@ function papelLabel(papel) {
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
-// CONSTANTES DO DASH MATURIDADE
+// CONSTANTES
 // ══════════════════════════════════════════════════════════════════════════════
 
 const NIVEIS = [
-  { id: 'N5', nome: 'Otimizado', faixa: '81% à 100%', cor: '#1B5E20' },
-  { id: 'N4', nome: 'Monitorado', faixa: '51% à 80%', cor: '#558B2F' },
-  { id: 'N3', nome: 'Padronizado', faixa: '26% à 50%', cor: '#F9A825' },
-  { id: 'N2', nome: 'Informal', faixa: '11% à 25%', cor: '#E65100' },
-  { id: 'N1', nome: 'Não confiável', faixa: '0% à 10%', cor: '#B71C1C' },
+  { id: 'N5', nome: 'Otimizado', faixa: '81–100%', cor: '#1B5E20' },
+  { id: 'N4', nome: 'Monitorado', faixa: '51–80%', cor: '#558B2F' },
+  { id: 'N3', nome: 'Padronizado', faixa: '26–50%', cor: '#F9A825' },
+  { id: 'N2', nome: 'Informal', faixa: '11–25%', cor: '#E65100' },
+  { id: 'N1', nome: 'Não confiável', faixa: '0–10%', cor: '#B71C1C' },
 ]
 
+const FASES_CORES = ['#00203E', '#1D3B5C', '#660033', '#660066', '#A6512F']
 const FASES_INFO = [
-  { id: 'F1', label: 'Fase 1', nome: 'Diagnóstico Inicial', peso: '10%', cor: '#5C6B7A' },
-  { id: 'F2', label: 'Fase 2', nome: 'Planos de Ação e Teste de Aderência', peso: '25%', cor: '#7A8A5C' },
-  { id: 'F3', label: 'Fase 3', nome: 'Revisão dos Controles Internos', peso: '25%', cor: '#C4A35A' },
-  { id: 'F4', label: 'Fase 4', nome: 'Auditoria Contínua', peso: '30%', cor: '#C47A5A' },
-  { id: 'F5', label: 'Fase 5', nome: 'Auditoria Independente', peso: '10%', cor: '#8B4A5A' },
+  { label: 'Fase 1', nome: 'Diagnóstico Inicial', peso: '10%' },
+  { label: 'Fase 2', nome: 'Planos de Ação e Teste de Aderência', peso: '25%' },
+  { label: 'Fase 3', nome: 'Revisão dos Controles Internos', peso: '25%' },
+  { label: 'Fase 4', nome: 'Auditoria Contínua', peso: '30%' },
+  { label: 'Fase 5', nome: 'Auditoria Independente', peso: '10%' },
 ]
-
-const GAUGE_GRADIENT = 'linear-gradient(90deg, #B71C1C 0%, #E65100 20%, #F9A825 40%, #558B2F 65%, #1B5E20 100%)'
 
 function getCorNivel(pct) {
   if (pct >= 0.81) return '#1B5E20'
@@ -143,7 +171,7 @@ function getCorNivel(pct) {
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
-// DASH MATURIDADE — Réplica da aba Excel
+// DASH MATURIDADE
 // ══════════════════════════════════════════════════════════════════════════════
 
 function HomeDash({ projeto }) {
@@ -158,218 +186,119 @@ function HomeDash({ projeto }) {
   async function loadDados(projetoId) {
     setLoading(true)
     const { data: areasData } = await supabase
-      .from('areas')
-      .select('id, nome, prefixo, peso, gerente, ordem')
-      .eq('projeto_id', projetoId)
-      .order('ordem')
-
+      .from('areas').select('id, nome, prefixo, peso, gerente, ordem')
+      .eq('projeto_id', projetoId).order('ordem')
     const { data: mrcData } = await supabase
-      .from('mrc')
-      .select('*')
-      .eq('projeto_id', projetoId)
+      .from('mrc').select('*').eq('projeto_id', projetoId)
 
     const controles = mrcData || []
     const areas = areasData || []
-
     const resultado = areas.map(area => {
-      const controlesArea = controles.filter(c =>
-        c.area_id === area.id || c.area === area.nome
-      )
-      const f1Concluida = controlesArea.length > 0 &&
-        controlesArea.every(c => c.r1 && c.r1 !== 'Teste Não Realizado')
-      const calc = calcularPercentualArea(controlesArea, f1Concluida)
-      return { ...area, controles: controlesArea, calc }
+      const ca = controles.filter(c => c.area_id === area.id || c.area === area.nome)
+      const f1c = ca.length > 0 && ca.every(c => c.r1 && c.r1 !== 'Teste Não Realizado')
+      return { ...area, controles: ca, calc: calcularPercentualArea(ca, f1c) }
     })
-
     setAreasCalc(resultado)
     if (resultado.length > 0) setAreaSel(resultado[0].nome)
     setLoading(false)
   }
 
-  // Índice consolidado empresa
-  const areasParaConsolidado = areasCalc.map(a => ({
-    nome: a.nome,
-    peso: a.peso || 0,
-    percentual: a.calc?.percentual || 0,
-  }))
-  const empresa = calcularIndiceEmpresa(areasParaConsolidado)
-
-  // Área selecionada
+  const empresa = calcularIndiceEmpresa(areasCalc.map(a => ({ nome: a.nome, peso: a.peso || 0, percentual: a.calc?.percentual || 0 })))
   const areaAtiva = areasCalc.find(a => a.nome === areaSel)
+  const ranking = [...areasCalc].filter(a => a.controles.length > 0).sort((a, b) => (b.calc?.percentual || 0) - (a.calc?.percentual || 0))
 
-  // Ranking ordenado
-  const ranking = [...areasCalc]
-    .filter(a => a.controles.length > 0)
-    .sort((a, b) => (b.calc?.percentual || 0) - (a.calc?.percentual || 0))
-
-  // Contribuição por fase (empresa) — média ponderada das contribuições de cada área
-  function calcContribFaseEmpresa() {
-    const somaPesos = areasCalc.reduce((s, x) => s + (x.peso || 0), 0) || 1
-    let f1 = 0, f2 = 0, f3 = 0, f4 = 0, f5 = 0
-    areasCalc.forEach(a => {
-      const pesoArea = (a.peso || 0) / somaPesos
-      const ca = calcContribFaseArea(a)
-      f1 += ca.f1 * pesoArea
-      f2 += ca.f2 * pesoArea
-      f3 += ca.f3 * pesoArea
-      f4 += ca.f4 * pesoArea
-      f5 += ca.f5 * pesoArea
-    })
-    return { f1, f2, f3, f4, f5 }
-  }
-
-  // Contribuição por fase (área)
-  function calcContribFaseArea(area) {
-    if (!area?.calc) return { f1: 0, f2: 0, f3: 0, f4: 0, f5: 0 }
+  function contribFaseArea(area) {
+    if (!area?.calc) return [0, 0, 0, 0, 0]
     const f1 = area.calc.percentual > 0 ? 0.10 : 0
     let f2 = 0, f3 = 0, f4 = 0, f5 = 0
     ;(area.calc.detalhePorControle || []).forEach(d => {
-      const fases = d.detalheFases || {}
-      f2 += (fases.F2E1?.contribuicao || 0) + (fases.F2E2?.contribuicao || 0)
-      f3 += fases.F3?.contribuicao || 0
-      f4 += (fases.F4C1?.contribuicao || 0) + (fases.F4C2?.contribuicao || 0)
-      f5 += fases.F5?.contribuicao || 0
+      const f = d.detalheFases || {}
+      f2 += (f.F2E1?.contribuicao || 0) + (f.F2E2?.contribuicao || 0)
+      f3 += f.F3?.contribuicao || 0
+      f4 += (f.F4C1?.contribuicao || 0) + (f.F4C2?.contribuicao || 0)
+      f5 += f.F5?.contribuicao || 0
     })
-    return { f1, f2, f3, f4, f5 }
+    return [f1, f2, f3, f4, f5]
   }
 
-  const contribEmpresa = calcContribFaseEmpresa()
-  const contribArea = calcContribFaseArea(areaAtiva)
+  function contribFaseEmpresa() {
+    const sp = areasCalc.reduce((s, x) => s + (x.peso || 0), 0) || 1
+    return areasCalc.reduce((acc, a) => {
+      const pw = (a.peso || 0) / sp
+      const cf = contribFaseArea(a)
+      return acc.map((v, i) => v + cf[i] * pw)
+    }, [0, 0, 0, 0, 0])
+  }
 
-  if (loading) return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: '#F3EEE4' }}>
-      <div className="spinner" />
-    </div>
-  )
+  const cfe = contribFaseEmpresa()
+  const cfa = contribFaseArea(areaAtiva)
 
-  if (!projeto) return (
-    <div style={{ background: '#F3EEE4', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <div style={{ textAlign: 'center' }}>
-        <div style={{ fontSize: 48, opacity: 0.3 }}>⊞</div>
-        <div style={{ fontSize: 16, fontWeight: 600, color: '#555', marginTop: 12 }}>Nenhum projeto ativo</div>
-        <div style={{ fontSize: 13, color: '#888' }}>Selecione ou cadastre um projeto.</div>
-      </div>
-    </div>
-  )
+  if (loading) return <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: '#F3EEE4' }}><div className="spinner" /></div>
+  if (!projeto) return <div style={{ background: '#F3EEE4', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 12 }}><div style={{ fontSize: 48, opacity: 0.3 }}>📊</div><div style={{ fontSize: 15, fontWeight: 600, color: '#555' }}>Nenhum projeto ativo</div></div>
+
+  const nomeCliente = projeto.clientes?.nome || 'Cliente'
 
   return (
-    <div className="dm-page">
-      {/* ─── Título ─── */}
-      <div className="dm-title-bar">
-        <span className="dm-title">Maturidade do Ambiente de Controles Internos</span>
-        <span className="dm-badge">{projeto.clientes?.nome} · {projeto.nome}</span>
+    <div style={DM.page}>
+      {/* ─── Header ─── */}
+      <div style={DM.header}>
+        <span style={DM.headerLeft}>Cliente: {nomeCliente}</span>
+        <span style={DM.headerRight}>Maturidade do Ambiente de Controles Internos</span>
       </div>
 
-      {/* ─── Grid 3 colunas ─── */}
-      <div className="dm-grid">
+      {/* ─── Grid 3 colunas — compacto one-page ─── */}
+      <div style={DM.grid}>
 
-        {/* ── Coluna Esquerda ── */}
-        <div className="dm-col-left">
-          <div className="dm-card">
-            <div className="dm-meta-label">Última Atualização</div>
-            <div className="dm-meta-value">{new Date().toLocaleDateString('pt-BR')}</div>
+        {/* COL ESQUERDA — Meta + Régua */}
+        <div style={DM.colL}>
+          <div style={DM.card}>
+            <div style={DM.lbl}>Última Atualização</div>
+            <div style={{ fontSize: 13, color: '#444' }}>{new Date().toLocaleDateString('pt-BR')}</div>
           </div>
-          <div className="dm-card">
-            <div className="dm-meta-label">Métrica de Maturidade</div>
-            <div className="dm-regua">
-              {NIVEIS.map(n => (
-                <div key={n.id} className="dm-regua-item">
-                  <div className="dm-regua-dot" style={{ background: n.cor }} />
-                  <div>
-                    <div className="dm-regua-nome" style={{ color: n.cor }}>{n.id} - {n.nome}</div>
-                    <div className="dm-regua-faixa">{n.faixa}</div>
-                  </div>
+          <div style={DM.card}>
+            <div style={DM.lbl}>Métrica de Maturidade</div>
+            {NIVEIS.map(n => (
+              <div key={n.id} style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 6 }}>
+                <div style={{ width: 12, height: 12, borderRadius: 2, background: n.cor, flexShrink: 0 }} />
+                <div>
+                  <div style={{ fontSize: 10, fontWeight: 700, color: n.cor, lineHeight: 1.1 }}>{n.id} - {n.nome}</div>
+                  <div style={{ fontSize: 9, color: '#999', lineHeight: 1.1 }}>{n.faixa}</div>
                 </div>
-              ))}
-            </div>
+              </div>
+            ))}
           </div>
         </div>
 
-        {/* ── Coluna Central ── */}
-        <div className="dm-col-center">
-
-          {/* Visão Empresa */}
-          <div className="dm-card">
-            <div className="dm-visao-header">
-              <span className="dm-visao-label">Visão</span>
-              <span className="dm-visao-nome">{projeto.clientes?.nome || 'Empresa'}</span>
-            </div>
-            <div className="dm-visao-body">
-              <div className="dm-index-big">{(empresa.indice * 100).toFixed(2)}%</div>
-              <div className="dm-fases-row">
-                {[
-                  { label: 'Fase 1', val: contribEmpresa.f1 },
-                  { label: 'Fase 2', val: contribEmpresa.f2 },
-                  { label: 'Fase 3', val: contribEmpresa.f3 },
-                  { label: 'Fase 4', val: contribEmpresa.f4 },
-                  { label: 'Fase 5', val: contribEmpresa.f5 },
-                ].map((f, i) => (
-                  <div key={i} className="dm-fase-box" style={{ background: FASES_INFO[i].cor }}>
-                    <div className="dm-fase-box-label">{f.label}</div>
-                    <div className="dm-fase-box-val">{(f.val * 100).toFixed(2)}%</div>
-                  </div>
-                ))}
-              </div>
-            </div>
-            <GaugeBar percentual={empresa.indice} />
-          </div>
-
-          {/* Visão Área */}
-          <div className="dm-card">
-            <div className="dm-visao-header">
-              <span className="dm-visao-label">Visão</span>
-              <select className="dm-area-select" value={areaSel} onChange={e => setAreaSel(e.target.value)}>
-                {areasCalc.map(a => <option key={a.id} value={a.nome}>{a.nome}</option>)}
-              </select>
-            </div>
-            <div className="dm-visao-body">
-              <div className="dm-index-big">{((areaAtiva?.calc?.percentual || 0) * 100).toFixed(2)}%</div>
-              <div className="dm-fases-row">
-                {[
-                  { label: 'Fase 1', val: contribArea.f1 },
-                  { label: 'Fase 2', val: contribArea.f2 },
-                  { label: 'Fase 3', val: contribArea.f3 },
-                  { label: 'Fase 4', val: contribArea.f4 },
-                  { label: 'Fase 5', val: contribArea.f5 },
-                ].map((f, i) => (
-                  <div key={i} className="dm-fase-box" style={{ background: FASES_INFO[i].cor }}>
-                    <div className="dm-fase-box-label">{f.label}</div>
-                    <div className="dm-fase-box-val">{(f.val * 100).toFixed(2)}%</div>
-                  </div>
-                ))}
-              </div>
-            </div>
-            <GaugeBar percentual={areaAtiva?.calc?.percentual || 0} />
-          </div>
+        {/* COL CENTRAL — Visão Empresa + Visão Área */}
+        <div style={DM.colC}>
+          <VisaoCard titulo="Visão" nome={nomeCliente} pct={empresa.indice} fases={cfe} />
+          <VisaoCardArea nome={areaSel} areas={areasCalc} onSelect={setAreaSel} pct={areaAtiva?.calc?.percentual || 0} fases={cfa} />
         </div>
 
-        {/* ── Coluna Direita ── */}
-        <div className="dm-col-right">
-
-          {/* Ranking */}
-          <div className="dm-card">
-            <div className="dm-section-title">Ranking</div>
-            <table className="dm-rank-table">
+        {/* COL DIREITA — Ranking + Fases Info */}
+        <div style={DM.colR}>
+          <div style={{ ...DM.card, flex: 1, overflow: 'auto' }}>
+            <div style={DM.secTitle}>Ranking</div>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 11 }}>
               <thead>
-                <tr>
-                  <th className="dm-rank-th" style={{ width: 44 }}>Posição</th>
-                  <th className="dm-rank-th" style={{ textAlign: 'left' }}>Departamento</th>
-                  <th className="dm-rank-th" style={{ width: 60 }}>%</th>
-                  <th className="dm-rank-th" style={{ width: 70 }}></th>
+                <tr style={{ borderBottom: '2px solid #00203E' }}>
+                  <th style={DM.th}>#</th>
+                  <th style={{ ...DM.th, textAlign: 'left' }}>Departamento</th>
+                  <th style={DM.th}>%</th>
+                  <th style={{ ...DM.th, width: 60 }}></th>
                 </tr>
               </thead>
               <tbody>
                 {ranking.map((a, i) => {
-                  const pct = a.calc?.percentual || 0
-                  const cor = getCorNivel(pct)
+                  const p = a.calc?.percentual || 0
                   return (
-                    <tr key={a.id} className="dm-rank-row">
-                      <td className="dm-rank-pos">{i + 1}</td>
-                      <td className="dm-rank-nome">{a.nome}</td>
-                      <td className="dm-rank-pct" style={{ color: cor }}>{(pct * 100).toFixed(2)}%</td>
-                      <td className="dm-rank-bar-cell">
-                        <div className="dm-rank-bar-track">
-                          <div className="dm-rank-bar-fill" style={{ width: `${Math.min(pct * 100, 100)}%`, background: cor }} />
+                    <tr key={a.id} style={{ borderBottom: '1px solid #eee' }}>
+                      <td style={{ padding: '4px 4px', textAlign: 'center', fontWeight: 700, color: '#00203E', fontSize: 10 }}>{i + 1}</td>
+                      <td style={{ padding: '4px 6px', fontSize: 10, color: '#444' }}>{a.nome}</td>
+                      <td style={{ padding: '4px 4px', textAlign: 'center', fontWeight: 700, fontSize: 10, color: getCorNivel(p) }}>{(p * 100).toFixed(2)}%</td>
+                      <td style={{ padding: '4px 4px' }}>
+                        <div style={{ width: '100%', height: 5, background: '#eee', borderRadius: 3, overflow: 'hidden' }}>
+                          <div style={{ width: `${Math.min(p * 100, 100)}%`, height: '100%', borderRadius: 3, background: getCorNivel(p), transition: 'width .4s' }} />
                         </div>
                       </td>
                     </tr>
@@ -379,340 +308,167 @@ function HomeDash({ projeto }) {
             </table>
           </div>
 
-          {/* Fases Info */}
-          <div className="dm-card">
-            <div className="dm-section-title">Fases</div>
-            {FASES_INFO.map(f => (
-              <div key={f.id} className="dm-fase-info-row" style={{ borderLeftColor: f.cor }}>
-                <span className="dm-fase-info-label" style={{ background: f.cor }}>{f.label}</span>
-                <span className="dm-fase-info-nome">{f.nome}</span>
-                <span className="dm-fase-info-peso">Peso: {f.peso}</span>
+          <div style={DM.card}>
+            <div style={DM.secTitle}>Fases</div>
+            {FASES_INFO.map((f, i) => (
+              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '5px 0 5px 8px', borderLeft: `3px solid ${FASES_CORES[i]}`, marginBottom: 3 }}>
+                <span style={{ fontSize: 8, fontWeight: 700, color: '#fff', background: FASES_CORES[i], padding: '1px 6px', borderRadius: 2, whiteSpace: 'nowrap' }}>{f.label}</span>
+                <span style={{ fontSize: 10, color: '#444', flex: 1 }}>{f.nome}</span>
+                <span style={{ fontSize: 9, fontWeight: 700, color: '#888' }}>Peso: {f.peso}</span>
               </div>
             ))}
           </div>
         </div>
       </div>
+    </div>
+  )
+}
 
-      {/* ─── CSS Scoped ao Dashboard ─── */}
-      <style>{`
-        .dm-page {
-          background: #F3EEE4;
-          min-height: 100vh;
-          padding: 24px 28px;
-          font-family: 'Montserrat', sans-serif;
-          color: #333;
-        }
-        .dm-title-bar {
-          background: #00203E;
-          border-radius: 8px;
-          padding: 16px 24px;
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          margin-bottom: 20px;
-        }
-        .dm-title {
-          font-family: 'Cormorant Garamond', serif;
-          font-size: 20px;
-          font-weight: 600;
-          color: #fff;
-          letter-spacing: 0.5px;
-        }
-        .dm-badge {
-          font-size: 11px;
-          font-weight: 500;
-          color: #CC915E;
-          background: rgba(204,145,94,0.12);
-          padding: 4px 12px;
-          border-radius: 20px;
-          border: 1px solid rgba(204,145,94,0.25);
-        }
-        .dm-grid {
-          display: grid;
-          grid-template-columns: 180px 1fr 320px;
-          gap: 16px;
-          align-items: start;
-        }
-        @media (max-width: 1100px) {
-          .dm-grid {
-            grid-template-columns: 1fr;
-          }
-        }
-        .dm-col-left, .dm-col-center, .dm-col-right {
-          display: flex;
-          flex-direction: column;
-          gap: 14px;
-        }
-        .dm-card {
-          background: #fff;
-          border-radius: 8px;
-          padding: 16px 18px;
-          box-shadow: 0 1px 4px rgba(0,0,0,0.06);
-        }
-        .dm-meta-label {
-          font-size: 11px;
-          font-weight: 700;
-          text-transform: uppercase;
-          color: #00203E;
-          letter-spacing: 0.8px;
-          margin-bottom: 6px;
-        }
-        .dm-meta-value {
-          font-size: 14px;
-          color: #555;
-        }
-        .dm-regua {
-          display: flex;
-          flex-direction: column;
-          gap: 10px;
-          margin-top: 8px;
-        }
-        .dm-regua-item {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-        }
-        .dm-regua-dot {
-          width: 14px;
-          height: 14px;
-          border-radius: 3px;
-          flex-shrink: 0;
-        }
-        .dm-regua-nome {
-          font-size: 11px;
-          font-weight: 700;
-          line-height: 1.2;
-        }
-        .dm-regua-faixa {
-          font-size: 10px;
-          color: #888;
-          line-height: 1.2;
-        }
-        .dm-visao-header {
-          display: flex;
-          align-items: center;
-          gap: 12px;
-          margin-bottom: 14px;
-          border-bottom: 1px solid #eee;
-          padding-bottom: 10px;
-        }
-        .dm-visao-label {
-          font-size: 11px;
-          color: #999;
-          text-transform: uppercase;
-          letter-spacing: 0.5px;
-        }
-        .dm-visao-nome {
-          font-family: 'Cormorant Garamond', serif;
-          font-size: 18px;
-          font-weight: 700;
-          color: #00203E;
-        }
-        .dm-area-select {
-          font-family: 'Cormorant Garamond', serif;
-          font-size: 18px;
-          font-weight: 700;
-          color: #00203E;
-          background: transparent;
-          border: none;
-          border-bottom: 2px solid #CC915E;
-          outline: none;
-          cursor: pointer;
-          padding-bottom: 2px;
-          padding-right: 8px;
-        }
-        .dm-visao-body {
-          display: flex;
-          align-items: center;
-          gap: 20px;
-          margin-bottom: 16px;
-        }
-        .dm-index-big {
-          font-family: 'Montserrat', sans-serif;
-          font-size: 32px;
-          font-weight: 300;
-          color: #00203E;
-          min-width: 110px;
-        }
-        .dm-fases-row {
-          display: flex;
-          gap: 6px;
-          flex: 1;
-        }
-        .dm-fase-box {
-          flex: 1;
-          border-radius: 6px;
-          padding: 8px 4px;
-          text-align: center;
-          color: #fff;
-        }
-        .dm-fase-box-label {
-          font-size: 9px;
-          font-weight: 700;
-          text-transform: uppercase;
-          letter-spacing: 0.3px;
-          margin-bottom: 2px;
-        }
-        .dm-fase-box-val {
-          font-size: 12px;
-          font-weight: 400;
-        }
-        .dm-section-title {
-          font-size: 13px;
-          font-weight: 700;
-          text-transform: uppercase;
-          color: #00203E;
-          letter-spacing: 0.8px;
-          margin-bottom: 10px;
-          text-align: center;
-        }
-        .dm-rank-table {
-          width: 100%;
-          border-collapse: collapse;
-        }
-        .dm-rank-th {
-          font-size: 10px;
-          font-weight: 700;
-          text-transform: uppercase;
-          color: #888;
-          padding: 4px 6px;
-          border-bottom: 1px solid #ddd;
-          text-align: center;
-        }
-        .dm-rank-row {
-          border-bottom: 1px solid #f0f0f0;
-        }
-        .dm-rank-row:hover {
-          background: #faf8f4;
-        }
-        .dm-rank-pos {
-          text-align: center;
-          padding: 5px 4px;
-          font-weight: 700;
-          color: #00203E;
-          font-size: 11px;
-        }
-        .dm-rank-nome {
-          padding: 5px 6px;
-          font-size: 11px;
-          color: #444;
-        }
-        .dm-rank-pct {
-          text-align: center;
-          padding: 5px 4px;
-          font-weight: 700;
-          font-size: 11px;
-        }
-        .dm-rank-bar-cell {
-          padding: 5px 4px;
-        }
-        .dm-rank-bar-track {
-          width: 100%;
-          height: 6px;
-          background: #eee;
-          border-radius: 3px;
-          overflow: hidden;
-        }
-        .dm-rank-bar-fill {
-          height: 100%;
-          border-radius: 3px;
-          transition: width 0.4s ease;
-        }
-        .dm-fase-info-row {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          padding: 7px 0 7px 10px;
-          border-left: 4px solid;
-          margin-bottom: 4px;
-        }
-        .dm-fase-info-label {
-          font-size: 9px;
-          font-weight: 700;
-          color: #fff;
-          padding: 2px 8px;
-          border-radius: 3px;
-          white-space: nowrap;
-        }
-        .dm-fase-info-nome {
-          font-size: 11px;
-          color: #444;
-          flex: 1;
-        }
-        .dm-fase-info-peso {
-          font-size: 10px;
-          font-weight: 700;
-          color: #888;
-          white-space: nowrap;
-        }
-        /* Gauge */
-        .dm-gauge-wrap {
-          position: relative;
-          height: 50px;
-          margin-top: 4px;
-        }
-        .dm-gauge-indicator {
-          position: absolute;
-          top: 0;
-          transform: translateX(-50%);
-          z-index: 2;
-          transition: left 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        .dm-gauge-triangle {
-          width: 0;
-          height: 0;
-          border-left: 8px solid transparent;
-          border-right: 8px solid transparent;
-          border-top: 12px solid #00203E;
-        }
-        .dm-gauge-bar {
-          position: absolute;
-          top: 16px;
-          left: 0;
-          right: 0;
-          height: 16px;
-          border-radius: 8px;
-          overflow: hidden;
-          background: ${GAUGE_GRADIENT};
-        }
-        .dm-gauge-labels {
-          position: absolute;
-          top: 36px;
-          left: 0;
-          right: 0;
-        }
-        .dm-gauge-label {
-          position: absolute;
-          transform: translateX(-50%);
-          font-size: 10px;
-          font-weight: 600;
-          color: #888;
-        }
-      `}</style>
+// ── Visão Card (Empresa) ──
+function VisaoCard({ titulo, nome, pct, fases }) {
+  return (
+    <div style={DM.card}>
+      <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 10 }}>
+        <span style={{ fontSize: 10, color: '#999', textTransform: 'uppercase', letterSpacing: .5 }}>{titulo}</span>
+        <span style={{ fontSize: 16, fontWeight: 700, color: '#00203E' }}>{nome}</span>
+      </div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 10 }}>
+        <div style={{ fontSize: 28, fontWeight: 300, color: '#00203E', minWidth: 95 }}>{(pct * 100).toFixed(2)}%</div>
+        <FasesBoxes fases={fases} />
+      </div>
+      <GaugeBar pct={pct} />
+    </div>
+  )
+}
+
+// ── Visão Card (Área com dropdown) ──
+function VisaoCardArea({ nome, areas, onSelect, pct, fases }) {
+  return (
+    <div style={DM.card}>
+      <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 10 }}>
+        <span style={{ fontSize: 10, color: '#999', textTransform: 'uppercase', letterSpacing: .5 }}>Visão</span>
+        <select value={nome} onChange={e => onSelect(e.target.value)} style={{
+          fontSize: 16, fontWeight: 700, color: '#00203E', background: 'transparent',
+          border: 'none', borderBottom: '2px solid #CC915E', outline: 'none', cursor: 'pointer', fontFamily: "'Montserrat', sans-serif",
+        }}>
+          {areas.map(a => <option key={a.id} value={a.nome}>{a.nome}</option>)}
+        </select>
+      </div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 10 }}>
+        <div style={{ fontSize: 28, fontWeight: 300, color: '#00203E', minWidth: 95 }}>{(pct * 100).toFixed(2)}%</div>
+        <FasesBoxes fases={fases} />
+      </div>
+      <GaugeBar pct={pct} />
+    </div>
+  )
+}
+
+// ── Fases boxes ──
+function FasesBoxes({ fases }) {
+  return (
+    <div style={{ display: 'flex', gap: 4, flex: 1 }}>
+      {fases.map((v, i) => (
+        <div key={i} style={{ flex: 1, background: FASES_CORES[i], borderRadius: 5, padding: '6px 3px', textAlign: 'center', color: '#fff' }}>
+          <div style={{ fontSize: 8, fontWeight: 700, textTransform: 'uppercase', letterSpacing: .2 }}>Fase {i + 1}</div>
+          <div style={{ fontSize: 11, fontWeight: 400 }}>{(v * 100).toFixed(2)}%</div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+// ── Gauge Bar ──
+function GaugeBar({ pct }) {
+  const pos = Math.max(0, Math.min(pct * 100, 100))
+  return (
+    <div style={{ position: 'relative', height: 40, marginTop: 2 }}>
+      <div style={{ position: 'absolute', left: `${pos}%`, top: 0, transform: 'translateX(-50%)', zIndex: 2, transition: 'left .6s cubic-bezier(.4,0,.2,1)' }}>
+        <div style={{ width: 0, height: 0, borderLeft: '7px solid transparent', borderRight: '7px solid transparent', borderTop: '10px solid #00203E' }} />
+      </div>
+      <div style={{ position: 'absolute', top: 13, left: 0, right: 0, height: 12, borderRadius: 6, overflow: 'hidden', background: 'linear-gradient(90deg, #B71C1C 0%, #E65100 20%, #F9A825 40%, #558B2F 65%, #1B5E20 100%)' }} />
+      <div style={{ position: 'absolute', top: 28, left: 0, right: 0, display: 'flex', justifyContent: 'space-between', padding: '0 2%' }}>
+        {['N1', 'N2', 'N3', 'N4', 'N5'].map(n => (
+          <span key={n} style={{ fontSize: 9, fontWeight: 600, color: '#999' }}>{n}</span>
+        ))}
+      </div>
     </div>
   )
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
-// GAUGE BAR — Barra gradiente N1→N5 com triângulo indicador
+// ESTILOS INLINE — Dashboard Maturidade (light theme, compacto)
 // ══════════════════════════════════════════════════════════════════════════════
 
-function GaugeBar({ percentual }) {
-  const pct = Math.max(0, Math.min(percentual * 100, 100))
-
-  return (
-    <div className="dm-gauge-wrap">
-      <div className="dm-gauge-indicator" style={{ left: `${pct}%` }}>
-        <div className="dm-gauge-triangle" />
-      </div>
-      <div className="dm-gauge-bar" />
-      <div className="dm-gauge-labels">
-        <span className="dm-gauge-label" style={{ left: '5%' }}>N1</span>
-        <span className="dm-gauge-label" style={{ left: '18%' }}>N2</span>
-        <span className="dm-gauge-label" style={{ left: '38%' }}>N3</span>
-        <span className="dm-gauge-label" style={{ left: '65%' }}>N4</span>
-        <span className="dm-gauge-label" style={{ left: '90%' }}>N5</span>
-      </div>
-    </div>
-  )
+const DM = {
+  page: {
+    background: '#F3EEE4',
+    minHeight: '100vh',
+    padding: '14px 18px',
+    fontFamily: "'Montserrat', sans-serif",
+    color: '#333',
+    fontSize: 12,
+  },
+  header: {
+    background: '#00203E',
+    borderRadius: 6,
+    padding: '12px 20px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 14,
+  },
+  headerLeft: {
+    fontSize: 14,
+    fontWeight: 600,
+    color: '#CC915E',
+    fontFamily: "'Montserrat', sans-serif",
+  },
+  headerRight: {
+    fontSize: 14,
+    fontWeight: 400,
+    color: '#F3EEE4',
+    fontFamily: "'Montserrat', sans-serif",
+  },
+  grid: {
+    display: 'grid',
+    gridTemplateColumns: '160px 1fr 280px',
+    gap: 12,
+    alignItems: 'start',
+    maxHeight: 'calc(100vh - 90px)',
+  },
+  colL: { display: 'flex', flexDirection: 'column', gap: 10 },
+  colC: { display: 'flex', flexDirection: 'column', gap: 12 },
+  colR: { display: 'flex', flexDirection: 'column', gap: 10, maxHeight: 'calc(100vh - 90px)', overflow: 'hidden' },
+  card: {
+    background: '#fff',
+    borderRadius: 6,
+    padding: '12px 14px',
+    boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+  },
+  lbl: {
+    fontSize: 10,
+    fontWeight: 700,
+    textTransform: 'uppercase',
+    color: '#00203E',
+    letterSpacing: .6,
+    marginBottom: 4,
+  },
+  secTitle: {
+    fontSize: 11,
+    fontWeight: 700,
+    textTransform: 'uppercase',
+    color: '#00203E',
+    letterSpacing: .6,
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  th: {
+    fontSize: 9,
+    fontWeight: 700,
+    textTransform: 'uppercase',
+    color: '#fff',
+    background: '#00203E',
+    padding: '5px 6px',
+    textAlign: 'center',
+  },
 }
