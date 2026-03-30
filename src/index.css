@@ -180,10 +180,11 @@ body {
 .app { display: flex; height: 100vh; overflow: hidden; }
 
 /* ── Sidebar ── */
+/* Sidebar: width/min-width controlados via inline style no JSX (recolhimento) */
 .sidebar {
-  width: var(--sidebar-w); min-width: var(--sidebar-w);
   background: var(--bg1); border-right: 1px solid var(--brd);
   display: flex; flex-direction: column; overflow: hidden;
+  transition: width .25s ease, min-width .25s ease;
 }
 .sb-brand {
   display: flex; align-items: center; gap: 10px;

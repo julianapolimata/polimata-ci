@@ -1,6 +1,6 @@
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { Routes, Route, useNavigate, useLocation } from 'react-router-dom'
 import Configuracoes from './Configuracoes'
 import Perfil from './Perfil'
@@ -42,14 +42,19 @@ export default function Dashboard() {
   const sw = sidebarOpen ? 240 : 56
 
   return (
-    <div className="app" style={{ display: 'flex', height: '100vh', overflow: 'hidden' }}>
+    <div style={{ display: 'flex', height: '100vh', overflow: 'hidden' }}>
       {/* ── Sidebar ── */}
       <aside style={{
         width: sw, minWidth: sw, background: 'var(--bg1)', borderRight: '1px solid var(--brd)',
-        display: 'flex', flexDirection: 'column', overflow: 'hidden', transition: 'width .25s ease, min-width .25s ease',
+        display: 'flex', flexDirection: 'column', overflow: 'hidden',
+        transition: 'width .25s ease, min-width .25s ease',
       }}>
         {/* Brand */}
-        <div style={{ padding: sidebarOpen ? '12px 12px' : '12px 8px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderBottom: '1px solid var(--brd)', minHeight: 56 }}>
+        <div style={{
+          padding: sidebarOpen ? '12px 12px' : '12px 8px',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          borderBottom: '1px solid var(--brd)', minHeight: 56,
+        }}>
           {sidebarOpen
             ? <img src="/logotipo-2cores.png" alt="Polímata" style={{ width: '100%', maxWidth: 180, height: 'auto', objectFit: 'contain' }} />
             : <img src="/logotipo-2cores.png" alt="P" style={{ width: 32, height: 32, objectFit: 'contain' }} />
@@ -113,7 +118,7 @@ export default function Dashboard() {
       </aside>
 
       {/* ── Main ── */}
-      <main className="main" style={{ flex: 1, overflowY: 'auto' }}>
+      <main style={{ flex: 1, overflowY: 'auto', background: 'var(--bg0)' }}>
         <Routes>
           <Route path="/" element={<HomeDash projeto={projetoAtivo} />} />
           <Route path="/mrc" element={<MRCCompleta projetoId={projetoAtivo?.id} />} />
@@ -155,11 +160,11 @@ const NIVEIS = [
 
 const FASES_CORES = ['#00203E', '#1D3B5C', '#660033', '#660066', '#A6512F']
 const FASES_INFO = [
-  { label: 'Fase 1', nome: 'Diagnóstico Inicial', peso: '10%' },
-  { label: 'Fase 2', nome: 'Planos de Ação e Teste de Aderência', peso: '25%' },
-  { label: 'Fase 3', nome: 'Revisão dos Controles Internos', peso: '25%' },
-  { label: 'Fase 4', nome: 'Auditoria Contínua', peso: '30%' },
-  { label: 'Fase 5', nome: 'Auditoria Independente', peso: '10%' },
+  { label: 'F1', nome: 'Diagnóstico Inicial', peso: '10%' },
+  { label: 'F2', nome: 'Planos de Ação e Teste de Aderência', peso: '25%' },
+  { label: 'F3', nome: 'Revisão dos Controles Internos', peso: '25%' },
+  { label: 'F4', nome: 'Auditoria Contínua', peso: '30%' },
+  { label: 'F5', nome: 'Auditoria Independente', peso: '10%' },
 ]
 
 function getCorNivel(pct) {
@@ -171,7 +176,7 @@ function getCorNivel(pct) {
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
-// DASH MATURIDADE
+// DASH MATURIDADE — Layout em blocos horizontais
 // ══════════════════════════════════════════════════════════════════════════════
 
 function HomeDash({ projeto }) {
@@ -205,7 +210,10 @@ function HomeDash({ projeto }) {
 
   const empresa = calcularIndiceEmpresa(areasCalc.map(a => ({ nome: a.nome, peso: a.peso || 0, percentual: a.calc?.percentual || 0 })))
   const areaAtiva = areasCalc.find(a => a.nome === areaSel)
-  const ranking = [...areasCalc].filter(a => a.controles.length > 0).sort((a, b) => (b.calc?.percentual || 0) - (a.calc?.percentual || 0))
+  const ranking = useMemo(() =>
+    [...areasCalc].filter(a => a.controles.length > 0).sort((a, b) => (b.calc?.percentual || 0) - (a.calc?.percentual || 0)),
+    [areasCalc]
+  )
 
   function contribFaseArea(area) {
     if (!area?.calc) return [0, 0, 0, 0, 0]
@@ -232,133 +240,181 @@ function HomeDash({ projeto }) {
 
   const cfe = contribFaseEmpresa()
   const cfa = contribFaseArea(areaAtiva)
+  const nivelEmpresa = getNivelMaturidade(empresa.indice)
+  const nivelArea = getNivelMaturidade(areaAtiva?.calc?.percentual || 0)
 
-  if (loading) return <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: '#F3EEE4' }}><div className="spinner" /></div>
-  if (!projeto) return <div style={{ background: '#F3EEE4', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 12 }}><div style={{ fontSize: 48, opacity: 0.3 }}>📊</div><div style={{ fontSize: 15, fontWeight: 600, color: '#555' }}>Nenhum projeto ativo</div></div>
+  if (loading) return (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: '#F3EEE4' }}>
+      <div className="spinner" />
+    </div>
+  )
+
+  if (!projeto) return (
+    <div style={{ background: '#F3EEE4', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 12 }}>
+      <div style={{ fontSize: 48, opacity: 0.3 }}>📊</div>
+      <div style={{ fontSize: 15, fontWeight: 600, color: '#555' }}>Nenhum projeto ativo</div>
+    </div>
+  )
 
   const nomeCliente = projeto.clientes?.nome || 'Cliente'
 
   return (
-    <div style={DM.page}>
-      {/* ─── Header ─── */}
-      <div style={DM.header}>
-        <span style={DM.headerLeft}>Cliente: {nomeCliente}</span>
-        <span style={DM.headerRight}>Maturidade do Ambiente de Controles Internos</span>
+    <div style={S.page}>
+      {/* ─── HEADER ─── */}
+      <div style={S.header}>
+        <div style={S.headerTitle}>Maturidade do Ambiente de Controles Internos</div>
+        <div style={S.headerRight}>
+          <span style={{ fontSize: 11, color: 'rgba(243,238,228,0.5)' }}>Cliente</span>
+          <span style={{ fontSize: 13, fontWeight: 600, color: '#CC915E' }}>{nomeCliente}</span>
+        </div>
       </div>
 
-      {/* ─── Grid 3 colunas — compacto one-page ─── */}
-      <div style={DM.grid}>
-
-        {/* COL ESQUERDA — Meta + Régua */}
-        <div style={DM.colL}>
-          <div style={DM.card}>
-            <div style={DM.lbl}>Última Atualização</div>
-            <div style={{ fontSize: 13, color: '#444' }}>{new Date().toLocaleDateString('pt-BR')}</div>
+      {/* ─── BLOCO EMPRESA ─── */}
+      <div style={S.bloco}>
+        <div style={S.blocoLabel}>Visão Consolidada</div>
+        <div style={S.blocoRow}>
+          {/* Índice grande */}
+          <div style={S.indiceWrap}>
+            <div style={{ fontSize: 32, fontWeight: 300, color: '#00203E', lineHeight: 1 }}>
+              {(empresa.indice * 100).toFixed(2)}%
+            </div>
+            <div style={{
+              fontSize: 10, fontWeight: 700, color: '#fff',
+              background: getCorNivel(empresa.indice),
+              padding: '2px 10px', borderRadius: 3, marginTop: 4, textTransform: 'uppercase',
+            }}>
+              {nivelEmpresa.nivel} — {nivelEmpresa.nome}
+            </div>
           </div>
-          <div style={DM.card}>
-            <div style={DM.lbl}>Métrica de Maturidade</div>
-            {NIVEIS.map(n => (
-              <div key={n.id} style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 6 }}>
-                <div style={{ width: 12, height: 12, borderRadius: 2, background: n.cor, flexShrink: 0 }} />
-                <div>
-                  <div style={{ fontSize: 10, fontWeight: 700, color: n.cor, lineHeight: 1.1 }}>{n.id} - {n.nome}</div>
-                  <div style={{ fontSize: 9, color: '#999', lineHeight: 1.1 }}>{n.faixa}</div>
-                </div>
-              </div>
-            ))}
+          {/* Fases */}
+          <FasesBoxes fases={cfe} />
+        </div>
+        <GaugeBar pct={empresa.indice} />
+      </div>
+
+      {/* ─── BLOCO ÁREA ─── */}
+      <div style={S.bloco}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+          <div style={S.blocoLabel}>Visão</div>
+          <select value={areaSel} onChange={e => setAreaSel(e.target.value)} style={S.areaSelect}>
+            {areasCalc.map(a => <option key={a.id} value={a.nome}>{a.nome}</option>)}
+          </select>
+        </div>
+        <div style={S.blocoRow}>
+          <div style={S.indiceWrap}>
+            <div style={{ fontSize: 28, fontWeight: 300, color: '#00203E', lineHeight: 1 }}>
+              {((areaAtiva?.calc?.percentual || 0) * 100).toFixed(2)}%
+            </div>
+            <div style={{
+              fontSize: 10, fontWeight: 700, color: '#fff',
+              background: getCorNivel(areaAtiva?.calc?.percentual || 0),
+              padding: '2px 10px', borderRadius: 3, marginTop: 4, textTransform: 'uppercase',
+            }}>
+              {nivelArea.nivel} — {nivelArea.nome}
+            </div>
           </div>
+          <FasesBoxes fases={cfa} />
         </div>
+        <GaugeBar pct={areaAtiva?.calc?.percentual || 0} />
+      </div>
 
-        {/* COL CENTRAL — Visão Empresa + Visão Área */}
-        <div style={DM.colC}>
-          <VisaoCard titulo="Visão" nome={nomeCliente} pct={empresa.indice} fases={cfe} />
-          <VisaoCardArea nome={areaSel} areas={areasCalc} onSelect={setAreaSel} pct={areaAtiva?.calc?.percentual || 0} fases={cfa} />
-        </div>
+      {/* ─── BLOCO INFERIOR: Ranking + Régua/Fases ─── */}
+      <div style={S.blocoInferior}>
 
-        {/* COL DIREITA — Ranking + Fases Info */}
-        <div style={DM.colR}>
-          <div style={{ ...DM.card, flex: 1, overflow: 'auto' }}>
-            <div style={DM.secTitle}>Ranking</div>
+        {/* Ranking — 60% */}
+        <div style={{ ...S.card, flex: 3, display: 'flex', flexDirection: 'column', overflow: 'hidden', minHeight: 0 }}>
+          <div style={S.secTitle}>Ranking por Área</div>
+          <div style={{ flex: 1, overflowY: 'auto', minHeight: 0 }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 11 }}>
               <thead>
-                <tr style={{ borderBottom: '2px solid #00203E' }}>
-                  <th style={DM.th}>#</th>
-                  <th style={{ ...DM.th, textAlign: 'left' }}>Departamento</th>
-                  <th style={DM.th}>%</th>
-                  <th style={{ ...DM.th, width: 60 }}></th>
+                <tr>
+                  <th style={{ ...S.th, width: 30 }}>#</th>
+                  <th style={{ ...S.th, textAlign: 'left' }}>Departamento</th>
+                  <th style={{ ...S.th, width: 65 }}>Índice</th>
+                  <th style={{ ...S.th, width: 55 }}>Nível</th>
+                  <th style={{ ...S.th, width: 80 }}></th>
                 </tr>
               </thead>
               <tbody>
                 {ranking.map((a, i) => {
                   const p = a.calc?.percentual || 0
+                  const nv = getNivelMaturidade(p)
                   return (
                     <tr key={a.id} style={{ borderBottom: '1px solid #eee' }}>
-                      <td style={{ padding: '4px 4px', textAlign: 'center', fontWeight: 700, color: '#00203E', fontSize: 10 }}>{i + 1}</td>
-                      <td style={{ padding: '4px 6px', fontSize: 10, color: '#444' }}>{a.nome}</td>
-                      <td style={{ padding: '4px 4px', textAlign: 'center', fontWeight: 700, fontSize: 10, color: getCorNivel(p) }}>{(p * 100).toFixed(2)}%</td>
-                      <td style={{ padding: '4px 4px' }}>
-                        <div style={{ width: '100%', height: 5, background: '#eee', borderRadius: 3, overflow: 'hidden' }}>
-                          <div style={{ width: `${Math.min(p * 100, 100)}%`, height: '100%', borderRadius: 3, background: getCorNivel(p), transition: 'width .4s' }} />
+                      <td style={{ padding: '5px 4px', textAlign: 'center', fontWeight: 700, color: '#00203E', fontSize: 11 }}>{i + 1}</td>
+                      <td style={{ padding: '5px 8px', fontSize: 11, color: '#333' }}>{a.nome}</td>
+                      <td style={{ padding: '5px 4px', textAlign: 'center', fontWeight: 700, fontSize: 11, color: getCorNivel(p) }}>
+                        {(p * 100).toFixed(2)}%
+                      </td>
+                      <td style={{ padding: '5px 4px', textAlign: 'center' }}>
+                        <span style={{
+                          fontSize: 9, fontWeight: 700, color: '#fff',
+                          background: getCorNivel(p), padding: '2px 6px', borderRadius: 3,
+                        }}>
+                          {nv.nivel}
+                        </span>
+                      </td>
+                      <td style={{ padding: '5px 4px' }}>
+                        <div style={{ width: '100%', height: 6, background: '#eee', borderRadius: 3, overflow: 'hidden' }}>
+                          <div style={{
+                            width: `${Math.min(p * 100, 100)}%`, height: '100%',
+                            borderRadius: 3, background: getCorNivel(p), transition: 'width .4s',
+                          }} />
                         </div>
                       </td>
                     </tr>
                   )
                 })}
+                {ranking.length === 0 && (
+                  <tr><td colSpan={5} style={{ padding: 16, textAlign: 'center', color: '#999', fontSize: 11 }}>Sem dados de controles cadastrados.</td></tr>
+                )}
               </tbody>
             </table>
           </div>
+        </div>
 
-          <div style={DM.card}>
-            <div style={DM.secTitle}>Fases</div>
+        {/* Painel direito — Régua + Fases */}
+        <div style={{ flex: 2, display: 'flex', flexDirection: 'column', gap: 10, minHeight: 0 }}>
+          {/* Régua de Maturidade */}
+          <div style={S.card}>
+            <div style={S.secTitle}>Métrica de Maturidade</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              {NIVEIS.map(n => (
+                <div key={n.id} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <div style={{ width: 14, height: 14, borderRadius: 3, background: n.cor, flexShrink: 0 }} />
+                  <span style={{ fontSize: 11, fontWeight: 700, color: n.cor, minWidth: 24 }}>{n.id}</span>
+                  <span style={{ fontSize: 11, color: '#555', flex: 1 }}>{n.nome}</span>
+                  <span style={{ fontSize: 10, color: '#999' }}>{n.faixa}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Fases informativo */}
+          <div style={S.card}>
+            <div style={S.secTitle}>Fases do Programa</div>
             {FASES_INFO.map((f, i) => (
-              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '5px 0 5px 8px', borderLeft: `3px solid ${FASES_CORES[i]}`, marginBottom: 3 }}>
-                <span style={{ fontSize: 8, fontWeight: 700, color: '#fff', background: FASES_CORES[i], padding: '1px 6px', borderRadius: 2, whiteSpace: 'nowrap' }}>{f.label}</span>
+              <div key={i} style={{
+                display: 'flex', alignItems: 'center', gap: 8,
+                padding: '5px 0 5px 10px', borderLeft: `3px solid ${FASES_CORES[i]}`, marginBottom: 4,
+              }}>
+                <span style={{
+                  fontSize: 9, fontWeight: 700, color: '#fff',
+                  background: FASES_CORES[i], padding: '2px 7px', borderRadius: 3, whiteSpace: 'nowrap',
+                }}>{f.label}</span>
                 <span style={{ fontSize: 10, color: '#444', flex: 1 }}>{f.nome}</span>
-                <span style={{ fontSize: 9, fontWeight: 700, color: '#888' }}>Peso: {f.peso}</span>
+                <span style={{ fontSize: 9, fontWeight: 700, color: '#888' }}>{f.peso}</span>
               </div>
             ))}
           </div>
+
+          {/* Última atualização */}
+          <div style={{ ...S.card, textAlign: 'center', padding: '8px 14px' }}>
+            <span style={{ fontSize: 10, color: '#999', textTransform: 'uppercase', letterSpacing: .5 }}>Última Atualização: </span>
+            <span style={{ fontSize: 11, fontWeight: 600, color: '#00203E' }}>{new Date().toLocaleDateString('pt-BR')}</span>
+          </div>
         </div>
       </div>
-    </div>
-  )
-}
-
-// ── Visão Card (Empresa) ──
-function VisaoCard({ titulo, nome, pct, fases }) {
-  return (
-    <div style={DM.card}>
-      <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 10 }}>
-        <span style={{ fontSize: 10, color: '#999', textTransform: 'uppercase', letterSpacing: .5 }}>{titulo}</span>
-        <span style={{ fontSize: 16, fontWeight: 700, color: '#00203E' }}>{nome}</span>
-      </div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 10 }}>
-        <div style={{ fontSize: 28, fontWeight: 300, color: '#00203E', minWidth: 95 }}>{(pct * 100).toFixed(2)}%</div>
-        <FasesBoxes fases={fases} />
-      </div>
-      <GaugeBar pct={pct} />
-    </div>
-  )
-}
-
-// ── Visão Card (Área com dropdown) ──
-function VisaoCardArea({ nome, areas, onSelect, pct, fases }) {
-  return (
-    <div style={DM.card}>
-      <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 10 }}>
-        <span style={{ fontSize: 10, color: '#999', textTransform: 'uppercase', letterSpacing: .5 }}>Visão</span>
-        <select value={nome} onChange={e => onSelect(e.target.value)} style={{
-          fontSize: 16, fontWeight: 700, color: '#00203E', background: 'transparent',
-          border: 'none', borderBottom: '2px solid #CC915E', outline: 'none', cursor: 'pointer', fontFamily: "'Montserrat', sans-serif",
-        }}>
-          {areas.map(a => <option key={a.id} value={a.nome}>{a.nome}</option>)}
-        </select>
-      </div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 10 }}>
-        <div style={{ fontSize: 28, fontWeight: 300, color: '#00203E', minWidth: 95 }}>{(pct * 100).toFixed(2)}%</div>
-        <FasesBoxes fases={fases} />
-      </div>
-      <GaugeBar pct={pct} />
     </div>
   )
 }
@@ -366,11 +422,14 @@ function VisaoCardArea({ nome, areas, onSelect, pct, fases }) {
 // ── Fases boxes ──
 function FasesBoxes({ fases }) {
   return (
-    <div style={{ display: 'flex', gap: 4, flex: 1 }}>
+    <div style={{ display: 'flex', gap: 5, flex: 1 }}>
       {fases.map((v, i) => (
-        <div key={i} style={{ flex: 1, background: FASES_CORES[i], borderRadius: 5, padding: '6px 3px', textAlign: 'center', color: '#fff' }}>
-          <div style={{ fontSize: 8, fontWeight: 700, textTransform: 'uppercase', letterSpacing: .2 }}>Fase {i + 1}</div>
-          <div style={{ fontSize: 11, fontWeight: 400 }}>{(v * 100).toFixed(2)}%</div>
+        <div key={i} style={{
+          flex: 1, background: FASES_CORES[i], borderRadius: 5, padding: '8px 4px',
+          textAlign: 'center', color: '#fff',
+        }}>
+          <div style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: .3, opacity: .8 }}>Fase {i + 1}</div>
+          <div style={{ fontSize: 13, fontWeight: 500, marginTop: 2 }}>{(v * 100).toFixed(2)}%</div>
         </div>
       ))}
     </div>
@@ -381,12 +440,26 @@ function FasesBoxes({ fases }) {
 function GaugeBar({ pct }) {
   const pos = Math.max(0, Math.min(pct * 100, 100))
   return (
-    <div style={{ position: 'relative', height: 40, marginTop: 2 }}>
-      <div style={{ position: 'absolute', left: `${pos}%`, top: 0, transform: 'translateX(-50%)', zIndex: 2, transition: 'left .6s cubic-bezier(.4,0,.2,1)' }}>
-        <div style={{ width: 0, height: 0, borderLeft: '7px solid transparent', borderRight: '7px solid transparent', borderTop: '10px solid #00203E' }} />
+    <div style={{ position: 'relative', height: 38, marginTop: 6 }}>
+      <div style={{
+        position: 'absolute', left: `${pos}%`, top: 0, transform: 'translateX(-50%)', zIndex: 2,
+        transition: 'left .6s cubic-bezier(.4,0,.2,1)',
+      }}>
+        <div style={{
+          width: 0, height: 0,
+          borderLeft: '7px solid transparent', borderRight: '7px solid transparent',
+          borderTop: '10px solid #00203E',
+        }} />
       </div>
-      <div style={{ position: 'absolute', top: 13, left: 0, right: 0, height: 12, borderRadius: 6, overflow: 'hidden', background: 'linear-gradient(90deg, #B71C1C 0%, #E65100 20%, #F9A825 40%, #558B2F 65%, #1B5E20 100%)' }} />
-      <div style={{ position: 'absolute', top: 28, left: 0, right: 0, display: 'flex', justifyContent: 'space-between', padding: '0 2%' }}>
+      <div style={{
+        position: 'absolute', top: 13, left: 0, right: 0, height: 10, borderRadius: 5,
+        overflow: 'hidden',
+        background: 'linear-gradient(90deg, #B71C1C 0%, #E65100 20%, #F9A825 40%, #558B2F 65%, #1B5E20 100%)',
+      }} />
+      <div style={{
+        position: 'absolute', top: 26, left: 0, right: 0,
+        display: 'flex', justifyContent: 'space-between', padding: '0 2%',
+      }}>
         {['N1', 'N2', 'N3', 'N4', 'N5'].map(n => (
           <span key={n} style={{ fontSize: 9, fontWeight: 600, color: '#999' }}>{n}</span>
         ))}
@@ -396,79 +469,82 @@ function GaugeBar({ pct }) {
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
-// ESTILOS INLINE — Dashboard Maturidade (light theme, compacto)
+// ESTILOS — Layout horizontal, preenchimento total
 // ══════════════════════════════════════════════════════════════════════════════
 
-const DM = {
+const S = {
   page: {
     background: '#F3EEE4',
-    minHeight: '100vh',
-    padding: '14px 18px',
+    height: '100vh',
+    padding: '12px 16px',
     fontFamily: "'Montserrat', sans-serif",
     color: '#333',
     fontSize: 12,
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 10,
+    overflow: 'hidden',
   },
   header: {
     background: '#00203E',
     borderRadius: 6,
-    padding: '12px 20px',
+    padding: '10px 20px',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 14,
+    flexShrink: 0,
   },
-  headerLeft: {
-    fontSize: 14,
-    fontWeight: 600,
-    color: '#CC915E',
+  headerTitle: {
+    fontSize: 14, fontWeight: 400, color: '#F3EEE4',
     fontFamily: "'Montserrat', sans-serif",
+    letterSpacing: .3,
   },
   headerRight: {
-    fontSize: 14,
-    fontWeight: 400,
-    color: '#F3EEE4',
-    fontFamily: "'Montserrat', sans-serif",
+    display: 'flex', alignItems: 'center', gap: 8,
   },
-  grid: {
-    display: 'grid',
-    gridTemplateColumns: '160px 1fr 280px',
-    gap: 12,
-    alignItems: 'start',
-    maxHeight: 'calc(100vh - 90px)',
+  bloco: {
+    background: '#fff',
+    borderRadius: 6,
+    padding: '12px 18px',
+    boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+    flexShrink: 0,
   },
-  colL: { display: 'flex', flexDirection: 'column', gap: 10 },
-  colC: { display: 'flex', flexDirection: 'column', gap: 12 },
-  colR: { display: 'flex', flexDirection: 'column', gap: 10, maxHeight: 'calc(100vh - 90px)', overflow: 'hidden' },
+  blocoLabel: {
+    fontSize: 10, fontWeight: 700, textTransform: 'uppercase',
+    color: '#00203E', letterSpacing: .8, marginBottom: 8,
+  },
+  blocoRow: {
+    display: 'flex', alignItems: 'center', gap: 16,
+  },
+  indiceWrap: {
+    minWidth: 130, flexShrink: 0,
+  },
+  areaSelect: {
+    fontSize: 14, fontWeight: 700, color: '#00203E', background: 'transparent',
+    border: 'none', borderBottom: '2px solid #CC915E', outline: 'none', cursor: 'pointer',
+    fontFamily: "'Montserrat', sans-serif", padding: '2px 4px',
+  },
+  blocoInferior: {
+    display: 'flex',
+    gap: 10,
+    flex: 1,
+    minHeight: 0,
+    overflow: 'hidden',
+  },
   card: {
     background: '#fff',
     borderRadius: 6,
     padding: '12px 14px',
     boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
   },
-  lbl: {
-    fontSize: 10,
-    fontWeight: 700,
-    textTransform: 'uppercase',
-    color: '#00203E',
-    letterSpacing: .6,
-    marginBottom: 4,
-  },
   secTitle: {
-    fontSize: 11,
-    fontWeight: 700,
-    textTransform: 'uppercase',
-    color: '#00203E',
-    letterSpacing: .6,
-    marginBottom: 8,
-    textAlign: 'center',
+    fontSize: 11, fontWeight: 700, textTransform: 'uppercase',
+    color: '#00203E', letterSpacing: .6, marginBottom: 8, textAlign: 'center',
   },
   th: {
-    fontSize: 9,
-    fontWeight: 700,
-    textTransform: 'uppercase',
-    color: '#fff',
-    background: '#00203E',
-    padding: '5px 6px',
+    fontSize: 9, fontWeight: 700, textTransform: 'uppercase',
+    color: '#fff', background: '#00203E', padding: '6px 6px',
     textAlign: 'center',
+    position: 'sticky', top: 0, zIndex: 2,
   },
 }
