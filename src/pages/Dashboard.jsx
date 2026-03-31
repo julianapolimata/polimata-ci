@@ -136,8 +136,8 @@ export default function Dashboard() {
             </div>
           )}
           {sidebarOpen && areaExpanded && areasCalc.map(a => (
-            <button key={a.id} className={`nav-item${location.pathname === '/area/' + encodeURIComponent(a.nome) ? ' active' : ''}`}
-              onClick={() => navigate('/area/' + encodeURIComponent(a.nome))}
+            <button key={a.id} className={`nav-item${location.pathname === '/area/' + a.id ? ' active' : ''}`}
+              onClick={() => navigate('/area/' + a.id)}
               style={{ padding: '5px 16px 5px 28px', fontSize: 11, gap: 6 }}>
               <span style={{ fontSize: 10 }}>›</span> {a.nome}
             </button>
@@ -166,7 +166,7 @@ export default function Dashboard() {
         <Routes>
           <Route path="/" element={<HomeDash projeto={projetoAtivo} areasCalc={areasCalc} todosControles={todosControles} loading={loading} ultimaAtualizacao={ultimaAtualizacao} />} />
           <Route path="/visao-geral" element={<VisaoGeral projeto={projetoAtivo} areasCalc={areasCalc} loading={loading} ultimaAtualizacao={ultimaAtualizacao} navigate={navigate} />} />
-          <Route path="/area/:areaNome" element={<PorArea projeto={projetoAtivo} areasCalc={areasCalc} loading={loading} navigate={navigate} />} />
+          <Route path="/area/:areaId" element={<PorArea projeto={projetoAtivo} areasCalc={areasCalc} loading={loading} navigate={navigate} />} />
           <Route path="/mrc" element={<MRCCompleta projetoId={projetoAtivo?.id} />} />
           <Route path="/configuracoes/*" element={<Configuracoes />} />
           <Route path="/perfil" element={<Perfil />} />
@@ -403,7 +403,7 @@ function VisaoGeral({ projeto, areasCalc, loading, ultimaAtualizacao, navigate }
               const p = a.calc?.percentual||0, nv = getNivelMaturidade(p)
               const peso = somaPesos > 0 ? ((a.peso||0)/somaPesos*100).toFixed(1)+'%' : '—'
               return (
-                <tr key={a.id} style={{ cursor: 'pointer' }} onClick={() => navigate('/area/'+encodeURIComponent(a.nome))}
+                <tr key={a.id} style={{ cursor: 'pointer' }} onClick={() => navigate('/area/'+a.id)}
                   onMouseEnter={e => e.currentTarget.style.background='rgba(204,145,94,0.06)'} onMouseLeave={e => e.currentTarget.style.background=''}>
                   <td style={{ padding: '10px', textAlign: 'center', fontWeight: 700, color: '#00203E', borderBottom: '1px solid #eee' }}>{i+1}</td>
                   <td style={{ padding: '10px', textAlign: 'left', fontWeight: 600, color: '#00203E', borderBottom: '1px solid #eee' }}>{a.nome}</td>
@@ -425,9 +425,9 @@ function VisaoGeral({ projeto, areasCalc, loading, ultimaAtualizacao, navigate }
 // ══════════════════════════════════════════════════════════════════════════════
 
 function PorArea({ projeto, areasCalc, loading, navigate }) {
-  const { areaNome } = useParams()
-  const nome = decodeURIComponent(areaNome || '')
-  const area = areasCalc.find(a => a.nome === nome)
+  const { areaId } = useParams()
+  const area = areasCalc.find(a => a.id === areaId)
+  const nome = area?.nome || ''
   const [busca, setBusca] = useState('')
   const [filtCrit, setFiltCrit] = useState('')
   const [filtImp, setFiltImp] = useState('')
