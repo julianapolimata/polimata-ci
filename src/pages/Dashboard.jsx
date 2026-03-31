@@ -441,19 +441,19 @@ function PorArea({ projeto, areasCalc, loading, navigate }) {
   const pesoEmpresa = somaPesos > 0 ? ((area.peso||0)/somaPesos*100).toFixed(1) : '0'
   const p = area.calc?.percentual||0, nv = getNivelMaturidade(p)
   let efetivos=0, inefetivos=0, gaps=0, gapsCriticos=0
-  area.controles.forEach(c => { if (isEfetivo(c.r1)) efetivos++; else if (isInefetivo(c.r1)) inefetivos++; else if (isGap(c.r1)) { gaps++; if ((c.crit||'').toLowerCase().includes('crít')||(c.crit||'').toLowerCase().includes('crit')) gapsCriticos++ } })
+  area.controles.forEach(c => { if (isEfetivo(c.r1)) efetivos++; else if (isInefetivo(c.r1)) inefetivos++; else if (isGap(c.r1)) { gaps++; const cr = String(c.crit||'').toLowerCase(); if (cr.includes('crít')||cr.includes('crit')) gapsCriticos++ } })
 
   const cf = area.controles.filter(c => {
     if (busca) { const b = busca.toLowerCase(); if (![c.ref_risco,c.ref_controle,c.desc_risco,c.desc_controle,c.desc_inconsistencia,c.recomendacao].some(f => (f||'').toLowerCase().includes(b))) return false }
-    if (filtCrit && (c.crit||'') !== filtCrit) return false
-    if (filtImp && (c.imp||'') !== filtImp) return false
-    if (filtRes && (c.r1||'') !== filtRes) return false
+    if (filtCrit && String(c.crit||'') !== filtCrit) return false
+    if (filtImp && String(c.imp||'') !== filtImp) return false
+    if (filtRes && String(c.r1||'') !== filtRes) return false
     return true
   })
 
-  const crits = [...new Set(area.controles.map(c => c.crit).filter(Boolean))].sort()
-  const imps = [...new Set(area.controles.map(c => c.imp).filter(Boolean))].sort()
-  const ress = [...new Set(area.controles.map(c => c.r1).filter(Boolean))].sort()
+  const crits = [...new Set(area.controles.map(c => String(c.crit||'')).filter(v => v))].sort()
+  const imps = [...new Set(area.controles.map(c => String(c.imp||'')).filter(v => v))].sort()
+  const ress = [...new Set(area.controles.map(c => String(c.r1||'')).filter(v => v))].sort()
 
   function faseLabel(c) {
     if (c.r3 && c.r3 !== 'Teste Não Realizado') return { f: 'F3 — Revisão', s: c.r3 }
