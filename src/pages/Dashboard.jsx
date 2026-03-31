@@ -354,9 +354,8 @@ function HomeDash({ projeto }) {
         <div style={S.colVisoes}>
 
           {/* Visão Consolidada Empresa */}
-          <div style={{ ...S.card, flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden' }}>
-            <div style={{ ...S.blocoLabel, flexShrink: 0 }}>Visão Consolidada Empresa</div>
-            <div style={{ flex: 1, minHeight: 0, overflowY: 'auto' }}>
+          <div style={{ ...S.card, flexShrink: 0, display: 'flex', flexDirection: 'column' }}>
+            <div style={S.blocoLabel}>Visão Consolidada Empresa</div>
             <div style={S.visaoRow}>
               <div style={S.indiceWrap}>
                 <div style={{ fontSize: 26, fontWeight: 300, color: '#00203E', lineHeight: 1 }}>
@@ -367,8 +366,6 @@ function HomeDash({ projeto }) {
               <FasesBoxes fases={cfe} />
             </div>
             <GaugeBar pct={empresa.indice} />
-            <KpisTable kpis={kpisEmpresa} />
-            </div>
           </div>
 
           {/* Visão Área */}
