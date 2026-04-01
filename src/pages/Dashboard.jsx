@@ -97,7 +97,7 @@ export default function Dashboard() {
   async function loadDados(pid) {
     setLoading(true)
     const { data: ad } = await supabase.from('areas').select('id, nome, prefixo, peso, gerente, ordem').eq('projeto_id', pid).order('ordem')
-    const { data: md } = await supabase.from('mrc').select('*').eq('projeto_id', pid)
+    const { data: md } = await supabase.from('mrc').select('*').eq('projeto_id', pid).neq('ativo', false)
     const controles = md || [], areas = ad || []
     const res = areas.map(a => {
       const ca = controles.filter(c => c.area_id === a.id || c.area === a.nome)

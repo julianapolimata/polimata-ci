@@ -213,9 +213,8 @@ export default function ModalAtualizar({ row, onClose, onSaved, areas, projetoId
   }
 
   async function handleSalvarComFicha() {
-    await salvarAlteracoes('em_analise')
-    // TODO: gerar e baixar ficha Excel via ExcelJS
-    alert('📥 Ficha de Risco será gerada e baixada.\n(Funcionalidade de geração Excel será implementada em seguida)')
+    const ok = await salvarAlteracoes('em_analise')
+    if (ok) gerarFichaExcel()
   }
 
   async function handleSalvarSemFicha() {
@@ -257,10 +256,111 @@ export default function ModalAtualizar({ row, onClose, onSaved, areas, projetoId
       }
     }
 
-    await supabase.from('mrc').update(updates).eq('id', row.id)
+    const { error } = await supabase.from('mrc').update(updates).eq('id', row.id)
+    if (error) {
+      console.error('Erro ao salvar:', error)
+      alert('Erro ao salvar: ' + error.message)
+      setSaving(false)
+      return false
+    }
     setSaving(false)
     onSaved?.()
     onClose()
+    return true
+  }
+
+  function gerarFichaExcel() {
+    // Dados consolidados (do form ou do row original)
+    const dc = controleChoice === 'sim' ? editDc : row.dc
+    const dr = (riscoChoice === 'sim' && statusChoice === 'existente') ? novaDescRisco : row.dr
+    const cat = controleChoice === 'sim' ? editCat : row.cat
+    const freq = controleChoice === 'sim' ? editFreq : row.freq
+    const nat = controleChoice === 'sim' ? editNat : row.nat
+    const car = controleChoice === 'sim' ? editCar : row.car
+    const sis = controleChoice === 'sim' ? editSis : row.sis
+    const chave = controleChoice === 'sim' ? editChave : row.chave
+    const prems = controleChoice === 'sim' ? premissas : {
+      premissa_porque: row.premissa_porque || '',
+      premissa_quando: row.premissa_quando || '',
+      premissa_onde: row.premissa_onde || '',
+      premissa_quem: row.premissa_quem || '',
+      premissa_como: row.premissa_como || '',
+      premissa_resultado: row.premissa_resultado || '',
+    }
+
+    // Construir CSV como fallback simples (funciona sem ExcelJS)
+    // Header + dados pré-preenchidos no formato da ficha
+    const linhas = [
+      'POLÍMATA · CONSULTORIA EM GRC',
+      'FICHA DE RISCO — EXECUÇÃO DO TESTE',
+      '',
+      'IDENTIFICAÇÃO',
+      `Área / Processo,${row.area || ''}`,
+      `Subprocesso,${row.sub || ''}`,
+      `Ref. Risco,${row.rr || ''}`,
+      `Ref. Controle,${row.rc || ''}`,
+      `Gerência,${row.ger || ''}`,
+      `Responsável Subprocesso,${row.resp_sub || ''}`,
+      `Descrição do Risco,"${(dr || '').replace(/"/g, '""')}"`,
+      `Descrição do Controle,"${(dc || '').replace(/"/g, '""')}"`,
+      '',
+      'ATRIBUTOS DO CONTROLE',
+      `Categoria,${cat || ''}`,
+      `Frequência,${freq || ''}`,
+      `Natureza,${nat || ''}`,
+      `Característica,${car || ''}`,
+      `Sistema,${sis || ''}`,
+      `Controle Chave?,${chave || ''}`,
+      '',
+      'PRÓXIMA FASE',
+      `Fase,${proximaFase.label}`,
+      `Profissional,${perfil?.nome || ''}`,
+      `Data de Geração,${new Date().toLocaleDateString('pt-BR')}`,
+      '',
+      '1. AS 6 PREMISSAS DO CONTROLE',
+      `1. Quem faz,"${(prems.premissa_quem || '').replace(/"/g, '""')}"`,
+      `2. Quando faz,"${(prems.premissa_quando || '').replace(/"/g, '""')}"`,
+      `3. Por quê faz,"${(prems.premissa_porque || '').replace(/"/g, '""')}"`,
+      `4. Como faz,"${(prems.premissa_como || '').replace(/"/g, '""')}"`,
+      `5. Onde faz,"${(prems.premissa_onde || '').replace(/"/g, '""')}"`,
+      `6. Qual o resultado,"${(prems.premissa_resultado || '').replace(/"/g, '""')}"`,
+      '',
+      '2. PASSOS DE TESTE',
+      'Atividade / Passo,Status (a/r/NA),Observação',
+      'Passo 1,,',
+      'Passo 2,,',
+      'Passo 3,,',
+      'Passo 4,,',
+      'Passo 5,,',
+      'Passo 6,,',
+      'Passo 7,,',
+      'Passo 8,,',
+      'Passo 9,,',
+      'Passo 10,,',
+      '',
+      '3. CONCLUSÃO E RESULTADO',
+      'Conclusão,',
+      'Inconsistência Identificada,',
+      'Recomendação / Melhoria,',
+      '',
+      'RESULTADO,',
+      'Melhoria Identificada?,',
+      'Descrição da Melhoria,',
+      '',
+      '4. EXECUÇÃO DO TESTE E EVIDÊNCIAS',
+      '(inserir tabelas ou listas ou amostras testadas abaixo)',
+    ]
+
+    const csvContent = '\uFEFF' + linhas.join('\n') // BOM for Excel UTF-8
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `Ficha_de_Risco_${row.rc || 'controle'}.csv`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
   }
 
   async function logAudit(mrcId, campo, anterior, novo) {
