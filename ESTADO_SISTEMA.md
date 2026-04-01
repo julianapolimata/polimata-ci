@@ -23,67 +23,66 @@
 - **Fonte:** Montserrat para TUDO (sem exceções)
 - **Cores fases:** F1=#00203E, F2=#1D3B5C, F3=#660033, F4=#660066, F5=#A6512F
 - **Regra de duas camadas:** estrutural = marca; semântico = cores universais
+- **NUNCA usar roxo** — Planos de Ação usa dourado (#CC915E)
 
 ---
 
-## Telas em Produção
+## Telas Implementadas (Dashboard.jsx)
+
+### Sidebar atualizada
+- Grupo "Dashboards": Dashboard Maturidade | Visão Geral
+- Grupo "Por Área": lista colapsável das 14 áreas (navega por ID)
+- Grupo "Operação": MRC Completa (badge com total)
+- Grupo "Administração": Configurações (admin only)
+
+### 1. Dashboard Maturidade (rota `/`)
+- Gauge engrossada (12px) + "Última atualização" no header
+- Visão Empresa compacta (sem KpisTable) + Visão Área com KPIs
+- Ranking por Área com scroll
+
+### 2. Visão Geral (rota `/visao-geral`) — IMPLEMENTADA
+- 4 cards totais: Total | Efetivo | Inefetivo | GAP (com breakdown 4 criticidades)
+- Labels sub-header: Crít / Sign / Mod / Baixo
+- Tabela "Resumo por Área": Área | Última Revisão | Total | Efetivo×4 | Inefetivo×4 | GAP×4
+- Linha TOTAL no rodapé; clique na área navega para Por Área
+
+### 3. Por Área (rota `/area/:areaId`) — IMPLEMENTADA
+- ← VOLTAR + nome área + "X controles · Peso empresa: Y%"
+- 5 KPIs: Maturidade(%+badge) | Efetivos | Inefetivos | GAPs | Planos de Ação (dourado)
+- Busca + filtros (criticidades via crit_label, impactos, resultados F1)
+- Tabela MRC filtrada (23 colunas), scroll horizontal
+- Badges coloridos: Resultado (verde/vermelho/laranja), Impacto, Probabilidade, Criticidade
+- Botão "Ver" (modal MRCCompleta a integrar)
+- Navegável via sidebar, Ranking, ou Visão Geral
+
+### Outras telas
 | Tela | Arquivo |
 |---|---|
 | Login | src/pages/Login.jsx |
-| Sidebar (recolhível) | Dashboard.jsx |
-| Dashboard Maturidade | src/pages/Dashboard.jsx (v4) |
 | MRC Completa | src/components/MRCCompleta.jsx (522 ctrl) |
 | Config Clientes/Usuários | src/pages/Configuracoes.jsx |
 | Perfil | src/pages/Perfil.jsx |
 
 ---
 
-## Mockup v5 APROVADO — Implementar na próxima sessão
-
-### 1. Dashboard Maturidade (ajustes)
-- Gauge engrossada (6→12px)
-- "Última atualização: DD/MM/AAAA" no header
-
-### 2. Visão Geral (nova rota)
-- Régua N1-N5 topo
-- Tabela "Índice por Área": # | Área | Peso | Controles | % Maturidade | Nível | Barra
-- Clique na área → navega "Por Área"
-
-### 3. Por Área (nova rota + subitens sidebar)
-- Ref: v17 imagens 2-7, tema claro (creme)
-- ← VOLTAR + nome área + "X controles · Peso empresa: Y%"
-- 4 KPIs: Maturidade(%+badge) | Efetivos | Inefetivos | GAPs·Críticos
-- Régua N1-N5 com nível destacado
-- Busca + filtros (criticidades, impactos, resultados)
-- Tabela MRC filtrada (23 colunas + botão "Ver" → modal MRCCompleta)
-- Sidebar lista 14 áreas; também acessível via Ranking e Visão Geral
-
-### Sidebar atualizada
-- Visão Geral: Dashboard Maturidade | Visão Geral
-- Por Área: Todas as Áreas | Compras | ... | Vendas
-- Operação: MRC Completa (522)
-- Administração: Configurações
+## Campos Supabase — tabela `mrc` (DEFINITIVO)
+`rr` (Ref.Risco), `rc` (Ref.Controle), `sub` (Subprocesso), `ger` (Gerência), `resp_sub` (Resp.Subprocesso), `dt_ult` (Data Últ.Atualização), `dr` (Desc.Risco), `dc` (Desc.Controle), `cat` (Categoria), `freq` (Frequência), `nat` (Natureza), `car` (Característica), `sis` (Sistema), `chave` (Ctrl Chave), `passos_f1` (Passos Teste), `r1` (Resultado F1), `incons` (Desc.Inconsistência), `rec` (Recomendação), `imp` (Impacto - text), `prob` (Probabilidade - text), `crit` (Criticidade - INTEGER 1-4), `crit_label` (Label criticidade - text), `area` (Processo/Área - text), `st_pa`, `r_ader`, `r3`, `dc_novo`, `area_id` (UUID FK)
 
 ---
 
 ## Engine de Cálculo
 - src/lib/calculoMaturidade.js — validado (Compras → 37.78% → N3)
-- Exporta: calcularPercentualArea, calcularIndiceEmpresa, getNivelMaturidade, PESO_FASE
+- State elevado no shell Dashboard: areasCalc + todosControles compartilhados entre 3 telas
 
 ---
 
-## Dados Supabase
-- 522 controles (mrc), 14 áreas (Compras=0001 a Vendas=0014)
-- Campos: r1, crit, imp, prob, st_pa, r_ader, r3, area_id (UUID FK)
-
----
-
-## Pendências após mockup v5
-1. Export Excel/PDF da MRC
-2. Integrar engine na MRC (peso real no modal)
-3. Workflow aprovação
-4. Access control suspensos
-5. Flow "Novo Projeto" (sistemas do cliente)
+## Pendências
+1. Integrar botão "Ver" do Por Área com modal do MRCCompleta
+2. Export Excel/PDF da MRC
+3. Integrar engine na MRC (peso real no modal)
+4. Workflow aprovação
+5. Access control suspensos
+6. Flow "Novo Projeto" (sistemas do cliente)
 
 ---
 
@@ -93,4 +92,5 @@
 - Workflow: mockup HTML → aprovação → JSX
 - Layout: viewport completo, sem scroll/assimetria
 - Excel: ExcelJS (não SheetJS)
-- Ref legacy: referencia/CI_Polimata_v17_1.html
+- `crit` é INTEGER no Supabase — sempre usar String() ao comparar
+- Navegação Por Área usa `area.id` (UUID), não nome encodado

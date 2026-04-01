@@ -467,10 +467,10 @@ function VisaoGeral({ projeto, areasCalc, loading, ultimaAtualizacao, navigate }
               <tr>
                 {[0,1,2].map(g => (
                   [
-                    <th key={`${g}c`} style={{ ...vgSubTh, background: critColors[0]+'20', color: critColors[0] }}>●</th>,
-                    <th key={`${g}s`} style={{ ...vgSubTh, background: critColors[1]+'20', color: critColors[1] }}>●</th>,
-                    <th key={`${g}m`} style={{ ...vgSubTh, background: critColors[2]+'20', color: critColors[2] }}>●</th>,
-                    <th key={`${g}b`} style={{ ...vgSubTh, background: critColors[3]+'20', color: critColors[3], borderRight: g < 2 ? '2px solid #F3EEE4' : 'none' }}>●</th>,
+                    <th key={`${g}c`} style={{ ...vgSubTh, background: critColors[0]+'20', color: critColors[0] }}>Crít</th>,
+                    <th key={`${g}s`} style={{ ...vgSubTh, background: critColors[1]+'20', color: critColors[1] }}>Sign</th>,
+                    <th key={`${g}m`} style={{ ...vgSubTh, background: critColors[2]+'20', color: critColors[2] }}>Mod</th>,
+                    <th key={`${g}b`} style={{ ...vgSubTh, background: critColors[3]+'20', color: critColors[3], borderRight: g < 2 ? '2px solid #F3EEE4' : 'none' }}>Baixo</th>,
                   ]
                 )).flat()}
               </tr>
@@ -598,8 +598,8 @@ function PorArea({ projeto, areasCalc, loading, navigate }) {
       </div>
 
       {/* MRC Table */}
-      <div style={{ flex: 1, minHeight: 0, background: '#fff', borderRadius: 6, boxShadow: '0 1px 3px rgba(0,0,0,0.05)', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-        <div style={{ flex: 1, overflow: 'auto', minHeight: 0 }}>
+      <div style={{ flex: 1, minHeight: 0, background: '#fff', borderRadius: 6, boxShadow: '0 1px 3px rgba(0,0,0,0.05)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+        <div style={{ flex: 1, overflowX: 'auto', overflowY: 'auto', minHeight: 0 }}>
           <table style={{ width: 'max-content', minWidth: '100%', borderCollapse: 'collapse' }}>
             <thead><tr>
               {['Data Últ. Atual.','Gerência','Resp. Subproc.','Processo','Subprocesso','Ref. Risco','Desc. Risco','Ref. Controle','Desc. Controle','Categoria','Frequência','Natureza','Caract.','Sistema','Ctrl Chave?','Passos Teste','Resultado','Desc. Inconsist.','Recomendação','Impacto','Probab.','Criticidade','Fase Atual'].map((h,i) =>
