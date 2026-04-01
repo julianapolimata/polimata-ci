@@ -217,7 +217,7 @@ function ColunasPanel({ visCols, setVisCols, open, onClose }) {
 
 // ─── MODAL ───────────────────────────────────────────────────────────────────
 
-function ModalDetalhe({ row, onClose }) {
+export function ModalDetalhe({ row, onClose }) {
   const [tab, setTab] = useState('ident')
   if (!row) return null
   const tabs = [{ id:'ident',label:'Identificação' },{ id:'f1',label:'F1 — Diagnóstico' },{ id:'f2e1',label:'F2-E1 — Plano de Ação' },{ id:'f2e2',label:'F2-E2 — Aderência' },{ id:'f3',label:'F3 — Revisão' }]

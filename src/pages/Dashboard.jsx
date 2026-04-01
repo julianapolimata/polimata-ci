@@ -4,7 +4,7 @@ import { useEffect, useState, useMemo } from 'react'
 import { Routes, Route, useNavigate, useLocation, useParams } from 'react-router-dom'
 import Configuracoes from './Configuracoes'
 import Perfil from './Perfil'
-import MRCCompleta from '../components/MRCCompleta'
+import MRCCompleta, { ModalDetalhe } from '../components/MRCCompleta'
 import {
   calcularPercentualArea,
   calcularIndiceEmpresa,
@@ -520,6 +520,7 @@ function PorArea({ projeto, areasCalc, loading, navigate }) {
   const [filtCrit, setFiltCrit] = useState('')
   const [filtImp, setFiltImp] = useState('')
   const [filtRes, setFiltRes] = useState('')
+  const [modalRow, setModalRow] = useState(null)
 
   if (loading) return <Spinner />
   if (!projeto) return <NoProjeto />
@@ -616,11 +617,12 @@ function PorArea({ projeto, areasCalc, loading, navigate }) {
                 <Td w={180}>{c.passos_f1}</Td><td style={tS}>{badgeR(c.r1)}</td><Td w={180}>{c.incons}</Td><Td w={180}>{c.rec}</Td>
                 <td style={tS}>{badgeImp(c.imp)}</td><td style={tS}>{badgeProb(c.prob)}</td><td style={tS}>{badgeCrit(c.crit)}</td>
                 <td style={tS}><div style={{ fontSize: 10, fontWeight: 500, color: '#00203E', borderLeft: '3px solid #CC915E', paddingLeft: 6, lineHeight: 1.3 }}>{fl.f}</div><div style={{ fontSize: 9, color: '#999', paddingLeft: 9 }}>{fl.s}</div></td>
-                <td style={{ ...tS, textAlign: 'center' }}><button style={{ background: 'rgba(0,32,62,0.08)', border: '1px solid rgba(0,32,62,0.15)', borderRadius: 3, padding: '2px 10px', fontSize: 10, fontWeight: 600, color: '#00203E', cursor: 'pointer', fontFamily: 'inherit' }}>Ver</button></td>
+                <td style={{ ...tS, textAlign: 'center' }}><button onClick={() => setModalRow(c)} style={{ background: 'rgba(0,32,62,0.08)', border: '1px solid rgba(0,32,62,0.15)', borderRadius: 3, padding: '2px 10px', fontSize: 10, fontWeight: 600, color: '#00203E', cursor: 'pointer', fontFamily: 'inherit' }}>Ver</button></td>
               </tr>)})}{cf.length === 0 && <tr><td colSpan={24} style={{ padding: 32, textAlign: 'center', color: '#999' }}>Nenhum controle encontrado.</td></tr>}</tbody>
           </table>
         </div>
       </div>
+      {modalRow && <ModalDetalhe row={modalRow} onClose={() => setModalRow(null)} />}
     </div>
   )
 }
