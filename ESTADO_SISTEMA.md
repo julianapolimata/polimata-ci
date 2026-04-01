@@ -29,68 +29,79 @@
 
 ## Telas Implementadas (Dashboard.jsx)
 
-### Sidebar atualizada
-- Grupo "Dashboards": Dashboard Maturidade | Visão Geral
-- Grupo "Por Área": lista colapsável das 14 áreas (navega por ID)
-- Grupo "Operação": MRC Completa (badge com total)
-- Grupo "Administração": Configurações (admin only)
+### Sidebar
+- "Dashboards": Dashboard Maturidade | Visão Geral
+- "Por Área": lista colapsável das 14 áreas (navega por ID)
+- "Operação": MRC Completa (badge com total)
+- "Administração": Configurações (admin only)
 
 ### 1. Dashboard Maturidade (rota `/`)
 - Gauge engrossada (12px) + "Última atualização" no header
-- Visão Empresa compacta (sem KpisTable) + Visão Área com KPIs
-- Ranking por Área com scroll
+- Visão Empresa compacta + Visão Área com KPIs + Ranking
 
-### 2. Visão Geral (rota `/visao-geral`) — IMPLEMENTADA
-- 4 cards totais: Total | Efetivo | Inefetivo | GAP (com breakdown 4 criticidades)
-- Labels sub-header: Crít / Sign / Mod / Baixo
-- Tabela "Resumo por Área": Área | Última Revisão | Total | Efetivo×4 | Inefetivo×4 | GAP×4
-- Linha TOTAL no rodapé; clique na área navega para Por Área
+### 2. Visão Geral (rota `/visao-geral`)
+- 4 cards totais: Total | Efetivo | Inefetivo | GAP (breakdown 4 criticidades)
+- Sub-headers: Crít / Sign / Mod / Baixo (texto, não bolinhas)
+- Tabela "Resumo por Área" com linha TOTAL; clique navega para Por Área
 
-### 3. Por Área (rota `/area/:areaId`) — IMPLEMENTADA
-- ← VOLTAR + nome área + "X controles · Peso empresa: Y%"
-- 5 KPIs: Maturidade(%+badge) | Efetivos | Inefetivos | GAPs | Planos de Ação (dourado)
-- Busca + filtros (criticidades via crit_label, impactos, resultados F1)
-- Tabela MRC filtrada (23 colunas), scroll horizontal
-- Badges coloridos: Resultado (verde/vermelho/laranja), Impacto, Probabilidade, Criticidade
-- Botão "Ver" (modal MRCCompleta a integrar)
-- Navegável via sidebar, Ranking, ou Visão Geral
+### 3. Por Área (rota `/area/:areaId`)
+- ← VOLTAR + nome área + meta
+- 5 KPIs: Maturidade | Efetivos | Inefetivos | GAPs | Planos de Ação (dourado)
+- Busca + filtros + tabela MRC filtrada (23 colunas, scroll horizontal)
+- Badges coloridos: Resultado, Impacto, Probabilidade, Criticidade
+- Botão "Ver" abre ModalDetalhe (exportado do MRCCompleta)
 
 ### Outras telas
-| Tela | Arquivo |
-|---|---|
-| Login | src/pages/Login.jsx |
-| MRC Completa | src/components/MRCCompleta.jsx (522 ctrl) |
-| Config Clientes/Usuários | src/pages/Configuracoes.jsx |
-| Perfil | src/pages/Perfil.jsx |
+- Login, MRC Completa (522 ctrl), Config Clientes/Usuários, Perfil
 
 ---
 
 ## Campos Supabase — tabela `mrc` (DEFINITIVO)
-`rr` (Ref.Risco), `rc` (Ref.Controle), `sub` (Subprocesso), `ger` (Gerência), `resp_sub` (Resp.Subprocesso), `dt_ult` (Data Últ.Atualização), `dr` (Desc.Risco), `dc` (Desc.Controle), `cat` (Categoria), `freq` (Frequência), `nat` (Natureza), `car` (Característica), `sis` (Sistema), `chave` (Ctrl Chave), `passos_f1` (Passos Teste), `r1` (Resultado F1), `incons` (Desc.Inconsistência), `rec` (Recomendação), `imp` (Impacto - text), `prob` (Probabilidade - text), `crit` (Criticidade - INTEGER 1-4), `crit_label` (Label criticidade - text), `area` (Processo/Área - text), `st_pa`, `r_ader`, `r3`, `dc_novo`, `area_id` (UUID FK)
+`rr`, `rc`, `sub`, `ger`, `resp_sub`, `dt_ult`, `dr`, `dc`, `cat`, `freq`, `nat`, `car`, `sis`, `chave`, `passos_f1`, `r1`, `incons`, `rec`, `imp` (text), `prob` (text), `crit` (INTEGER 1-4), `crit_label` (text), `area` (text), `st_pa`, `r_ader`, `r3`, `dc_novo`, `area_id` (UUID FK), `dem_pa`, `resp_pa`, `dt_pa`, `coment_pa`, `dt_teste`, `melhoria`, `incons_ader`, `coment_ader`, `st_f3`, `incons_f3`, `rec_f3`, `status_workflow`, `criado_em`, `atualizado_em`
 
 ---
 
 ## Engine de Cálculo
 - src/lib/calculoMaturidade.js — validado (Compras → 37.78% → N3)
-- State elevado no shell Dashboard: areasCalc + todosControles compartilhados entre 3 telas
+- State elevado: areasCalc + todosControles compartilhados entre 3 telas
 
 ---
 
-## Pendências
-1. Integrar botão "Ver" do Por Área com modal do MRCCompleta
-2. Export Excel/PDF da MRC
-3. Integrar engine na MRC (peso real no modal)
-4. Workflow aprovação
-5. Access control suspensos
-6. Flow "Novo Projeto" (sistemas do cliente)
+## PRÓXIMO PASSO: Workflow de Atualização de Controles
+
+Juliana quer um botão "Atualizar" em cada controle (na tabela Por Área + dentro do modal Ver). Ao clicar, abre modal de atualização com:
+
+**Fluxo descrito até agora:**
+1. Mostra informações atuais do risco/controle + fase atual
+2. Pergunta: "Houve alteração no descritivo do risco?"
+   - **SIM** → abre opções de status: Existente / Evitado / Transferido
+     - Se **Evitado** → caixa de texto para justificativa + inativa o registro (mantém para histórico, libera a referência para reuso)
+     - Se **Transferido** → [a definir]
+     - Se **Existente** → permite editar o descritivo do risco
+   - **NÃO** → informações se mantêm, segue para próximas perguntas
+
+**Perguntas pendentes (aguardando resposta da Juliana):**
+1. Quem pode atualizar? (admin + consultor, ou gestor_cliente também?)
+2. "Evitado" = "Descontinuado" da metodologia?
+3. Referência liberada: R.COM.05 fica disponível ou próximo é sempre sequencial?
+4. Após o risco, o fluxo pergunta sobre o controle também?
+5. Relaciona com workflow de aprovação (rascunho → em_revisao → aprovado)?
+6. Campos novos necessários no Supabase?
+
+---
+
+## Pendências após workflow
+1. Export Excel/PDF da MRC
+2. Integrar engine na MRC (peso real no modal)
+3. Workflow aprovação
+4. Access control suspensos
+5. Flow "Novo Projeto" (sistemas do cliente)
 
 ---
 
 ## Notas Técnicas
 - GitHub bloqueado no Claude → upload direto de arquivos
-- Verificar extensões antes de commit (.css.css bug)
-- Workflow: mockup HTML → aprovação → JSX
-- Layout: viewport completo, sem scroll/assimetria
-- Excel: ExcelJS (não SheetJS)
-- `crit` é INTEGER no Supabase — sempre usar String() ao comparar
-- Navegação Por Área usa `area.id` (UUID), não nome encodado
+- Workflow com Claude: mockup HTML → aprovação → JSX
+- `crit` é INTEGER — sempre usar String() ao comparar
+- Navegação Por Área usa `area.id` (UUID)
+- ModalDetalhe exportado como named export de MRCCompleta.jsx
