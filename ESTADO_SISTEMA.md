@@ -1,5 +1,5 @@
 # ESTADO DO SISTEMA — CI Polímata
-> Atualizado em: 31/03/2026
+> Atualizado em: 01/04/2026
 > Cole no início de cada novo chat para retomar sem perda de contexto.
 
 ---
@@ -22,86 +22,152 @@
 - **Creme:** #F3EEE4
 - **Fonte:** Montserrat para TUDO (sem exceções)
 - **Cores fases:** F1=#00203E, F2=#1D3B5C, F3=#660033, F4=#660066, F5=#A6512F
-- **Regra de duas camadas:** estrutural = marca; semântico = cores universais
-- **NUNCA usar roxo** — Planos de Ação usa dourado (#CC915E)
+- **Regra:** estrutural = marca; semântico = cores universais. NUNCA usar roxo.
 
 ---
 
-## Telas Implementadas (Dashboard.jsx)
+## Telas Implementadas
 
 ### Sidebar
-- "Dashboards": Dashboard Maturidade | Visão Geral
-- "Por Área": lista colapsável das 14 áreas (navega por ID)
-- "Operação": MRC Completa (badge com total)
-- "Administração": Configurações (admin only)
+- Dashboards: Dashboard Maturidade | Visão Geral
+- Por Área: 14 áreas colapsáveis (navega por UUID)
+- Operação: MRC Completa (badge total)
+- Administração: Configurações (admin only)
 
 ### 1. Dashboard Maturidade (rota `/`)
-- Gauge engrossada (12px) + "Última atualização" no header
+- Gauge 12px + "Última atualização" no header
 - Visão Empresa compacta + Visão Área com KPIs + Ranking
 
 ### 2. Visão Geral (rota `/visao-geral`)
-- 4 cards totais: Total | Efetivo | Inefetivo | GAP (breakdown 4 criticidades)
-- Sub-headers: Crít / Sign / Mod / Baixo (texto, não bolinhas)
-- Tabela "Resumo por Área" com linha TOTAL; clique navega para Por Área
+- 4 cards: Total | Efetivo | Inefetivo | GAP (breakdown 4 criticidades: Crít/Sign/Mod/Baixo)
+- Tabela Resumo por Área com Efetivo×4 | Inefetivo×4 | GAP×4 + linha TOTAL
 
 ### 3. Por Área (rota `/area/:areaId`)
-- ← VOLTAR + nome área + meta
+- ← VOLTAR + nome + meta
 - 5 KPIs: Maturidade | Efetivos | Inefetivos | GAPs | Planos de Ação (dourado)
-- Busca + filtros + tabela MRC filtrada (23 colunas, scroll horizontal)
-- Badges coloridos: Resultado, Impacto, Probabilidade, Criticidade
-- Botão "Ver" abre ModalDetalhe (exportado do MRCCompleta)
+- Filtros + tabela MRC 23 colunas + badges coloridos Imp/Prob/Crit
+- Botão "Ver" → abre ModalDetalhe (exportado do MRCCompleta)
+- Botão "Atualizar" → abre ModalAtualizar (workflow multi-step) ← EM IMPLEMENTAÇÃO
 
 ### Outras telas
-- Login, MRC Completa (522 ctrl), Config Clientes/Usuários, Perfil
+- Login, MRC Completa, Config Clientes/Usuários, Perfil
 
 ---
 
-## Campos Supabase — tabela `mrc` (DEFINITIVO)
-`rr`, `rc`, `sub`, `ger`, `resp_sub`, `dt_ult`, `dr`, `dc`, `cat`, `freq`, `nat`, `car`, `sis`, `chave`, `passos_f1`, `r1`, `incons`, `rec`, `imp` (text), `prob` (text), `crit` (INTEGER 1-4), `crit_label` (text), `area` (text), `st_pa`, `r_ader`, `r3`, `dc_novo`, `area_id` (UUID FK), `dem_pa`, `resp_pa`, `dt_pa`, `coment_pa`, `dt_teste`, `melhoria`, `incons_ader`, `coment_ader`, `st_f3`, `incons_f3`, `rec_f3`, `status_workflow`, `criado_em`, `atualizado_em`
+## Campos Supabase — tabela `mrc`
+`id`, `projeto_id`, `area_id`, `rr`, `rc`, `sub`, `ger`, `resp_sub`, `dt_ult`, `dr`, `dc`, `imp`, `prob`, `crit` (INTEGER 1-4), `crit_label`, `cat`, `freq`, `nat`, `car`, `sis`, `chave`, `passos_f1`, `r1`, `incons`, `rec`, `dem_pa`, `resp_pa`, `dt_pa`, `st_pa`, `coment_pa`, `dt_teste`, `dc_novo`, `r_ader`, `melhoria`, `incons_ader`, `coment_ader`, `st_f3`, `r3`, `incons_f3`, `rec_f3`, `area` (text/processo), `status_workflow`, `criado_em`, `atualizado_em`, `criado_por`, `atualizado_por`
+
+### Campos novos a criar (tabela mrc):
+- `status_risco` text DEFAULT 'existente' — valores: existente, evitado, transferido
+- `motivo_inativacao` text — justificativa quando evitado
+- `ativo` boolean DEFAULT true — false quando evitado ou transferido (origem)
+- `transferido_de` UUID — FK para o registro original (quando é cópia no destino)
+- `ref_anterior` text — guardar referência original antes de liberar
+- `premissa_porque` text — premissa "Por quê?"
+- `premissa_quando` text — premissa "Quando?"
+- `premissa_onde` text — premissa "Onde?"
+- `premissa_quem` text — premissa "Quem?" (vazio se automatizado)
+- `premissa_como` text — premissa "Como?"
+- `premissa_resultado` text — premissa "Qual o resultado?"
+
+### Tabela nova: `mrc_audit_log`
+- `id` UUID PK
+- `mrc_id` UUID FK → mrc.id
+- `campo` text — nome do campo alterado
+- `valor_anterior` text
+- `valor_novo` text
+- `usuario_id` UUID FK → perfis.id
+- `criado_em` timestamptz DEFAULT now()
 
 ---
 
 ## Engine de Cálculo
-- src/lib/calculoMaturidade.js — validado (Compras → 37.78% → N3)
-- State elevado: areasCalc + todosControles compartilhados entre 3 telas
+- src/lib/calculoMaturidade.js — validado
+- State elevado no shell Dashboard: areasCalc + todosControles compartilhados
 
 ---
 
-## PRÓXIMO PASSO: Workflow de Atualização de Controles
+## ═══════════════════════════════════════════════════════
+## EM IMPLEMENTAÇÃO: WORKFLOW DE ATUALIZAÇÃO DE CONTROLES
+## ═══════════════════════════════════════════════════════
 
-Juliana quer um botão "Atualizar" em cada controle (na tabela Por Área + dentro do modal Ver). Ao clicar, abre modal de atualização com:
+### Status: MOCKUP v2 APROVADO → Codificação JSX em andamento
 
-**Fluxo descrito até agora:**
-1. Mostra informações atuais do risco/controle + fase atual
-2. Pergunta: "Houve alteração no descritivo do risco?"
-   - **SIM** → abre opções de status: Existente / Evitado / Transferido
-     - Se **Evitado** → caixa de texto para justificativa + inativa o registro (mantém para histórico, libera a referência para reuso)
-     - Se **Transferido** → [a definir]
-     - Se **Existente** → permite editar o descritivo do risco
-   - **NÃO** → informações se mantêm, segue para próximas perguntas
+### Mockup aprovado: mockup-atualizar-v2.html
 
-**Perguntas pendentes (aguardando resposta da Juliana):**
-1. Quem pode atualizar? (admin + consultor, ou gestor_cliente também?)
-2. "Evitado" = "Descontinuado" da metodologia?
-3. Referência liberada: R.COM.05 fica disponível ou próximo é sempre sequencial?
-4. Após o risco, o fluxo pergunta sobre o controle também?
-5. Relaciona com workflow de aprovação (rascunho → em_revisao → aprovado)?
-6. Campos novos necessários no Supabase?
+### Visão geral do fluxo
+Botão "Atualizar" aparece APENAS na tela Por Área, visível APENAS para admin_polimata e consultor_polimata (cliente não vê). Aparece na tabela (abaixo do "Ver") E dentro do modal Ver.
+
+### Fluxo multi-step (modal):
+
+**STEP 1 — Risco:**
+- Card resumo: ref.risco, ref.controle, fase atual, resultado, descrição do risco
+- Pergunta: "Houve alteração no descritivo do risco?"
+  - **NÃO** → mantém tudo, vai pro STEP 2
+  - **SIM** → "Qual o novo status do risco?"
+    - **Existente** → permite editar descritivo do risco → vai pro STEP 2
+    - **Evitado (Descontinuado)** → alerta vermelho + caixa de justificativa obrigatória → INATIVA a linha (ativo=false), libera a referência. FIM.
+    - **Transferido** → seleciona área destino + subprocesso + gerência (DROPDOWN cadastrados) + responsável (DROPDOWN cadastrados) → cria CÓPIA na nova área com nova ref. menor disponível, inativa na origem. FIM.
+
+**STEP 2 — Controle (só se risco é "existente"):**
+- Pergunta: "Houve alteração no descritivo do controle?"
+  - **NÃO** → mantém tudo, vai pro STEP 3
+  - **SIM** → permite editar:
+    - Descritivo, Categoria, Frequência, Natureza, Característica, Sistema, Controle Chave
+    - **6 Premissas do Controle** (grid 3×2): Por Quê? / Quando? / Onde? / Quem? / Como? / Qual o resultado?
+    - Cada premissa tem tooltip ⓘ com explicação
+    - Se Característica = "Automatizado" → campo "Quem?" fica desabilitado
+
+**STEP 3 — Executar Teste:**
+- Info box: "Risco e controle confirmados. Agora gere a Ficha de Risco para executar o teste do controle."
+- Preview table com dados que irão na ficha
+- **Próxima Fase** (não fase atual) — calculada automaticamente pela metodologia:
+  - F1 Efetivo → F3 (atalho)
+  - F1 Inefetivo/GAP → F2-E1 (Plano de Ação)
+  - F2-E1 concluído → F2-E2 (Teste de Aderência)
+  - F2-E2 Efetivo → F3
+  - etc.
+- **Botão principal (navy card):** "Salvar e Baixar Ficha de Risco" — salva alterações PRIMEIRO, depois baixa .xlsx. Status → "Em Análise"
+- **Botão secundário (dashed card):** "Salvar sem gerar ficha" — salva, marca como "Teste Pendente" com sinalização visual
+
+### Comportamento do botão X (fechar modal):
+- Abre mini-modal de confirmação: "Deseja sair? As alterações não salvas serão perdidas."
+- Botões: "Continuar editando" / "Sair sem salvar"
+
+### Botão Cancelar no footer:
+- Mesmo comportamento do X — abre confirmação
+
+### Status visuais na tabela Por Área:
+- **Em Análise** → badge dourado pulsante (após salvar com ficha)
+- **Teste Pendente** → badge amarelo (após salvar sem ficha)
+
+### Referência reaproveitada
+- Quando risco é evitado/transferido, a referência (ex: R.COM.05) fica livre
+- Próximo risco novo na área recebe a MENOR referência disponível
+- Só cria sequência nova se todas anteriores estiverem ocupadas
+
+### Permissões:
+- Botão "Atualizar" visível apenas para papel admin_polimata ou consultor_polimata
+- gestor_cliente e usuario_cliente NÃO veem o botão
 
 ---
 
 ## Pendências após workflow
-1. Export Excel/PDF da MRC
-2. Integrar engine na MRC (peso real no modal)
-3. Workflow aprovação
-4. Access control suspensos
-5. Flow "Novo Projeto" (sistemas do cliente)
+1. Upload e leitura de ficha preenchida
+2. Export Excel/PDF da MRC
+3. Integrar engine na MRC (peso real no modal)
+4. Workflow aprovação (rascunho → em_revisao → aprovado)
+5. Access control suspensos
+6. Flow "Novo Projeto"
 
 ---
 
 ## Notas Técnicas
 - GitHub bloqueado no Claude → upload direto de arquivos
-- Workflow com Claude: mockup HTML → aprovação → JSX
+- Workflow com Claude: mockup → aprovação → JSX
+- Excel: usar ExcelJS (não SheetJS)
 - `crit` é INTEGER — sempre usar String() ao comparar
-- Navegação Por Área usa `area.id` (UUID)
-- ModalDetalhe exportado como named export de MRCCompleta.jsx
+- Navegação Por Área usa area.id (UUID)
+- Ficha de Risco template: Ficha_de_Risco_Polimata_Template.xlsx
+- Gerência e Responsável Subprocesso: sempre DROPDOWN com nomes cadastrados (não texto livre)
+- 6 premissas do controle: Por Quê / Quando / Onde / Quem / Como / Qual o Resultado

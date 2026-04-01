@@ -5,6 +5,7 @@ import { Routes, Route, useNavigate, useLocation, useParams } from 'react-router
 import Configuracoes from './Configuracoes'
 import Perfil from './Perfil'
 import MRCCompleta, { ModalDetalhe } from '../components/MRCCompleta'
+import ModalAtualizar from '../components/ModalAtualizar'
 import {
   calcularPercentualArea,
   calcularIndiceEmpresa,
@@ -166,7 +167,7 @@ export default function Dashboard() {
         <Routes>
           <Route path="/" element={<HomeDash projeto={projetoAtivo} areasCalc={areasCalc} todosControles={todosControles} loading={loading} ultimaAtualizacao={ultimaAtualizacao} />} />
           <Route path="/visao-geral" element={<VisaoGeral projeto={projetoAtivo} areasCalc={areasCalc} loading={loading} ultimaAtualizacao={ultimaAtualizacao} navigate={navigate} />} />
-          <Route path="/area/:areaId" element={<PorArea projeto={projetoAtivo} areasCalc={areasCalc} loading={loading} navigate={navigate} />} />
+          <Route path="/area/:areaId" element={<PorArea projeto={projetoAtivo} areasCalc={areasCalc} loading={loading} navigate={navigate} loadDados={loadDados} />} />
           <Route path="/mrc" element={<MRCCompleta projetoId={projetoAtivo?.id} />} />
           <Route path="/configuracoes/*" element={<Configuracoes />} />
           <Route path="/perfil" element={<Perfil />} />
@@ -512,8 +513,9 @@ const vgTd = { padding: '6px 4px', textAlign: 'center', borderBottom: '1px solid
 // TELA 3 — POR ÁREA
 // ══════════════════════════════════════════════════════════════════════════════
 
-function PorArea({ projeto, areasCalc, loading, navigate }) {
+function PorArea({ projeto, areasCalc, loading, navigate, loadDados }) {
   const { areaId } = useParams()
+  const { perfil } = useAuth()
   const area = areasCalc.find(a => a.id === areaId)
   const nome = area?.nome || ''
   const [busca, setBusca] = useState('')
@@ -521,6 +523,8 @@ function PorArea({ projeto, areasCalc, loading, navigate }) {
   const [filtImp, setFiltImp] = useState('')
   const [filtRes, setFiltRes] = useState('')
   const [modalRow, setModalRow] = useState(null)
+  const [atualizarRow, setAtualizarRow] = useState(null)
+  const canEdit = perfil?.papel === 'admin_polimata' || perfil?.papel === 'consultor_polimata'
 
   if (loading) return <Spinner />
   if (!projeto) return <NoProjeto />
@@ -617,12 +621,20 @@ function PorArea({ projeto, areasCalc, loading, navigate }) {
                 <Td w={180}>{c.passos_f1}</Td><td style={tS}>{badgeR(c.r1)}</td><Td w={180}>{c.incons}</Td><Td w={180}>{c.rec}</Td>
                 <td style={tS}>{badgeImp(c.imp)}</td><td style={tS}>{badgeProb(c.prob)}</td><td style={tS}>{badgeCrit(c.crit)}</td>
                 <td style={tS}><div style={{ fontSize: 10, fontWeight: 500, color: '#00203E', borderLeft: '3px solid #CC915E', paddingLeft: 6, lineHeight: 1.3 }}>{fl.f}</div><div style={{ fontSize: 9, color: '#999', paddingLeft: 9 }}>{fl.s}</div></td>
-                <td style={{ ...tS, textAlign: 'center' }}><button onClick={() => setModalRow(c)} style={{ background: 'rgba(0,32,62,0.08)', border: '1px solid rgba(0,32,62,0.15)', borderRadius: 3, padding: '2px 10px', fontSize: 10, fontWeight: 600, color: '#00203E', cursor: 'pointer', fontFamily: 'inherit' }}>Ver</button></td>
+                <td style={{ ...tS, textAlign: 'center' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 3, alignItems: 'center' }}>
+                    <button onClick={() => setModalRow(c)} style={{ background: 'rgba(0,32,62,0.08)', border: '1px solid rgba(0,32,62,0.15)', borderRadius: 3, padding: '2px 10px', fontSize: 10, fontWeight: 600, color: '#00203E', cursor: 'pointer', fontFamily: 'inherit', width: '100%' }}>Ver</button>
+                    {canEdit && <button onClick={() => setAtualizarRow(c)} style={{ background: 'rgba(204,145,94,0.1)', border: '1px solid rgba(204,145,94,0.3)', borderRadius: 3, padding: '2px 10px', fontSize: 10, fontWeight: 600, color: '#A6512F', cursor: 'pointer', fontFamily: 'inherit', width: '100%' }}>Atualizar</button>}
+                    {c.status_workflow === 'em_analise' && <span style={{ fontSize: 8, fontWeight: 700, color: '#A6512F', background: 'rgba(204,145,94,0.15)', padding: '1px 6px', borderRadius: 2, textTransform: 'uppercase', letterSpacing: 0.5 }}>Em Análise</span>}
+                    {c.status_workflow === 'teste_pendente' && <span style={{ fontSize: 8, fontWeight: 700, color: '#9A7B00', background: 'rgba(249,168,37,0.15)', padding: '1px 6px', borderRadius: 2, textTransform: 'uppercase', letterSpacing: 0.5 }}>Teste Pendente</span>}
+                  </div>
+                </td>
               </tr>)})}{cf.length === 0 && <tr><td colSpan={24} style={{ padding: 32, textAlign: 'center', color: '#999' }}>Nenhum controle encontrado.</td></tr>}</tbody>
           </table>
         </div>
       </div>
       {modalRow && <ModalDetalhe row={modalRow} onClose={() => setModalRow(null)} />}
+      {atualizarRow && <ModalAtualizar row={atualizarRow} onClose={() => setAtualizarRow(null)} onSaved={() => { setAtualizarRow(null); if (projeto?.id) loadDados(projeto.id) }} areas={areasCalc} projetoId={projeto?.id} />}
     </div>
   )
 }
