@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
+import ExcelJS from 'exceljs'
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // CONSTANTES
@@ -269,7 +270,7 @@ export default function ModalAtualizar({ row, onClose, onSaved, areas, projetoId
     return true
   }
 
-  function gerarFichaExcel() {
+  async function gerarFichaExcel() {
     // Dados consolidados (do form ou do row original)
     const dc = controleChoice === 'sim' ? editDc : row.dc
     const dr = (riscoChoice === 'sim' && statusChoice === 'existente') ? novaDescRisco : row.dr
@@ -288,75 +289,195 @@ export default function ModalAtualizar({ row, onClose, onSaved, areas, projetoId
       premissa_resultado: row.premissa_resultado || '',
     }
 
-    // Construir CSV como fallback simples (funciona sem ExcelJS)
-    // Header + dados pré-preenchidos no formato da ficha
-    const linhas = [
-      'POLÍMATA · CONSULTORIA EM GRC',
-      'FICHA DE RISCO — EXECUÇÃO DO TESTE',
-      '',
-      'IDENTIFICAÇÃO',
-      `Área / Processo,${row.area || ''}`,
-      `Subprocesso,${row.sub || ''}`,
-      `Ref. Risco,${row.rr || ''}`,
-      `Ref. Controle,${row.rc || ''}`,
-      `Gerência,${row.ger || ''}`,
-      `Responsável Subprocesso,${row.resp_sub || ''}`,
-      `Descrição do Risco,"${(dr || '').replace(/"/g, '""')}"`,
-      `Descrição do Controle,"${(dc || '').replace(/"/g, '""')}"`,
-      '',
-      'ATRIBUTOS DO CONTROLE',
-      `Categoria,${cat || ''}`,
-      `Frequência,${freq || ''}`,
-      `Natureza,${nat || ''}`,
-      `Característica,${car || ''}`,
-      `Sistema,${sis || ''}`,
-      `Controle Chave?,${chave || ''}`,
-      '',
-      'PRÓXIMA FASE',
-      `Fase,${proximaFase.label}`,
-      `Profissional,${perfil?.nome || ''}`,
-      `Data de Geração,${new Date().toLocaleDateString('pt-BR')}`,
-      '',
-      '1. AS 6 PREMISSAS DO CONTROLE',
-      `1. Quem faz,"${(prems.premissa_quem || '').replace(/"/g, '""')}"`,
-      `2. Quando faz,"${(prems.premissa_quando || '').replace(/"/g, '""')}"`,
-      `3. Por quê faz,"${(prems.premissa_porque || '').replace(/"/g, '""')}"`,
-      `4. Como faz,"${(prems.premissa_como || '').replace(/"/g, '""')}"`,
-      `5. Onde faz,"${(prems.premissa_onde || '').replace(/"/g, '""')}"`,
-      `6. Qual o resultado,"${(prems.premissa_resultado || '').replace(/"/g, '""')}"`,
-      '',
-      '2. PASSOS DE TESTE',
-      'Atividade / Passo,Status (a/r/NA),Observação',
-      'Passo 1,,',
-      'Passo 2,,',
-      'Passo 3,,',
-      'Passo 4,,',
-      'Passo 5,,',
-      'Passo 6,,',
-      'Passo 7,,',
-      'Passo 8,,',
-      'Passo 9,,',
-      'Passo 10,,',
-      '',
-      '3. CONCLUSÃO E RESULTADO',
-      'Conclusão,',
-      'Inconsistência Identificada,',
-      'Recomendação / Melhoria,',
-      '',
-      'RESULTADO,',
-      'Melhoria Identificada?,',
-      'Descrição da Melhoria,',
-      '',
-      '4. EXECUÇÃO DO TESTE E EVIDÊNCIAS',
-      '(inserir tabelas ou listas ou amostras testadas abaixo)',
-    ]
+    // ═══ GERAR XLSX COM EXCELJS ═══
+    const wb = new ExcelJS.Workbook()
+    wb.creator = 'CI Polímata'
+    wb.created = new Date()
 
-    const csvContent = '\uFEFF' + linhas.join('\n') // BOM for Excel UTF-8
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+    // Cores Polímata
+    const NAVY = '00203E'
+    const NAVY_DEEP = '00112C'
+    const NAVY_MID = '1D3B5C'
+    const GOLD = 'CC915E'
+    const CREAM = 'F3EEE4'
+    const WHITE = 'FFFFFF'
+    const LIGHT = 'F0EBE3'
+
+    const hairBorder = { top: { style: 'hair', color: { argb: 'D5CFC6' } }, bottom: { style: 'hair', color: { argb: 'D5CFC6' } }, left: { style: 'hair', color: { argb: 'D5CFC6' } }, right: { style: 'hair', color: { argb: 'D5CFC6' } } }
+    const thinBorder = { top: { style: 'thin', color: { argb: NAVY_MID } }, bottom: { style: 'thin', color: { argb: NAVY_MID } }, left: { style: 'thin', color: { argb: NAVY_MID } }, right: { style: 'thin', color: { argb: NAVY_MID } } }
+
+    // ── ABA: 📋 Teste ──
+    const ws = wb.addWorksheet('📋 Teste')
+    ws.properties.defaultColWidth = 16
+    ws.getColumn('B').width = 30
+    ws.getColumn('C').width = 20
+    ws.getColumn('D').width = 20
+    ws.getColumn('E').width = 20
+    ws.getColumn('F').width = 20
+    ws.getColumn('G').width = 20
+    ws.getColumn('H').width = 20
+    ws.getColumn('I').width = 12
+    ws.getColumn('J').width = 30
+
+    const fontTitle = { name: 'Montserrat', size: 14, bold: true, color: { argb: CREAM } }
+    const fontSub = { name: 'Montserrat', size: 9, color: { argb: CREAM } }
+    const fontSection = { name: 'Montserrat', size: 10, bold: true, color: { argb: GOLD } }
+    const fontLabel = { name: 'Montserrat', size: 9, bold: true, color: { argb: NAVY } }
+    const fontValue = { name: 'Montserrat', size: 9, color: { argb: '333333' } }
+    const fontHint = { name: 'Montserrat', size: 8, italic: true, color: { argb: '999999' } }
+
+    const fillNavy = { type: 'pattern', pattern: 'solid', fgColor: { argb: NAVY } }
+    const fillCream = { type: 'pattern', pattern: 'solid', fgColor: { argb: CREAM } }
+    const fillLight = { type: 'pattern', pattern: 'solid', fgColor: { argb: LIGHT } }
+    const fillWhite = { type: 'pattern', pattern: 'solid', fgColor: { argb: WHITE } }
+
+    function sectionHeader(r, title) {
+      ws.mergeCells(`B${r}:J${r}`)
+      const c = ws.getCell(`B${r}`)
+      c.value = title
+      c.font = fontSection
+      c.fill = fillNavy
+      c.alignment = { horizontal: 'left', vertical: 'middle', indent: 1 }
+      c.border = thinBorder
+      ws.getRow(r).height = 22
+    }
+
+    function labelValue(r, label, value, mergeEnd = 'J') {
+      ws.getCell(`B${r}`).value = label
+      ws.getCell(`B${r}`).font = fontLabel
+      ws.getCell(`B${r}`).fill = fillLight
+      ws.getCell(`B${r}`).border = hairBorder
+      ws.getCell(`B${r}`).alignment = { vertical: 'middle', indent: 1 }
+      ws.mergeCells(`C${r}:${mergeEnd}${r}`)
+      ws.getCell(`C${r}`).value = value || ''
+      ws.getCell(`C${r}`).font = fontValue
+      ws.getCell(`C${r}`).fill = fillWhite
+      ws.getCell(`C${r}`).border = hairBorder
+      ws.getCell(`C${r}`).alignment = { vertical: 'middle', wrapText: true, indent: 1 }
+    }
+
+    // Header
+    ws.mergeCells('B1:J1')
+    ws.getCell('B1').value = 'POLÍMATA  ·  CONSULTORIA EM GRC'
+    ws.getCell('B1').font = fontTitle
+    ws.getCell('B1').fill = fillNavy
+    ws.getCell('B1').alignment = { horizontal: 'center', vertical: 'middle' }
+    ws.getRow(1).height = 32
+
+    ws.mergeCells('B2:J2')
+    ws.getCell('B2').value = 'EXECUÇÃO DO TESTE'
+    ws.getCell('B2').font = { name: 'Montserrat', size: 11, bold: true, color: { argb: GOLD } }
+    ws.getCell('B2').fill = fillNavy
+    ws.getCell('B2').alignment = { horizontal: 'center', vertical: 'middle' }
+    ws.getRow(2).height = 20
+
+    ws.mergeCells('B3:J3')
+    ws.getCell('B3').value = 'Documento de trabalho · As 6 premissas são ferramenta metodológica — não alimentam o sistema'
+    ws.getCell('B3').font = fontHint
+    ws.getCell('B3').fill = fillCream
+    ws.getCell('B3').alignment = { horizontal: 'center', vertical: 'middle' }
+
+    // Identificação (pré-preenchida, apenas leitura de referência)
+    let r = 5
+    sectionHeader(r, 'IDENTIFICAÇÃO DO CONTROLE'); r++
+    labelValue(r, 'Área / Processo', row.area); r++
+    labelValue(r, 'Subprocesso', row.sub); r++
+    labelValue(r, 'Ref. Risco', row.rr); r++
+    labelValue(r, 'Ref. Controle', row.rc); r++
+    labelValue(r, 'Gerência', row.ger); r++
+    labelValue(r, 'Resp. Subprocesso', row.resp_sub); r++
+    labelValue(r, 'Descrição do Risco', dr); r++
+    ws.getRow(r - 1).height = 36
+    labelValue(r, 'Descrição do Controle', dc); r++
+    ws.getRow(r - 1).height = 36
+    labelValue(r, 'Categoria', cat); r++
+    labelValue(r, 'Frequência', freq); r++
+    labelValue(r, 'Natureza', nat); r++
+    labelValue(r, 'Característica', car); r++
+    labelValue(r, 'Sistema', sis); r++
+    labelValue(r, 'Controle Chave?', chave); r++
+    labelValue(r, 'Próxima Fase', proximaFase.label); r++
+    labelValue(r, 'Profissional', perfil?.nome || ''); r++
+    labelValue(r, 'Data de Geração', new Date().toLocaleDateString('pt-BR')); r++
+
+    r++
+    sectionHeader(r, '1. AS 6 PREMISSAS DO CONTROLE — validação metodológica'); r++
+    ws.mergeCells(`B${r}:J${r}`)
+    ws.getCell(`B${r}`).value = 'Se o controle não mudou desde a fase anterior, confirme e avance. Se mudou, preencha novamente.'
+    ws.getCell(`B${r}`).font = fontHint
+    ws.getCell(`B${r}`).fill = fillCream
+    ws.getCell(`B${r}`).alignment = { horizontal: 'left', indent: 1 }
+    r++
+    labelValue(r, '1. QUEM FAZ', prems.premissa_quem); r++
+    labelValue(r, '2. QUANDO FAZ', prems.premissa_quando); r++
+    labelValue(r, '3. POR QUÊ FAZ', prems.premissa_porque); r++
+    labelValue(r, '4. COMO FAZ', prems.premissa_como); r++
+    labelValue(r, '5. ONDE FAZ', prems.premissa_onde); r++
+    labelValue(r, '6. QUAL O RESULTADO', prems.premissa_resultado); r++
+
+    r++
+    sectionHeader(r, '2. PASSOS DE TESTE'); r++
+    // Header row
+    ws.getCell(`B${r}`).value = 'Atividade / Passo'
+    ws.getCell(`B${r}`).font = fontLabel; ws.getCell(`B${r}`).fill = fillNavy; ws.getCell(`B${r}`).font = { ...fontLabel, color: { argb: CREAM } }; ws.getCell(`B${r}`).border = thinBorder
+    ws.mergeCells(`C${r}:H${r}`)
+    ws.getCell(`I${r}`).value = 'Status'
+    ws.getCell(`I${r}`).font = { ...fontLabel, color: { argb: CREAM } }; ws.getCell(`I${r}`).fill = fillNavy; ws.getCell(`I${r}`).border = thinBorder; ws.getCell(`I${r}`).alignment = { horizontal: 'center' }
+    ws.getCell(`J${r}`).value = 'Observação'
+    ws.getCell(`J${r}`).font = { ...fontLabel, color: { argb: CREAM } }; ws.getCell(`J${r}`).fill = fillNavy; ws.getCell(`J${r}`).border = thinBorder
+    r++
+    for (let i = 1; i <= 10; i++) {
+      ws.mergeCells(`B${r}:H${r}`)
+      ws.getCell(`B${r}`).value = `Passo ${i}`
+      ws.getCell(`B${r}`).font = fontValue; ws.getCell(`B${r}`).fill = fillWhite; ws.getCell(`B${r}`).border = hairBorder
+      ws.getCell(`I${r}`).value = ''
+      ws.getCell(`I${r}`).fill = fillWhite; ws.getCell(`I${r}`).border = hairBorder; ws.getCell(`I${r}`).alignment = { horizontal: 'center' }
+      ws.getCell(`J${r}`).value = ''
+      ws.getCell(`J${r}`).fill = fillWhite; ws.getCell(`J${r}`).border = hairBorder
+      r++
+    }
+    ws.mergeCells(`B${r}:J${r}`)
+    ws.getCell(`B${r}`).value = 'Status: a = Aprovado   ·   r = Reprovado / Com ressalva   ·   N/A = Não Aplicável'
+    ws.getCell(`B${r}`).font = fontHint; ws.getCell(`B${r}`).fill = fillCream
+    r += 2
+
+    sectionHeader(r, '3. CONCLUSÃO E RESULTADO'); r++
+    labelValue(r, 'Conclusão', ''); r++
+    ws.getRow(r - 1).height = 40
+    labelValue(r, 'Inconsistência Identificada', ''); r++
+    ws.getRow(r - 1).height = 40
+    labelValue(r, 'Recomendação / Melhoria', ''); r++
+    ws.getRow(r - 1).height = 40
+    r++
+    labelValue(r, 'RESULTADO', ''); r++
+    ws.getCell(`C${r - 1}`).font = { ...fontValue, bold: true, size: 11 }
+    labelValue(r, 'Melhoria Identificada?', ''); r++
+    labelValue(r, 'Descrição da Melhoria', ''); r++
+    ws.mergeCells(`B${r}:J${r}`)
+    ws.getCell(`B${r}`).value = '↑ Preencher apenas quando "Melhoria Identificada?" = Sim'
+    ws.getCell(`B${r}`).font = fontHint; ws.getCell(`B${r}`).fill = fillCream
+    r += 2
+
+    // Assinaturas
+    ws.mergeCells(`B${r}:J${r}`)
+    ws.getCell(`B${r}`).value = 'Executor: _______________________________   Data: ___/___/______   Revisor: _______________________________   Data: ___/___/______'
+    ws.getCell(`B${r}`).font = { name: 'Montserrat', size: 9, color: { argb: '666666' } }
+    ws.getCell(`B${r}`).alignment = { horizontal: 'center' }
+    r += 2
+
+    sectionHeader(r, '4. EXECUÇÃO DO TESTE E EVIDÊNCIAS — inserir tabelas, listas ou amostras testadas'); r++
+
+    // Print settings
+    ws.pageSetup = { orientation: 'landscape', fitToPage: true, fitToWidth: 1, fitToHeight: 0, paperSize: 9 }
+    ws.headerFooter.oddFooter = '&C&8Polímata Consultoria em GRC · Ficha de Risco · &D'
+
+    // ── Download ──
+    const buffer = await wb.xlsx.writeBuffer()
+    const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = `Ficha_de_Risco_${row.rc || 'controle'}.csv`
+    a.download = `Ficha_de_Risco_${row.rc || 'controle'}.xlsx`
     document.body.appendChild(a)
     a.click()
     document.body.removeChild(a)
