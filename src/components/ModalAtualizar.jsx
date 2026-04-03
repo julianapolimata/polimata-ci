@@ -273,7 +273,6 @@ export default function ModalAtualizar({ row, onClose, onSaved, areas, projeto }
 
 
   async function gerarFichaExcel() {
-    // Dados consolidados
     const dc = controleChoice === 'sim' ? editDc : row.dc
     const dr = (riscoChoice === 'sim' && statusChoice === 'existente') ? novaDescRisco : row.dr
     const cat = controleChoice === 'sim' ? editCat : row.cat
@@ -297,13 +296,14 @@ export default function ModalAtualizar({ row, onClose, onSaved, areas, projeto }
       pageSetup: { orientation: 'landscape', fitToPage: true, fitToWidth: 1, fitToHeight: 0, paperSize: 9 }
     })
 
-    ws.getColumn('A').width = 11
-    ws.getColumn('B').width = 28
-    ws.getColumn('C').width = 18
-    ws.getColumn('D').width = 18
-    ws.getColumn('E').width = 18
-    ws.getColumn('F').width = 18
-    ws.getColumn('G').width = 18
+    // Col A = 3 (medida Excel) 
+    ws.getColumn('A').width = 3
+    ws.getColumn('B').width = 22
+    ws.getColumn('C').width = 20
+    ws.getColumn('D').width = 22
+    ws.getColumn('E').width = 20
+    ws.getColumn('F').width = 22
+    ws.getColumn('G').width = 20
     ws.getColumn('H').width = 10
     ws.getColumn('I').width = 28
 
@@ -312,103 +312,111 @@ export default function ModalAtualizar({ row, onClose, onSaved, areas, projeto }
     const fP = { type: 'pattern', pattern: 'solid', fgColor: { argb: PRE_BG } }
     const fC = { type: 'pattern', pattern: 'solid', fgColor: { argb: CREAM } }
     const fW = { type: 'pattern', pattern: 'solid', fgColor: { argb: WHITE } }
-    const fl = { name: 'Montserrat', size: 8, bold: true, color: { argb: NAVY } }
-    const fv = { name: 'Montserrat', size: 9, color: { argb: '333333' } }
-    const fg = { name: 'Montserrat', size: 9, bold: true, color: { argb: GOLD_DARK } }
-    const fh = { name: 'Montserrat', size: 7, italic: true, color: { argb: '999999' } }
-    const fs = { name: 'Montserrat', size: 9, bold: true, color: { argb: GOLD } }
-    const fd = { name: 'Montserrat', size: 8, italic: true, color: { argb: 'BBBBBB' } }
+
+    // Fonts - SEM itálico em nenhum lugar
+    const flLabel = { name: 'Montserrat', size: 8, bold: true, color: { argb: NAVY } }
+    const fvValue = { name: 'Montserrat', size: 9, color: { argb: '333333' } }
+    const fgGold = { name: 'Montserrat', size: 9, bold: true, color: { argb: GOLD_DARK } }
+    const fhHint = { name: 'Montserrat', size: 7, color: { argb: '999999' } }
+    const fsSection = { name: 'Montserrat', size: 9, bold: true, color: { argb: GOLD } }
+    const fdDim = { name: 'Montserrat', size: 8, color: { argb: 'BBBBBB' } }
+    const flSmall = { name: 'Montserrat', size: 7, bold: true, color: { argb: NAVY } }
 
     function sec(r, t) {
       ws.mergeCells(`B${r}:I${r}`)
-      const c = ws.getCell(`B${r}`); c.value = t; c.font = fs; c.fill = fN
+      const c = ws.getCell(`B${r}`); c.value = t; c.font = fsSection; c.fill = fN
       c.alignment = { horizontal: 'left', vertical: 'middle', indent: 1 }
       c.border = { bottom: { style: 'thin', color: { argb: GOLD } } }
       ws.getRow(r).height = 22
     }
     function pre(r, l, v) {
-      ws.getCell(`B${r}`).value = l; ws.getCell(`B${r}`).font = fl; ws.getCell(`B${r}`).fill = fW
+      ws.getCell(`B${r}`).value = l; ws.getCell(`B${r}`).font = flLabel; ws.getCell(`B${r}`).fill = fW
       ws.getCell(`B${r}`).alignment = { vertical: 'middle', indent: 1 }; ws.getCell(`B${r}`).border = bH
       ws.mergeCells(`C${r}:I${r}`)
-      const c = ws.getCell(`C${r}`); c.value = v || ''; c.font = fv; c.fill = fP
+      const c = ws.getCell(`C${r}`); c.value = v || ''; c.font = fvValue; c.fill = fP
       c.alignment = { vertical: 'middle', wrapText: true, indent: 1 }
       c.border = { ...bH, left: { style: 'medium', color: { argb: GOLD } } }
     }
-    function ref(r, l, v) {
-      ws.getCell(`B${r}`).value = l; ws.getCell(`B${r}`).font = fl; ws.getCell(`B${r}`).fill = fW
+    function refR(r, l, v) {
+      ws.getCell(`B${r}`).value = l; ws.getCell(`B${r}`).font = flLabel; ws.getCell(`B${r}`).fill = fW
       ws.getCell(`B${r}`).alignment = { vertical: 'middle', indent: 1 }; ws.getCell(`B${r}`).border = bH
       ws.mergeCells(`C${r}:I${r}`)
-      const c = ws.getCell(`C${r}`); c.value = v || ''; c.font = fg; c.fill = fP
+      const c = ws.getCell(`C${r}`); c.value = v || ''; c.font = fgGold; c.fill = fP
       c.alignment = { vertical: 'middle', indent: 1 }
       c.border = { ...bH, left: { style: 'medium', color: { argb: GOLD } } }
     }
     function edit(r, l, p) {
-      ws.getCell(`B${r}`).value = l; ws.getCell(`B${r}`).font = fl; ws.getCell(`B${r}`).fill = fW
+      ws.getCell(`B${r}`).value = l; ws.getCell(`B${r}`).font = flLabel; ws.getCell(`B${r}`).fill = fW
       ws.getCell(`B${r}`).alignment = { vertical: 'middle', indent: 1 }; ws.getCell(`B${r}`).border = bH
       ws.mergeCells(`C${r}:I${r}`)
-      const c = ws.getCell(`C${r}`); c.value = p || ''; c.font = fd; c.fill = fW
+      const c = ws.getCell(`C${r}`); c.value = p || ''; c.font = fdDim; c.fill = fW
       c.alignment = { vertical: 'middle', wrapText: true, indent: 1 }
       c.border = { ...bH, left: { style: 'thin', color: { argb: BORDER_GRAY } } }
     }
 
-    // ═══ HEADER ═══
+    // ═══ HEADER (com logo) ═══
     let r = 1
+
+    // Tentar carregar logo
+    try {
+      const logoResp = await fetch('/logotipo-2cores.png')
+      if (logoResp.ok) {
+        const logoBlob = await logoResp.blob()
+        const logoBuffer = await logoBlob.arrayBuffer()
+        const logoId = wb.addImage({ buffer: logoBuffer, extension: 'png' })
+        ws.addImage(logoId, { tl: { col: 1, row: 0 }, ext: { width: 140, height: 36 } })
+      }
+    } catch (e) { /* logo não disponível */ }
+
     ws.mergeCells(`B${r}:I${r}`)
-    ws.getCell(`B${r}`).value = 'Polímata · Consultoria em GRC'
+    ws.getCell(`B${r}`).value = '          Polímata · Consultoria em GRC'
     ws.getCell(`B${r}`).font = { name: 'Montserrat', size: 14, bold: true, color: { argb: CREAM } }
     ws.getCell(`B${r}`).fill = fN; ws.getCell(`B${r}`).alignment = { horizontal: 'left', vertical: 'middle', indent: 1 }
-    ws.getRow(r).height = 28; r++
+    ws.getRow(r).height = 32; r++
 
     ws.mergeCells(`B${r}:I${r}`)
     ws.getCell(`B${r}`).value = 'FICHA DE RISCO — EXECUÇÃO DO TESTE'
     ws.getCell(`B${r}`).font = { name: 'Montserrat', size: 10, bold: true, color: { argb: GOLD } }
     ws.getCell(`B${r}`).fill = fN; ws.getCell(`B${r}`).alignment = { horizontal: 'left', vertical: 'middle', indent: 1 }
+    ws.getCell(`B${r}`).border = { bottom: { style: 'medium', color: { argb: GOLD } } }
     ws.getRow(r).height = 18; r++
 
-    ws.mergeCells(`B${r}:I${r}`)
-    ws.getCell(`B${r}`).value = 'Documento de trabalho · As 6 premissas são ferramenta metodológica — não alimentam o sistema'
-    ws.getCell(`B${r}`).font = fh; ws.getCell(`B${r}`).fill = fC
-    ws.getCell(`B${r}`).alignment = { horizontal: 'left', vertical: 'middle', indent: 1 }
-    ws.getCell(`B${r}`).border = { bottom: { style: 'medium', color: { argb: GOLD } } }; r += 2
+    // ═══ BLOCO 1 — PROJETO (grid 3 colunas, labels navy como padrão) ═══
+    // Cada par: label em B/D/F (navy bold) + valor em C/E/G-I
+    r++
+    // Linha 1: Cliente | Natureza | Fase
+    ws.getCell(`B${r}`).value = 'CLIENTE'; ws.getCell(`B${r}`).font = flSmall; ws.getCell(`B${r}`).fill = fP; ws.getCell(`B${r}`).border = bH; ws.getCell(`B${r}`).alignment = { vertical: 'middle', indent: 1 }
+    ws.getCell(`C${r}`).value = projeto?.clientes?.nome || 'Cliente'; ws.getCell(`C${r}`).font = { name: 'Montserrat', size: 10, bold: true, color: { argb: NAVY } }; ws.getCell(`C${r}`).fill = fP; ws.getCell(`C${r}`).border = bH; ws.getCell(`C${r}`).alignment = { vertical: 'middle', indent: 1 }
+    ws.getCell(`D${r}`).value = 'NATUREZA DO PROJETO'; ws.getCell(`D${r}`).font = flSmall; ws.getCell(`D${r}`).fill = fP; ws.getCell(`D${r}`).border = bH; ws.getCell(`D${r}`).alignment = { vertical: 'middle', indent: 1 }
+    ws.getCell(`E${r}`).value = projeto?.nome || 'Projeto'; ws.getCell(`E${r}`).font = { name: 'Montserrat', size: 10, bold: true, color: { argb: NAVY } }; ws.getCell(`E${r}`).fill = fP; ws.getCell(`E${r}`).border = bH; ws.getCell(`E${r}`).alignment = { vertical: 'middle', indent: 1 }
+    ws.getCell(`F${r}`).value = 'FASE EM CURSO'; ws.getCell(`F${r}`).font = flSmall; ws.getCell(`F${r}`).fill = fP; ws.getCell(`F${r}`).border = bH; ws.getCell(`F${r}`).alignment = { vertical: 'middle', indent: 1 }
+    ws.mergeCells(`G${r}:I${r}`)
+    ws.getCell(`G${r}`).value = proximaFase.label; ws.getCell(`G${r}`).font = fgGold; ws.getCell(`G${r}`).fill = fP; ws.getCell(`G${r}`).border = bH; ws.getCell(`G${r}`).alignment = { vertical: 'middle', indent: 1 }
+    ws.getRow(r).height = 22; r++
 
-    // ═══ BLOCO 1 — PROJETO (grid 3×3) ═══
-    const campos = [
-      ['CLIENTE', projeto?.clientes?.nome || 'Cliente', false],
-      ['NATUREZA DO PROJETO', projeto?.nome || 'Projeto', false],
-      ['FASE EM CURSO', proximaFase.label, true],
-      ['EXECUTOR', perfil?.nome || '', false],
-      ['DATA E HORÁRIO', dataHora, false],
-      ['DOWNLOAD POR', perfil?.email || '', false],
-      ['REVISOR', '(a preencher)', true],
-      ['DATA DA REVISÃO', '(a preencher)', true],
-      ['', '', false],
-    ]
-    const colPairs = [['B','C'], ['D','E'], ['F','I']]
-    for (let i = 0; i < campos.length; i++) {
-      const [label, value, isEdit] = campos[i]
-      const col = i % 3
-      const gr = r + Math.floor(i / 3)
-      const [lc, vc] = colPairs[col]
-      if (!label) { ws.getRow(gr).height = 22; continue }
-      ws.getCell(`${lc}${gr}`).value = label
-      ws.getCell(`${lc}${gr}`).font = { name: 'Montserrat', size: 7, bold: true, color: { argb: '999999' } }
-      ws.getCell(`${lc}${gr}`).fill = fP; ws.getCell(`${lc}${gr}`).alignment = { vertical: 'top', indent: 1 }; ws.getCell(`${lc}${gr}`).border = bH
-      if (col === 2) ws.mergeCells(`${vc}${gr}:I${gr}`)
-      const vCell = ws.getCell(`${vc}${gr}`)
-      vCell.value = value
-      vCell.font = isEdit ? fd : (i === 2 ? fg : { name: 'Montserrat', size: 10, bold: true, color: { argb: NAVY } })
-      vCell.fill = isEdit ? fW : fP
-      vCell.alignment = { vertical: 'middle', indent: 1 }; vCell.border = bH
-      ws.getRow(gr).height = 22
-    }
-    r += 3
+    // Linha 2: Executor | Data | Download por
+    ws.getCell(`B${r}`).value = 'EXECUTOR'; ws.getCell(`B${r}`).font = flSmall; ws.getCell(`B${r}`).fill = fP; ws.getCell(`B${r}`).border = bH; ws.getCell(`B${r}`).alignment = { vertical: 'middle', indent: 1 }
+    ws.getCell(`C${r}`).value = perfil?.nome || ''; ws.getCell(`C${r}`).font = { name: 'Montserrat', size: 10, bold: true, color: { argb: NAVY } }; ws.getCell(`C${r}`).fill = fP; ws.getCell(`C${r}`).border = bH; ws.getCell(`C${r}`).alignment = { vertical: 'middle', indent: 1 }
+    ws.getCell(`D${r}`).value = 'DATA E HORÁRIO'; ws.getCell(`D${r}`).font = flSmall; ws.getCell(`D${r}`).fill = fP; ws.getCell(`D${r}`).border = bH; ws.getCell(`D${r}`).alignment = { vertical: 'middle', indent: 1 }
+    ws.getCell(`E${r}`).value = dataHora; ws.getCell(`E${r}`).font = { name: 'Montserrat', size: 10, bold: true, color: { argb: NAVY } }; ws.getCell(`E${r}`).fill = fP; ws.getCell(`E${r}`).border = bH; ws.getCell(`E${r}`).alignment = { vertical: 'middle', indent: 1 }
+    ws.getCell(`F${r}`).value = 'DOWNLOAD POR'; ws.getCell(`F${r}`).font = flSmall; ws.getCell(`F${r}`).fill = fP; ws.getCell(`F${r}`).border = bH; ws.getCell(`F${r}`).alignment = { vertical: 'middle', indent: 1 }
+    ws.mergeCells(`G${r}:I${r}`)
+    ws.getCell(`G${r}`).value = perfil?.email || ''; ws.getCell(`G${r}`).font = { name: 'Montserrat', size: 9, color: { argb: NAVY } }; ws.getCell(`G${r}`).fill = fP; ws.getCell(`G${r}`).border = bH; ws.getCell(`G${r}`).alignment = { vertical: 'middle', indent: 1 }
+    ws.getRow(r).height = 22; r++
+
+    // Linha 3: Revisor | Data Revisão | (vazio)
+    ws.getCell(`B${r}`).value = 'REVISOR'; ws.getCell(`B${r}`).font = flSmall; ws.getCell(`B${r}`).fill = fW; ws.getCell(`B${r}`).border = bH; ws.getCell(`B${r}`).alignment = { vertical: 'middle', indent: 1 }
+    ws.getCell(`C${r}`).value = ''; ws.getCell(`C${r}`).font = fdDim; ws.getCell(`C${r}`).fill = fW; ws.getCell(`C${r}`).border = bH; ws.getCell(`C${r}`).alignment = { vertical: 'middle', indent: 1 }
+    ws.getCell(`D${r}`).value = 'DATA DA REVISÃO'; ws.getCell(`D${r}`).font = flSmall; ws.getCell(`D${r}`).fill = fW; ws.getCell(`D${r}`).border = bH; ws.getCell(`D${r}`).alignment = { vertical: 'middle', indent: 1 }
+    ws.getCell(`E${r}`).value = ''; ws.getCell(`E${r}`).font = fdDim; ws.getCell(`E${r}`).fill = fW; ws.getCell(`E${r}`).border = bH; ws.getCell(`E${r}`).alignment = { vertical: 'middle', indent: 1 }
+    ws.getRow(r).height = 22; r++
 
     // ═══ IDENTIFICAÇÃO ═══
     r++; sec(r, 'IDENTIFICAÇÃO DO CONTROLE'); r++
     pre(r, 'ÁREA / PROCESSO', row.area); r++
     pre(r, 'SUBPROCESSO', row.sub); r++
-    ref(r, 'REF. RISCO', row.rr); r++
-    ref(r, 'REF. CONTROLE', row.rc); r++
+    refR(r, 'REF. RISCO', row.rr); r++
+    refR(r, 'REF. CONTROLE', row.rc); r++
     pre(r, 'GERÊNCIA', row.ger); r++
     pre(r, 'RESP. SUBPROCESSO', row.resp_sub); r++
     pre(r, 'DESCRIÇÃO DO RISCO', dr); ws.getRow(r).height = 32; r++
@@ -423,14 +431,14 @@ export default function ModalAtualizar({ row, onClose, onSaved, areas, projeto }
     pre(r, 'SISTEMA', sis); r++
     pre(r, 'CONTROLE CHAVE?', chave); r++
 
-    // ═══ 6 PREMISSAS (todas editáveis) ═══
+    // ═══ 6 PREMISSAS (editáveis) ═══
     r++; sec(r, '1. AS 6 PREMISSAS DO CONTROLE — VALIDAÇÃO METODOLÓGICA'); r++
-    edit(r, '1. QUEM FAZ', '(preencher)'); r++
-    edit(r, '2. QUANDO FAZ', '(preencher)'); r++
-    edit(r, '3. POR QUÊ FAZ', '(preencher)'); r++
-    edit(r, '4. COMO FAZ', '(preencher)'); r++
-    edit(r, '5. ONDE FAZ', '(preencher)'); r++
-    edit(r, '6. QUAL O RESULTADO', '(preencher)'); r++
+    edit(r, '1. QUEM FAZ', ''); r++
+    edit(r, '2. QUANDO FAZ', ''); r++
+    edit(r, '3. POR QUÊ FAZ', ''); r++
+    edit(r, '4. COMO FAZ', ''); r++
+    edit(r, '5. ONDE FAZ', ''); r++
+    edit(r, '6. QUAL O RESULTADO', ''); r++
 
     // ═══ PASSOS DE TESTE ═══
     r++; sec(r, '2. PASSOS DE TESTE'); r++
@@ -445,13 +453,13 @@ export default function ModalAtualizar({ row, onClose, onSaved, areas, projeto }
 
     for (let i = 1; i <= 10; i++) {
       ws.mergeCells(`B${r}:G${r}`)
-      ws.getCell(`B${r}`).value = `Passo ${i}`; ws.getCell(`B${r}`).font = fd; ws.getCell(`B${r}`).fill = fW; ws.getCell(`B${r}`).border = bH; ws.getCell(`B${r}`).alignment = { indent: 1, vertical: 'middle' }
+      ws.getCell(`B${r}`).value = `Passo ${i}`; ws.getCell(`B${r}`).font = fdDim; ws.getCell(`B${r}`).fill = fW; ws.getCell(`B${r}`).border = bH; ws.getCell(`B${r}`).alignment = { indent: 1, vertical: 'middle' }
       ws.getCell(`H${r}`).fill = fW; ws.getCell(`H${r}`).border = bH; ws.getCell(`H${r}`).alignment = { horizontal: 'center', vertical: 'middle' }
       ws.getCell(`I${r}`).fill = fW; ws.getCell(`I${r}`).border = bH; r++
     }
     ws.mergeCells(`B${r}:I${r}`)
     ws.getCell(`B${r}`).value = '✓ = Teste realizado com sucesso · ✗ = Não foi possível realizar o teste'
-    ws.getCell(`B${r}`).font = fh; ws.getCell(`B${r}`).fill = fW; ws.getCell(`B${r}`).alignment = { indent: 1 }; r++
+    ws.getCell(`B${r}`).font = fhHint; ws.getCell(`B${r}`).fill = fW; ws.getCell(`B${r}`).alignment = { indent: 1 }; r++
 
     // ═══ RESULTADO ═══
     r++; sec(r, '3. RESULTADO'); r++
@@ -462,15 +470,15 @@ export default function ModalAtualizar({ row, onClose, onSaved, areas, projeto }
     ws.getCell(`C${r}`).border = { ...bH, left: { style: 'medium', color: { argb: GOLD } } }
     ws.getRow(r).height = 28; r++
     edit(r, 'INCONSISTÊNCIA IDENTIFICADA', ''); ws.getRow(r).height = 32; r++
-    edit(r, 'MELHORIA IDENTIFICADA?', '(Sim / Não)'); r++
+    edit(r, 'MELHORIA IDENTIFICADA?', ''); r++
     edit(r, 'DESCRIÇÃO DA MELHORIA', ''); ws.getRow(r).height = 32; r++
     ws.mergeCells(`B${r}:I${r}`); ws.getCell(`B${r}`).value = '↑ Preencher apenas quando "Melhoria Identificada?" = Sim'
-    ws.getCell(`B${r}`).font = fh; ws.getCell(`B${r}`).fill = fW; r++
+    ws.getCell(`B${r}`).font = fhHint; ws.getCell(`B${r}`).fill = fW; r++
 
     // ═══ EVIDÊNCIAS ═══
     r++; sec(r, '4. EXECUÇÃO DO TESTE E EVIDÊNCIAS'); r++
     ws.mergeCells(`B${r}:I${r}`); ws.getCell(`B${r}`).value = '(inserir tabelas, listas ou amostras testadas abaixo)'
-    ws.getCell(`B${r}`).font = fd; ws.getCell(`B${r}`).fill = fW; ws.getCell(`B${r}`).alignment = { horizontal: 'center', vertical: 'middle' }
+    ws.getCell(`B${r}`).font = fdDim; ws.getCell(`B${r}`).fill = fW; ws.getCell(`B${r}`).alignment = { horizontal: 'center', vertical: 'middle' }
     ws.getRow(r).height = 80; r += 2
 
     // ═══ FOOTER ═══
@@ -485,6 +493,14 @@ export default function ModalAtualizar({ row, onClose, onSaved, areas, projeto }
     const buffer = await wb.xlsx.writeBuffer()
     const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
     const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `Ficha_de_Risco_${row.rc || 'controle'}.xlsx`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+  }
     const a = document.createElement('a')
     a.href = url
     a.download = `Ficha_de_Risco_${row.rc || 'controle'}.xlsx`
