@@ -11,11 +11,14 @@ import ExcelJS from 'exceljs'
 const HEADER_ROW = 11
 const DATA_START_ROW = 12
 
+// Coluna 5 (Processo) é usada APENAS no preview, não é campo da tabela mrc
+const PREVIEW_COL_PROCESSO = 5
+
 const COL_MAP = {
   1:  'dt_ult',       // Última Atualização
   3:  'ger',          // Gerência
   4:  'resp_sub',     // Responsável Subprocesso
-  5:  'area',         // Processo (nome da área)
+  // col 5 (Processo/Área) → usado só no preview, não vai pro Supabase
   6:  'sub',          // Subprocesso
   7:  'rr',           // Ref. Risco
   8:  'dr',           // Descrição do Risco
@@ -191,7 +194,6 @@ export default function ImportarMRC({ projetoId, areas, onImported }) {
         const reg = {
           projeto_id: projetoId,
           area_id: areaObj.id,
-          area: areaObj.nome,
           ativo: true,
           status_workflow: 'rascunho',
           criado_por: perfil?.id || null,
@@ -320,7 +322,7 @@ export default function ImportarMRC({ projetoId, areas, onImported }) {
                     <td style={S.td}>{i + 1}</td>
                     <td style={{ ...S.td, color: '#CC915E', fontWeight: 600 }}>{row[7] || '—'}</td>
                     <td style={{ ...S.td, color: '#CC915E', fontWeight: 600 }}>{row[9] || '—'}</td>
-                    <td style={S.td}>{row[5] || '—'}</td>
+                    <td style={S.td}>{row[PREVIEW_COL_PROCESSO] || '—'}</td>
                     <td style={S.td}>{row[6] || '—'}</td>
                     <td style={S.td}>{row[18] || '—'}</td>
                     <td style={S.td}>{row[21] || '—'}</td>
