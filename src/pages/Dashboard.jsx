@@ -302,10 +302,11 @@ function HomeDash({ projeto, areasCalc, todosControles, loading, ultimaAtualizac
 
   return (
     <div style={D.page}>
-      <div style={D.header}>
+      <div style={{ ...D.header, position: 'relative' }}>
         <div style={D.headerCliente}>{clienteNome} · {projeto.nome || 'Controles Internos'}</div>
         <div style={D.headerTitulo}>Maturidade do Ambiente de Controles Internos</div>
         <div style={D.headerSub}>Visão consolidada · {areasCalc.length} áreas · {todosControles.length} controles · Metodologia Polímata</div>
+        <div style={{ position: 'absolute', top: 14, right: 0, fontSize: 9, color: 'rgba(243,238,228,0.3)', fontWeight: 400 }}>Última atualização: {ultimaAtualizacao}</div>
       </div>
 
       <div style={D.kpiRow}>
@@ -522,6 +523,8 @@ function PorArea({ projeto, areasCalc, todosControles, loading, navigate, loadDa
     if (precisaPlanoAcao(c) && !planoAcaoConcluido(c)) planosAcao++
   })
 
+  const ultAtualArea = useMemo(() => getUltimaAtualizacao(area.controles), [area.controles])
+
   // Heatmap da área
   const areaHeatmap = useMemo(() => {
     const grid = Array.from({ length: 4 }, () => Array(4).fill(0))
@@ -570,17 +573,18 @@ function PorArea({ projeto, areasCalc, todosControles, loading, navigate, loadDa
 
   const PA = paStyles
   const tdS = { padding: '7px 8px', borderBottom: '1px solid rgba(255,255,255,0.04)', fontSize: 11, color: 'rgba(243,238,228,0.7)', whiteSpace: 'nowrap', verticalAlign: 'top' }
-  function Td({ children, w = 150 }) { return <td style={{ ...tdS, maxWidth: w, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{children || '—'}</td> }
+  function Td({ children, w = 150 }) { return <td style={{ ...tdS, width: w, minWidth: w, maxWidth: w, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{children || '—'}</td> }
 
   return (
     <div style={PA.page}>
       {/* HEADER */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 0 6px', flexShrink: 0 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 0 6px', flexShrink: 0, position: 'relative' }}>
         <button onClick={() => navigate('/')} style={PA.btnVoltar}>← VOLTAR</button>
         <div>
           <div style={{ fontSize: 18, fontWeight: 600, color: '#F3EEE4' }}>{nome}</div>
           <div style={{ fontSize: 10, color: 'rgba(243,238,228,0.35)', marginTop: 1 }}>{area.controles.length} controles · Peso empresa: {pesoEmpresa}%</div>
         </div>
+        <div style={{ position: 'absolute', top: 12, right: 0, fontSize: 9, color: 'rgba(243,238,228,0.3)', fontWeight: 400 }}>Última atualização: {ultAtualArea}</div>
       </div>
 
       {/* ZONA SUPERIOR — HEATMAP + KPI GRID */}
@@ -665,24 +669,33 @@ function PorArea({ projeto, areasCalc, todosControles, loading, navigate, loadDa
 
       {/* TABELA MRC */}
       <div style={PA.tabelaWrap}>
-        <div style={{ flex: 1, overflowX: 'auto', overflowY: 'auto', minHeight: 0 }}>
+        <div style={{ flex: 1, overflowX: 'scroll', overflowY: 'auto', minHeight: 0 }}>
           <table style={{ width: 'max-content', minWidth: '100%', borderCollapse: 'collapse' }}>
             <thead><tr>
-              {['Data Últ. Atual.','Gerência','Resp. Subproc.','Processo','Subprocesso','Ref. Risco','Desc. Risco','Ref. Controle','Desc. Controle','Categoria','Frequência','Natureza','Caract.','Sistema','Ctrl Chave?','Passos Teste','Resultado','Desc. Inconsist.','Recomendação','Impacto','Probab.','Criticidade','Fase Atual'].map((h,i) =>
-                <th key={i} style={{ fontSize: 8, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5, color: '#F3EEE4', background: '#00203E', padding: '6px 8px', textAlign: 'left', whiteSpace: 'nowrap', position: 'sticky', top: 0, zIndex: 2 }}>{h}</th>)}
-              <th style={{ fontSize: 8, fontWeight: 700, color: '#F3EEE4', background: '#00203E', padding: '6px 8px', position: 'sticky', top: 0, zIndex: 2, width: 40 }}></th>
+              {[
+                { h: 'Data Últ. Atual.', w: 100 }, { h: 'Gerência', w: 120 }, { h: 'Resp. Subproc.', w: 120 },
+                { h: 'Processo', w: 140 }, { h: 'Subprocesso', w: 120 }, { h: 'Ref. Risco', w: 80 },
+                { h: 'Desc. Risco', w: 200 }, { h: 'Ref. Controle', w: 90 }, { h: 'Desc. Controle', w: 200 },
+                { h: 'Categoria', w: 110 }, { h: 'Frequência', w: 90 }, { h: 'Natureza', w: 80 },
+                { h: 'Caract.', w: 80 }, { h: 'Sistema', w: 80 }, { h: 'Ctrl Chave?', w: 80 },
+                { h: 'Passos Teste', w: 180 }, { h: 'Resultado', w: 80 }, { h: 'Desc. Inconsist.', w: 180 },
+                { h: 'Recomendação', w: 180 }, { h: 'Impacto', w: 80 }, { h: 'Probab.', w: 80 },
+                { h: 'Criticidade', w: 100 }, { h: 'Fase Atual', w: 160 },
+              ].map((col, i) =>
+                <th key={i} style={{ fontSize: 8, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5, color: '#F3EEE4', background: '#00203E', padding: '6px 8px', textAlign: 'left', whiteSpace: 'nowrap', position: 'sticky', top: 0, zIndex: 2, width: col.w, minWidth: col.w }}>{col.h}</th>)}
+              <th style={{ fontSize: 8, fontWeight: 700, color: '#F3EEE4', background: '#00203E', padding: '6px 8px', position: 'sticky', top: 0, zIndex: 2, width: 70, minWidth: 70 }}></th>
             </tr></thead>
             <tbody>{cf.map((c, i) => { const fl = faseLabel(c); return (
               <tr key={c.id||i} onMouseEnter={e => e.currentTarget.style.background='rgba(204,145,94,0.04)'} onMouseLeave={e => e.currentTarget.style.background=''}>
-                <Td>{c.dt_ult || '—'}</Td>
-                <Td>{c.ger}</Td><Td>{c.resp_sub}</Td><Td>{c.area}</Td><Td>{c.sub}</Td>
-                <td style={{ ...tdS, color: '#CC915E', fontWeight: 600 }}>{c.rr}</td><Td w={200}>{c.dr}</Td>
-                <td style={{ ...tdS, color: '#CC915E', fontWeight: 600 }}>{c.rc}</td><Td w={200}>{c.dc}</Td>
-                <Td>{c.cat}</Td><Td>{c.freq}</Td><Td>{c.nat}</Td><Td>{c.car}</Td><Td>{c.sis}</Td><Td>{c.chave}</Td>
-                <Td w={180}>{c.passos_f1}</Td><td style={tdS}>{badgeR(c.r1)}</td><Td w={180}>{c.incons}</Td><Td w={180}>{c.rec}</Td>
-                <td style={tdS}>{badgeImp(c.imp)}</td><td style={tdS}>{badgeProb(c.prob)}</td><td style={tdS}>{badgeCrit(c.crit)}</td>
-                <td style={tdS}><div style={{ fontSize: 10, fontWeight: 500, color: '#F3EEE4', borderLeft: '3px solid #CC915E', paddingLeft: 6, lineHeight: 1.3 }}>{fl.f}</div><div style={{ fontSize: 9, color: 'rgba(243,238,228,0.3)', paddingLeft: 9 }}>{fl.s}</div></td>
-                <td style={{ ...tdS, textAlign: 'center' }}>
+                <Td w={100}>{c.dt_ult || '—'}</Td>
+                <Td w={120}>{c.ger}</Td><Td w={120}>{c.resp_sub}</Td><Td w={140}>{c.area}</Td><Td w={120}>{c.sub}</Td>
+                <td style={{ ...tdS, color: '#CC915E', fontWeight: 600, width: 80, minWidth: 80 }}>{c.rr}</td><Td w={200}>{c.dr}</Td>
+                <td style={{ ...tdS, color: '#CC915E', fontWeight: 600, width: 90, minWidth: 90 }}>{c.rc}</td><Td w={200}>{c.dc}</Td>
+                <Td w={110}>{c.cat}</Td><Td w={90}>{c.freq}</Td><Td w={80}>{c.nat}</Td><Td w={80}>{c.car}</Td><Td w={80}>{c.sis}</Td><Td w={80}>{c.chave}</Td>
+                <Td w={180}>{c.passos_f1}</Td><td style={{ ...tdS, width: 80, minWidth: 80 }}>{badgeR(c.r1)}</td><Td w={180}>{c.incons}</Td><Td w={180}>{c.rec}</Td>
+                <td style={{ ...tdS, width: 80, minWidth: 80 }}>{badgeImp(c.imp)}</td><td style={{ ...tdS, width: 80, minWidth: 80 }}>{badgeProb(c.prob)}</td><td style={{ ...tdS, width: 100, minWidth: 100 }}>{badgeCrit(c.crit)}</td>
+                <td style={{ ...tdS, width: 160, minWidth: 160 }}><div style={{ fontSize: 10, fontWeight: 500, color: '#F3EEE4', borderLeft: '3px solid #CC915E', paddingLeft: 6, lineHeight: 1.3 }}>{fl.f}</div><div style={{ fontSize: 9, color: 'rgba(243,238,228,0.3)', paddingLeft: 9 }}>{fl.s}</div></td>
+                <td style={{ ...tdS, textAlign: 'center', width: 70, minWidth: 70 }}>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 3, alignItems: 'center' }}>
                     <button onClick={() => setModalRow(c)} style={{ background: 'rgba(243,238,228,0.06)', border: '1px solid rgba(243,238,228,0.1)', borderRadius: 3, padding: '2px 10px', fontSize: 10, fontWeight: 600, color: 'rgba(243,238,228,0.6)', cursor: 'pointer', fontFamily: 'inherit', width: '100%' }}>Ver</button>
                     {canEdit && <button onClick={() => setAtualizarRow(c)} style={{ background: 'rgba(204,145,94,0.1)', border: '1px solid rgba(204,145,94,0.3)', borderRadius: 3, padding: '2px 10px', fontSize: 10, fontWeight: 600, color: '#CC915E', cursor: 'pointer', fontFamily: 'inherit', width: '100%' }}>Atualizar</button>}
@@ -705,7 +718,7 @@ function PorArea({ projeto, areasCalc, todosControles, loading, navigate, loadDa
 // ══════════════════════════════════════════════════════════════════════════════
 
 const paStyles = {
-  page: { background: '#00112C', minHeight: '100vh', padding: '0 20px 12px', fontFamily: "'Montserrat', sans-serif", color: '#F3EEE4', fontSize: 12, display: 'flex', flexDirection: 'column', overflow: 'hidden' },
+  page: { background: '#00112C', height: '100vh', padding: '0 20px 12px', fontFamily: "'Montserrat', sans-serif", color: '#F3EEE4', fontSize: 12, display: 'flex', flexDirection: 'column', overflow: 'hidden' },
   btnVoltar: { display: 'inline-flex', alignItems: 'center', gap: 4, background: 'rgba(243,238,228,0.06)', border: '1px solid rgba(243,238,228,0.1)', borderRadius: 4, padding: '4px 10px', fontSize: 10, fontWeight: 600, color: 'rgba(243,238,228,0.5)', cursor: 'pointer', fontFamily: 'inherit' },
   zonaSuperior: { display: 'flex', gap: 10, flexShrink: 0, margin: '6px 0 8px' },
   cardTitle: { fontSize: 8, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1.2, color: 'rgba(243,238,228,0.4)', marginBottom: 8 },
@@ -719,11 +732,11 @@ const paStyles = {
   heatXLabel: { flex: 1, textAlign: 'center', fontSize: 8, fontWeight: 600, color: 'rgba(243,238,228,0.45)' },
   heatLegend: { display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, marginTop: 6, paddingTop: 6, borderTop: '1px solid rgba(255,255,255,0.04)' },
   legendItem: { display: 'flex', alignItems: 'center', gap: 4, fontSize: 8, color: 'rgba(243,238,228,0.4)' },
-  kpiGrid: { flex: 1, display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gridTemplateRows: 'auto auto', gap: 8 },
-  kpiCard: { background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 8, padding: '10px 12px', borderTop: '3px solid', display: 'flex', flexDirection: 'column', justifyContent: 'center' },
-  kpiLabel: { fontSize: 7, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.8, color: 'rgba(243,238,228,0.4)', marginBottom: 3 },
-  kpiValor: { fontSize: 22, fontWeight: 300, lineHeight: 1 },
-  kpiSub: { fontSize: 8, color: 'rgba(243,238,228,0.25)', marginTop: 3 },
+  kpiGrid: { flex: 1, display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gridTemplateRows: '1fr 1fr', gap: 8 },
+  kpiCard: { background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 8, padding: '12px 14px', borderTop: '3px solid', display: 'flex', flexDirection: 'column', justifyContent: 'center' },
+  kpiLabel: { fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.8, color: 'rgba(243,238,228,0.45)', marginBottom: 4 },
+  kpiValor: { fontSize: 28, fontWeight: 300, lineHeight: 1 },
+  kpiSub: { fontSize: 10, color: 'rgba(243,238,228,0.3)', marginTop: 4 },
   filtroInput: { flex: 1, minWidth: 200, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 4, padding: '6px 10px', fontFamily: 'inherit', fontSize: 11, outline: 'none', color: '#F3EEE4' },
   filtroSel: { background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 4, padding: '5px 8px', fontFamily: 'inherit', fontSize: 10, color: 'rgba(243,238,228,0.6)', cursor: 'pointer', outline: 'none' },
   tabelaWrap: { flex: 1, minHeight: 0, background: 'rgba(255,255,255,0.02)', borderRadius: 8, border: '1px solid rgba(255,255,255,0.05)', display: 'flex', flexDirection: 'column', overflow: 'hidden' },
