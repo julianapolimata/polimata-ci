@@ -298,7 +298,7 @@ export default function ModalAtualizar({ row, onClose, onSaved, areas, projeto }
     })
 
     ws.getColumn('A').width = 3
-    ws.getColumn('B').width = 22
+    ws.getColumn('B').width = 34
     ws.getColumn('C').width = 20
     ws.getColumn('D').width = 22
     ws.getColumn('E').width = 20
