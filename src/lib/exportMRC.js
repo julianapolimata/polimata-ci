@@ -1,14 +1,16 @@
 import ExcelJS from 'exceljs'
 
 // ══════════════════════════════════════════════════════════════════════════════
-// EXPORT MRC PARA EXCEL (.xlsx) — Polímata brand v4
+// EXPORT MRC PARA EXCEL (.xlsx) — Polímata brand v5
+// Replicação exata do layout aprovado
 // ══════════════════════════════════════════════════════════════════════════════
 
 const NAVY = '00203E'
 const GOLD = 'CC915E'
 const CREME = 'F3EEE4'
-const CREME_FILL = { type: 'pattern', pattern: 'solid', fgColor: { argb: CREME } }
 const NAVY_FILL = { type: 'pattern', pattern: 'solid', fgColor: { argb: NAVY } }
+const CREME_FILL = { type: 'pattern', pattern: 'solid', fgColor: { argb: CREME } }
+const WHITE_FILL = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFFF' } }
 const COL_HEADER_FILL = { type: 'pattern', pattern: 'solid', fgColor: { argb: '001A3A' } }
 const COL_HEADER_FONT = { name: 'Montserrat', bold: true, size: 9, color: { argb: 'FFFFFFFF' } }
 const BODY_FONT = { name: 'Montserrat', size: 9, color: { argb: 'FF333333' } }
@@ -19,13 +21,13 @@ const THIN_BORDER = {
   left: { style: 'thin', color: { argb: 'FFDDDDDD' } },
   right: { style: 'thin', color: { argb: 'FFDDDDDD' } },
 }
-const WHITE_BORDER = {
+// Grid cell borders = creme color (invisible on creme bg)
+const CREME_BORDER = {
   top: { style: 'thin', color: { argb: CREME } },
   bottom: { style: 'thin', color: { argb: CREME } },
   left: { style: 'thin', color: { argb: CREME } },
   right: { style: 'thin', color: { argb: CREME } },
 }
-const NO_BORDER = {}
 
 const MRC_COLUMNS = [
   { key: 'dt_ult', header: 'Data Última Atualização', width: 18 },
@@ -63,7 +65,7 @@ const HM_COLORS = [
   ['F97316', 'EAB308', 'EAB308', '22C55E'],
   ['EAB308', '22C55E', '22C55E', '22C55E'],
 ]
-const EMPTY_CELL_COLOR = 'E8E4DC'
+const EMPTY_COLOR = 'E8E4DC'
 
 function isYellowish(c) { return c === 'EAB308' || c === 'FACC15' }
 function impToIdx(v) { return { 'Crítico': 0, 'Alto': 1, 'Moderado': 2, 'Baixo': 3 }[v] ?? -1 }
@@ -113,12 +115,12 @@ async function fetchIconBase64() {
   } catch { return null }
 }
 
-// Preenche uma range inteira com fundo creme
+// Fill creme in range (only cells without existing fill)
 function fillCreme(ws, fromRow, toRow, fromCol, toCol) {
   for (let r = fromRow; r <= toRow; r++) {
     for (let c = fromCol; c <= toCol; c++) {
       const cell = ws.getCell(r, c)
-      if (!cell.fill || !cell.fill.fgColor) {
+      if (!cell.fill || !cell.fill.fgColor || cell.fill.fgColor.argb === '00000000') {
         cell.fill = CREME_FILL
       }
     }
@@ -126,7 +128,7 @@ function fillCreme(ws, fromRow, toRow, fromCol, toCol) {
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
-// ABA 1: MAPA DE CALOR
+// ABA 1: MAPA DE CALOR (réplica exata)
 // ══════════════════════════════════════════════════════════════════════════════
 
 function buildHeatmapSheet(wb, controles, iconId, clienteNome, projetoNome) {
@@ -135,55 +137,48 @@ function buildHeatmapSheet(wb, controles, iconId, clienteNome, projetoNome) {
     pageSetup: { orientation: 'landscape', fitToPage: true },
   })
 
-  // Colunas: A=3(margem), B=3(eixoY), C=12(labels), D-G=16(grid), H=4(espaço)
+  // Colunas: A=3, B=4.09, C=18.63, D-H=default(~8.43)
   ws.getColumn(1).width = 3
-  ws.getColumn(2).width = 3
-  ws.getColumn(3).width = 12
-  ws.getColumn(4).width = 16
-  ws.getColumn(5).width = 16
-  ws.getColumn(6).width = 16
-  ws.getColumn(7).width = 16
-  ws.getColumn(8).width = 4
+  ws.getColumn(2).width = 4.09
+  ws.getColumn(3).width = 18.63
+  // D-H ficam default
 
   const lastCol = 8
 
-  // ── HEADER (linhas 1-3, merge B até G) ──
-  // Linha 1: marca
+  // ── HEADER (linhas 1-3) ──
+  // Row 1: height=15
+  ws.getRow(1).height = 15
   ws.mergeCells('B1:G1')
   const r1 = ws.getCell('B1')
   r1.value = '  Polímata · Consultoria em GRC'
   r1.font = { name: 'Montserrat', bold: true, size: 10, color: { argb: CREME } }
   r1.fill = NAVY_FILL
   r1.alignment = { vertical: 'middle' }
-  ws.getRow(1).height = 30
   for (let c = 1; c <= lastCol; c++) ws.getCell(1, c).fill = NAVY_FILL
 
   if (iconId !== null) {
-    ws.addImage(iconId, { tl: { col: 0.8, row: 0.15 }, ext: { width: 22, height: 22 }, editAs: 'oneCell' })
+    ws.addImage(iconId, { tl: { col: 0.8, row: 0.05 }, ext: { width: 14, height: 14 }, editAs: 'oneCell' })
   }
 
-  // Linha 2: título
+  // Row 2: default height
   ws.mergeCells('B2:G2')
   const r2 = ws.getCell('B2')
   r2.value = 'MAPA DE CALOR — IMPACTO × PROBABILIDADE'
   r2.font = { name: 'Montserrat', bold: true, size: 9, color: { argb: GOLD } }
   r2.fill = NAVY_FILL
   r2.alignment = { vertical: 'middle' }
-  ws.getRow(2).height = 20
   for (let c = 1; c <= lastCol; c++) ws.getCell(2, c).fill = NAVY_FILL
 
-  // Linha 3: info
+  // Row 3: default height
   ws.mergeCells('B3:G3')
   const r3 = ws.getCell('B3')
   r3.value = infoLine(clienteNome, projetoNome, controles.length)
   r3.font = { name: 'Montserrat', size: 8, color: { argb: 'FF999999' } }
   r3.fill = NAVY_FILL
   r3.alignment = { vertical: 'middle' }
-  ws.getRow(3).height = 16
   for (let c = 1; c <= lastCol; c++) ws.getCell(3, c).fill = NAVY_FILL
 
-  // Linha 4: espaço
-  ws.getRow(4).height = 14
+  // Row 4: default (spacer)
 
   // ── CALCULAR DADOS ──
   const grid = Array.from({ length: 4 }, () => Array(4).fill(0))
@@ -201,8 +196,8 @@ function buildHeatmapSheet(wb, controles, iconId, clienteNome, projetoNome) {
     }
   })
 
-  // ── GRID (linhas 5-8) ──
-  // Eixo Y: merge B5:B8
+  // ── GRID (rows 5-8, height=40 each) ──
+  // Eixo Y: B5:B8 merged
   ws.mergeCells('B5:B8')
   const yAxis = ws.getCell('B5')
   yAxis.value = 'IMPACTO ↑'
@@ -212,41 +207,40 @@ function buildHeatmapSheet(wb, controles, iconId, clienteNome, projetoNome) {
 
   for (let ri = 0; ri < 4; ri++) {
     const rowNum = 5 + ri
-    ws.getRow(rowNum).height = 52
+    ws.getRow(rowNum).height = 40
 
-    // Label Y
+    // Label Y (col C)
     const yLabel = ws.getCell(rowNum, 3)
     yLabel.value = HM_IMP_LABELS[ri]
     yLabel.font = { name: 'Montserrat', bold: true, size: 10, color: { argb: 'FF555555' } }
     yLabel.alignment = { vertical: 'middle', horizontal: 'right' }
     yLabel.fill = CREME_FILL
 
-    // Grid cells (D-G)
+    // Grid cells (D-G = cols 4-7)
     for (let ci = 0; ci < 4; ci++) {
       const cell = ws.getCell(rowNum, 4 + ci)
       const n = grid[ri][ci]
       const e = gridE[ri][ci], inf = gridI[ri][ci], g = gridG[ri][ci]
       const color = HM_COLORS[ri][ci]
-      const yellow = isYellowish(color)
 
       if (n === 0) {
         cell.value = '0'
-        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: EMPTY_CELL_COLOR } }
+        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: EMPTY_COLOR } }
         cell.font = { name: 'Montserrat', bold: true, size: 14, color: { argb: 'FFBBBBBB' } }
       } else {
-        cell.value = { richText: [
-          { text: `${n}\n`, font: { name: 'Montserrat', bold: true, size: 18, color: { argb: yellow ? 'FF333333' : 'FFFFFFFF' } } },
-          { text: `E:${e}  I:${inf}  G:${g}`, font: { name: 'Montserrat', size: 8, color: { argb: yellow ? 'FF666666' : 'BBFFFFFF' } } },
-        ]}
+        // String simples com \n (como no arquivo original)
+        cell.value = `${n}\nE:${e}  I:${inf}  G:${g}`
         cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: color } }
+        const yellow = isYellowish(color)
+        cell.font = { name: 'Montserrat', bold: false, size: 11, color: { argb: yellow ? 'FF333333' : 'FFFFFFFF' } }
       }
       cell.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true }
-      cell.border = WHITE_BORDER
+      cell.border = CREME_BORDER
     }
   }
 
-  // Labels X (linha 9)
-  ws.getRow(9).height = 20
+  // Labels X (row 9, height=15)
+  ws.getRow(9).height = 15
   HM_PROB_LABELS.forEach((label, ci) => {
     const cell = ws.getCell(9, 4 + ci)
     cell.value = label
@@ -255,25 +249,16 @@ function buildHeatmapSheet(wb, controles, iconId, clienteNome, projetoNome) {
     cell.fill = CREME_FILL
   })
 
-  // "PROBABILIDADE →"
+  // "PROBABILIDADE →" (row 10, default height)
   ws.mergeCells('D10:G10')
   const xAxis = ws.getCell('D10')
   xAxis.value = 'PROBABILIDADE →'
   xAxis.font = { name: 'Montserrat', bold: true, size: 7, color: { argb: 'FFAAAAAA' } }
   xAxis.alignment = { horizontal: 'center' }
   xAxis.fill = CREME_FILL
-  ws.getRow(10).height = 14
 
-  // Linha 11: espaço
-  ws.getRow(11).height = 10
-
-  // ── LEGENDA (linha 12) ──
-  ws.getRow(12).height = 20
-  // Separador visual
-  for (let c = 3; c <= 7; c++) {
-    ws.getCell(12, c).border = { top: { style: 'thin', color: { argb: 'FFD8D4CC' } } }
-    ws.getCell(12, c).fill = CREME_FILL
-  }
+  // ── ROWS 11-14: spacer + legenda (all creme fill, no borders) ──
+  // Row 12: legenda
   const legData = [
     { label: '■ Crítico', color: 'EF4444' },
     { label: '■ Significativo', color: 'F97316' },
@@ -288,21 +273,13 @@ function buildHeatmapSheet(wb, controles, iconId, clienteNome, projetoNome) {
     cell.fill = CREME_FILL
   })
 
-  // Linhas 13-14: separador
-  ws.getRow(13).height = 10
-  ws.getRow(14).height = 6
-  for (let c = 3; c <= 7; c++) {
-    ws.getCell(14, c).border = { bottom: { style: 'thin', color: { argb: 'FFD8D4CC' } } }
-    ws.getCell(14, c).fill = CREME_FILL
-  }
-
-  // ── RESUMO (linhas 15-18) ──
-  ws.getRow(15).height = 18
+  // ── ROW 15: RESUMO title ──
   const resumoTitle = ws.getCell('C15')
   resumoTitle.value = 'RESUMO'
   resumoTitle.font = { name: 'Montserrat', bold: true, size: 8, color: { argb: 'FFAAAAAA' } }
   resumoTitle.fill = CREME_FILL
 
+  // ── ROWS 16-18: Cards ──
   const totalEf = controles.filter(c => (c.r1 || '').toLowerCase() === 'efetivo').length
   const totalIn = controles.filter(c => (c.r1 || '').toLowerCase() === 'inefetivo').length
   const totalGp = controles.filter(c => { const v = (c.r1 || '').toLowerCase(); return v === 'gap' || v === 'gap de processo' }).length
@@ -315,42 +292,41 @@ function buildHeatmapSheet(wb, controles, iconId, clienteNome, projetoNome) {
     { label: 'GAP', value: totalGp, sub: tot > 0 ? `${Math.round(totalGp/tot*100)}% do total` : '—', color: 'EF4444', border: 'EF4444' },
   ]
 
-  ws.getRow(16).height = 16
-  ws.getRow(17).height = 36
-  ws.getRow(18).height = 16
+  // Row 17: height=39.5
+  ws.getRow(17).height = 39.5
 
   cards.forEach((card, i) => {
     const col = 4 + i
 
-    // Label (linha 16)
+    // Row 16: label
     const labelCell = ws.getCell(16, col)
     labelCell.value = card.label
     labelCell.font = { name: 'Montserrat', bold: true, size: 7, color: { argb: 'FF999999' } }
     labelCell.alignment = { vertical: 'bottom', horizontal: 'left' }
-    labelCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFFFFF' } }
+    labelCell.fill = WHITE_FILL
     labelCell.border = {
       top: { style: 'medium', color: { argb: card.border } },
       left: { style: 'thin', color: { argb: 'FFEEEEEE' } },
       right: { style: 'thin', color: { argb: 'FFEEEEEE' } },
     }
 
-    // Valor (linha 17)
+    // Row 17: valor
     const valCell = ws.getCell(17, col)
     valCell.value = card.value
     valCell.font = { name: 'Montserrat', size: 26, color: { argb: card.color } }
     valCell.alignment = { vertical: 'middle', horizontal: 'left' }
-    valCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFFFFF' } }
+    valCell.fill = WHITE_FILL
     valCell.border = {
       left: { style: 'thin', color: { argb: 'FFEEEEEE' } },
       right: { style: 'thin', color: { argb: 'FFEEEEEE' } },
     }
 
-    // Sub (linha 18)
+    // Row 18: sub
     const subCell = ws.getCell(18, col)
     subCell.value = card.sub
     subCell.font = { name: 'Montserrat', size: 8, color: { argb: 'FFBBBBBB' } }
     subCell.alignment = { vertical: 'top', horizontal: 'left' }
-    subCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFFFFF' } }
+    subCell.fill = WHITE_FILL
     subCell.border = {
       bottom: { style: 'thin', color: { argb: 'FFEEEEEE' } },
       left: { style: 'thin', color: { argb: 'FFEEEEEE' } },
@@ -358,31 +334,33 @@ function buildHeatmapSheet(wb, controles, iconId, clienteNome, projetoNome) {
     }
   })
 
-  // ── FOOTER (linha 20) ──
-  ws.getRow(19).height = 12
-  ws.getRow(20).height = 14
-  ws.mergeCells('B20:D20')
+  // ── ROW 19: spacer (height=15) ──
+  ws.getRow(19).height = 15
+
+  // ── ROW 20: footer (height=15) ──
+  ws.getRow(20).height = 15
+  ws.mergeCells('B20:E20')
   const footL = ws.getCell('B20')
   footL.value = 'Polímata · Consultoria em GRC'
-  footL.font = { name: 'Montserrat', size: 7, color: { argb: 'FFBBBBBB' } }
+  footL.font = { name: 'Montserrat', size: 10, color: { argb: NAVY } }
   footL.fill = CREME_FILL
-  footL.border = { top: { style: 'thin', color: { argb: 'FFD8D4CC' } } }
+  footL.border = { top: { style: 'medium', color: { argb: GOLD } } }
 
-  ws.mergeCells('F20:G20')
-  const footR = ws.getCell('F20')
+  // Border top dourada em F20, G20
+  ws.getCell('F20').border = { top: { style: 'medium', color: { argb: GOLD } } }
+  ws.getCell('F20').fill = CREME_FILL
+  ws.getCell('G20').border = { top: { style: 'medium', color: { argb: GOLD } } }
+  ws.getCell('G20').fill = CREME_FILL
+
+  const footR = ws.getCell('H20')
   const now = new Date()
   footR.value = `${now.toLocaleDateString('pt-BR')} · ${now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`
-  footR.font = { name: 'Montserrat', size: 7, color: { argb: 'FFBBBBBB' } }
+  footR.font = { name: 'Montserrat', size: 10, color: { argb: NAVY } }
   footR.alignment = { horizontal: 'right' }
   footR.fill = CREME_FILL
-  footR.border = { top: { style: 'thin', color: { argb: 'FFD8D4CC' } } }
+  footR.border = { top: { style: 'medium', color: { argb: GOLD } } }
 
-  for (let c = 4; c <= 5; c++) {
-    ws.getCell(20, c).border = { top: { style: 'thin', color: { argb: 'FFD8D4CC' } } }
-    ws.getCell(20, c).fill = CREME_FILL
-  }
-
-  // ── PREENCHER FUNDO CREME ──
+  // ── PREENCHER FUNDO CREME em tudo que não tem fill ──
   fillCreme(ws, 4, 20, 1, lastCol)
 
   return ws
@@ -393,7 +371,7 @@ function buildHeatmapSheet(wb, controles, iconId, clienteNome, projetoNome) {
 // ══════════════════════════════════════════════════════════════════════════════
 
 function buildMRCSheet(wb, controles, tituloAba, iconId, clienteNome, projetoNome) {
-  const lastCol = MRC_COLUMNS.length + 1 // +1 para coluna A margem
+  const lastCol = MRC_COLUMNS.length + 1
   const ws = wb.addWorksheet(tituloAba, {
     views: [{ state: 'frozen', ySplit: 4, xSplit: 1 }],
     properties: { defaultRowHeight: 15, showGridLines: false },
@@ -405,17 +383,17 @@ function buildMRCSheet(wb, controles, tituloAba, iconId, clienteNome, projetoNom
   MRC_COLUMNS.forEach((col, idx) => { ws.getColumn(idx + 2).width = col.width })
 
   // ── HEADER (linhas 1-3, merge B até lastCol) ──
+  ws.getRow(1).height = 15
   ws.mergeCells(1, 2, 1, lastCol)
   const brandCell = ws.getCell('B1')
   brandCell.value = '  Polímata · Consultoria em GRC'
   brandCell.font = { name: 'Montserrat', bold: true, size: 10, color: { argb: CREME } }
   brandCell.fill = NAVY_FILL
   brandCell.alignment = { vertical: 'middle', horizontal: 'left' }
-  ws.getRow(1).height = 30
   for (let c = 1; c <= lastCol; c++) ws.getCell(1, c).fill = NAVY_FILL
 
   if (iconId !== null) {
-    ws.addImage(iconId, { tl: { col: 0.8, row: 0.15 }, ext: { width: 22, height: 22 }, editAs: 'oneCell' })
+    ws.addImage(iconId, { tl: { col: 0.8, row: 0.05 }, ext: { width: 14, height: 14 }, editAs: 'oneCell' })
   }
 
   ws.mergeCells(2, 2, 2, lastCol)
@@ -424,7 +402,6 @@ function buildMRCSheet(wb, controles, tituloAba, iconId, clienteNome, projetoNom
   titleCell.font = { name: 'Montserrat', bold: true, size: 9, color: { argb: GOLD } }
   titleCell.fill = NAVY_FILL
   titleCell.alignment = { vertical: 'middle', horizontal: 'left' }
-  ws.getRow(2).height = 20
   for (let c = 1; c <= lastCol; c++) ws.getCell(2, c).fill = NAVY_FILL
 
   ws.mergeCells(3, 2, 3, lastCol)
@@ -433,10 +410,9 @@ function buildMRCSheet(wb, controles, tituloAba, iconId, clienteNome, projetoNom
   infoCell.font = { name: 'Montserrat', size: 8, color: { argb: 'FF999999' } }
   infoCell.fill = NAVY_FILL
   infoCell.alignment = { vertical: 'middle', horizontal: 'left' }
-  ws.getRow(3).height = 16
   for (let c = 1; c <= lastCol; c++) ws.getCell(3, c).fill = NAVY_FILL
 
-  // ── LINHA 4: CABEÇALHOS (B em diante) ──
+  // ── LINHA 4: CABEÇALHOS ──
   const colHeaderRow = ws.getRow(4)
   ws.getCell(4, 1).fill = COL_HEADER_FILL
   ws.getCell(4, 1).border = { bottom: { style: 'medium', color: { argb: GOLD } } }
@@ -451,11 +427,9 @@ function buildMRCSheet(wb, controles, tituloAba, iconId, clienteNome, projetoNom
   })
   colHeaderRow.height = 28
 
-  // ── DADOS (linha 5+) ──
+  // ── DADOS ──
   controles.forEach((row, rowIdx) => {
     const excelRow = ws.getRow(rowIdx + 5)
-
-    // Coluna A: margem com fundo creme
     ws.getCell(rowIdx + 5, 1).fill = CREME_FILL
 
     MRC_COLUMNS.forEach((col, colIdx) => {
@@ -479,20 +453,16 @@ function buildMRCSheet(wb, controles, tituloAba, iconId, clienteNome, projetoNom
       cell.alignment = { vertical: 'top', wrapText: true }
       cell.border = THIN_BORDER
 
-      // Fundo alternado
       if (rowIdx % 2 === 1) {
         cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'F8F6F2' } }
       }
-      // Refs douradas
       if (col.key === 'rr' || col.key === 'rc') {
         cell.font = { ...GOLD_FONT }
       }
-      // Resultado colorido
       if (col.key === 'r1') {
         const cor = getResultadoColor(value)
         if (cor) cell.font = { ...BODY_FONT, bold: true, color: cor }
       }
-      // Criticidade colorida
       if (col.key === 'crit_label') {
         const cor = getCritColor(row.crit)
         if (cor) cell.font = { ...BODY_FONT, bold: true, color: cor }
@@ -521,13 +491,9 @@ export async function exportarMRCExcel(controles, nomeArquivo, tituloAba = 'MRC'
   const iconBase64 = await fetchIconBase64()
   const iconId = iconBase64 ? wb.addImage({ base64: iconBase64, extension: 'png' }) : null
 
-  // Aba 1: Mapa de Calor
   buildHeatmapSheet(wb, controles, iconId, clienteNome, projetoNome)
-
-  // Aba 2: Dados da MRC
   buildMRCSheet(wb, controles, tituloAba, iconId, clienteNome, projetoNome)
 
-  // Gerar e baixar
   const buffer = await wb.xlsx.writeBuffer()
   const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
   const url = URL.createObjectURL(blob)
