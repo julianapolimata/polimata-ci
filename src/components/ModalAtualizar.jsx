@@ -501,14 +501,7 @@ export default function ModalAtualizar({ row, onClose, onSaved, areas, projeto }
     document.body.removeChild(a)
     URL.revokeObjectURL(url)
   }
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `Ficha_de_Risco_${row.rc || 'controle'}.xlsx`
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-    URL.revokeObjectURL(url)
-  }
+
   async function logAudit(mrcId, campo, anterior, novo) {
     try {
       await supabase.from('mrc_audit_log').insert([{
