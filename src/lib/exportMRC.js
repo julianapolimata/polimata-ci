@@ -1,12 +1,13 @@
 import ExcelJS from 'exceljs'
 
 // ══════════════════════════════════════════════════════════════════════════════
-// EXPORT MRC PARA EXCEL (.xlsx) — Polímata brand v3
+// EXPORT MRC PARA EXCEL (.xlsx) — Polímata brand v4
 // ══════════════════════════════════════════════════════════════════════════════
 
 const NAVY = '00203E'
 const GOLD = 'CC915E'
 const CREME = 'F3EEE4'
+const CREME_FILL = { type: 'pattern', pattern: 'solid', fgColor: { argb: CREME } }
 const NAVY_FILL = { type: 'pattern', pattern: 'solid', fgColor: { argb: NAVY } }
 const COL_HEADER_FILL = { type: 'pattern', pattern: 'solid', fgColor: { argb: '001A3A' } }
 const COL_HEADER_FONT = { name: 'Montserrat', bold: true, size: 9, color: { argb: 'FFFFFFFF' } }
@@ -19,11 +20,12 @@ const THIN_BORDER = {
   right: { style: 'thin', color: { argb: 'FFDDDDDD' } },
 }
 const WHITE_BORDER = {
-  top: { style: 'thin', color: { argb: 'FFFFFFFF' } },
-  bottom: { style: 'thin', color: { argb: 'FFFFFFFF' } },
-  left: { style: 'thin', color: { argb: 'FFFFFFFF' } },
-  right: { style: 'thin', color: { argb: 'FFFFFFFF' } },
+  top: { style: 'thin', color: { argb: CREME } },
+  bottom: { style: 'thin', color: { argb: CREME } },
+  left: { style: 'thin', color: { argb: CREME } },
+  right: { style: 'thin', color: { argb: CREME } },
 }
+const NO_BORDER = {}
 
 const MRC_COLUMNS = [
   { key: 'dt_ult', header: 'Data Última Atualização', width: 18 },
@@ -55,15 +57,15 @@ const CRIT_LABEL_MAP = { 4: '4. Crítico', 3: '3. Significativo', 2: '2. Moderad
 
 const HM_IMP_LABELS = ['Crítico', 'Alto', 'Moderado', 'Baixo']
 const HM_PROB_LABELS = ['Extrema', 'Alta', 'Média', 'Baixa']
-// Cores ARGB por [impacto][probabilidade]
 const HM_COLORS = [
   ['EF4444', 'EF4444', 'F97316', 'EAB308'],
   ['EF4444', 'F97316', 'EAB308', 'EAB308'],
   ['F97316', 'EAB308', 'EAB308', '22C55E'],
   ['EAB308', '22C55E', '22C55E', '22C55E'],
 ]
-const YELLOW_COLORS = ['EAB308', 'FACC15']
+const EMPTY_CELL_COLOR = 'E8E4DC'
 
+function isYellowish(c) { return c === 'EAB308' || c === 'FACC15' }
 function impToIdx(v) { return { 'Crítico': 0, 'Alto': 1, 'Moderado': 2, 'Baixo': 3 }[v] ?? -1 }
 function probToIdx(v) { return { 'Extrema': 0, 'Alta': 1, 'Média': 2, 'Baixa': 3 }[v] ?? -1 }
 
@@ -88,11 +90,18 @@ function getCritColor(crit) {
   return map[crit] ? { argb: map[crit] } : null
 }
 
-function isYellowish(color) { return YELLOW_COLORS.includes(color) }
+function infoLine(clienteNome, projetoNome, count) {
+  const parts = []
+  if (clienteNome) parts.push(`Cliente: ${clienteNome}`)
+  if (projetoNome) parts.push(`Projeto: ${projetoNome}`)
+  parts.push(`${count} controles`)
+  parts.push(`Gerado em ${new Date().toLocaleDateString('pt-BR')}`)
+  return parts.join('  ·  ')
+}
 
-async function fetchLogoBase64() {
+async function fetchIconBase64() {
   try {
-    const resp = await fetch('/logotipo-2cores.png')
+    const resp = await fetch('/icon.png')
     if (!resp.ok) return null
     const blob = await resp.blob()
     return new Promise((resolve) => {
@@ -104,79 +113,79 @@ async function fetchLogoBase64() {
   } catch { return null }
 }
 
-function infoLine(clienteNome, projetoNome, count) {
-  const parts = []
-  if (clienteNome) parts.push(`Cliente: ${clienteNome}`)
-  if (projetoNome) parts.push(`Projeto: ${projetoNome}`)
-  parts.push(`${count} controles`)
-  parts.push(`Gerado em ${new Date().toLocaleDateString('pt-BR')}`)
-  return parts.join('  ·  ')
+// Preenche uma range inteira com fundo creme
+function fillCreme(ws, fromRow, toRow, fromCol, toCol) {
+  for (let r = fromRow; r <= toRow; r++) {
+    for (let c = fromCol; c <= toCol; c++) {
+      const cell = ws.getCell(r, c)
+      if (!cell.fill || !cell.fill.fgColor) {
+        cell.fill = CREME_FILL
+      }
+    }
+  }
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
 // ABA 1: MAPA DE CALOR
 // ══════════════════════════════════════════════════════════════════════════════
 
-function buildHeatmapSheet(wb, controles, logoId, clienteNome, projetoNome) {
+function buildHeatmapSheet(wb, controles, iconId, clienteNome, projetoNome) {
   const ws = wb.addWorksheet('Mapa de Calor', {
-    properties: { defaultRowHeight: 15 },
+    properties: { defaultRowHeight: 15, showGridLines: false },
     pageSetup: { orientation: 'landscape', fitToPage: true },
   })
 
-  // Layout de colunas centrado:
-  // A=3(margem), B=2(eixoY), C=12(labels Y), D-G=16(grid ×4), H=2(espaço), I=16, J=16, K=16, L=16, M=3(margem)
-  // Total ~13 colunas
-  ws.getColumn(1).width = 3    // margem esquerda
-  ws.getColumn(2).width = 3    // eixo Y label
-  ws.getColumn(3).width = 12   // labels impacto
-  ws.getColumn(4).width = 16   // grid col 1
-  ws.getColumn(5).width = 16   // grid col 2
-  ws.getColumn(6).width = 16   // grid col 3
-  ws.getColumn(7).width = 16   // grid col 4
-  ws.getColumn(8).width = 3    // espaço
-  ws.getColumn(9).width = 16   // resumo card 1
-  ws.getColumn(10).width = 16  // resumo card 2
-  ws.getColumn(11).width = 16  // resumo card 3
-  ws.getColumn(12).width = 16  // resumo card 4
-  ws.getColumn(13).width = 3   // margem direita
+  // Colunas: A=3(margem), B=3(eixoY), C=12(labels), D-G=16(grid), H=4(espaço)
+  ws.getColumn(1).width = 3
+  ws.getColumn(2).width = 3
+  ws.getColumn(3).width = 12
+  ws.getColumn(4).width = 16
+  ws.getColumn(5).width = 16
+  ws.getColumn(6).width = 16
+  ws.getColumn(7).width = 16
+  ws.getColumn(8).width = 4
 
-  // ── HEADER (linhas 1-3) ──
-  ws.mergeCells('A1:L1')
-  const r1 = ws.getCell('A1')
-  r1.value = '     Polímata · Consultoria em GRC'
+  const lastCol = 8
+
+  // ── HEADER (linhas 1-3, merge B até G) ──
+  // Linha 1: marca
+  ws.mergeCells('B1:G1')
+  const r1 = ws.getCell('B1')
+  r1.value = '  Polímata · Consultoria em GRC'
   r1.font = { name: 'Montserrat', bold: true, size: 10, color: { argb: CREME } }
   r1.fill = NAVY_FILL
   r1.alignment = { vertical: 'middle' }
   ws.getRow(1).height = 30
-  // Preencher todas cells da row 1 com navy
-  for (let c = 1; c <= 13; c++) { const cell = ws.getCell(1, c); cell.fill = NAVY_FILL }
+  for (let c = 1; c <= lastCol; c++) ws.getCell(1, c).fill = NAVY_FILL
 
-  if (logoId !== null) {
-    ws.addImage(logoId, { tl: { col: 0.2, row: 0.1 }, ext: { width: 24, height: 24 }, editAs: 'oneCell' })
+  if (iconId !== null) {
+    ws.addImage(iconId, { tl: { col: 0.8, row: 0.15 }, ext: { width: 22, height: 22 }, editAs: 'oneCell' })
   }
 
-  ws.mergeCells('A2:L2')
-  const r2 = ws.getCell('A2')
-  r2.value = '     MAPA DE CALOR — IMPACTO × PROBABILIDADE'
+  // Linha 2: título
+  ws.mergeCells('B2:G2')
+  const r2 = ws.getCell('B2')
+  r2.value = 'MAPA DE CALOR — IMPACTO × PROBABILIDADE'
   r2.font = { name: 'Montserrat', bold: true, size: 9, color: { argb: GOLD } }
   r2.fill = NAVY_FILL
   r2.alignment = { vertical: 'middle' }
   ws.getRow(2).height = 20
-  for (let c = 1; c <= 13; c++) { ws.getCell(2, c).fill = NAVY_FILL }
+  for (let c = 1; c <= lastCol; c++) ws.getCell(2, c).fill = NAVY_FILL
 
-  ws.mergeCells('A3:L3')
-  const r3 = ws.getCell('A3')
-  r3.value = '     ' + infoLine(clienteNome, projetoNome, controles.length)
+  // Linha 3: info
+  ws.mergeCells('B3:G3')
+  const r3 = ws.getCell('B3')
+  r3.value = infoLine(clienteNome, projetoNome, controles.length)
   r3.font = { name: 'Montserrat', size: 8, color: { argb: 'FF999999' } }
   r3.fill = NAVY_FILL
   r3.alignment = { vertical: 'middle' }
   ws.getRow(3).height = 16
-  for (let c = 1; c <= 13; c++) { ws.getCell(3, c).fill = NAVY_FILL }
+  for (let c = 1; c <= lastCol; c++) ws.getCell(3, c).fill = NAVY_FILL
 
   // Linha 4: espaço
-  ws.getRow(4).height = 12
+  ws.getRow(4).height = 14
 
-  // ── CALCULAR DADOS DO HEATMAP ──
+  // ── CALCULAR DADOS ──
   const grid = Array.from({ length: 4 }, () => Array(4).fill(0))
   const gridE = Array.from({ length: 4 }, () => Array(4).fill(0))
   const gridI = Array.from({ length: 4 }, () => Array(4).fill(0))
@@ -192,40 +201,42 @@ function buildHeatmapSheet(wb, controles, logoId, clienteNome, projetoNome) {
     }
   })
 
-  // ── GRID DO HEATMAP (linhas 5-8) ──
-  // Eixo Y rotacionado: coluna B, merge linhas 5-8
+  // ── GRID (linhas 5-8) ──
+  // Eixo Y: merge B5:B8
   ws.mergeCells('B5:B8')
   const yAxis = ws.getCell('B5')
   yAxis.value = 'IMPACTO ↑'
   yAxis.font = { name: 'Montserrat', bold: true, size: 7, color: { argb: 'FFAAAAAA' } }
   yAxis.alignment = { vertical: 'middle', horizontal: 'center', textRotation: 90 }
+  yAxis.fill = CREME_FILL
 
   for (let ri = 0; ri < 4; ri++) {
     const rowNum = 5 + ri
-    ws.getRow(rowNum).height = 48
+    ws.getRow(rowNum).height = 52
 
-    // Label Y (coluna C)
+    // Label Y
     const yLabel = ws.getCell(rowNum, 3)
     yLabel.value = HM_IMP_LABELS[ri]
     yLabel.font = { name: 'Montserrat', bold: true, size: 10, color: { argb: 'FF555555' } }
     yLabel.alignment = { vertical: 'middle', horizontal: 'right' }
+    yLabel.fill = CREME_FILL
 
-    // Células do grid (colunas D-G = 4-7)
+    // Grid cells (D-G)
     for (let ci = 0; ci < 4; ci++) {
       const cell = ws.getCell(rowNum, 4 + ci)
       const n = grid[ri][ci]
       const e = gridE[ri][ci], inf = gridI[ri][ci], g = gridG[ri][ci]
       const color = HM_COLORS[ri][ci]
-      const isYellow = isYellowish(color)
+      const yellow = isYellowish(color)
 
       if (n === 0) {
         cell.value = '0'
-        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'F0EDE8' } }
-        cell.font = { name: 'Montserrat', bold: true, size: 14, color: { argb: 'FFCCCCCC' } }
+        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: EMPTY_CELL_COLOR } }
+        cell.font = { name: 'Montserrat', bold: true, size: 14, color: { argb: 'FFBBBBBB' } }
       } else {
         cell.value = { richText: [
-          { text: `${n}\n`, font: { name: 'Montserrat', bold: true, size: 18, color: { argb: isYellow ? 'FF333333' : 'FFFFFFFF' } } },
-          { text: `E:${e}  I:${inf}  G:${g}`, font: { name: 'Montserrat', size: 8, color: { argb: isYellow ? 'FF666666' : 'CCFFFFFF' } } },
+          { text: `${n}\n`, font: { name: 'Montserrat', bold: true, size: 18, color: { argb: yellow ? 'FF333333' : 'FFFFFFFF' } } },
+          { text: `E:${e}  I:${inf}  G:${g}`, font: { name: 'Montserrat', size: 8, color: { argb: yellow ? 'FF666666' : 'BBFFFFFF' } } },
         ]}
         cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: color } }
       }
@@ -234,33 +245,35 @@ function buildHeatmapSheet(wb, controles, logoId, clienteNome, projetoNome) {
     }
   }
 
-  // Labels X (linha 9, colunas D-G)
+  // Labels X (linha 9)
   ws.getRow(9).height = 20
   HM_PROB_LABELS.forEach((label, ci) => {
     const cell = ws.getCell(9, 4 + ci)
     cell.value = label
     cell.font = { name: 'Montserrat', bold: true, size: 10, color: { argb: 'FF555555' } }
     cell.alignment = { vertical: 'top', horizontal: 'center' }
+    cell.fill = CREME_FILL
   })
 
-  // "PROBABILIDADE →" (linha 10)
+  // "PROBABILIDADE →"
   ws.mergeCells('D10:G10')
   const xAxis = ws.getCell('D10')
   xAxis.value = 'PROBABILIDADE →'
   xAxis.font = { name: 'Montserrat', bold: true, size: 7, color: { argb: 'FFAAAAAA' } }
   xAxis.alignment = { horizontal: 'center' }
+  xAxis.fill = CREME_FILL
   ws.getRow(10).height = 14
 
   // Linha 11: espaço
-  ws.getRow(11).height = 8
+  ws.getRow(11).height = 10
 
-  // ── LEGENDA (linha 12, colunas D-G centrada) ──
-  ws.getRow(12).height = 18
-  // Borda top para separar
+  // ── LEGENDA (linha 12) ──
+  ws.getRow(12).height = 20
+  // Separador visual
   for (let c = 3; c <= 7; c++) {
-    ws.getCell(12, c).border = { top: { style: 'thin', color: { argb: 'FFEEEEEE' } } }
+    ws.getCell(12, c).border = { top: { style: 'thin', color: { argb: 'FFD8D4CC' } } }
+    ws.getCell(12, c).fill = CREME_FILL
   }
-
   const legData = [
     { label: '■ Crítico', color: 'EF4444' },
     { label: '■ Significativo', color: 'F97316' },
@@ -270,21 +283,25 @@ function buildHeatmapSheet(wb, controles, logoId, clienteNome, projetoNome) {
   legData.forEach((item, i) => {
     const cell = ws.getCell(12, 4 + i)
     cell.value = item.label
-    cell.font = { name: 'Montserrat', size: 9, color: { argb: item.color } }
+    cell.font = { name: 'Montserrat', bold: true, size: 9, color: { argb: item.color } }
     cell.alignment = { horizontal: 'center', vertical: 'middle' }
+    cell.fill = CREME_FILL
   })
 
-  // ── SEPARADOR (linha 13-14) ──
-  ws.getRow(13).height = 8
+  // Linhas 13-14: separador
+  ws.getRow(13).height = 10
   ws.getRow(14).height = 6
-  ws.mergeCells('C14:G14')
-  ws.getCell('C14').border = { bottom: { style: 'thin', color: { argb: 'FFEEEEEE' } } }
+  for (let c = 3; c <= 7; c++) {
+    ws.getCell(14, c).border = { bottom: { style: 'thin', color: { argb: 'FFD8D4CC' } } }
+    ws.getCell(14, c).fill = CREME_FILL
+  }
 
-  // ── RESUMO (linha 15: título, linhas 16-18: cards) ──
+  // ── RESUMO (linhas 15-18) ──
   ws.getRow(15).height = 18
   const resumoTitle = ws.getCell('C15')
   resumoTitle.value = 'RESUMO'
   resumoTitle.font = { name: 'Montserrat', bold: true, size: 8, color: { argb: 'FFAAAAAA' } }
+  resumoTitle.fill = CREME_FILL
 
   const totalEf = controles.filter(c => (c.r1 || '').toLowerCase() === 'efetivo').length
   const totalIn = controles.filter(c => (c.r1 || '').toLowerCase() === 'inefetivo').length
@@ -292,38 +309,37 @@ function buildHeatmapSheet(wb, controles, logoId, clienteNome, projetoNome) {
   const tot = controles.length
 
   const cards = [
-    { label: 'TOTAL DE CONTROLES', value: tot, sub: 'controles', color: NAVY, borderColor: NAVY },
-    { label: 'EFETIVOS', value: totalEf, sub: tot > 0 ? `${Math.round(totalEf/tot*100)}% do total` : '—', color: '22C55E', borderColor: '22C55E' },
-    { label: 'INEFETIVOS', value: totalIn, sub: tot > 0 ? `${Math.round(totalIn/tot*100)}% do total` : '—', color: 'FACC15', borderColor: 'FACC15' },
-    { label: 'GAP', value: totalGp, sub: tot > 0 ? `${Math.round(totalGp/tot*100)}% do total` : '—', color: 'EF4444', borderColor: 'EF4444' },
+    { label: 'TOTAL DE CONTROLES', value: tot, sub: 'controles', color: NAVY, border: NAVY },
+    { label: 'EFETIVOS', value: totalEf, sub: tot > 0 ? `${Math.round(totalEf/tot*100)}% do total` : '—', color: '22C55E', border: '22C55E' },
+    { label: 'INEFETIVOS', value: totalIn, sub: tot > 0 ? `${Math.round(totalIn/tot*100)}% do total` : '—', color: 'FACC15', border: 'FACC15' },
+    { label: 'GAP', value: totalGp, sub: tot > 0 ? `${Math.round(totalGp/tot*100)}% do total` : '—', color: 'EF4444', border: 'EF4444' },
   ]
 
-  // Cada card ocupa 1 coluna (D, E, F, G) e 3 linhas (16=label, 17=valor, 18=sub)
   ws.getRow(16).height = 16
-  ws.getRow(17).height = 32
+  ws.getRow(17).height = 36
   ws.getRow(18).height = 16
 
   cards.forEach((card, i) => {
     const col = 4 + i
 
-    // Borda top colorida (linha 16)
+    // Label (linha 16)
     const labelCell = ws.getCell(16, col)
     labelCell.value = card.label
     labelCell.font = { name: 'Montserrat', bold: true, size: 7, color: { argb: 'FF999999' } }
     labelCell.alignment = { vertical: 'bottom', horizontal: 'left' }
-    labelCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FAFAF8' } }
+    labelCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFFFFF' } }
     labelCell.border = {
-      top: { style: 'medium', color: { argb: card.borderColor } },
+      top: { style: 'medium', color: { argb: card.border } },
       left: { style: 'thin', color: { argb: 'FFEEEEEE' } },
       right: { style: 'thin', color: { argb: 'FFEEEEEE' } },
     }
 
-    // Valor grande (linha 17)
+    // Valor (linha 17)
     const valCell = ws.getCell(17, col)
     valCell.value = card.value
-    valCell.font = { name: 'Montserrat', size: 24, color: { argb: card.color } }
+    valCell.font = { name: 'Montserrat', size: 26, color: { argb: card.color } }
     valCell.alignment = { vertical: 'middle', horizontal: 'left' }
-    valCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FAFAF8' } }
+    valCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFFFFF' } }
     valCell.border = {
       left: { style: 'thin', color: { argb: 'FFEEEEEE' } },
       right: { style: 'thin', color: { argb: 'FFEEEEEE' } },
@@ -334,7 +350,7 @@ function buildHeatmapSheet(wb, controles, logoId, clienteNome, projetoNome) {
     subCell.value = card.sub
     subCell.font = { name: 'Montserrat', size: 8, color: { argb: 'FFBBBBBB' } }
     subCell.alignment = { vertical: 'top', horizontal: 'left' }
-    subCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FAFAF8' } }
+    subCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFFFFF' } }
     subCell.border = {
       bottom: { style: 'thin', color: { argb: 'FFEEEEEE' } },
       left: { style: 'thin', color: { argb: 'FFEEEEEE' } },
@@ -343,26 +359,31 @@ function buildHeatmapSheet(wb, controles, logoId, clienteNome, projetoNome) {
   })
 
   // ── FOOTER (linha 20) ──
-  ws.getRow(19).height = 10
+  ws.getRow(19).height = 12
   ws.getRow(20).height = 14
-  ws.mergeCells('C20:D20')
-  const footL = ws.getCell('C20')
+  ws.mergeCells('B20:D20')
+  const footL = ws.getCell('B20')
   footL.value = 'Polímata · Consultoria em GRC'
-  footL.font = { name: 'Montserrat', size: 7, color: { argb: 'FFCCCCCC' } }
-  footL.border = { top: { style: 'thin', color: { argb: 'FFEEEEEE' } } }
+  footL.font = { name: 'Montserrat', size: 7, color: { argb: 'FFBBBBBB' } }
+  footL.fill = CREME_FILL
+  footL.border = { top: { style: 'thin', color: { argb: 'FFD8D4CC' } } }
 
   ws.mergeCells('F20:G20')
   const footR = ws.getCell('F20')
   const now = new Date()
   footR.value = `${now.toLocaleDateString('pt-BR')} · ${now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`
-  footR.font = { name: 'Montserrat', size: 7, color: { argb: 'FFCCCCCC' } }
+  footR.font = { name: 'Montserrat', size: 7, color: { argb: 'FFBBBBBB' } }
   footR.alignment = { horizontal: 'right' }
-  footR.border = { top: { style: 'thin', color: { argb: 'FFEEEEEE' } } }
+  footR.fill = CREME_FILL
+  footR.border = { top: { style: 'thin', color: { argb: 'FFD8D4CC' } } }
 
-  // Preencher bordas top na linha 20
   for (let c = 4; c <= 5; c++) {
-    ws.getCell(20, c).border = { top: { style: 'thin', color: { argb: 'FFEEEEEE' } } }
+    ws.getCell(20, c).border = { top: { style: 'thin', color: { argb: 'FFD8D4CC' } } }
+    ws.getCell(20, c).fill = CREME_FILL
   }
+
+  // ── PREENCHER FUNDO CREME ──
+  fillCreme(ws, 4, 20, 1, lastCol)
 
   return ws
 }
@@ -371,60 +392,54 @@ function buildHeatmapSheet(wb, controles, logoId, clienteNome, projetoNome) {
 // ABA 2: DADOS DA MRC
 // ══════════════════════════════════════════════════════════════════════════════
 
-function buildMRCSheet(wb, controles, tituloAba, logoId, clienteNome, projetoNome) {
-  const totalCols = MRC_COLUMNS.length + 1 // +1 para coluna A margem
+function buildMRCSheet(wb, controles, tituloAba, iconId, clienteNome, projetoNome) {
+  const lastCol = MRC_COLUMNS.length + 1 // +1 para coluna A margem
   const ws = wb.addWorksheet(tituloAba, {
-    views: [{ state: 'frozen', ySplit: 4, xSplit: 1 }], // congela header + coluna A
-    properties: { defaultRowHeight: 15 },
+    views: [{ state: 'frozen', ySplit: 4, xSplit: 1 }],
+    properties: { defaultRowHeight: 15, showGridLines: false },
     pageSetup: { orientation: 'landscape', fitToPage: true },
   })
 
-  // Coluna A = margem (largura 3)
+  // Coluna A = margem
   ws.getColumn(1).width = 3
-  // Colunas B em diante = dados
-  MRC_COLUMNS.forEach((col, idx) => {
-    ws.getColumn(idx + 2).width = col.width
-  })
+  MRC_COLUMNS.forEach((col, idx) => { ws.getColumn(idx + 2).width = col.width })
 
-  // ── HEADER (linhas 1-3) ──
-  const lastCol = MRC_COLUMNS.length + 1
-  ws.mergeCells(1, 1, 1, lastCol)
-  const brandCell = ws.getCell('A1')
-  brandCell.value = '     Polímata · Consultoria em GRC'
+  // ── HEADER (linhas 1-3, merge B até lastCol) ──
+  ws.mergeCells(1, 2, 1, lastCol)
+  const brandCell = ws.getCell('B1')
+  brandCell.value = '  Polímata · Consultoria em GRC'
   brandCell.font = { name: 'Montserrat', bold: true, size: 10, color: { argb: CREME } }
   brandCell.fill = NAVY_FILL
   brandCell.alignment = { vertical: 'middle', horizontal: 'left' }
   ws.getRow(1).height = 30
-  for (let c = 1; c <= lastCol; c++) { ws.getCell(1, c).fill = NAVY_FILL }
+  for (let c = 1; c <= lastCol; c++) ws.getCell(1, c).fill = NAVY_FILL
 
-  if (logoId !== null) {
-    ws.addImage(logoId, { tl: { col: 0.2, row: 0.1 }, ext: { width: 24, height: 24 }, editAs: 'oneCell' })
+  if (iconId !== null) {
+    ws.addImage(iconId, { tl: { col: 0.8, row: 0.15 }, ext: { width: 22, height: 22 }, editAs: 'oneCell' })
   }
 
-  ws.mergeCells(2, 1, 2, lastCol)
-  const titleCell = ws.getCell('A2')
-  titleCell.value = `     MATRIZ DE RISCOS E CONTROLES — ${tituloAba.toUpperCase()}`
+  ws.mergeCells(2, 2, 2, lastCol)
+  const titleCell = ws.getCell('B2')
+  titleCell.value = `MATRIZ DE RISCOS E CONTROLES — ${tituloAba.toUpperCase()}`
   titleCell.font = { name: 'Montserrat', bold: true, size: 9, color: { argb: GOLD } }
   titleCell.fill = NAVY_FILL
   titleCell.alignment = { vertical: 'middle', horizontal: 'left' }
   ws.getRow(2).height = 20
-  for (let c = 1; c <= lastCol; c++) { ws.getCell(2, c).fill = NAVY_FILL }
+  for (let c = 1; c <= lastCol; c++) ws.getCell(2, c).fill = NAVY_FILL
 
-  ws.mergeCells(3, 1, 3, lastCol)
-  const infoCell = ws.getCell('A3')
-  infoCell.value = '     ' + infoLine(clienteNome, projetoNome, controles.length)
+  ws.mergeCells(3, 2, 3, lastCol)
+  const infoCell = ws.getCell('B3')
+  infoCell.value = infoLine(clienteNome, projetoNome, controles.length)
   infoCell.font = { name: 'Montserrat', size: 8, color: { argb: 'FF999999' } }
   infoCell.fill = NAVY_FILL
   infoCell.alignment = { vertical: 'middle', horizontal: 'left' }
   ws.getRow(3).height = 16
-  for (let c = 1; c <= lastCol; c++) { ws.getCell(3, c).fill = NAVY_FILL }
+  for (let c = 1; c <= lastCol; c++) ws.getCell(3, c).fill = NAVY_FILL
 
-  // ── LINHA 4: CABEÇALHOS (coluna B em diante) ──
+  // ── LINHA 4: CABEÇALHOS (B em diante) ──
   const colHeaderRow = ws.getRow(4)
-  // Coluna A vazia na linha 4
-  const cellA4 = ws.getCell(4, 1)
-  cellA4.fill = COL_HEADER_FILL
-  cellA4.border = { bottom: { style: 'medium', color: { argb: GOLD } } }
+  ws.getCell(4, 1).fill = COL_HEADER_FILL
+  ws.getCell(4, 1).border = { bottom: { style: 'medium', color: { argb: GOLD } } }
 
   MRC_COLUMNS.forEach((col, idx) => {
     const cell = colHeaderRow.getCell(idx + 2)
@@ -436,11 +451,15 @@ function buildMRCSheet(wb, controles, tituloAba, logoId, clienteNome, projetoNom
   })
   colHeaderRow.height = 28
 
-  // ── DADOS (linha 5+, coluna B em diante) ──
+  // ── DADOS (linha 5+) ──
   controles.forEach((row, rowIdx) => {
     const excelRow = ws.getRow(rowIdx + 5)
+
+    // Coluna A: margem com fundo creme
+    ws.getCell(rowIdx + 5, 1).fill = CREME_FILL
+
     MRC_COLUMNS.forEach((col, colIdx) => {
-      const cell = excelRow.getCell(colIdx + 2) // +2 porque coluna A é margem
+      const cell = excelRow.getCell(colIdx + 2)
       let value
 
       if (col.key === 'fase') {
@@ -460,16 +479,20 @@ function buildMRCSheet(wb, controles, tituloAba, logoId, clienteNome, projetoNom
       cell.alignment = { vertical: 'top', wrapText: true }
       cell.border = THIN_BORDER
 
+      // Fundo alternado
       if (rowIdx % 2 === 1) {
         cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'F8F6F2' } }
       }
+      // Refs douradas
       if (col.key === 'rr' || col.key === 'rc') {
         cell.font = { ...GOLD_FONT }
       }
+      // Resultado colorido
       if (col.key === 'r1') {
         const cor = getResultadoColor(value)
         if (cor) cell.font = { ...BODY_FONT, bold: true, color: cor }
       }
+      // Criticidade colorida
       if (col.key === 'crit_label') {
         const cor = getCritColor(row.crit)
         if (cor) cell.font = { ...BODY_FONT, bold: true, color: cor }
@@ -477,17 +500,17 @@ function buildMRCSheet(wb, controles, tituloAba, logoId, clienteNome, projetoNom
     })
   })
 
-  // Auto-filter (coluna B em diante)
+  // Auto-filter
   ws.autoFilter = {
     from: { row: 4, column: 2 },
-    to: { row: controles.length + 4, column: MRC_COLUMNS.length + 1 },
+    to: { row: controles.length + 4, column: lastCol },
   }
 
   return ws
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
-// FUNÇÃO PRINCIPAL DE EXPORT
+// FUNÇÃO PRINCIPAL
 // ══════════════════════════════════════════════════════════════════════════════
 
 export async function exportarMRCExcel(controles, nomeArquivo, tituloAba = 'MRC', clienteNome = '', projetoNome = '') {
@@ -495,14 +518,14 @@ export async function exportarMRCExcel(controles, nomeArquivo, tituloAba = 'MRC'
   wb.creator = 'CI Polímata'
   wb.created = new Date()
 
-  const logoBase64 = await fetchLogoBase64()
-  const logoId = logoBase64 ? wb.addImage({ base64: logoBase64, extension: 'png' }) : null
+  const iconBase64 = await fetchIconBase64()
+  const iconId = iconBase64 ? wb.addImage({ base64: iconBase64, extension: 'png' }) : null
 
   // Aba 1: Mapa de Calor
-  buildHeatmapSheet(wb, controles, logoId, clienteNome, projetoNome)
+  buildHeatmapSheet(wb, controles, iconId, clienteNome, projetoNome)
 
   // Aba 2: Dados da MRC
-  buildMRCSheet(wb, controles, tituloAba, logoId, clienteNome, projetoNome)
+  buildMRCSheet(wb, controles, tituloAba, iconId, clienteNome, projetoNome)
 
   // Gerar e baixar
   const buffer = await wb.xlsx.writeBuffer()
