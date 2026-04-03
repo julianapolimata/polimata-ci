@@ -1,5 +1,5 @@
 # ESTADO DO SISTEMA — CI Polímata
-> Atualizado em: 03/04/2026 (fim da sessão)
+> Atualizado em: 03/04/2026 (fim da sessão — ficha confirmada)
 > Cole no início de cada novo chat para retomar sem perda de contexto.
 
 ---
@@ -101,61 +101,90 @@ CHECK (status_workflow = ANY (ARRAY['rascunho','em_revisao','aprovado','reprovad
 ---
 
 ## ═══════════════════════════════════════════════
-## IMPLEMENTADO: FICHA DE RISCO EXCEL ✅
+## IMPLEMENTADO: FICHA DE RISCO EXCEL v5 ✅ CONFIRMADO EM PRODUÇÃO
 ## ═══════════════════════════════════════════════
 
-### Versão: v5 — deploy pendente confirmação (build fix enviado 03/04)
+### Versão: v5 — push realizado e confirmado (03/04/2026)
 ### Gerada via ExcelJS no browser, download direto .xlsx
+### Exemplo confirmado: Ficha_de_Risco_C_COM_07.xlsx
 
-### Estrutura aprovada:
+### Estrutura real (2 abas):
 
-**HEADER:** Logo (fetch /logotipo-2cores.png) + "Polímata · Consultoria em GRC" + "FICHA DE RISCO — EXECUÇÃO DO TESTE" (sem subtítulo)
+**Aba 1: "📋 Ficha de Risco" (61 linhas × 9 colunas, paisagem)**
 
-**BLOCO 1 — PROJETO (grid 3 colunas, labels navy bold):**
-| Label | Valor | Origem |
-|---|---|---|
-| CLIENTE | Brascabos | projeto.clientes.nome |
-| NATUREZA DO PROJETO | Controles Internos 2025 | projeto.nome |
-| FASE EM CURSO | F2-E1 — Plano de Ação | getProximaFase() |
-| EXECUTOR | Juliana | perfil.nome |
-| DATA E HORÁRIO | 03/04/2026 · 14:32 | new Date() |
-| DOWNLOAD POR | juliana@polimatagrc.com.br | perfil.email |
-| REVISOR | (editável) | profissional preenche |
-| DATA DA REVISÃO | (editável) | profissional preenche |
+**Layout de colunas:**
+- Col A = 3 (margem)
+- Col B = 34 (labels)
+- Col C-G = 20-22 (valores, merged)
+- Col H = 10 (✓/✗)
+- Col I = 28 (observação)
 
-**IDENTIFICAÇÃO (pré-preenchido, fundo #F8F6F2 + borda dourada):**
-- Área, Subprocesso, Ref.Risco, Ref.Controle, Gerência (mrc.ger), Resp.Subprocesso (mrc.resp_sub), Desc.Risco, Desc.Controle
+**HEADER (rows 1-2):**
+- Logo (logotipo-2cores.png) inserida como imagem na célula A1
+- B1: "Polímata · Consultoria em GRC" — Montserrat bold 10pt, creme (#F3EEE4), fundo navy (#00203E)
+- B2: "FICHA DE RISCO — EXECUÇÃO DO TESTE" — mesmo estilo, merged B2:I2
 
-**ATRIBUTOS (pré-preenchido):** Categoria, Frequência, Natureza, Característica, Sistema, Controle Chave?
+**SEÇÃO 1 — DADOS DO PROJETO (rows 4-12):**
+- Título row 4: "1. DADOS DO PROJETO" — dourado (#CC915E) bold sobre navy (#00203E), merged
+- Labels col B: Montserrat bold 10pt navy (#00203E), fundo branco
+- Valores col C: Montserrat regular 10pt #333333, fundo creme (#F8F6F2)
+- Campos: CLIENTE, NATUREZA DO PROJETO, FASE EM CURSO, EXECUTOR, DATA E HORÁRIO, DOWNLOAD POR, REVISOR (editável), DATA DA REVISÃO (editável)
+- Valores merged C:I em cada row
 
-**1. PREMISSAS (6 campos, TODOS editáveis pelo profissional):**
-- Quem, Quando, Por Quê, Como, Onde, Qual o Resultado
+**SEÇÃO 2 — IDENTIFICAÇÃO DO RISCO E CONTROLE (rows 14-22):**
+- Título row 14: "2. IDENTIFICAÇÃO DO RISCO E CONTROLE" — dourado sobre navy
+- Campos pré-preenchidos: ÁREA/PROCESSO, SUBPROCESSO, REF.RISCO, REF.CONTROLE, GERÊNCIA, RESP.SUBPROCESSO, DESC.RISCO, DESC.CONTROLE
+- Valores: fundo #F8F6F2 + borda esquerda medium #CC915E (dourada)
 
-**2. PASSOS DE TESTE (10 linhas):** Atividade/Passo + ✓/✗ + Observação
+**SEÇÃO 3 — ATRIBUTOS DO CONTROLE (rows 24-30):**
+- Título row 24: "3. ATRIBUTOS DO CONTROLE"
+- Campos: CATEGORIA, FREQUÊNCIA, NATUREZA, CARACTERÍSTICA, SISTEMA, CONTROLE CHAVE?
+- Mesmo estilo pré-preenchido (creme + borda dourada)
 
-**3. RESULTADO (4 campos):** Resultado (destaque) + Inconsistência + Melhoria? + Desc.Melhoria
+**SEÇÃO 4 — PREMISSAS (rows 32-38):**
+- Título row 32: "4. AS 6 PREMISSAS DO CONTROLE — VALIDAÇÃO METODOLÓGICA"
+- 6 campos editáveis: QUEM FAZ, QUANDO FAZ, POR QUÊ FAZ, COMO FAZ, ONDE FAZ, QUAL O RESULTADO
+- Valores: fundo #F8F6F2 + borda dourada (mesmo estilo dos pré-preenchidos)
 
-**4. EVIDÊNCIAS:** Área livre
+**SEÇÃO 5 — PASSOS DE TESTE (rows 40-52):**
+- Título row 40: "5. PASSOS DE TESTE"
+- Header row 41: "Atividade / Passo" (B, merged B:G) | "✓ / ✗" (H) | "Observação" (I)
+- Row 42: legenda "✓ = Teste realizado com sucesso · ✗ = Não foi possível realizar o teste"
+- Rows 43-52: Passo 1 a Passo 10 (editáveis)
 
-**FOOTER:** Polímata + data/hora/email
+**SEÇÃO 6 — RESULTADO (rows 55-59):**
+- Título row 55: "6. RESULTADO"
+- Campos: RESULTADO, INCONSISTÊNCIA IDENTIFICADA, MELHORIA IDENTIFICADA?, DESCRIÇÃO DA MELHORIA
+- Row 60: nota "↑ Preencher apenas quando 'Melhoria Identificada?' = Sim"
 
-### Regras visuais:
-- Fundo BRANCO, sem linhas de grade
-- Pré-preenchido: #F8F6F2 + borda esquerda #CC915E
-- Editável: branco + borda cinza
-- Coluna A = 3 (medida Excel)
-- SEM itálico, labels navy bold
-- Paisagem, fit to page
+**FOOTER (row 61):**
+- B61: "Polímata Consultoria em GRC · Ficha de Risco"
+- F61: "Gerado em: DD/MM/AAAA · HH:MM · Por: email@..."
+
+**Aba 2: "Teste" (área livre)**
+- Row 2, col B: "7. EXECUÇÃO DO TESTE E EVIDÊNCIAS"
+- Espaço aberto para o profissional colar evidências
+
+### Regras visuais confirmadas:
+- Fundo BRANCO geral, sem linhas de grade
+- Títulos de seção: dourado (#CC915E) sobre navy (#00203E), bold
+- Labels: navy (#00203E) bold sobre branco
+- Valores pré-preenchidos: #333333 regular sobre #F8F6F2, borda esquerda medium #CC915E
+- Campos editáveis: branco + borda cinza
+- Coluna A = 3 (margem estreita)
+- Fonte Montserrat 10pt em tudo, SEM itálico
+- Orientação paisagem
+- 1 imagem (logo) incorporada
 
 ---
 
 ## Pendências (próximo chat)
-1. **Confirmar build/deploy** da ficha Excel v5
-2. **Testar ficha** — logo, grid, cores, dados corretos
+1. ~~Confirmar build/deploy da ficha Excel v5~~ ✅ FEITO
+2. **Testar ficha no browser** — verificar que logo carrega, dados corretos em produção
 3. **Configurar domínio** polimatagrc.com.br no Vercel
 4. **Tema escuro** do sistema (avaliar telas além do Dashboard)
 5. **PWA offline** — funcionamento sem internet + sincronização
-6. Upload e leitura de ficha preenchida
+6. Upload e leitura de ficha preenchida (re-importar dados do Excel de volta pro sistema)
 7. Export Excel/PDF da MRC
 8. Integrar engine na MRC (peso real no modal)
 9. Workflow aprovação (rascunho → em_revisao → aprovado)
