@@ -169,8 +169,7 @@ export default function Dashboard() {
         )}
         <nav style={{ flex: 1, overflowY: 'auto', padding: '8px 0', display: 'flex', flexDirection: 'column', gap: 1 }}>
           {sidebarOpen && <div className="sb-sep">Dashboards</div>}
-          <SideNavItem icon="📊" label="Dashboard Maturidade" active={location.pathname === '/'} onClick={() => navigate('/')} open={sidebarOpen} />
-          <SideNavItem icon="📋" label="Visão Geral" active={location.pathname === '/visao-geral'} onClick={() => navigate('/visao-geral')} open={sidebarOpen} />
+          <SideNavItem icon="📊" label="Dashboard" active={location.pathname === '/'} onClick={() => navigate('/')} open={sidebarOpen} />
           {sidebarOpen && (
             <div className="sb-sep" style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }} onClick={() => setAreaExpanded(x => !x)}>
               Por Área <span style={{ fontSize: 10 }}>{areaExpanded ? '▾' : '▸'}</span>
@@ -206,8 +205,7 @@ export default function Dashboard() {
       <main style={{ flex: 1, overflowY: 'auto', background: 'var(--bg0)' }}>
         <Routes>
           <Route path="/" element={<HomeDash projeto={projetoAtivo} areasCalc={areasCalc} todosControles={todosControles} loading={loading} ultimaAtualizacao={ultimaAtualizacao} />} />
-          <Route path="/visao-geral" element={<VisaoGeral projeto={projetoAtivo} areasCalc={areasCalc} loading={loading} ultimaAtualizacao={ultimaAtualizacao} navigate={navigate} />} />
-          <Route path="/area/:areaId" element={<PorArea projeto={projetoAtivo} areasCalc={areasCalc} loading={loading} navigate={navigate} loadDados={loadDados} />} />
+          <Route path="/area/:areaId" element={<PorArea projeto={projetoAtivo} areasCalc={areasCalc} todosControles={todosControles} loading={loading} navigate={navigate} loadDados={loadDados} />} />
           <Route path="/mrc" element={<MRCCompleta projetoId={projetoAtivo?.id} />} />
           <Route path="/configuracoes/*" element={<Configuracoes />} />
           <Route path="/perfil" element={<Perfil />} />
@@ -240,18 +238,16 @@ function Spinner() { return <div style={{ display: 'flex', alignItems: 'center',
 function NoProjeto() { return <div style={{ background: '#00112C', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 12 }}><div style={{ fontSize: 48, opacity: 0.3 }}>📊</div><div style={{ fontSize: 15, fontWeight: 600, color: '#F3EEE4' }}>Nenhum projeto ativo</div></div> }
 
 // ══════════════════════════════════════════════════════════════════════════════
-// TELA 1 — DASHBOARD MATURIDADE (REDESIGN v7)
+// TELA 1 — DASHBOARD (REDESIGN v7)
 // ══════════════════════════════════════════════════════════════════════════════
 
 function HomeDash({ projeto, areasCalc, todosControles, loading, ultimaAtualizacao }) {
   const navigate = useNavigate()
-  const [areaFiltro, setAreaFiltro] = useState(null) // nome da área filtrada no heatmap
+  const [areaFiltro, setAreaFiltro] = useState(null)
 
-  // Dados consolidados
   const empresa = useMemo(() => calcularIndiceEmpresa(areasCalc.map(a => ({ nome: a.nome, peso: a.peso || 0, percentual: a.calc?.percentual || 0 }))), [areasCalc])
   const ranking = useMemo(() => [...areasCalc].filter(a => a.controles.length > 0).sort((a, b) => (b.calc?.percentual || 0) - (a.calc?.percentual || 0)), [areasCalc])
 
-  // KPIs globais
   const kpis = useMemo(() => {
     let ef = 0, inf = 0, gap = 0, pa = 0
     todosControles.forEach(c => {
@@ -263,7 +259,6 @@ function HomeDash({ projeto, areasCalc, todosControles, loading, ultimaAtualizac
     return { ef, inf, gap, pa }
   }, [todosControles])
 
-  // Heatmap: Impacto × Probabilidade — filtrado por área se selecionada
   const heatmapData = useMemo(() => {
     const grid = Array.from({ length: 4 }, () => Array(4).fill(0))
     const controles = areaFiltro
@@ -279,14 +274,10 @@ function HomeDash({ projeto, areasCalc, todosControles, loading, ultimaAtualizac
     return grid
   }, [todosControles, areasCalc, areaFiltro])
 
-  // Tabela Área × Criticidade
   const critPorArea = useMemo(() => {
     return ranking.map(a => {
       const cr = [0, 0, 0, 0]
-      a.controles.forEach(c => {
-        const idx = critToIdx(c.crit)
-        cr[idx]++
-      })
+      a.controles.forEach(c => { cr[critToIdx(c.crit)]++ })
       return { nome: a.nome, crit: cr, total: a.controles.length }
     })
   }, [ranking])
@@ -311,14 +302,12 @@ function HomeDash({ projeto, areasCalc, todosControles, loading, ultimaAtualizac
 
   return (
     <div style={D.page}>
-      {/* HEADER */}
       <div style={D.header}>
         <div style={D.headerCliente}>{clienteNome} · {projeto.nome || 'Controles Internos'}</div>
         <div style={D.headerTitulo}>Maturidade do Ambiente de Controles Internos</div>
         <div style={D.headerSub}>Visão consolidada · {areasCalc.length} áreas · {todosControles.length} controles · Metodologia Polímata</div>
       </div>
 
-      {/* 6 KPI CARDS */}
       <div style={D.kpiRow}>
         <div style={{ ...D.kpiCard, borderTopColor: '#CC915E' }}>
           <div style={D.kpiLabel}>Índice de Maturidade Consolidado · {clienteNome}</div>
@@ -345,7 +334,7 @@ function HomeDash({ projeto, areasCalc, todosControles, loading, ultimaAtualizac
           <div style={{ ...D.kpiValor, color: COR_GAP }}>{kpis.gap}</div>
           <div style={D.kpiSub}>Riscos sem controle identificado</div>
         </div>
-        <div style={{ ...D.kpiCard, borderTopColor: '#CC915E', position: 'relative', overflow: 'hidden' }}>
+        <div style={{ ...D.kpiCard, borderTop: 'none', position: 'relative', overflow: 'hidden' }}>
           <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3, background: 'linear-gradient(90deg, #CC915E, #A6512F)' }} />
           <div style={D.kpiLabel}>Planos de Ação</div>
           <div style={{ ...D.kpiValor, color: '#CC915E' }}>{kpis.pa}</div>
@@ -353,7 +342,6 @@ function HomeDash({ projeto, areasCalc, todosControles, loading, ultimaAtualizac
         </div>
       </div>
 
-      {/* MATURIDADE POR ÁREA */}
       <div style={D.cardDark}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div style={D.cardTitle}>Maturidade por Área</div>
@@ -379,9 +367,7 @@ function HomeDash({ projeto, areasCalc, todosControles, loading, ultimaAtualizac
         </div>
       </div>
 
-      {/* ZONA INFERIOR: HEATMAP + TABELA CRITICIDADE */}
       <div style={D.zonaInferior}>
-        {/* HEATMAP */}
         <div style={{ ...D.cardDark, flex: 4, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
           <div style={D.cardTitle}>
             Mapa de Calor — Impacto × Probabilidade
@@ -419,7 +405,6 @@ function HomeDash({ projeto, areasCalc, todosControles, loading, ultimaAtualizac
           </div>
         </div>
 
-        {/* TABELA CRITICIDADE */}
         <div style={{ ...D.cardDark, flex: 5, display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden' }}>
           <div style={D.cardTitle}>Riscos por Área × Criticidade</div>
           <div style={{ flex: 1, overflowY: 'auto', minHeight: 0 }}>
@@ -499,144 +484,17 @@ const dashStyles = {
   legendItem: { display: 'flex', alignItems: 'center', gap: 5, fontSize: 9, color: 'rgba(243,238,228,0.45)' },
   legendDot: { width: 10, height: 10, borderRadius: 2 },
   critTh: { padding: '6px 8px', fontSize: 8, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.8, textAlign: 'center', position: 'sticky', top: 0, zIndex: 2, background: 'rgba(0,17,44,0.95)', borderBottom: '1px solid rgba(255,255,255,0.08)' },
-  critTdArea: { textAlign: 'left', fontWeight: 500, color: '#F3EEE4', fontSize: 10, padding: '5px 8px', borderBottom: '1px solid rgba(255,255,255,0.03)' },
-  critTdNum: { padding: '5px 8px', borderBottom: '1px solid rgba(255,255,255,0.03)', textAlign: 'center', fontWeight: 600, fontSize: 11 },
-  critTdTotal: { padding: '5px 8px', borderBottom: '1px solid rgba(255,255,255,0.03)', textAlign: 'center', fontWeight: 700, color: '#F3EEE4', fontSize: 11 },
-  critTfoot: { padding: '7px 8px', borderTop: '2px solid rgba(243,238,228,0.1)', fontWeight: 700, textAlign: 'center', fontSize: 11, color: '#F3EEE4' },
+  critTdArea: { padding: '5px 8px', fontSize: 10, fontWeight: 500, color: '#F3EEE4', borderBottom: '1px solid rgba(255,255,255,0.04)', textAlign: 'left' },
+  critTdNum: { padding: '5px 8px', fontSize: 12, fontWeight: 700, textAlign: 'center', borderBottom: '1px solid rgba(255,255,255,0.04)' },
+  critTdTotal: { padding: '5px 8px', fontSize: 11, fontWeight: 600, color: 'rgba(243,238,228,0.5)', textAlign: 'center', borderBottom: '1px solid rgba(255,255,255,0.04)' },
+  critTfoot: { padding: '8px', fontSize: 10, fontWeight: 700, textAlign: 'center', color: 'rgba(243,238,228,0.6)', borderTop: '1px solid rgba(255,255,255,0.1)' },
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
-// TELA 2 — VISÃO GERAL
+// TELA 2 — POR ÁREA (REDESIGN v2 — TEMA ESCURO + HEATMAP + KPI GRID)
 // ══════════════════════════════════════════════════════════════════════════════
 
-function VisaoGeral({ projeto, areasCalc, loading, ultimaAtualizacao, navigate }) {
-  if (loading) return <Spinner />
-  if (!projeto) return <NoProjeto />
-
-  const areaStats = useMemo(() => {
-    return areasCalc.filter(a => a.controles.length > 0).map(a => {
-      const ef = [0,0,0,0], inf = [0,0,0,0], gap = [0,0,0,0]
-      a.controles.forEach(c => {
-        const ci = Math.max(0, Math.min(3, 4 - (c.crit || 1)))
-        if (isEfetivo(c.r1)) ef[ci]++
-        else if (isInefetivo(c.r1)) inf[ci]++
-        else if (isGap(c.r1)) gap[ci]++
-      })
-      return { ...a, ef, inf, gap }
-    })
-  }, [areasCalc])
-
-  const totals = useMemo(() => {
-    const t = { total: 0, ef: [0,0,0,0], inf: [0,0,0,0], gap: [0,0,0,0] }
-    areaStats.forEach(a => {
-      t.total += a.controles.length
-      for (let i = 0; i < 4; i++) { t.ef[i] += a.ef[i]; t.inf[i] += a.inf[i]; t.gap[i] += a.gap[i] }
-    })
-    return t
-  }, [areaStats])
-
-  const sumArr = arr => arr.reduce((s, v) => s + v, 0)
-  const critColors = ['#B71C1C', '#E65100', '#F9A825', '#1B5E20']
-
-  return (
-    <div style={S.page}>
-      <div style={S.header}>
-        <span style={S.headerText}>Cliente: <strong>{projeto.clientes?.nome || 'Cliente'}</strong> · Visão Geral</span>
-        <span style={{ fontSize: 10, color: 'rgba(243,238,228,0.55)', fontWeight: 300 }}>Última atualização: {ultimaAtualizacao}</span>
-      </div>
-
-      <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
-        <div style={{ ...vgCard, borderTopColor: '#00203E' }}>
-          <div style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: .8, color: '#00203E' }}>Total</div>
-          <div style={{ fontSize: 32, fontWeight: 700, color: '#00203E', lineHeight: 1, marginTop: 4 }}>{totals.total}</div>
-        </div>
-        {[
-          { label: 'Efetivo', data: totals.ef, sum: sumArr(totals.ef), cor: '#1B5E20' },
-          { label: 'Inefetivo', data: totals.inf, sum: sumArr(totals.inf), cor: '#B71C1C' },
-          { label: 'GAP', data: totals.gap, sum: sumArr(totals.gap), cor: '#E65100' },
-        ].map((g, gi) => (
-          <div key={gi} style={{ ...vgCard, borderTopColor: g.cor }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: .8, color: g.cor }}>{g.label}</div>
-              <div style={{ fontSize: 20, fontWeight: 700, color: g.cor }}>{g.sum}</div>
-            </div>
-            <div style={{ display: 'flex', gap: 4, marginTop: 6 }}>
-              {g.data.map((v, ci) => (
-                <div key={ci} style={{ flex: 1, textAlign: 'center', background: `${critColors[ci]}15`, borderRadius: 3, padding: '3px 2px' }}>
-                  <div style={{ fontSize: 12, fontWeight: 700, color: critColors[ci] }}>{v}</div>
-                </div>
-              ))}
-            </div>
-            <div style={{ display: 'flex', gap: 4, marginTop: 2 }}>
-              {['Crít', 'Sign', 'Mod', 'Baixo'].map((l, ci) => (
-                <div key={ci} style={{ flex: 1, textAlign: 'center', fontSize: 7, color: '#999' }}>{l}</div>
-              ))}
-            </div>
-          </div>
-        ))}
-      </div>
-
-      <div style={{ flex: 1, minHeight: 0, background: '#fff', borderRadius: 6, boxShadow: '0 1px 3px rgba(0,0,0,0.05)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-        <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', color: '#00203E', letterSpacing: .8, padding: '10px 14px', borderBottom: '1px solid #eee', flexShrink: 0 }}>Resumo por Área</div>
-        <div style={{ flex: 1, overflowY: 'auto', minHeight: 0 }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-            <thead>
-              <tr>
-                <th style={{ ...S.th, textAlign: 'left', padding: '6px 10px', width: 180 }} rowSpan={2}>Área</th>
-                <th style={{ ...S.th, padding: '6px 6px', width: 70 }} rowSpan={2}>Última Revisão</th>
-                <th style={{ ...S.th, padding: '6px 6px', width: 50 }} rowSpan={2}>Total</th>
-                <th style={{ ...S.th, padding: '4px 4px', background: '#1B5E20', borderRight: '2px solid #F3EEE4' }} colSpan={4}>Efetivo</th>
-                <th style={{ ...S.th, padding: '4px 4px', background: '#B71C1C', borderRight: '2px solid #F3EEE4' }} colSpan={4}>Inefetivo</th>
-                <th style={{ ...S.th, padding: '4px 4px', background: '#E65100' }} colSpan={4}>GAP</th>
-              </tr>
-              <tr>
-                {[0,1,2].map(g => (
-                  [
-                    <th key={`${g}c`} style={{ ...vgSubTh, background: critColors[0]+'20', color: critColors[0] }}>Crít</th>,
-                    <th key={`${g}s`} style={{ ...vgSubTh, background: critColors[1]+'20', color: critColors[1] }}>Sign</th>,
-                    <th key={`${g}m`} style={{ ...vgSubTh, background: critColors[2]+'20', color: critColors[2] }}>Mod</th>,
-                    <th key={`${g}b`} style={{ ...vgSubTh, background: critColors[3]+'20', color: critColors[3], borderRight: g < 2 ? '2px solid #F3EEE4' : 'none' }}>Baixo</th>,
-                  ]
-                )).flat()}
-              </tr>
-            </thead>
-            <tbody>
-              {areaStats.map(a => (
-                <tr key={a.id} style={{ cursor: 'pointer' }} onClick={() => navigate('/area/' + a.id)}
-                  onMouseEnter={e => e.currentTarget.style.background = 'rgba(204,145,94,0.06)'} onMouseLeave={e => e.currentTarget.style.background = ''}>
-                  <td style={{ padding: '6px 10px', textAlign: 'left', fontWeight: 500, color: '#00203E', borderBottom: '1px solid #eee', fontSize: 11 }}>{a.nome}</td>
-                  <td style={{ padding: '6px 6px', textAlign: 'center', borderBottom: '1px solid #eee', fontSize: 10, color: '#999' }}>—</td>
-                  <td style={{ padding: '6px 6px', textAlign: 'center', borderBottom: '1px solid #eee', fontSize: 12, fontWeight: 700, color: '#00203E' }}>{a.controles.length}</td>
-                  {a.ef.map((v, ci) => <td key={'e' + ci} style={{ ...vgTd, color: v > 0 ? '#1B5E20' : '#ddd' }}>{v}</td>)}
-                  {a.inf.map((v, ci) => <td key={'i' + ci} style={{ ...vgTd, color: v > 0 ? '#B71C1C' : '#ddd' }}>{v}</td>)}
-                  {a.gap.map((v, ci) => <td key={'g' + ci} style={{ ...vgTd, color: v > 0 ? '#E65100' : '#ddd' }}>{v}</td>)}
-                </tr>
-              ))}
-              <tr style={{ background: 'rgba(0,32,62,0.04)' }}>
-                <td style={{ padding: '8px 10px', textAlign: 'left', fontWeight: 700, color: '#00203E', borderTop: '2px solid #00203E', fontSize: 11 }}>TOTAL</td>
-                <td style={{ padding: '8px 6px', borderTop: '2px solid #00203E' }}></td>
-                <td style={{ padding: '8px 6px', textAlign: 'center', fontWeight: 700, color: '#00203E', borderTop: '2px solid #00203E', fontSize: 12 }}>{totals.total}</td>
-                {totals.ef.map((v, ci) => <td key={'te' + ci} style={{ ...vgTd, fontWeight: 700, color: '#1B5E20', borderTop: '2px solid #00203E' }}>{v}</td>)}
-                {totals.inf.map((v, ci) => <td key={'ti' + ci} style={{ ...vgTd, fontWeight: 700, color: '#B71C1C', borderTop: '2px solid #00203E' }}>{v}</td>)}
-                {totals.gap.map((v, ci) => <td key={'tg' + ci} style={{ ...vgTd, fontWeight: 700, color: '#E65100', borderTop: '2px solid #00203E' }}>{v}</td>)}
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-const vgCard = { flex: 1, background: '#fff', borderRadius: 8, padding: '10px 14px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', borderTop: '3px solid' }
-const vgSubTh = { padding: '3px 4px', fontSize: 8, fontWeight: 700, textAlign: 'center', position: 'sticky', top: 28, zIndex: 2 }
-const vgTd = { padding: '6px 4px', textAlign: 'center', borderBottom: '1px solid #eee', fontSize: 11, fontWeight: 600 }
-
-// ══════════════════════════════════════════════════════════════════════════════
-// TELA 3 — POR ÁREA
-// ══════════════════════════════════════════════════════════════════════════════
-
-function PorArea({ projeto, areasCalc, loading, navigate, loadDados }) {
+function PorArea({ projeto, areasCalc, todosControles, loading, navigate, loadDados }) {
   const { areaId } = useParams()
   const { perfil } = useAuth()
   const area = areasCalc.find(a => a.id === areaId)
@@ -651,7 +509,7 @@ function PorArea({ projeto, areasCalc, loading, navigate, loadDados }) {
 
   if (loading) return <Spinner />
   if (!projeto) return <NoProjeto />
-  if (!area) return <div style={{ ...S.page, alignItems: 'center', justifyContent: 'center' }}><div style={{ color: '#999' }}>Área não encontrada.</div><button onClick={() => navigate('/visao-geral')} style={{ marginTop: 12, padding: '6px 16px', borderRadius: 4, border: '1px solid #ccc', background: '#fff', cursor: 'pointer', fontFamily: 'inherit' }}>← Voltar</button></div>
+  if (!area) return <div style={{ background: '#00112C', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 12, fontFamily: "'Montserrat', sans-serif" }}><div style={{ color: 'rgba(243,238,228,0.4)' }}>Área não encontrada.</div><button onClick={() => navigate('/')} style={{ marginTop: 12, padding: '6px 16px', borderRadius: 4, border: '1px solid rgba(243,238,228,0.1)', background: 'rgba(255,255,255,0.05)', color: '#F3EEE4', cursor: 'pointer', fontFamily: 'inherit', fontSize: 11 }}>← Voltar</button></div>
 
   const somaPesos = areasCalc.reduce((s, a) => s + (a.peso||0), 0)
   const pesoEmpresa = somaPesos > 0 ? ((area.peso||0)/somaPesos*100).toFixed(1) : '0'
@@ -663,6 +521,16 @@ function PorArea({ projeto, areasCalc, loading, navigate, loadDados }) {
     else if (isGap(c.r1)) gaps++
     if (precisaPlanoAcao(c) && !planoAcaoConcluido(c)) planosAcao++
   })
+
+  // Heatmap da área
+  const areaHeatmap = useMemo(() => {
+    const grid = Array.from({ length: 4 }, () => Array(4).fill(0))
+    area.controles.forEach(c => {
+      const ri = impToIdx(c.imp), ci = probToIdx(c.prob)
+      if (ri >= 0 && ci >= 0) grid[ri][ci]++
+    })
+    return grid
+  }, [area.controles])
 
   const cf = area.controles.filter(c => {
     if (busca) { const b = busca.toLowerCase(); if (![c.rr,c.rc,c.dr,c.dc,c.incons,c.rec].some(f => (f||'').toLowerCase().includes(b))) return false }
@@ -684,72 +552,145 @@ function PorArea({ projeto, areasCalc, loading, navigate, loadDados }) {
     return { f: 'F1 — Diagnóstico', s: 'Teste Não Realizado' }
   }
 
+  // Badge helpers (tema escuro)
+  const bdgS = { display: 'inline-block', padding: '2px 8px', borderRadius: 3, fontSize: 10, fontWeight: 600 }
   function badgeR(r) {
-    if (!r || r === 'Teste Não Realizado') return <span style={{ ...bS, background: 'rgba(0,0,0,0.04)', color: '#999' }}>{r||'—'}</span>
-    if (isEfetivo(r)) return <span style={{ ...bS, background: 'rgba(27,94,32,0.1)', color: '#1B5E20' }}>Efetivo</span>
-    if (isInefetivo(r)) return <span style={{ ...bS, background: 'rgba(183,28,28,0.1)', color: '#B71C1C' }}>Inefetivo</span>
-    if (isGap(r)) return <span style={{ ...bS, background: 'rgba(230,81,0,0.1)', color: '#E65100' }}>GAP</span>
-    return <span style={{ ...bS, background: 'rgba(0,0,0,0.04)', color: '#999' }}>{r}</span>
+    if (!r || r === 'Teste Não Realizado') return <span style={{ ...bdgS, background: 'rgba(255,255,255,0.04)', color: 'rgba(243,238,228,0.3)' }}>{r||'—'}</span>
+    if (isEfetivo(r)) return <span style={{ ...bdgS, background: 'rgba(34,197,94,0.12)', color: '#22C55E' }}>Efetivo</span>
+    if (isInefetivo(r)) return <span style={{ ...bdgS, background: 'rgba(250,204,21,0.12)', color: '#FACC15' }}>Inefetivo</span>
+    if (isGap(r)) return <span style={{ ...bdgS, background: 'rgba(239,68,68,0.12)', color: '#EF4444' }}>GAP</span>
+    return <span style={{ ...bdgS, background: 'rgba(255,255,255,0.04)', color: 'rgba(243,238,228,0.3)' }}>{r}</span>
   }
+  const IMP_C = { Crítico: { bg: 'rgba(239,68,68,0.12)', c: '#EF4444' }, Alto: { bg: 'rgba(249,115,22,0.12)', c: '#F97316' }, Moderado: { bg: 'rgba(234,179,8,0.12)', c: '#EAB308' }, Baixo: { bg: 'rgba(34,197,94,0.12)', c: '#22C55E' } }
+  const PRB_C = { Extrema: { bg: 'rgba(239,68,68,0.12)', c: '#EF4444' }, Alta: { bg: 'rgba(249,115,22,0.12)', c: '#F97316' }, Média: { bg: 'rgba(234,179,8,0.12)', c: '#EAB308' }, Baixa: { bg: 'rgba(34,197,94,0.12)', c: '#22C55E' } }
+  const CRT_C = { 4: { bg: 'rgba(239,68,68,0.12)', c: '#EF4444', l: '4. Crítico' }, 3: { bg: 'rgba(249,115,22,0.12)', c: '#F97316', l: '3. Significativo' }, 2: { bg: 'rgba(234,179,8,0.12)', c: '#EAB308', l: '2. Moderado' }, 1: { bg: 'rgba(34,197,94,0.12)', c: '#22C55E', l: '1. Baixo' } }
+  function badgeImp(v) { const m = IMP_C[v]; return m ? <span style={{ ...bdgS, background: m.bg, color: m.c }}>{v}</span> : <span style={{ ...bdgS, background: 'rgba(255,255,255,0.04)', color: 'rgba(243,238,228,0.3)' }}>{v||'—'}</span> }
+  function badgeProb(v) { const m = PRB_C[v]; return m ? <span style={{ ...bdgS, background: m.bg, color: m.c }}>{v}</span> : <span style={{ ...bdgS, background: 'rgba(255,255,255,0.04)', color: 'rgba(243,238,228,0.3)' }}>{v||'—'}</span> }
+  function badgeCrit(v) { const m = CRT_C[v]; return m ? <span style={{ ...bdgS, background: m.bg, color: m.c }}><span style={{ width: 5, height: 5, borderRadius: '50%', background: 'currentColor', display: 'inline-block', marginRight: 4 }} />{m.l}</span> : <span style={{ ...bdgS, background: 'rgba(255,255,255,0.04)', color: 'rgba(243,238,228,0.3)' }}>{v||'—'}</span> }
 
-  const IMP_COLORS = { Crítico: { bg: 'rgba(240,86,86,0.12)', c: '#F05656' }, Alto: { bg: 'rgba(249,115,22,0.12)', c: '#F97316' }, Moderado: { bg: 'rgba(212,160,48,0.12)', c: '#D4A030' }, Baixo: { bg: 'rgba(34,212,160,0.12)', c: '#22D4A0' } }
-  const PROB_COLORS = { Extrema: { bg: 'rgba(240,86,86,0.12)', c: '#F05656' }, Alta: { bg: 'rgba(249,115,22,0.12)', c: '#F97316' }, Média: { bg: 'rgba(212,160,48,0.12)', c: '#D4A030' }, Baixa: { bg: 'rgba(34,212,160,0.12)', c: '#22D4A0' } }
-  const CRIT_COLORS = { 4: { bg: 'rgba(240,86,86,0.12)', c: '#EF4444', l: '4. Crítico' }, 3: { bg: 'rgba(249,115,22,0.12)', c: '#F97316', l: '3. Significativo' }, 2: { bg: 'rgba(212,160,48,0.12)', c: '#D4A030', l: '2. Moderado' }, 1: { bg: 'rgba(34,212,160,0.12)', c: '#22D4A0', l: '1. Baixo' } }
-
-  function badgeImp(v) { const m = IMP_COLORS[v]; return m ? <span style={{ ...bS, background: m.bg, color: m.c }}>{v}</span> : <span style={{ ...bS, background: 'rgba(0,0,0,0.04)', color: '#999' }}>{v||'—'}</span> }
-  function badgeProb(v) { const m = PROB_COLORS[v]; return m ? <span style={{ ...bS, background: m.bg, color: m.c }}>{v}</span> : <span style={{ ...bS, background: 'rgba(0,0,0,0.04)', color: '#999' }}>{v||'—'}</span> }
-  function badgeCrit(v) { const m = CRIT_COLORS[v]; return m ? <span style={{ ...bS, background: m.bg, color: m.c }}><span style={{ width: 5, height: 5, borderRadius: '50%', background: 'currentColor', display: 'inline-block', marginRight: 4 }} />{m.l}</span> : <span style={{ ...bS, background: 'rgba(0,0,0,0.04)', color: '#999' }}>{v||'—'}</span> }
+  const PA = paStyles
+  const tdS = { padding: '7px 8px', borderBottom: '1px solid rgba(255,255,255,0.04)', fontSize: 11, color: 'rgba(243,238,228,0.7)', whiteSpace: 'nowrap', verticalAlign: 'top' }
+  function Td({ children, w = 150 }) { return <td style={{ ...tdS, maxWidth: w, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{children || '—'}</td> }
 
   return (
-    <div style={{ ...S.page, gap: 8 }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
-        <button onClick={() => navigate('/visao-geral')} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'rgba(0,32,62,0.08)', border: '1px solid rgba(0,32,62,0.15)', borderRadius: 4, padding: '4px 10px', fontSize: 10, fontWeight: 600, color: '#00203E', cursor: 'pointer', fontFamily: 'inherit' }}>← VOLTAR</button>
-        <div><div style={{ fontSize: 18, fontWeight: 600, color: '#00203E' }}>{nome}</div><div style={{ fontSize: 10, color: '#999', marginTop: 1 }}>{area.controles.length} controles · Peso empresa: {pesoEmpresa}%</div></div>
+    <div style={PA.page}>
+      {/* HEADER */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 0 6px', flexShrink: 0 }}>
+        <button onClick={() => navigate('/')} style={PA.btnVoltar}>← VOLTAR</button>
+        <div>
+          <div style={{ fontSize: 18, fontWeight: 600, color: '#F3EEE4' }}>{nome}</div>
+          <div style={{ fontSize: 10, color: 'rgba(243,238,228,0.35)', marginTop: 1 }}>{area.controles.length} controles · Peso empresa: {pesoEmpresa}%</div>
+        </div>
       </div>
 
-      <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
-        <div style={{ ...kpiS, borderTopColor: '#00203E' }}><div style={{ fontSize: 24, fontWeight: 300, color: '#00203E', lineHeight: 1 }}>{(p*100).toFixed(1)}%</div><div style={{ ...kpiLbl, color: '#00203E' }}>Maturidade <NivelBadge pct={p} nivel={nv} /></div></div>
-        <div style={{ ...kpiS, borderTopColor: '#1B5E20' }}><div style={{ fontSize: 24, fontWeight: 300, color: '#1B5E20', lineHeight: 1 }}>{efetivos}</div><div style={{ ...kpiLbl, color: '#1B5E20' }}>Efetivos</div></div>
-        <div style={{ ...kpiS, borderTopColor: '#B71C1C' }}><div style={{ fontSize: 24, fontWeight: 300, color: '#B71C1C', lineHeight: 1 }}>{inefetivos}</div><div style={{ ...kpiLbl, color: '#B71C1C' }}>Inefetivos</div></div>
-        <div style={{ ...kpiS, borderTopColor: '#E65100' }}><div style={{ fontSize: 24, fontWeight: 300, color: '#E65100', lineHeight: 1 }}>{gaps}</div><div style={{ ...kpiLbl, color: '#E65100' }}>GAPs</div></div>
-        <div style={{ ...kpiS, borderTopColor: '#CC915E' }}><div style={{ fontSize: 24, fontWeight: 300, color: '#CC915E', lineHeight: 1 }}>{planosAcao}</div><div style={{ ...kpiLbl, color: '#CC915E' }}>Planos de Ação</div></div>
+      {/* ZONA SUPERIOR — HEATMAP + KPI GRID */}
+      <div style={PA.zonaSuperior}>
+        {/* HEATMAP */}
+        <div style={PA.heatCard}>
+          <div style={PA.cardTitle}>Mapa de Calor — Impacto × Probabilidade</div>
+          <div style={{ display: 'flex', flex: 1 }}>
+            <div style={PA.heatYLabels}>
+              {IMP_LABELS.map(l => <div key={l} style={PA.heatYLabel}>{l}</div>)}
+            </div>
+            <div style={PA.heatGrid}>
+              {areaHeatmap.map((row, ri) => (
+                <div key={ri} style={PA.heatRow}>
+                  {row.map((val, ci) => (
+                    <div key={ci} style={{ ...PA.heatCell, background: val === 0 ? 'rgba(255,255,255,0.04)' : HEAT_CORES[ri][ci] }}>
+                      {val}
+                    </div>
+                  ))}
+                </div>
+              ))}
+            </div>
+          </div>
+          <div style={PA.heatXLabels}>
+            {PROB_LABELS.map(l => <div key={l} style={PA.heatXLabel}>{l}</div>)}
+          </div>
+          <div style={{ textAlign: 'center', marginTop: 1, fontSize: 7, fontWeight: 600, letterSpacing: 1, textTransform: 'uppercase', color: 'rgba(243,238,228,0.2)' }}>Probabilidade →</div>
+          <div style={PA.heatLegend}>
+            {CRIT_LABELS.map((l, i) => (
+              <div key={l} style={PA.legendItem}>
+                <div style={{ width: 8, height: 8, borderRadius: 2, background: CRIT_CORES[i] }} />
+                {l}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* KPI GRID 3×2 */}
+        <div style={PA.kpiGrid}>
+          <div style={{ ...PA.kpiCard, borderTopColor: '#CC915E' }}>
+            <div style={PA.kpiLabel}>Maturidade</div>
+            <div style={{ ...PA.kpiValor, color: '#CC915E' }}>{(p*100).toFixed(1)}%</div>
+            <NivelBadge pct={p} nivel={nv} />
+          </div>
+          <div style={{ ...PA.kpiCard, borderTopColor: '#F3EEE4' }}>
+            <div style={PA.kpiLabel}>Total de Controles</div>
+            <div style={{ ...PA.kpiValor, color: '#F3EEE4' }}>{area.controles.length}</div>
+            <div style={PA.kpiSub}>Peso empresa: {pesoEmpresa}%</div>
+          </div>
+          <div style={{ ...PA.kpiCard, borderTopColor: '#22C55E' }}>
+            <div style={PA.kpiLabel}>Efetivos</div>
+            <div style={{ ...PA.kpiValor, color: '#22C55E' }}>{efetivos}</div>
+            <div style={PA.kpiSub}>{area.controles.length > 0 ? Math.round(efetivos / area.controles.length * 100) : 0}% do total</div>
+          </div>
+          <div style={{ ...PA.kpiCard, borderTopColor: '#FACC15' }}>
+            <div style={PA.kpiLabel}>Inefetivos</div>
+            <div style={{ ...PA.kpiValor, color: '#FACC15' }}>{inefetivos}</div>
+            <div style={PA.kpiSub}>Aguardam ação corretiva</div>
+          </div>
+          <div style={{ ...PA.kpiCard, borderTopColor: '#EF4444' }}>
+            <div style={PA.kpiLabel}>GAP</div>
+            <div style={{ ...PA.kpiValor, color: '#EF4444' }}>{gaps}</div>
+            <div style={PA.kpiSub}>Riscos sem controle</div>
+          </div>
+          <div style={{ ...PA.kpiCard, borderTop: 'none', position: 'relative', overflow: 'hidden' }}>
+            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3, background: 'linear-gradient(90deg, #CC915E, #A6512F)' }} />
+            <div style={PA.kpiLabel}>Planos de Ação</div>
+            <div style={{ ...PA.kpiValor, color: '#CC915E' }}>{planosAcao}</div>
+            <div style={PA.kpiSub}>Em desenvolvimento</div>
+          </div>
+        </div>
       </div>
 
-      <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexShrink: 0, flexWrap: 'wrap' }}>
-        <input value={busca} onChange={e => setBusca(e.target.value)} placeholder="Buscar risco, controle, inconsistência..." style={{ flex: 1, minWidth: 200, background: '#fff', border: '1px solid #ddd', borderRadius: 4, padding: '6px 10px', fontFamily: 'inherit', fontSize: 11, outline: 'none', color: '#333' }} />
-        <select value={filtCrit} onChange={e => setFiltCrit(e.target.value)} style={fS}><option value="">Todas criticidades</option>{crits.map(c => <option key={c} value={c}>{c}</option>)}</select>
-        <select value={filtImp} onChange={e => setFiltImp(e.target.value)} style={fS}><option value="">Todos impactos</option>{imps.map(c => <option key={c} value={c}>{c}</option>)}</select>
-        <select value={filtRes} onChange={e => setFiltRes(e.target.value)} style={fS}><option value="">Todos resultados F1</option>{ress.map(c => <option key={c} value={c}>{c}</option>)}</select>
-        <div style={{ fontSize: 10, color: '#999', background: '#fff', border: '1px solid #ddd', borderRadius: 4, padding: '5px 10px' }}>{cf.length} controles</div>
+      {/* FILTROS */}
+      <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexShrink: 0, flexWrap: 'wrap', marginBottom: 6 }}>
+        <input value={busca} onChange={e => setBusca(e.target.value)} placeholder="Buscar risco, controle, inconsistência..." style={PA.filtroInput} />
+        <select value={filtCrit} onChange={e => setFiltCrit(e.target.value)} style={PA.filtroSel}><option value="">Todas criticidades</option>{crits.map(c => <option key={c} value={c}>{c}</option>)}</select>
+        <select value={filtImp} onChange={e => setFiltImp(e.target.value)} style={PA.filtroSel}><option value="">Todos impactos</option>{imps.map(c => <option key={c} value={c}>{c}</option>)}</select>
+        <select value={filtRes} onChange={e => setFiltRes(e.target.value)} style={PA.filtroSel}><option value="">Todos resultados F1</option>{ress.map(c => <option key={c} value={c}>{c}</option>)}</select>
+        <div style={{ fontSize: 10, color: 'rgba(243,238,228,0.3)', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 4, padding: '5px 10px' }}>{cf.length} controles</div>
       </div>
 
-      <div style={{ flex: 1, minHeight: 0, background: '#fff', borderRadius: 6, boxShadow: '0 1px 3px rgba(0,0,0,0.05)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+      {/* TABELA MRC */}
+      <div style={PA.tabelaWrap}>
         <div style={{ flex: 1, overflowX: 'auto', overflowY: 'auto', minHeight: 0 }}>
           <table style={{ width: 'max-content', minWidth: '100%', borderCollapse: 'collapse' }}>
             <thead><tr>
               {['Data Últ. Atual.','Gerência','Resp. Subproc.','Processo','Subprocesso','Ref. Risco','Desc. Risco','Ref. Controle','Desc. Controle','Categoria','Frequência','Natureza','Caract.','Sistema','Ctrl Chave?','Passos Teste','Resultado','Desc. Inconsist.','Recomendação','Impacto','Probab.','Criticidade','Fase Atual'].map((h,i) =>
-                <th key={i} style={{ ...S.th, textAlign: 'left', padding: '7px 8px', fontSize: 8, letterSpacing: .5, whiteSpace: 'nowrap' }}>{h}</th>)}
-              <th style={{ ...S.th, width: 40 }}></th>
+                <th key={i} style={{ fontSize: 8, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5, color: '#F3EEE4', background: '#00203E', padding: '6px 8px', textAlign: 'left', whiteSpace: 'nowrap', position: 'sticky', top: 0, zIndex: 2 }}>{h}</th>)}
+              <th style={{ fontSize: 8, fontWeight: 700, color: '#F3EEE4', background: '#00203E', padding: '6px 8px', position: 'sticky', top: 0, zIndex: 2, width: 40 }}></th>
             </tr></thead>
             <tbody>{cf.map((c, i) => { const fl = faseLabel(c); return (
               <tr key={c.id||i} onMouseEnter={e => e.currentTarget.style.background='rgba(204,145,94,0.04)'} onMouseLeave={e => e.currentTarget.style.background=''}>
                 <Td>{c.dt_ult || '—'}</Td>
                 <Td>{c.ger}</Td><Td>{c.resp_sub}</Td><Td>{c.area}</Td><Td>{c.sub}</Td>
-                <td style={{ ...tS, color: '#CC915E', fontWeight: 600 }}>{c.rr}</td><Td w={200}>{c.dr}</Td>
-                <td style={{ ...tS, color: '#CC915E', fontWeight: 600 }}>{c.rc}</td><Td w={200}>{c.dc}</Td>
+                <td style={{ ...tdS, color: '#CC915E', fontWeight: 600 }}>{c.rr}</td><Td w={200}>{c.dr}</Td>
+                <td style={{ ...tdS, color: '#CC915E', fontWeight: 600 }}>{c.rc}</td><Td w={200}>{c.dc}</Td>
                 <Td>{c.cat}</Td><Td>{c.freq}</Td><Td>{c.nat}</Td><Td>{c.car}</Td><Td>{c.sis}</Td><Td>{c.chave}</Td>
-                <Td w={180}>{c.passos_f1}</Td><td style={tS}>{badgeR(c.r1)}</td><Td w={180}>{c.incons}</Td><Td w={180}>{c.rec}</Td>
-                <td style={tS}>{badgeImp(c.imp)}</td><td style={tS}>{badgeProb(c.prob)}</td><td style={tS}>{badgeCrit(c.crit)}</td>
-                <td style={tS}><div style={{ fontSize: 10, fontWeight: 500, color: '#00203E', borderLeft: '3px solid #CC915E', paddingLeft: 6, lineHeight: 1.3 }}>{fl.f}</div><div style={{ fontSize: 9, color: '#999', paddingLeft: 9 }}>{fl.s}</div></td>
-                <td style={{ ...tS, textAlign: 'center' }}>
+                <Td w={180}>{c.passos_f1}</Td><td style={tdS}>{badgeR(c.r1)}</td><Td w={180}>{c.incons}</Td><Td w={180}>{c.rec}</Td>
+                <td style={tdS}>{badgeImp(c.imp)}</td><td style={tdS}>{badgeProb(c.prob)}</td><td style={tdS}>{badgeCrit(c.crit)}</td>
+                <td style={tdS}><div style={{ fontSize: 10, fontWeight: 500, color: '#F3EEE4', borderLeft: '3px solid #CC915E', paddingLeft: 6, lineHeight: 1.3 }}>{fl.f}</div><div style={{ fontSize: 9, color: 'rgba(243,238,228,0.3)', paddingLeft: 9 }}>{fl.s}</div></td>
+                <td style={{ ...tdS, textAlign: 'center' }}>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 3, alignItems: 'center' }}>
-                    <button onClick={() => setModalRow(c)} style={{ background: 'rgba(0,32,62,0.08)', border: '1px solid rgba(0,32,62,0.15)', borderRadius: 3, padding: '2px 10px', fontSize: 10, fontWeight: 600, color: '#00203E', cursor: 'pointer', fontFamily: 'inherit', width: '100%' }}>Ver</button>
-                    {canEdit && <button onClick={() => setAtualizarRow(c)} style={{ background: 'rgba(204,145,94,0.1)', border: '1px solid rgba(204,145,94,0.3)', borderRadius: 3, padding: '2px 10px', fontSize: 10, fontWeight: 600, color: '#A6512F', cursor: 'pointer', fontFamily: 'inherit', width: '100%' }}>Atualizar</button>}
-                    {c.status_workflow === 'em_analise' && <span style={{ fontSize: 8, fontWeight: 700, color: '#A6512F', background: 'rgba(204,145,94,0.15)', padding: '1px 6px', borderRadius: 2, textTransform: 'uppercase', letterSpacing: 0.5 }}>Em Análise</span>}
-                    {c.status_workflow === 'teste_pendente' && <span style={{ fontSize: 8, fontWeight: 700, color: '#9A7B00', background: 'rgba(249,168,37,0.15)', padding: '1px 6px', borderRadius: 2, textTransform: 'uppercase', letterSpacing: 0.5 }}>Teste Pendente</span>}
+                    <button onClick={() => setModalRow(c)} style={{ background: 'rgba(243,238,228,0.06)', border: '1px solid rgba(243,238,228,0.1)', borderRadius: 3, padding: '2px 10px', fontSize: 10, fontWeight: 600, color: 'rgba(243,238,228,0.6)', cursor: 'pointer', fontFamily: 'inherit', width: '100%' }}>Ver</button>
+                    {canEdit && <button onClick={() => setAtualizarRow(c)} style={{ background: 'rgba(204,145,94,0.1)', border: '1px solid rgba(204,145,94,0.3)', borderRadius: 3, padding: '2px 10px', fontSize: 10, fontWeight: 600, color: '#CC915E', cursor: 'pointer', fontFamily: 'inherit', width: '100%' }}>Atualizar</button>}
+                    {c.status_workflow === 'em_analise' && <span style={{ fontSize: 8, fontWeight: 700, color: '#CC915E', background: 'rgba(204,145,94,0.15)', padding: '1px 6px', borderRadius: 2, textTransform: 'uppercase', letterSpacing: 0.5 }}>Em Análise</span>}
+                    {c.status_workflow === 'teste_pendente' && <span style={{ fontSize: 8, fontWeight: 700, color: '#EAB308', background: 'rgba(234,179,8,0.15)', padding: '1px 6px', borderRadius: 2, textTransform: 'uppercase', letterSpacing: 0.5 }}>Teste Pendente</span>}
                   </div>
                 </td>
-              </tr>)})}{cf.length === 0 && <tr><td colSpan={24} style={{ padding: 32, textAlign: 'center', color: '#999' }}>Nenhum controle encontrado.</td></tr>}</tbody>
+              </tr>)})}{cf.length === 0 && <tr><td colSpan={24} style={{ padding: 32, textAlign: 'center', color: 'rgba(243,238,228,0.3)' }}>Nenhum controle encontrado.</td></tr>}</tbody>
           </table>
         </div>
       </div>
@@ -759,17 +700,37 @@ function PorArea({ projeto, areasCalc, loading, navigate, loadDados }) {
   )
 }
 
-const kpiS = { flex: 1, background: '#fff', borderRadius: 8, padding: '12px 14px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', borderTop: '3px solid' }
-const kpiLbl = { fontSize: 9, fontWeight: 600, textTransform: 'uppercase', letterSpacing: .5, marginTop: 4, display: 'flex', alignItems: 'center', gap: 6 }
+// ══════════════════════════════════════════════════════════════════════════════
+// ESTILOS POR ÁREA (tema escuro)
+// ══════════════════════════════════════════════════════════════════════════════
 
-function Td({ children, w = 150 }) { return <td style={{ ...tS, maxWidth: w, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{children || '—'}</td> }
-
-const tS = { padding: '8px', borderBottom: '1px solid #eee', fontSize: 11, color: '#333', whiteSpace: 'nowrap', verticalAlign: 'top' }
-const bS = { display: 'inline-block', padding: '2px 8px', borderRadius: 3, fontSize: 10, fontWeight: 600 }
-const fS = { background: '#fff', border: '1px solid #ddd', borderRadius: 4, padding: '5px 8px', fontFamily: 'inherit', fontSize: 10, color: '#333', cursor: 'pointer', outline: 'none' }
+const paStyles = {
+  page: { background: '#00112C', minHeight: '100vh', padding: '0 20px 12px', fontFamily: "'Montserrat', sans-serif", color: '#F3EEE4', fontSize: 12, display: 'flex', flexDirection: 'column', overflow: 'hidden' },
+  btnVoltar: { display: 'inline-flex', alignItems: 'center', gap: 4, background: 'rgba(243,238,228,0.06)', border: '1px solid rgba(243,238,228,0.1)', borderRadius: 4, padding: '4px 10px', fontSize: 10, fontWeight: 600, color: 'rgba(243,238,228,0.5)', cursor: 'pointer', fontFamily: 'inherit' },
+  zonaSuperior: { display: 'flex', gap: 10, flexShrink: 0, margin: '6px 0 8px' },
+  cardTitle: { fontSize: 8, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1.2, color: 'rgba(243,238,228,0.4)', marginBottom: 8 },
+  heatCard: { background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 10, padding: '12px 14px', width: 320, flexShrink: 0, display: 'flex', flexDirection: 'column' },
+  heatYLabels: { display: 'flex', flexDirection: 'column', justifyContent: 'space-around', paddingRight: 6, width: 55, flexShrink: 0 },
+  heatYLabel: { fontSize: 8, fontWeight: 600, color: 'rgba(243,238,228,0.45)', textAlign: 'right', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', flex: 1 },
+  heatGrid: { flex: 1, display: 'flex', flexDirection: 'column', gap: 2 },
+  heatRow: { display: 'flex', gap: 2, flex: 1 },
+  heatCell: { flex: 1, borderRadius: 4, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 700, color: '#fff', minHeight: 36 },
+  heatXLabels: { display: 'flex', paddingLeft: 61, paddingTop: 4, gap: 2 },
+  heatXLabel: { flex: 1, textAlign: 'center', fontSize: 8, fontWeight: 600, color: 'rgba(243,238,228,0.45)' },
+  heatLegend: { display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, marginTop: 6, paddingTop: 6, borderTop: '1px solid rgba(255,255,255,0.04)' },
+  legendItem: { display: 'flex', alignItems: 'center', gap: 4, fontSize: 8, color: 'rgba(243,238,228,0.4)' },
+  kpiGrid: { flex: 1, display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gridTemplateRows: 'auto auto', gap: 8 },
+  kpiCard: { background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 8, padding: '10px 12px', borderTop: '3px solid', display: 'flex', flexDirection: 'column', justifyContent: 'center' },
+  kpiLabel: { fontSize: 7, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.8, color: 'rgba(243,238,228,0.4)', marginBottom: 3 },
+  kpiValor: { fontSize: 22, fontWeight: 300, lineHeight: 1 },
+  kpiSub: { fontSize: 8, color: 'rgba(243,238,228,0.25)', marginTop: 3 },
+  filtroInput: { flex: 1, minWidth: 200, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 4, padding: '6px 10px', fontFamily: 'inherit', fontSize: 11, outline: 'none', color: '#F3EEE4' },
+  filtroSel: { background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 4, padding: '5px 8px', fontFamily: 'inherit', fontSize: 10, color: 'rgba(243,238,228,0.6)', cursor: 'pointer', outline: 'none' },
+  tabelaWrap: { flex: 1, minHeight: 0, background: 'rgba(255,255,255,0.02)', borderRadius: 8, border: '1px solid rgba(255,255,255,0.05)', display: 'flex', flexDirection: 'column', overflow: 'hidden' },
+}
 
 // ══════════════════════════════════════════════════════════════════════════════
-// ESTILOS (Visão Geral + Por Área)
+// ESTILOS LEGADO (mantidos para compatibilidade MRC)
 // ══════════════════════════════════════════════════════════════════════════════
 
 const S = {
