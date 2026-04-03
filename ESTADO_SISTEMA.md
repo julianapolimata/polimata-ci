@@ -1,5 +1,5 @@
 # ESTADO DO SISTEMA — CI Polímata
-> Atualizado em: 03/04/2026 (sessão 3 — Por Área redesign v2 + ajustes gerais)
+> Atualizado em: 03/04/2026 (sessão 3 — Dashboard + Export Excel + Import MRC)
 > Cole no início de cada novo chat para retomar sem perda de contexto.
 
 ---
@@ -25,13 +25,14 @@
 - **Cores fases:** F1=#00203E, F2=#1D3B5C, F3=#660033, F4=#660066, F5=#A6512F
 - **Regra:** estrutural = marca; semântico = cores universais. NUNCA usar roxo.
 - **Logo:** logotipo-2cores.png na pasta public/
+- **Ícone:** icon.png na pasta public/ (só o P dourado, para uso em Excel headers)
 - **Brandbook:** Apresentacao.pdf (referência oficial)
 - **NUNCA usar itálico** em documentos gerados pelo sistema
 
 ### Cores régua maturidade (VIVAS):
 - N1=#DC2626 (0–10%), N2=#EA580C (11–25%), N3=#EAB308 (26–50%), N4=#16A34A (51–80%), N5=#15803D (81–100%)
 
-### Cores semânticas resultado (definição aprovada 03/04):
+### Cores semânticas resultado:
 - **Efetivo = verde vivo (#22C55E)**
 - **Inefetivo = amarelo (#FACC15)**
 - **GAP = vermelho (#EF4444)**
@@ -40,7 +41,7 @@
 - Crítico=#EF4444, Significativo=#F97316, Moderado=#EAB308, Baixo=#22C55E
 
 ### Barras de maturidade:
-- Degradê contínuo seguindo a régua: #DC2626 → #EF4444 → #EA580C → #F97316 → #EAB308 → #84CC16 → #22C55E → #15803D
+- Degradê contínuo: #DC2626 → #EF4444 → #EA580C → #F97316 → #EAB308 → #84CC16 → #22C55E → #15803D
 - Função `getBarGradient(pct100)` no Dashboard.jsx
 
 ---
@@ -48,54 +49,148 @@
 ## Telas Implementadas
 
 ### Sidebar
-- Dashboards: Dashboard (renomeado de "Dashboard Maturidade")
-- ~~Visão Geral~~ — **REMOVIDA** (sessão 3)
+- Dashboards: Dashboard
+- ~~Visão Geral~~ — **REMOVIDA**
 - Por Área: 14 áreas colapsáveis (navega por UUID)
 - Operação: MRC Completa (badge total)
-- Administração: Configurações (admin only)
+- Administração: Configurações (admin only) | **Importar MRC** (admin only)
 
-### 1. Dashboard (rota `/`) — TEMA ESCURO ✅ REDESIGN v7+
+### 1. Dashboard (rota `/`) — TEMA ESCURO ✅
 - Fundo navy (#00112C)
-- **HEADER:** Cliente + título + subtítulo + **última atualização global** (canto superior direito)
-- **6 KPI Cards:**
-  - Índice de Maturidade Consolidado · [Cliente] (dourado #CC915E, badge nível)
-  - Total de Controles (creme, subtítulo áreas)
-  - Efetivos (verde vivo #22C55E, % do total)
-  - Inefetivos (amarelo #FACC15)
-  - GAP (vermelho #EF4444, número único sem segregar)
-  - Planos de Ação (gradiente dourado via div absoluto, sem borderImage — preserva borderRadius)
-- **Maturidade por Área (full width):**
-  - Ranking do maior ao menor %
-  - Barras com degradê contínuo
-  - Badge nível com cores vivas
-  - **Clique navega para `/area/:areaId`** (não filtra mais o heatmap)
-- **Zona inferior lado a lado:**
-  - **Esquerda (~40%): Heatmap Impacto × Probabilidade 4×4**
-    - Filtrável por área (clique na tabela de criticidade)
-  - **Direita (~60%): Tabela Área × Criticidade**
-    - Clique filtra o heatmap + botão "Limpar filtro"
-    - Linha TOTAL no footer
+- Header + última atualização global (card discreto, canto superior direito)
+- 6 KPI Cards (Maturidade, Total, Efetivos, Inefetivos, GAP, Planos de Ação)
+- Maturidade por Área: clique navega para `/area/:areaId`
+- Zona inferior: Heatmap 4×4 + Tabela Área × Criticidade
 
-### 2. Por Área (rota `/area/:areaId`) — ✅ REDESIGN v2 TEMA ESCURO (sessão 3)
-- Fundo navy (#00112C) — mesmo tema do Dashboard
-- **HEADER:** Botão "← VOLTAR" → `/` (Dashboard) + nome da área + **última atualização da área** (canto superior direito)
-- **ZONA SUPERIOR — lado a lado:**
-  - **Esquerda: Heatmap 4×4 compacto** (Impacto × Probabilidade, filtrado para a área)
-  - **Direita: Grid 3×2 de KPI cards** (Maturidade, Total, Efetivos, Inefetivos, GAP, Planos de Ação)
-  - Fontes harmonizadas: label 9px, valor 28px, sub 10px
-- **Header fixo:** zona superior + filtros congelados, só tabela MRC rola
-- **Filtros:** busca + criticidade + impacto + resultado F1 (tema escuro)
-- **Tabela MRC 23 colunas:**
-  - Colunas com larguras fixas uniformes (width + minWidth) — consistente entre todas as áreas
-  - Headers com alinhamento `textAlign: 'left'` consistente
-  - Scroll horizontal visível (`overflowX: 'scroll'`)
-  - Badges tema escuro (Efetivo verde, Inefetivo amarelo, GAP vermelho)
-- Botão "Ver" → ModalDetalhe
-- Botão "Atualizar" (dourado, só admin/consultor) → ModalAtualizar ✅
-- Badges "EM ANÁLISE" e "TESTE PENDENTE" ✅
+### 2. Por Área (rota `/area/:areaId`) — TEMA ESCURO ✅
+- Header fixo + última atualização da área
+- Heatmap 4×4 (esquerda) + Grid 3×2 KPIs (direita)
+- Filtros + botão Excel export (dourado)
+- Tabela MRC 23 colunas (larguras fixas, scroll horizontal)
+
+### 3. MRC Completa (rota `/mrc`) ✅
+- Heatmap + Régua + Filtros + Tabela
+- Botão Excel funcional
+
+### 4. Importar MRC (rota `/importar-mrc`) — ✅ IMPLEMENTADO (sessão 3)
+- **Admin only** (admin_polimata)
+- Item "📥 Importar MRC" na sidebar, seção Administração
+- Fluxo: selecionar área → upload .xlsx → preview → confirmar → importar
+- **Apaga todos os controles da área e insere os do arquivo**
+- Atualiza `gerente` na tabela `areas` com o valor `ger` do Excel
+- Lê header na linha 11, dados a partir da linha 12
+- Preview mostra até 20 controles (ref, processo, resultado, impacto, criticidade)
+- Inserção em batches de 50
+- Callback `onImported` recarrega dados no Dashboard
 
 ### Outras telas
-- Login, MRC Completa, Config Clientes/Usuários, Perfil
+- Login, Config Clientes/Usuários, Perfil
+
+---
+
+## ═══════════════════════════════════════════════
+## IMPLEMENTADO: IMPORTAR MRC ✅ (sessão 3)
+## ═══════════════════════════════════════════════
+
+### Arquivo: src/components/ImportarMRC.jsx
+### Dependência: ExcelJS (já instalado)
+### Props: projetoId, areas, onImported
+
+### Mapeamento Excel → Supabase (header linha 11, dados linha 12+):
+| Col idx (0-based) | Header Excel | Campo Supabase |
+|---|---|---|
+| 1 | Última Atualização | dt_ult |
+| 3 | Gerência | ger |
+| 4 | Responsável Subprocesso | resp_sub |
+| 5 | Processo | area |
+| 6 | Subprocesso | sub |
+| 7 | Ref. Risco | rr |
+| 8 | Descrição do Risco | dr |
+| 9 | Ref. Controle | rc |
+| 10 | Descrição do Controle | dc |
+| 11 | Categoria de Controle | cat |
+| 12 | Frequência | freq |
+| 13 | Natureza | nat |
+| 14 | Característica | car |
+| 15 | Sistema | sis |
+| 16 | Controle Chave? | chave |
+| 17 | Passos de Teste | passos_f1 |
+| 18 | Resultado | r1 |
+| 19 | Inconsistência | incons |
+| 20 | Recomendação | rec |
+| 21 | Impacto | imp |
+| 22 | Probabilidade | prob |
+| 23 | Criticidade | crit_label + crit (integer) |
+| 29 | Demanda PA? | dem_pa |
+| 30 | Responsável PA | resp_pa |
+| 31 | Data Limite PA | dt_pa |
+| 33 | Status PA | st_pa |
+| 34 | Histórico PA | coment_pa |
+| 35 | Data Teste Aderência | dt_teste |
+| 36 | Nova Descrição Controle | dc_novo |
+| 44 | Resultado Aderência | r_ader |
+| 45 | Melhoria? | melhoria |
+| 46 | Inconsistência Aderência | incons_ader |
+| 47 | Comentários Aderência | coment_ader |
+| 50 | Status Risco | status_risco |
+| 56 | Resultado F3 | r3 |
+| 57 | Inconsistência F3 | incons_f3 |
+| 58 | Recomendação F3 | rec_f3 |
+
+### Limpeza de dados:
+- N/A, n/a, vazio, "—" → null
+- Criticidade texto → integer (1-4)
+- Impacto/Probabilidade normalizados (Crítico, Alto, Moderado, Baixo / Extrema, Alta, Média, Baixa)
+- Datas → ISO string
+- RichText ExcelJS → string plana
+
+---
+
+## ═══════════════════════════════════════════════
+## IMPLEMENTADO: EXPORT EXCEL MRC ✅ APROVADO
+## ═══════════════════════════════════════════════
+
+### Arquivo: src/lib/exportMRC.js
+### Função: `exportarMRCExcel(controles, nomeArquivo, tituloAba, clienteNome, projetoNome)`
+
+### Excel (2 abas) — especificação aprovada:
+
+**Aba 1: "Mapa de Calor"**
+- `views: [{ showGridLines: false }]`
+- Fundo creme #F3EEE4
+- Coluna A=4, B=4.09, C-H=18
+- Header navy merge B1:G1, B2:G2, B3:G3 (A não entra no merge)
+- Ícone icon.png 36×36
+- Grid 4×4 (linhas 5-8, altura 49.5): todas coloridas (inclusive zeros)
+- Bordas cor creme (invisíveis)
+- Legenda linha 12: ■ coloridos, sem bordas
+- Resumo linhas 16-18: cards fundo branco, **centralizados sem merge**
+- Linha 17 height=39.5, font sz=26
+- Footer linha 20 height=15: merge B20:E20, border-top medium dourado
+
+**Aba 2: dados MRC**
+- `views: [{ state: 'frozen', ySplit: 4, xSplit: 1, showGridLines: false }]`
+- Coluna A=4 (margem creme), dados coluna B+
+- 23 colunas, auto-filter, linhas alternadas
+
+---
+
+## ═══════════════════════════════════════════════
+## IMPLEMENTADO: WORKFLOW DE ATUALIZAÇÃO ✅
+## ═══════════════════════════════════════════════
+
+### Componente: src/components/ModalAtualizar.jsx
+### Fluxo: Step 1 (Risco) → Step 2 (Controle + 6 premissas) → Step 3 (Ficha)
+### Status: em_analise (com ficha) / teste_pendente (sem ficha)
+
+---
+
+## ═══════════════════════════════════════════════
+## IMPLEMENTADO: FICHA DE RISCO EXCEL v5 ✅
+## ═══════════════════════════════════════════════
+
+### Gerada via ExcelJS no browser, download direto .xlsx
+### 2 abas (Ficha de Risco + Teste/Evidências), layout A=3, paisagem, Montserrat 10pt
 
 ---
 
@@ -103,26 +198,14 @@
 `id`, `projeto_id`, `area_id`, `rr`, `rc`, `sub`, `ger`, `resp_sub`, `dt_ult`, `dr`, `dc`, `imp`, `prob`, `crit` (INTEGER 1-4), `crit_label`, `cat`, `freq`, `nat`, `car`, `sis`, `chave`, `passos_f1`, `r1`, `incons`, `rec`, `dem_pa`, `resp_pa`, `dt_pa`, `st_pa`, `coment_pa`, `dt_teste`, `dc_novo`, `r_ader`, `melhoria`, `incons_ader`, `coment_ader`, `st_f3`, `r3`, `incons_f3`, `rec_f3`, `area`, `status_workflow`, `criado_em`, `atualizado_em`, `criado_por`, `atualizado_por`
 
 ### Campos adicionados (migração 01/04/2026):
-- `status_risco` text DEFAULT 'existente'
-- `motivo_inativacao` text
-- `ativo` boolean DEFAULT true
-- `transferido_de` UUID FK
-- `ref_anterior` text
+- `status_risco`, `motivo_inativacao`, `ativo`, `transferido_de`, `ref_anterior`
 - `premissa_porque`, `premissa_quando`, `premissa_onde`, `premissa_quem`, `premissa_como`, `premissa_resultado`
 
-### Constraint status_workflow:
-CHECK (status_workflow = ANY (ARRAY['rascunho','em_revisao','aprovado','reprovado','em_analise','teste_pendente']))
+### Tabela `areas`:
+- id, projeto_id, nome, prefixo, peso, gerente, ordem
 
 ### Tabela `mrc_audit_log`:
 - id, mrc_id, campo, valor_anterior, valor_novo, usuario_id, criado_em
-
-### Query loadDados:
-- Filtra `.neq('ativo', false)`
-
-### Campos usados no Heatmap:
-- `imp` (Impacto): Crítico / Alto / Moderado / Baixo → impToIdx()
-- `prob` (Probabilidade): Extrema / Alta / Média / Baixa → probToIdx()
-- `crit` (Criticidade): INTEGER 1-4 (1=Baixo, 2=Moderado, 3=Significativo, 4=Crítico) → critToIdx()
 
 ---
 
@@ -133,96 +216,56 @@ CHECK (status_workflow = ANY (ARRAY['rascunho','em_revisao','aprovado','reprovad
 ---
 
 ## ═══════════════════════════════════════════════
-## IMPLEMENTADO: WORKFLOW DE ATUALIZAÇÃO ✅
+## REGRAS DE PROPAGAÇÃO (aprovadas, implementação pendente)
 ## ═══════════════════════════════════════════════
 
-### Componente: src/components/ModalAtualizar.jsx
-### Dependência: ExcelJS (`npm install exceljs`)
-### Props: row, onClose, onSaved, areas, projeto (objeto completo com clientes.nome)
+### 1. Importação MRC → atualizar gerente da área
+- Ao importar Excel, o campo `ger` do primeiro controle atualiza `areas.gerente`
+- **Status: PENDENTE** (implementar no ImportarMRC.jsx)
 
-### Fluxo: Step 1 (Risco) → Step 2 (Controle + 6 premissas) → Step 3 (Ficha)
-### Evitado/Transferido: encerra no Step 1
-### Salvar: erro tratado com alert + retorno boolean
-### Status: em_analise (com ficha) / teste_pendente (sem ficha)
+### 2. Configurações → alterar gerente replica para MRC
+- Ao mudar `areas.gerente` em Configurações do Cliente, atualizar `mrc.ger` em todos os controles daquela `area_id`
+- **Status: PENDENTE** (precisa do Configuracoes.jsx para implementar)
 
----
-
-## ═══════════════════════════════════════════════
-## IMPLEMENTADO: FICHA DE RISCO EXCEL v5 ✅ CONFIRMADO EM PRODUÇÃO
-## ═══════════════════════════════════════════════
-
-### Versão: v5 — push realizado e confirmado (03/04/2026)
-### Gerada via ExcelJS no browser, download direto .xlsx
-### Exemplo confirmado: Ficha_de_Risco_C_COM_07.xlsx
-
-### Estrutura real (2 abas):
-
-**Aba 1: "📋 Ficha de Risco" (61 linhas × 9 colunas, paisagem)**
-
-Layout de colunas: A=3, B=34, C-G=20-22, H=10, I=28
-
-**HEADER (rows 1-2):** Logo + "Polímata · Consultoria em GRC" + "FICHA DE RISCO — EXECUÇÃO DO TESTE" — Montserrat bold 10pt creme sobre navy
-
-**SEÇÃO 1 — DADOS DO PROJETO (rows 4-12):** CLIENTE, NATUREZA, FASE, EXECUTOR, DATA, DOWNLOAD POR, REVISOR (editável), DATA REVISÃO (editável)
-
-**SEÇÃO 2 — IDENTIFICAÇÃO (rows 14-22):** ÁREA, SUBPROCESSO, REF.RISCO, REF.CONTROLE, GERÊNCIA, RESP.SUBPROCESSO, DESC.RISCO, DESC.CONTROLE — pré-preenchido #F8F6F2 + borda esquerda medium #CC915E
-
-**SEÇÃO 3 — ATRIBUTOS (rows 24-30):** CATEGORIA, FREQUÊNCIA, NATUREZA, CARACTERÍSTICA, SISTEMA, CONTROLE CHAVE?
-
-**SEÇÃO 4 — PREMISSAS (rows 32-38):** 6 campos editáveis (Quem, Quando, Por Quê, Como, Onde, Resultado)
-
-**SEÇÃO 5 — PASSOS DE TESTE (rows 40-52):** 10 linhas (Atividade + ✓/✗ + Observação)
-
-**SEÇÃO 6 — RESULTADO (rows 55-59):** RESULTADO, INCONSISTÊNCIA, MELHORIA?, DESC.MELHORIA
-
-**FOOTER (row 61):** Polímata + data/hora/email
-
-**Aba 2: "Teste"** — "7. EXECUÇÃO DO TESTE E EVIDÊNCIAS" (área livre para evidências)
-
-### Regras visuais confirmadas:
-- Fundo BRANCO, sem linhas de grade
-- Títulos seção: dourado (#CC915E) sobre navy (#00203E), bold
-- Labels: navy bold sobre branco
-- Valores pré-preenchidos: #333333 regular sobre #F8F6F2, borda esquerda medium #CC915E
-- Montserrat 10pt, SEM itálico, paisagem, 1 imagem (logo)
+### 3. Responsável subprocesso → propagação condicional
+- Ao alterar `mrc.resp_sub` de um controle, perguntar: "Aplicar a todos os subprocessos com mesmo nome?"
+  - Sim → atualiza todos `mrc.resp_sub` onde `sub` = mesmo subprocesso na mesma área
+  - Não → atualiza apenas o controle em edição
+- **Status: PENDENTE** (precisa do ModalAtualizar.jsx para implementar)
 
 ---
 
 ## Pendências (próximo chat)
-1. **Testar deploy sessão 3** — confirmar visual do Dashboard + Por Área em produção
-2. **Testar navegação** — clicar em "Maturidade por Área" deve ir para `/area/:id`
-3. **Testar ficha Excel v5 no browser** — verificar logo + dados em produção
-4. **Configurar domínio** polimatagrc.com.br no Vercel
-5. **PWA offline** — funcionamento sem internet + sincronização
-6. Upload e leitura de ficha preenchida
-7. Export Excel/PDF da MRC
+1. **Implementar propagação gerente** na importação (ImportarMRC.jsx)
+2. **Implementar propagação gerente** nas configurações (Configuracoes.jsx — precisa do arquivo)
+3. **Implementar propagação resp_sub** condicional (ModalAtualizar.jsx — precisa do arquivo)
+4. **Testar importação** com arquivo real separado por área
+5. **Configurar domínio** polimatagrc.com.br no Vercel
+6. **PWA offline**
+7. Upload e leitura de ficha preenchida
 8. Integrar engine na MRC (peso real no modal)
 9. Workflow aprovação (rascunho → em_revisao → aprovado)
 10. Access control suspensos
 11. Flow "Novo Projeto"
+12. Export PDF da MRC
 
 ---
 
 ## Notas Técnicas
-- GitHub bloqueado no Claude → upload direto de arquivos
-- Workflow com Claude: mockup HTML → aprovação → código JSX
+- GitHub bloqueado no Claude → Juliana salva downloads direto na pasta do projeto
+- Workflow com Claude: mockup HTML → aprovação → código JSX/ExcelJS
 - Excel: ExcelJS (instalado via npm)
 - `crit` é INTEGER — sempre usar String() ao comparar
 - Navegação Por Área usa area.id (UUID)
 - Gerência e Responsável: DROPDOWN cadastrados (não texto livre)
-- resp_sub: campo da tabela mrc (dado do controle)
-- Premissas na ficha: ferramenta metodológica, NÃO alimentam o sistema
-- Passos de teste: ✓/✗ (não aprovado/reprovado)
-- Modal Atualizar: fundo branco (contraste com tema escuro)
-- Dashboard.jsx passa `projeto` (objeto completo) pro ModalAtualizar
-- CUIDADO: ao montar arquivos por partes, verificar duplicação de blocos (causou build fail 03/04)
-- Dashboard.jsx: ~755 linhas (sessão 3)
+- Dashboard.jsx: ~770 linhas
 - Funções helper: impToIdx(), probToIdx(), critToIdx(), getBarGradient(), getUltimaAtualizacao()
-- Estado `areaFiltro` no HomeDash controla filtro do heatmap (só via tabela criticidade)
-- Componentes mantidos: NivelBadge, Spinner, NoProjeto, Shell, PorArea
-- Componentes removidos: FasesBoxes, GaugeBar, KpisTable, ReguaN1N5, contribFaseArea/Empresa, **VisaoGeral**
-- Card "Planos de Ação": usa div absoluto com gradiente (borderImage anula borderRadius)
-- PorArea: heatmap da área via `useMemo` sobre `area.controles`
-- PorArea: `ultAtualArea` via `getUltimaAtualizacao(area.controles)`
-- Tabela MRC: colunas com larguras fixas (width+minWidth) para uniformidade entre áreas
-- Estilos separados: `dashStyles` (Dashboard), `paStyles` (PorArea), `S` (legado MRC)
+- Componentes removidos: FasesBoxes, GaugeBar, KpisTable, ReguaN1N5, VisaoGeral
+- Card "Planos de Ação": div absoluto com gradiente (borderImage anula borderRadius)
+- Estilos separados: `dashStyles`, `paStyles`, `S` (legado MRC)
+- Export Excel: `src/lib/exportMRC.js` — 2 abas, icon.png (NÃO logotipo)
+- ExcelJS gridlines: `showGridLines: false` DEVE estar dentro de `views[]`
+- Importação MRC: header linha 11, dados linha 12+, arquivo pode ter 97 colunas (F1-F5)
+- Importação: limpa N/A, normaliza imp/prob, parseia crit texto→integer
+- Áreas devem existir antes da importação (criadas em Configurações)
+- Arquivos Excel da Brascabos podem vir criptografados — pedir versão sem senha
