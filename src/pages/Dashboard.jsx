@@ -6,6 +6,7 @@ import Configuracoes from './Configuracoes'
 import Perfil from './Perfil'
 import MRCCompleta, { ModalDetalhe } from '../components/MRCCompleta'
 import ModalAtualizar from '../components/ModalAtualizar'
+import ImportarMRC from '../components/ImportarMRC'
 import {
   calcularPercentualArea,
   calcularIndiceEmpresa,
@@ -187,7 +188,8 @@ export default function Dashboard() {
           <SideNavItem icon="📋" label="MRC Completa" active={location.pathname === '/mrc'} onClick={() => navigate('/mrc')} open={sidebarOpen}
             badge={todosControles.length > 0 ? todosControles.length : null} />
           {isAdmin && (<>{sidebarOpen && <div className="sb-sep">Administração</div>}
-            <SideNavItem icon="⚙️" label="Configurações" active={location.pathname.startsWith('/configuracoes')} onClick={() => navigate('/configuracoes')} open={sidebarOpen} /></>)}
+            <SideNavItem icon="⚙️" label="Configurações" active={location.pathname.startsWith('/configuracoes')} onClick={() => navigate('/configuracoes')} open={sidebarOpen} />
+            <SideNavItem icon="📥" label="Importar MRC" active={location.pathname === '/importar-mrc'} onClick={() => navigate('/importar-mrc')} open={sidebarOpen} /></>)}
         </nav>
         <button onClick={() => setSidebarOpen(o => !o)} style={{ background: 'transparent', border: 'none', borderTop: '1px solid var(--brd)', color: 'var(--txt3)', padding: '10px', cursor: 'pointer', fontSize: 14, textAlign: 'center' }}>
           {sidebarOpen ? '◂' : '▸'}
@@ -209,6 +211,7 @@ export default function Dashboard() {
           <Route path="/area/:areaId" element={<PorArea projeto={projetoAtivo} areasCalc={areasCalc} todosControles={todosControles} loading={loading} navigate={navigate} loadDados={loadDados} />} />
           <Route path="/mrc" element={<MRCCompleta projetoId={projetoAtivo?.id} clienteNome={projetoAtivo?.clientes?.nome || ''} projetoNome={projetoAtivo?.nome || ''} />} />
           <Route path="/configuracoes/*" element={<Configuracoes />} />
+          <Route path="/importar-mrc" element={<ImportarMRC projetoId={projetoAtivo?.id} areas={areasCalc} onImported={() => { if (projetoAtivo?.id) loadDados(projetoAtivo.id) }} />} />
           <Route path="/perfil" element={<Perfil />} />
         </Routes>
       </main>
