@@ -634,7 +634,7 @@ function PorArea({ projeto, areasCalc, loading, navigate, loadDados }) {
         </div>
       </div>
       {modalRow && <ModalDetalhe row={modalRow} onClose={() => setModalRow(null)} />}
-      {atualizarRow && <ModalAtualizar row={atualizarRow} onClose={() => setAtualizarRow(null)} onSaved={() => { setAtualizarRow(null); if (projeto?.id) loadDados(projeto.id) }} areas={areasCalc} projetoId={projeto?.id} />}
+      {atualizarRow && <ModalAtualizar row={atualizarRow} onClose={() => setAtualizarRow(null)} onSaved={() => { setAtualizarRow(null); if (projeto?.id) loadDados(projeto.id) }} areas={areasCalc} projeto={projeto} />}
     </div>
   )
 }
