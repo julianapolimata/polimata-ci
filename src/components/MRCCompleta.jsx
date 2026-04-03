@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { supabase } from '../lib/supabase'
+import { exportarMRCExcel } from '../lib/exportMRC'
 
 // ─── CONSTANTES ──────────────────────────────────────────────────────────────
 
@@ -403,7 +404,7 @@ export default function MRCCompleta({ projetoId }) {
           <button className="btn btn-xs" onClick={() => setExpandAll(o => !o)}>⊞ {expandAll ? 'Recolher Tudo' : 'Expandir Tudo'}</button>
           {temFiltro && <button className="btn btn-ghost btn-sm" onClick={limparFiltros}>✕ Limpar filtros</button>}
           <div className="mrc-actions-right">
-            <button className="btn-export btn-export-xl" title="Exportar para Excel"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/></svg>Excel</button>
+            <button className="btn-export btn-export-xl" title="Exportar para Excel" onClick={() => exportarMRCExcel(filtered, 'MRC_Completa_' + new Date().toISOString().slice(0,10), 'MRC Completa')}><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/></svg>Excel</button>
             <button className="btn-export btn-export-pdf" title="Exportar para PDF"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>PDF</button>
             <div className="col-panel-wrap"><button className="btn btn-xs" onClick={() => setColPanelOpen(o => !o)}>⊞ Colunas</button><ColunasPanel visCols={visCols} setVisCols={setVisCols} open={colPanelOpen} onClose={() => setColPanelOpen(false)} /></div>
           </div>

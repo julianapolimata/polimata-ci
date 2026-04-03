@@ -12,6 +12,7 @@ import {
   getNivelMaturidade,
   PESO_FASE,
 } from '../lib/calculoMaturidade'
+import { exportarMRCExcel } from '../lib/exportMRC'
 
 // ══════════════════════════════════════════════════════════════════════════════
 // CONSTANTES
@@ -306,7 +307,7 @@ function HomeDash({ projeto, areasCalc, todosControles, loading, ultimaAtualizac
         <div style={D.headerCliente}>{clienteNome} · {projeto.nome || 'Controles Internos'}</div>
         <div style={D.headerTitulo}>Maturidade do Ambiente de Controles Internos</div>
         <div style={D.headerSub}>Visão consolidada · {areasCalc.length} áreas · {todosControles.length} controles · Metodologia Polímata</div>
-        <div style={{ position: 'absolute', top: 14, right: 0, fontSize: 9, color: 'rgba(243,238,228,0.3)', fontWeight: 400 }}>Última atualização: {ultimaAtualizacao}</div>
+        <div style={{ position: 'absolute', top: 14, right: 0, fontSize: 10, color: 'rgba(243,238,228,0.5)', fontWeight: 500, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 6, padding: '4px 10px' }}>Última atualização: {ultimaAtualizacao}</div>
       </div>
 
       <div style={D.kpiRow}>
@@ -584,7 +585,7 @@ function PorArea({ projeto, areasCalc, todosControles, loading, navigate, loadDa
           <div style={{ fontSize: 18, fontWeight: 600, color: '#F3EEE4' }}>{nome}</div>
           <div style={{ fontSize: 10, color: 'rgba(243,238,228,0.35)', marginTop: 1 }}>{area.controles.length} controles · Peso empresa: {pesoEmpresa}%</div>
         </div>
-        <div style={{ position: 'absolute', top: 12, right: 0, fontSize: 9, color: 'rgba(243,238,228,0.3)', fontWeight: 400 }}>Última atualização: {ultAtualArea}</div>
+        <div style={{ position: 'absolute', top: 12, right: 0, fontSize: 10, color: 'rgba(243,238,228,0.5)', fontWeight: 500, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 6, padding: '4px 10px' }}>Última atualização: {ultAtualArea}</div>
       </div>
 
       {/* ZONA SUPERIOR — HEATMAP + KPI GRID */}
@@ -665,6 +666,10 @@ function PorArea({ projeto, areasCalc, todosControles, loading, navigate, loadDa
         <select value={filtImp} onChange={e => setFiltImp(e.target.value)} style={PA.filtroSel}><option value="">Todos impactos</option>{imps.map(c => <option key={c} value={c}>{c}</option>)}</select>
         <select value={filtRes} onChange={e => setFiltRes(e.target.value)} style={PA.filtroSel}><option value="">Todos resultados F1</option>{ress.map(c => <option key={c} value={c}>{c}</option>)}</select>
         <div style={{ fontSize: 10, color: 'rgba(243,238,228,0.3)', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 4, padding: '5px 10px' }}>{cf.length} controles</div>
+        <button onClick={() => exportarMRCExcel(cf, `MRC_${nome.replace(/\s+/g, '_')}_${new Date().toISOString().slice(0,10)}`, nome)} style={PA.btnExport} title="Exportar Excel da área">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/></svg>
+          Excel
+        </button>
       </div>
 
       {/* TABELA MRC */}
@@ -739,6 +744,7 @@ const paStyles = {
   kpiSub: { fontSize: 10, color: 'rgba(243,238,228,0.3)', marginTop: 4 },
   filtroInput: { flex: 1, minWidth: 200, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 4, padding: '6px 10px', fontFamily: 'inherit', fontSize: 11, outline: 'none', color: '#F3EEE4' },
   filtroSel: { background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 4, padding: '5px 8px', fontFamily: 'inherit', fontSize: 10, color: 'rgba(243,238,228,0.6)', cursor: 'pointer', outline: 'none' },
+  btnExport: { display: 'inline-flex', alignItems: 'center', gap: 5, background: 'rgba(204,145,94,0.12)', border: '1px solid rgba(204,145,94,0.3)', borderRadius: 4, padding: '5px 10px', fontSize: 10, fontWeight: 600, color: '#CC915E', cursor: 'pointer', fontFamily: 'inherit', marginLeft: 'auto' },
   tabelaWrap: { flex: 1, minHeight: 0, background: 'rgba(255,255,255,0.02)', borderRadius: 8, border: '1px solid rgba(255,255,255,0.05)', display: 'flex', flexDirection: 'column', overflow: 'hidden' },
 }
 
