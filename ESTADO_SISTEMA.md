@@ -1,5 +1,5 @@
 # ESTADO DO SISTEMA — CI Polímata
-> Atualizado em: 01/04/2026
+> Atualizado em: 03/04/2026 (fim da sessão)
 > Cole no início de cada novo chat para retomar sem perda de contexto.
 
 ---
@@ -13,6 +13,7 @@
 - **Local:** C:\projetos\polimata-fresh\polimata-ci
 - **Admin:** juliana@polimatagrc.com.br
 - **Git push:** sempre usar `--force`
+- **Domínio próprio:** polimatagrc.com.br (pendente configuração no Vercel)
 
 ---
 
@@ -23,6 +24,9 @@
 - **Fonte:** Montserrat para TUDO (sem exceções)
 - **Cores fases:** F1=#00203E, F2=#1D3B5C, F3=#660033, F4=#660066, F5=#A6512F
 - **Regra:** estrutural = marca; semântico = cores universais. NUNCA usar roxo.
+- **Logo:** logotipo-2cores.png na pasta public/
+- **Brandbook:** Apresentacao.pdf (referência oficial)
+- **NUNCA usar itálico** em documentos gerados pelo sistema
 
 ---
 
@@ -34,20 +38,19 @@
 - Operação: MRC Completa (badge total)
 - Administração: Configurações (admin only)
 
-### 1. Dashboard Maturidade (rota `/`)
-- Gauge 12px + "Última atualização" no header
-- Visão Empresa compacta + Visão Área com KPIs + Ranking
+### 1. Dashboard Maturidade (rota `/`) — TEMA ESCURO
+- Fundo navy com cards escuros
+- Gauge + Visão Empresa + Visão Área + KPIs + Ranking
 
 ### 2. Visão Geral (rota `/visao-geral`)
-- 4 cards: Total | Efetivo | Inefetivo | GAP (breakdown 4 criticidades: Crít/Sign/Mod/Baixo)
-- Tabela Resumo por Área com Efetivo×4 | Inefetivo×4 | GAP×4 + linha TOTAL
+- 4 cards: Total | Efetivo | Inefetivo | GAP (breakdown 4 criticidades)
+- Tabela Resumo por Área + linha TOTAL
 
 ### 3. Por Área (rota `/area/:areaId`)
-- ← VOLTAR + nome + meta
-- 5 KPIs: Maturidade | Efetivos | Inefetivos | GAPs | Planos de Ação (dourado)
-- Filtros + tabela MRC 23 colunas + badges coloridos Imp/Prob/Crit
-- Botão "Ver" → abre ModalDetalhe (exportado do MRCCompleta)
-- Botão "Atualizar" → abre ModalAtualizar (workflow multi-step) ← EM IMPLEMENTAÇÃO
+- 5 KPIs + Filtros + tabela MRC 23 colunas
+- Botão "Ver" → ModalDetalhe
+- Botão "Atualizar" (dourado, só admin/consultor) → ModalAtualizar ✅
+- Badges "EM ANÁLISE" e "TESTE PENDENTE" ✅
 
 ### Outras telas
 - Login, MRC Completa, Config Clientes/Usuários, Perfil
@@ -55,119 +58,122 @@
 ---
 
 ## Campos Supabase — tabela `mrc`
-`id`, `projeto_id`, `area_id`, `rr`, `rc`, `sub`, `ger`, `resp_sub`, `dt_ult`, `dr`, `dc`, `imp`, `prob`, `crit` (INTEGER 1-4), `crit_label`, `cat`, `freq`, `nat`, `car`, `sis`, `chave`, `passos_f1`, `r1`, `incons`, `rec`, `dem_pa`, `resp_pa`, `dt_pa`, `st_pa`, `coment_pa`, `dt_teste`, `dc_novo`, `r_ader`, `melhoria`, `incons_ader`, `coment_ader`, `st_f3`, `r3`, `incons_f3`, `rec_f3`, `area` (text/processo), `status_workflow`, `criado_em`, `atualizado_em`, `criado_por`, `atualizado_por`
+`id`, `projeto_id`, `area_id`, `rr`, `rc`, `sub`, `ger`, `resp_sub`, `dt_ult`, `dr`, `dc`, `imp`, `prob`, `crit` (INTEGER 1-4), `crit_label`, `cat`, `freq`, `nat`, `car`, `sis`, `chave`, `passos_f1`, `r1`, `incons`, `rec`, `dem_pa`, `resp_pa`, `dt_pa`, `st_pa`, `coment_pa`, `dt_teste`, `dc_novo`, `r_ader`, `melhoria`, `incons_ader`, `coment_ader`, `st_f3`, `r3`, `incons_f3`, `rec_f3`, `area`, `status_workflow`, `criado_em`, `atualizado_em`, `criado_por`, `atualizado_por`
 
-### Campos novos a criar (tabela mrc):
-- `status_risco` text DEFAULT 'existente' — valores: existente, evitado, transferido
-- `motivo_inativacao` text — justificativa quando evitado
-- `ativo` boolean DEFAULT true — false quando evitado ou transferido (origem)
-- `transferido_de` UUID — FK para o registro original (quando é cópia no destino)
-- `ref_anterior` text — guardar referência original antes de liberar
-- `premissa_porque` text — premissa "Por quê?"
-- `premissa_quando` text — premissa "Quando?"
-- `premissa_onde` text — premissa "Onde?"
-- `premissa_quem` text — premissa "Quem?" (vazio se automatizado)
-- `premissa_como` text — premissa "Como?"
-- `premissa_resultado` text — premissa "Qual o resultado?"
+### Campos adicionados (migração 01/04/2026):
+- `status_risco` text DEFAULT 'existente'
+- `motivo_inativacao` text
+- `ativo` boolean DEFAULT true
+- `transferido_de` UUID FK
+- `ref_anterior` text
+- `premissa_porque`, `premissa_quando`, `premissa_onde`, `premissa_quem`, `premissa_como`, `premissa_resultado`
 
-### Tabela nova: `mrc_audit_log`
-- `id` UUID PK
-- `mrc_id` UUID FK → mrc.id
-- `campo` text — nome do campo alterado
-- `valor_anterior` text
-- `valor_novo` text
-- `usuario_id` UUID FK → perfis.id
-- `criado_em` timestamptz DEFAULT now()
+### Constraint status_workflow:
+CHECK (status_workflow = ANY (ARRAY['rascunho','em_revisao','aprovado','reprovado','em_analise','teste_pendente']))
+
+### Tabela `mrc_audit_log`:
+- id, mrc_id, campo, valor_anterior, valor_novo, usuario_id, criado_em
+
+### Query loadDados:
+- Filtra `.neq('ativo', false)`
 
 ---
 
 ## Engine de Cálculo
 - src/lib/calculoMaturidade.js — validado
-- State elevado no shell Dashboard: areasCalc + todosControles compartilhados
+- State elevado no shell Dashboard
 
 ---
 
-## ═══════════════════════════════════════════════════════
-## EM IMPLEMENTAÇÃO: WORKFLOW DE ATUALIZAÇÃO DE CONTROLES
-## ═══════════════════════════════════════════════════════
+## ═══════════════════════════════════════════════
+## IMPLEMENTADO: WORKFLOW DE ATUALIZAÇÃO ✅
+## ═══════════════════════════════════════════════
 
-### Status: MOCKUP v2 APROVADO → Codificação JSX em andamento
+### Componente: src/components/ModalAtualizar.jsx
+### Dependência: ExcelJS (`npm install exceljs`)
+### Props: row, onClose, onSaved, areas, projeto (objeto completo com clientes.nome)
 
-### Mockup aprovado: mockup-atualizar-v2.html
-
-### Visão geral do fluxo
-Botão "Atualizar" aparece APENAS na tela Por Área, visível APENAS para admin_polimata e consultor_polimata (cliente não vê). Aparece na tabela (abaixo do "Ver") E dentro do modal Ver.
-
-### Fluxo multi-step (modal):
-
-**STEP 1 — Risco:**
-- Card resumo: ref.risco, ref.controle, fase atual, resultado, descrição do risco
-- Pergunta: "Houve alteração no descritivo do risco?"
-  - **NÃO** → mantém tudo, vai pro STEP 2
-  - **SIM** → "Qual o novo status do risco?"
-    - **Existente** → permite editar descritivo do risco → vai pro STEP 2
-    - **Evitado (Descontinuado)** → alerta vermelho + caixa de justificativa obrigatória → INATIVA a linha (ativo=false), libera a referência. FIM.
-    - **Transferido** → seleciona área destino + subprocesso + gerência (DROPDOWN cadastrados) + responsável (DROPDOWN cadastrados) → cria CÓPIA na nova área com nova ref. menor disponível, inativa na origem. FIM.
-
-**STEP 2 — Controle (só se risco é "existente"):**
-- Pergunta: "Houve alteração no descritivo do controle?"
-  - **NÃO** → mantém tudo, vai pro STEP 3
-  - **SIM** → permite editar:
-    - Descritivo, Categoria, Frequência, Natureza, Característica, Sistema, Controle Chave
-    - **6 Premissas do Controle** (grid 3×2): Por Quê? / Quando? / Onde? / Quem? / Como? / Qual o resultado?
-    - Cada premissa tem tooltip ⓘ com explicação
-    - Se Característica = "Automatizado" → campo "Quem?" fica desabilitado
-
-**STEP 3 — Executar Teste:**
-- Info box: "Risco e controle confirmados. Agora gere a Ficha de Risco para executar o teste do controle."
-- Preview table com dados que irão na ficha
-- **Próxima Fase** (não fase atual) — calculada automaticamente pela metodologia:
-  - F1 Efetivo → F3 (atalho)
-  - F1 Inefetivo/GAP → F2-E1 (Plano de Ação)
-  - F2-E1 concluído → F2-E2 (Teste de Aderência)
-  - F2-E2 Efetivo → F3
-  - etc.
-- **Botão principal (navy card):** "Salvar e Baixar Ficha de Risco" — salva alterações PRIMEIRO, depois baixa .xlsx. Status → "Em Análise"
-- **Botão secundário (dashed card):** "Salvar sem gerar ficha" — salva, marca como "Teste Pendente" com sinalização visual
-
-### Comportamento do botão X (fechar modal):
-- Abre mini-modal de confirmação: "Deseja sair? As alterações não salvas serão perdidas."
-- Botões: "Continuar editando" / "Sair sem salvar"
-
-### Botão Cancelar no footer:
-- Mesmo comportamento do X — abre confirmação
-
-### Status visuais na tabela Por Área:
-- **Em Análise** → badge dourado pulsante (após salvar com ficha)
-- **Teste Pendente** → badge amarelo (após salvar sem ficha)
-
-### Referência reaproveitada
-- Quando risco é evitado/transferido, a referência (ex: R.COM.05) fica livre
-- Próximo risco novo na área recebe a MENOR referência disponível
-- Só cria sequência nova se todas anteriores estiverem ocupadas
-
-### Permissões:
-- Botão "Atualizar" visível apenas para papel admin_polimata ou consultor_polimata
-- gestor_cliente e usuario_cliente NÃO veem o botão
+### Fluxo: Step 1 (Risco) → Step 2 (Controle + 6 premissas) → Step 3 (Ficha)
+### Evitado/Transferido: encerra no Step 1
+### Salvar: erro tratado com alert + retorno boolean
+### Status: em_analise (com ficha) / teste_pendente (sem ficha)
 
 ---
 
-## Pendências após workflow
-1. Upload e leitura de ficha preenchida
-2. Export Excel/PDF da MRC
-3. Integrar engine na MRC (peso real no modal)
-4. Workflow aprovação (rascunho → em_revisao → aprovado)
-5. Access control suspensos
-6. Flow "Novo Projeto"
+## ═══════════════════════════════════════════════
+## IMPLEMENTADO: FICHA DE RISCO EXCEL ✅
+## ═══════════════════════════════════════════════
+
+### Versão: v5 — deploy pendente confirmação (build fix enviado 03/04)
+### Gerada via ExcelJS no browser, download direto .xlsx
+
+### Estrutura aprovada:
+
+**HEADER:** Logo (fetch /logotipo-2cores.png) + "Polímata · Consultoria em GRC" + "FICHA DE RISCO — EXECUÇÃO DO TESTE" (sem subtítulo)
+
+**BLOCO 1 — PROJETO (grid 3 colunas, labels navy bold):**
+| Label | Valor | Origem |
+|---|---|---|
+| CLIENTE | Brascabos | projeto.clientes.nome |
+| NATUREZA DO PROJETO | Controles Internos 2025 | projeto.nome |
+| FASE EM CURSO | F2-E1 — Plano de Ação | getProximaFase() |
+| EXECUTOR | Juliana | perfil.nome |
+| DATA E HORÁRIO | 03/04/2026 · 14:32 | new Date() |
+| DOWNLOAD POR | juliana@polimatagrc.com.br | perfil.email |
+| REVISOR | (editável) | profissional preenche |
+| DATA DA REVISÃO | (editável) | profissional preenche |
+
+**IDENTIFICAÇÃO (pré-preenchido, fundo #F8F6F2 + borda dourada):**
+- Área, Subprocesso, Ref.Risco, Ref.Controle, Gerência (mrc.ger), Resp.Subprocesso (mrc.resp_sub), Desc.Risco, Desc.Controle
+
+**ATRIBUTOS (pré-preenchido):** Categoria, Frequência, Natureza, Característica, Sistema, Controle Chave?
+
+**1. PREMISSAS (6 campos, TODOS editáveis pelo profissional):**
+- Quem, Quando, Por Quê, Como, Onde, Qual o Resultado
+
+**2. PASSOS DE TESTE (10 linhas):** Atividade/Passo + ✓/✗ + Observação
+
+**3. RESULTADO (4 campos):** Resultado (destaque) + Inconsistência + Melhoria? + Desc.Melhoria
+
+**4. EVIDÊNCIAS:** Área livre
+
+**FOOTER:** Polímata + data/hora/email
+
+### Regras visuais:
+- Fundo BRANCO, sem linhas de grade
+- Pré-preenchido: #F8F6F2 + borda esquerda #CC915E
+- Editável: branco + borda cinza
+- Coluna A = 3 (medida Excel)
+- SEM itálico, labels navy bold
+- Paisagem, fit to page
+
+---
+
+## Pendências (próximo chat)
+1. **Confirmar build/deploy** da ficha Excel v5
+2. **Testar ficha** — logo, grid, cores, dados corretos
+3. **Configurar domínio** polimatagrc.com.br no Vercel
+4. **Tema escuro** do sistema (avaliar telas além do Dashboard)
+5. **PWA offline** — funcionamento sem internet + sincronização
+6. Upload e leitura de ficha preenchida
+7. Export Excel/PDF da MRC
+8. Integrar engine na MRC (peso real no modal)
+9. Workflow aprovação (rascunho → em_revisao → aprovado)
+10. Access control suspensos
+11. Flow "Novo Projeto"
 
 ---
 
 ## Notas Técnicas
 - GitHub bloqueado no Claude → upload direto de arquivos
-- Workflow com Claude: mockup → aprovação → JSX
-- Excel: usar ExcelJS (não SheetJS)
+- Workflow com Claude: mockup HTML → aprovação → código
+- Excel: ExcelJS (instalado via npm)
 - `crit` é INTEGER — sempre usar String() ao comparar
 - Navegação Por Área usa area.id (UUID)
-- Ficha de Risco template: Ficha_de_Risco_Polimata_Template.xlsx
-- Gerência e Responsável Subprocesso: sempre DROPDOWN com nomes cadastrados (não texto livre)
-- 6 premissas do controle: Por Quê / Quando / Onde / Quem / Como / Qual o Resultado
+- Gerência e Responsável: DROPDOWN cadastrados (não texto livre)
+- resp_sub: campo da tabela mrc (dado do controle)
+- Premissas na ficha: ferramenta metodológica, NÃO alimentam o sistema
+- Passos de teste: ✓/✗ (não aprovado/reprovado)
+- Modal Atualizar: fundo branco (contraste com tema escuro)
+- Dashboard.jsx passa `projeto` (objeto completo) pro ModalAtualizar
+- CUIDADO: ao montar arquivos por partes, verificar duplicação de blocos (causou build fail 03/04)

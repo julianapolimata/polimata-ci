@@ -313,14 +313,14 @@ export default function ModalAtualizar({ row, onClose, onSaved, areas, projeto }
     const fC = { type: 'pattern', pattern: 'solid', fgColor: { argb: CREAM } }
     const fW = { type: 'pattern', pattern: 'solid', fgColor: { argb: WHITE } }
 
-    // Fonts - SEM itálico em nenhum lugar
-    const flLabel = { name: 'Montserrat', size: 8, bold: true, color: { argb: NAVY } }
-    const fvValue = { name: 'Montserrat', size: 9, color: { argb: '333333' } }
-    const fgGold = { name: 'Montserrat', size: 9, bold: true, color: { argb: GOLD_DARK } }
-    const fhHint = { name: 'Montserrat', size: 7, color: { argb: '999999' } }
-    const fsSection = { name: 'Montserrat', size: 9, bold: true, color: { argb: GOLD } }
-    const fdDim = { name: 'Montserrat', size: 8, color: { argb: 'BBBBBB' } }
-    const flSmall = { name: 'Montserrat', size: 7, bold: true, color: { argb: NAVY } }
+    // Fonts - SEM itálico em nenhum lugar — tudo size 10
+    const flLabel = { name: 'Montserrat', size: 10, bold: true, color: { argb: NAVY } }
+    const fvValue = { name: 'Montserrat', size: 10, color: { argb: '333333' } }
+    const fgGold = { name: 'Montserrat', size: 10, bold: true, color: { argb: GOLD_DARK } }
+    const fhHint = { name: 'Montserrat', size: 10, color: { argb: '999999' } }
+    const fsSection = { name: 'Montserrat', size: 10, bold: true, color: { argb: GOLD } }
+    const fdDim = { name: 'Montserrat', size: 10, color: { argb: 'BBBBBB' } }
+    const flSmall = { name: 'Montserrat', size: 10, bold: true, color: { argb: NAVY } }
 
     function sec(r, t) {
       ws.mergeCells(`B${r}:I${r}`)
@@ -359,18 +359,18 @@ export default function ModalAtualizar({ row, onClose, onSaved, areas, projeto }
 
     // Tentar carregar logo
     try {
-      const logoResp = await fetch('/logotipo-2cores.png')
+      const logoResp = await fetch('/icon.png')
       if (logoResp.ok) {
         const logoBlob = await logoResp.blob()
         const logoBuffer = await logoBlob.arrayBuffer()
         const logoId = wb.addImage({ buffer: logoBuffer, extension: 'png' })
-        ws.addImage(logoId, { tl: { col: 1, row: 0 }, ext: { width: 140, height: 36 } })
+        ws.addImage(logoId, { tl: { col: 1, row: 0 }, ext: { width: 28, height: 28 } })
       }
     } catch (e) { /* logo não disponível */ }
 
     ws.mergeCells(`B${r}:I${r}`)
     ws.getCell(`B${r}`).value = '          Polímata · Consultoria em GRC'
-    ws.getCell(`B${r}`).font = { name: 'Montserrat', size: 14, bold: true, color: { argb: CREAM } }
+    ws.getCell(`B${r}`).font = { name: 'Montserrat', size: 10, bold: true, color: { argb: CREAM } }
     ws.getCell(`B${r}`).fill = fN; ws.getCell(`B${r}`).alignment = { horizontal: 'left', vertical: 'middle', indent: 1 }
     ws.getRow(r).height = 32; r++
 
@@ -381,38 +381,19 @@ export default function ModalAtualizar({ row, onClose, onSaved, areas, projeto }
     ws.getCell(`B${r}`).border = { bottom: { style: 'medium', color: { argb: GOLD } } }
     ws.getRow(r).height = 18; r++
 
-    // ═══ BLOCO 1 — PROJETO (grid 3 colunas, labels navy como padrão) ═══
-    // Cada par: label em B/D/F (navy bold) + valor em C/E/G-I
-    r++
-    // Linha 1: Cliente | Natureza | Fase
-    ws.getCell(`B${r}`).value = 'CLIENTE'; ws.getCell(`B${r}`).font = flSmall; ws.getCell(`B${r}`).fill = fP; ws.getCell(`B${r}`).border = bH; ws.getCell(`B${r}`).alignment = { vertical: 'middle', indent: 1 }
-    ws.getCell(`C${r}`).value = projeto?.clientes?.nome || 'Cliente'; ws.getCell(`C${r}`).font = { name: 'Montserrat', size: 10, bold: true, color: { argb: NAVY } }; ws.getCell(`C${r}`).fill = fP; ws.getCell(`C${r}`).border = bH; ws.getCell(`C${r}`).alignment = { vertical: 'middle', indent: 1 }
-    ws.getCell(`D${r}`).value = 'NATUREZA DO PROJETO'; ws.getCell(`D${r}`).font = flSmall; ws.getCell(`D${r}`).fill = fP; ws.getCell(`D${r}`).border = bH; ws.getCell(`D${r}`).alignment = { vertical: 'middle', indent: 1 }
-    ws.getCell(`E${r}`).value = projeto?.nome || 'Projeto'; ws.getCell(`E${r}`).font = { name: 'Montserrat', size: 10, bold: true, color: { argb: NAVY } }; ws.getCell(`E${r}`).fill = fP; ws.getCell(`E${r}`).border = bH; ws.getCell(`E${r}`).alignment = { vertical: 'middle', indent: 1 }
-    ws.getCell(`F${r}`).value = 'FASE EM CURSO'; ws.getCell(`F${r}`).font = flSmall; ws.getCell(`F${r}`).fill = fP; ws.getCell(`F${r}`).border = bH; ws.getCell(`F${r}`).alignment = { vertical: 'middle', indent: 1 }
-    ws.mergeCells(`G${r}:I${r}`)
-    ws.getCell(`G${r}`).value = proximaFase.label; ws.getCell(`G${r}`).font = fgGold; ws.getCell(`G${r}`).fill = fP; ws.getCell(`G${r}`).border = bH; ws.getCell(`G${r}`).alignment = { vertical: 'middle', indent: 1 }
-    ws.getRow(r).height = 22; r++
-
-    // Linha 2: Executor | Data | Download por
-    ws.getCell(`B${r}`).value = 'EXECUTOR'; ws.getCell(`B${r}`).font = flSmall; ws.getCell(`B${r}`).fill = fP; ws.getCell(`B${r}`).border = bH; ws.getCell(`B${r}`).alignment = { vertical: 'middle', indent: 1 }
-    ws.getCell(`C${r}`).value = perfil?.nome || ''; ws.getCell(`C${r}`).font = { name: 'Montserrat', size: 10, bold: true, color: { argb: NAVY } }; ws.getCell(`C${r}`).fill = fP; ws.getCell(`C${r}`).border = bH; ws.getCell(`C${r}`).alignment = { vertical: 'middle', indent: 1 }
-    ws.getCell(`D${r}`).value = 'DATA E HORÁRIO'; ws.getCell(`D${r}`).font = flSmall; ws.getCell(`D${r}`).fill = fP; ws.getCell(`D${r}`).border = bH; ws.getCell(`D${r}`).alignment = { vertical: 'middle', indent: 1 }
-    ws.getCell(`E${r}`).value = dataHora; ws.getCell(`E${r}`).font = { name: 'Montserrat', size: 10, bold: true, color: { argb: NAVY } }; ws.getCell(`E${r}`).fill = fP; ws.getCell(`E${r}`).border = bH; ws.getCell(`E${r}`).alignment = { vertical: 'middle', indent: 1 }
-    ws.getCell(`F${r}`).value = 'DOWNLOAD POR'; ws.getCell(`F${r}`).font = flSmall; ws.getCell(`F${r}`).fill = fP; ws.getCell(`F${r}`).border = bH; ws.getCell(`F${r}`).alignment = { vertical: 'middle', indent: 1 }
-    ws.mergeCells(`G${r}:I${r}`)
-    ws.getCell(`G${r}`).value = perfil?.email || ''; ws.getCell(`G${r}`).font = { name: 'Montserrat', size: 9, color: { argb: NAVY } }; ws.getCell(`G${r}`).fill = fP; ws.getCell(`G${r}`).border = bH; ws.getCell(`G${r}`).alignment = { vertical: 'middle', indent: 1 }
-    ws.getRow(r).height = 22; r++
-
-    // Linha 3: Revisor | Data Revisão | (vazio)
-    ws.getCell(`B${r}`).value = 'REVISOR'; ws.getCell(`B${r}`).font = flSmall; ws.getCell(`B${r}`).fill = fW; ws.getCell(`B${r}`).border = bH; ws.getCell(`B${r}`).alignment = { vertical: 'middle', indent: 1 }
-    ws.getCell(`C${r}`).value = ''; ws.getCell(`C${r}`).font = fdDim; ws.getCell(`C${r}`).fill = fW; ws.getCell(`C${r}`).border = bH; ws.getCell(`C${r}`).alignment = { vertical: 'middle', indent: 1 }
-    ws.getCell(`D${r}`).value = 'DATA DA REVISÃO'; ws.getCell(`D${r}`).font = flSmall; ws.getCell(`D${r}`).fill = fW; ws.getCell(`D${r}`).border = bH; ws.getCell(`D${r}`).alignment = { vertical: 'middle', indent: 1 }
-    ws.getCell(`E${r}`).value = ''; ws.getCell(`E${r}`).font = fdDim; ws.getCell(`E${r}`).fill = fW; ws.getCell(`E${r}`).border = bH; ws.getCell(`E${r}`).alignment = { vertical: 'middle', indent: 1 }
-    ws.getRow(r).height = 22; r++
+    // ═══ BLOCO 1 — PROJETO (mesmo padrão do bloco Identificação: label + valor) ═══
+    sec(r, 'DADOS DO PROJETO'); r++
+    pre(r, 'CLIENTE', projeto?.clientes?.nome || 'Cliente'); r++
+    pre(r, 'NATUREZA DO PROJETO', projeto?.nome || 'Projeto'); r++
+    refR(r, 'FASE EM CURSO', proximaFase.label); r++
+    pre(r, 'EXECUTOR', perfil?.nome || ''); r++
+    pre(r, 'DATA E HORÁRIO', dataHora); r++
+    pre(r, 'DOWNLOAD POR', perfil?.email || ''); r++
+    edit(r, 'REVISOR', ''); r++
+    edit(r, 'DATA DA REVISÃO', ''); r++
 
     // ═══ IDENTIFICAÇÃO ═══
-    r++; sec(r, 'IDENTIFICAÇÃO DO CONTROLE'); r++
+    sec(r, 'IDENTIFICAÇÃO DO CONTROLE'); r++
     pre(r, 'ÁREA / PROCESSO', row.area); r++
     pre(r, 'SUBPROCESSO', row.sub); r++
     refR(r, 'REF. RISCO', row.rr); r++
@@ -423,7 +404,7 @@ export default function ModalAtualizar({ row, onClose, onSaved, areas, projeto }
     pre(r, 'DESCRIÇÃO DO CONTROLE', dc); ws.getRow(r).height = 32; r++
 
     // ═══ ATRIBUTOS ═══
-    r++; sec(r, 'ATRIBUTOS DO CONTROLE'); r++
+    sec(r, 'ATRIBUTOS DO CONTROLE'); r++
     pre(r, 'CATEGORIA', cat); r++
     pre(r, 'FREQUÊNCIA', freq); r++
     pre(r, 'NATUREZA', nat); r++
@@ -432,7 +413,7 @@ export default function ModalAtualizar({ row, onClose, onSaved, areas, projeto }
     pre(r, 'CONTROLE CHAVE?', chave); r++
 
     // ═══ 6 PREMISSAS (editáveis) ═══
-    r++; sec(r, '1. AS 6 PREMISSAS DO CONTROLE — VALIDAÇÃO METODOLÓGICA'); r++
+    sec(r, '1. AS 6 PREMISSAS DO CONTROLE — VALIDAÇÃO METODOLÓGICA'); r++
     edit(r, '1. QUEM FAZ', ''); r++
     edit(r, '2. QUANDO FAZ', ''); r++
     edit(r, '3. POR QUÊ FAZ', ''); r++
@@ -441,14 +422,14 @@ export default function ModalAtualizar({ row, onClose, onSaved, areas, projeto }
     edit(r, '6. QUAL O RESULTADO', ''); r++
 
     // ═══ PASSOS DE TESTE ═══
-    r++; sec(r, '2. PASSOS DE TESTE'); r++
+    sec(r, '2. PASSOS DE TESTE'); r++
     ws.mergeCells(`B${r}:G${r}`)
     ws.getCell(`B${r}`).value = 'Atividade / Passo'
-    ws.getCell(`B${r}`).font = { name: 'Montserrat', size: 8, bold: true, color: { argb: CREAM } }
+    ws.getCell(`B${r}`).font = { name: 'Montserrat', size: 10, bold: true, color: { argb: CREAM } }
     ws.getCell(`B${r}`).fill = fN; ws.getCell(`B${r}`).alignment = { horizontal: 'left', vertical: 'middle', indent: 1 }
-    ws.getCell(`H${r}`).value = '✓ / ✗'; ws.getCell(`H${r}`).font = { name: 'Montserrat', size: 8, bold: true, color: { argb: CREAM } }
+    ws.getCell(`H${r}`).value = '✓ / ✗'; ws.getCell(`H${r}`).font = { name: 'Montserrat', size: 10, bold: true, color: { argb: CREAM } }
     ws.getCell(`H${r}`).fill = fN; ws.getCell(`H${r}`).alignment = { horizontal: 'center', vertical: 'middle' }
-    ws.getCell(`I${r}`).value = 'Observação'; ws.getCell(`I${r}`).font = { name: 'Montserrat', size: 8, bold: true, color: { argb: CREAM } }
+    ws.getCell(`I${r}`).value = 'Observação'; ws.getCell(`I${r}`).font = { name: 'Montserrat', size: 10, bold: true, color: { argb: CREAM } }
     ws.getCell(`I${r}`).fill = fN; ws.getCell(`I${r}`).alignment = { horizontal: 'left', vertical: 'middle', indent: 1 }; r++
 
     for (let i = 1; i <= 10; i++) {
@@ -462,7 +443,7 @@ export default function ModalAtualizar({ row, onClose, onSaved, areas, projeto }
     ws.getCell(`B${r}`).font = fhHint; ws.getCell(`B${r}`).fill = fW; ws.getCell(`B${r}`).alignment = { indent: 1 }; r++
 
     // ═══ RESULTADO ═══
-    r++; sec(r, '3. RESULTADO'); r++
+    sec(r, '3. RESULTADO'); r++
     ws.getCell(`B${r}`).value = 'RESULTADO'
     ws.getCell(`B${r}`).font = { name: 'Montserrat', size: 10, bold: true, color: { argb: NAVY } }
     ws.getCell(`B${r}`).fill = fC; ws.getCell(`B${r}`).alignment = { vertical: 'middle', indent: 1 }
@@ -476,18 +457,10 @@ export default function ModalAtualizar({ row, onClose, onSaved, areas, projeto }
     ws.getCell(`B${r}`).font = fhHint; ws.getCell(`B${r}`).fill = fW; r++
 
     // ═══ EVIDÊNCIAS ═══
-    r++; sec(r, '4. EXECUÇÃO DO TESTE E EVIDÊNCIAS'); r++
+    sec(r, '4. EXECUÇÃO DO TESTE E EVIDÊNCIAS'); r++
     ws.mergeCells(`B${r}:I${r}`); ws.getCell(`B${r}`).value = '(inserir tabelas, listas ou amostras testadas abaixo)'
     ws.getCell(`B${r}`).font = fdDim; ws.getCell(`B${r}`).fill = fW; ws.getCell(`B${r}`).alignment = { horizontal: 'center', vertical: 'middle' }
-    ws.getRow(r).height = 80; r += 2
-
-    // ═══ FOOTER ═══
-    ws.mergeCells(`B${r}:E${r}`); ws.getCell(`B${r}`).value = 'Polímata Consultoria em GRC · Ficha de Risco'
-    ws.getCell(`B${r}`).font = { name: 'Montserrat', size: 7, color: { argb: NAVY } }; ws.getCell(`B${r}`).fill = fC
-    ws.getCell(`B${r}`).alignment = { indent: 1 }; ws.getCell(`B${r}`).border = { top: { style: 'medium', color: { argb: GOLD } } }
-    ws.mergeCells(`F${r}:I${r}`); ws.getCell(`F${r}`).value = `Gerado em: ${dataHora} · Por: ${perfil?.email || ''}`
-    ws.getCell(`F${r}`).font = { name: 'Montserrat', size: 7, color: { argb: NAVY } }; ws.getCell(`F${r}`).fill = fC
-    ws.getCell(`F${r}`).alignment = { horizontal: 'right' }; ws.getCell(`F${r}`).border = { top: { style: 'medium', color: { argb: GOLD } } }
+    ws.getRow(r).height = 80
 
     // Download
     const buffer = await wb.xlsx.writeBuffer()
