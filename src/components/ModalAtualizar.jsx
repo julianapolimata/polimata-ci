@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
 import ExcelJS from 'exceljs'
-import ModalRegressaoControle from './ModalRegressaoControle'
+// import ModalRegressaoControle from './ModalRegressaoControle' // TODO: implementar após criar Dashboard
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // CONSTANTES
@@ -74,7 +74,6 @@ export default function ModalAtualizar({ row, onClose, onSaved, areas, projeto }
   // Step 1
   const [riscoChoice, setRiscoChoice] = useState(null) // 'nao' | 'sim'
   const [statusChoice, setStatusChoice] = useState(null) // 'existente' | 'evitado' | 'transferido'
-  const [showRegressao, setShowRegressao] = useState(false)
   const [novaDescRisco, setNovaDescRisco] = useState(row.dr || '')
   const [motivoInativacao, setMotivoInativacao] = useState('')
   const [areaDestino, setAreaDestino] = useState('')
@@ -538,28 +537,17 @@ export default function ModalAtualizar({ row, onClose, onSaved, areas, projeto }
   const handleRiscoNao = () => {
     const regressao = detectarRegressao()
     if (regressao) {
-      setShowRegressao(true)
+      // TODO: Acionar ModalRegressaoControle quando implementado
+      alert('⚠️ ATENÇÃO: Regressão detectada. Você está revertendo um controle aprovado/em análise para inefetivo.\n\nEsta funcionalidade será implementada em breve.')
+      setRiscoChoice('nao')
+      setStep(2)
     } else {
       setRiscoChoice('nao')
       setStep(2)
     }
   }
 
-  if (showRegressao) {
-    return (
-      <ModalRegressaoControle
-        row={row}
-        onClose={() => {
-          setShowRegressao(false)
-          onClose()
-        }}
-        onSaved={() => {
-          onSaved?.()
-          onClose()
-        }}
-      />
-    )
-  }
+
 
   return (
     <div style={{
