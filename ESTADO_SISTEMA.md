@@ -1,5 +1,5 @@
 # ESTADO DO SISTEMA — CI Polímata
-> Atualizado em: 03/04/2026 (sessão 3 — Dashboard + Export Excel + Import MRC)
+> Atualizado em: 03/04/2026 (sessão 4 final)
 > Cole no início de cada novo chat para retomar sem perda de contexto.
 
 ---
@@ -46,6 +46,14 @@
 
 ---
 
+## Documentação da Metodologia
+- **METODOLOGIA.md** — documento completo da metodologia de avaliação de maturidade (redigido sessão 4)
+- Cobre: MRC, criticidade dinâmica, trilha F1-F5, progressão/regressão, planos de ação, cálculo, ficha de risco, perfis/workflow
+- **Revisão de criticidade** ocorre em 3 momentos: F1 (classificação inicial), Regressão (obrigatória ao retornar para PA), F3 (revisão com base em evidências)
+- Pendente incluir como seção/página no sistema
+
+---
+
 ## Telas Implementadas
 
 ### Sidebar
@@ -72,16 +80,12 @@
 - Heatmap + Régua + Filtros + Tabela
 - Botão Excel funcional
 
-### 4. Importar MRC (rota `/importar-mrc`) — ✅ IMPLEMENTADO (sessão 3)
+### 4. Importar MRC (rota `/importar-mrc`) — ✅ COMPLETO
 - **Admin only** (admin_polimata)
-- Item "📥 Importar MRC" na sidebar, seção Administração
 - Fluxo: selecionar área → upload .xlsx → preview → confirmar → importar
-- **Apaga todos os controles da área e insere os do arquivo**
-- Atualiza `gerente` na tabela `areas` com o valor `ger` do Excel
-- Lê header na linha 11, dados a partir da linha 12
-- Preview mostra até 20 controles (ref, processo, resultado, impacto, criticidade)
-- Inserção em batches de 50
-- Callback `onImported` recarrega dados no Dashboard
+- Apaga todos os controles da área e insere os do arquivo ✅
+- Atualiza `areas.gerente` com o valor `ger` do primeiro controle
+- **Cores tema escuro** ✅ | **Aviso amarelo** ✅ | **Pop-up confirmação** ✅
 
 ### Outras telas
 - Login, Config Clientes/Usuários, Perfil
@@ -89,60 +93,66 @@
 ---
 
 ## ═══════════════════════════════════════════════
-## IMPLEMENTADO: IMPORTAR MRC ✅ (sessão 3)
+## IMPLEMENTADO: IMPORTAR MRC ✅
 ## ═══════════════════════════════════════════════
 
 ### Arquivo: src/components/ImportarMRC.jsx
 ### Dependência: ExcelJS (já instalado)
 ### Props: projetoId, areas, onImported
 
-### Mapeamento Excel → Supabase (header linha 11, dados linha 12+):
-| Col idx (0-based) | Header Excel | Campo Supabase |
+### Formato do Excel esperado:
+- Header na **linha 11**, dados a partir da **linha 12**
+- Linhas 1-10 ignoradas (título, totais, agrupamentos)
+- Linha só é importada se tiver Ref. Risco (col H / índice 7) preenchido
+- Juliana separa por área antes de importar (cada upload = 1 área)
+
+### Mapeamento Excel → Supabase (col idx 0-based):
+| Col | Header | Campo |
 |---|---|---|
 | 1 | Última Atualização | dt_ult |
 | 3 | Gerência | ger |
-| 4 | Responsável Subprocesso | resp_sub |
-| 5 | Processo | area |
+| 4 | Resp. Subprocesso | resp_sub |
+| 5 | Processo | *(só preview, NÃO vai pro Supabase)* |
 | 6 | Subprocesso | sub |
 | 7 | Ref. Risco | rr |
-| 8 | Descrição do Risco | dr |
+| 8 | Desc. Risco | dr |
 | 9 | Ref. Controle | rc |
-| 10 | Descrição do Controle | dc |
-| 11 | Categoria de Controle | cat |
+| 10 | Desc. Controle | dc |
+| 11 | Categoria | cat |
 | 12 | Frequência | freq |
 | 13 | Natureza | nat |
 | 14 | Característica | car |
 | 15 | Sistema | sis |
-| 16 | Controle Chave? | chave |
-| 17 | Passos de Teste | passos_f1 |
+| 16 | Ctrl Chave? | chave |
+| 17 | Passos Teste | passos_f1 |
 | 18 | Resultado | r1 |
 | 19 | Inconsistência | incons |
 | 20 | Recomendação | rec |
 | 21 | Impacto | imp |
 | 22 | Probabilidade | prob |
-| 23 | Criticidade | crit_label + crit (integer) |
+| 23 | Criticidade | crit_label + crit (int) |
 | 29 | Demanda PA? | dem_pa |
-| 30 | Responsável PA | resp_pa |
+| 30 | Resp. PA | resp_pa |
 | 31 | Data Limite PA | dt_pa |
 | 33 | Status PA | st_pa |
 | 34 | Histórico PA | coment_pa |
 | 35 | Data Teste Aderência | dt_teste |
-| 36 | Nova Descrição Controle | dc_novo |
+| 36 | Nova Desc. Controle | dc_novo |
 | 44 | Resultado Aderência | r_ader |
 | 45 | Melhoria? | melhoria |
-| 46 | Inconsistência Aderência | incons_ader |
-| 47 | Comentários Aderência | coment_ader |
+| 46 | Incons. Aderência | incons_ader |
+| 47 | Coment. Aderência | coment_ader |
 | 50 | Status Risco | status_risco |
 | 56 | Resultado F3 | r3 |
-| 57 | Inconsistência F3 | incons_f3 |
+| 57 | Incons. F3 | incons_f3 |
 | 58 | Recomendação F3 | rec_f3 |
 
-### Limpeza de dados:
-- N/A, n/a, vazio, "—" → null
-- Criticidade texto → integer (1-4)
-- Impacto/Probabilidade normalizados (Crítico, Alto, Moderado, Baixo / Extrema, Alta, Média, Baixa)
-- Datas → ISO string
-- RichText ExcelJS → string plana
+### Limpeza: N/A→null, crit texto→int, imp/prob normalizados, datas→ISO, richText→string
+
+### Bugs corrigidos sessão 4:
+- Campo `area` removido do insert — coluna não existe na tabela `mrc`
+- Policy DELETE criada na tabela `mrc` (faltava, causava duplicação silenciosa)
+- Cores ajustadas para tema escuro
 
 ---
 
@@ -153,25 +163,19 @@
 ### Arquivo: src/lib/exportMRC.js
 ### Função: `exportarMRCExcel(controles, nomeArquivo, tituloAba, clienteNome, projetoNome)`
 
-### Excel (2 abas) — especificação aprovada:
+### Excel (2 abas):
 
 **Aba 1: "Mapa de Calor"**
 - `views: [{ showGridLines: false }]`
-- Fundo creme #F3EEE4
-- Coluna A=4, B=4.09, C-H=18
-- Header navy merge B1:G1, B2:G2, B3:G3 (A não entra no merge)
-- Ícone icon.png 36×36
-- Grid 4×4 (linhas 5-8, altura 49.5): todas coloridas (inclusive zeros)
-- Bordas cor creme (invisíveis)
-- Legenda linha 12: ■ coloridos, sem bordas
-- Resumo linhas 16-18: cards fundo branco, **centralizados sem merge**
-- Linha 17 height=39.5, font sz=26
-- Footer linha 20 height=15: merge B20:E20, border-top medium dourado
+- Fundo creme #F3EEE4, col A=4, B=4.09, C-H=18
+- Header navy merge B (não A), ícone icon.png 36×36
+- Grid 4×4 (linhas 5-8, h=49.5): todas coloridas inclusive zeros, bordas creme
+- Legenda linha 12, resumo linhas 16-18 centralizados sem merge
+- Footer linha 20 h=15, merge B20:E20, border-top medium dourado
 
 **Aba 2: dados MRC**
-- `views: [{ state: 'frozen', ySplit: 4, xSplit: 1, showGridLines: false }]`
-- Coluna A=4 (margem creme), dados coluna B+
-- 23 colunas, auto-filter, linhas alternadas
+- `views: [{ frozen ySplit=4, xSplit=1, showGridLines: false }]`
+- Col A=4 creme, dados col B+, 23 colunas, auto-filter
 
 ---
 
@@ -181,7 +185,6 @@
 
 ### Componente: src/components/ModalAtualizar.jsx
 ### Fluxo: Step 1 (Risco) → Step 2 (Controle + 6 premissas) → Step 3 (Ficha)
-### Status: em_analise (com ficha) / teste_pendente (sem ficha)
 
 ---
 
@@ -189,20 +192,21 @@
 ## IMPLEMENTADO: FICHA DE RISCO EXCEL v5 ✅
 ## ═══════════════════════════════════════════════
 
-### Gerada via ExcelJS no browser, download direto .xlsx
-### 2 abas (Ficha de Risco + Teste/Evidências), layout A=3, paisagem, Montserrat 10pt
+### 2 abas, ExcelJS browser, layout A=3, paisagem, Montserrat 10pt
 
 ---
 
 ## Campos Supabase — tabela `mrc`
-`id`, `projeto_id`, `area_id`, `rr`, `rc`, `sub`, `ger`, `resp_sub`, `dt_ult`, `dr`, `dc`, `imp`, `prob`, `crit` (INTEGER 1-4), `crit_label`, `cat`, `freq`, `nat`, `car`, `sis`, `chave`, `passos_f1`, `r1`, `incons`, `rec`, `dem_pa`, `resp_pa`, `dt_pa`, `st_pa`, `coment_pa`, `dt_teste`, `dc_novo`, `r_ader`, `melhoria`, `incons_ader`, `coment_ader`, `st_f3`, `r3`, `incons_f3`, `rec_f3`, `area`, `status_workflow`, `criado_em`, `atualizado_em`, `criado_por`, `atualizado_por`
+`id`, `projeto_id`, `area_id`, `rr`, `rc`, `sub`, `ger`, `resp_sub`, `dt_ult`, `dr`, `dc`, `imp`, `prob`, `crit` (INTEGER 1-4), `crit_label`, `cat`, `freq`, `nat`, `car`, `sis`, `chave`, `passos_f1`, `r1`, `incons`, `rec`, `dem_pa`, `resp_pa`, `dt_pa`, `st_pa`, `coment_pa`, `dt_teste`, `dc_novo`, `r_ader`, `melhoria`, `incons_ader`, `coment_ader`, `st_f3`, `r3`, `incons_f3`, `rec_f3`, `status_workflow`, `criado_em`, `atualizado_em`, `criado_por`, `atualizado_por`, `status_risco`, `motivo_inativacao`, `ativo`, `transferido_de`, `ref_anterior`, `premissa_porque`, `premissa_quando`, `premissa_onde`, `premissa_quem`, `premissa_como`, `premissa_resultado`
 
-### Campos adicionados (migração 01/04/2026):
-- `status_risco`, `motivo_inativacao`, `ativo`, `transferido_de`, `ref_anterior`
-- `premissa_porque`, `premissa_quando`, `premissa_onde`, `premissa_quem`, `premissa_como`, `premissa_resultado`
+**NOTA:** campo `area` (texto) NÃO existe na tabela `mrc` — usar `area_id` (FK para tabela `areas`)
+
+### RLS Policies tabela `mrc`:
+- mrc_select (SELECT), mrc_insert (INSERT), mrc_update (UPDATE), **mrc_delete (DELETE)** ← criada sessão 4
+- Todas: PERMISSIVE, public, USING(true)
 
 ### Tabela `areas`:
-- id, projeto_id, nome, prefixo, peso, gerente, ordem
+- id, projeto_id, nome, prefixo, peso, **gerente**, ordem
 
 ### Tabela `mrc_audit_log`:
 - id, mrc_id, campo, valor_anterior, valor_novo, usuario_id, criado_em
@@ -216,38 +220,36 @@
 ---
 
 ## ═══════════════════════════════════════════════
-## REGRAS DE PROPAGAÇÃO (aprovadas, implementação pendente)
+## REGRAS DE PROPAGAÇÃO (aprovadas)
 ## ═══════════════════════════════════════════════
 
-### 1. Importação MRC → atualizar gerente da área
-- Ao importar Excel, o campo `ger` do primeiro controle atualiza `areas.gerente`
-- **Status: PENDENTE** (implementar no ImportarMRC.jsx)
+### 1. Importação MRC → atualizar gerente ✅ IMPLEMENTADO
+- `ger` do primeiro controle → `areas.gerente`
 
-### 2. Configurações → alterar gerente replica para MRC
-- Ao mudar `areas.gerente` em Configurações do Cliente, atualizar `mrc.ger` em todos os controles daquela `area_id`
-- **Status: PENDENTE** (precisa do Configuracoes.jsx para implementar)
+### 2. Configurações → gerente replica para MRC — PENDENTE
+- Mudar `areas.gerente` → atualizar `mrc.ger` em todos controles da area_id
 
-### 3. Responsável subprocesso → propagação condicional
-- Ao alterar `mrc.resp_sub` de um controle, perguntar: "Aplicar a todos os subprocessos com mesmo nome?"
-  - Sim → atualiza todos `mrc.resp_sub` onde `sub` = mesmo subprocesso na mesma área
-  - Não → atualiza apenas o controle em edição
-- **Status: PENDENTE** (precisa do ModalAtualizar.jsx para implementar)
+### 3. Responsável subprocesso → propagação condicional — PENDENTE
+- Alterar `mrc.resp_sub` → perguntar "Aplicar a todos os subprocessos com mesmo nome?"
 
 ---
 
 ## Pendências (próximo chat)
-1. **Implementar propagação gerente** na importação (ImportarMRC.jsx)
-2. **Implementar propagação gerente** nas configurações (Configuracoes.jsx — precisa do arquivo)
-3. **Implementar propagação resp_sub** condicional (ModalAtualizar.jsx — precisa do arquivo)
-4. **Testar importação** com arquivo real separado por área
-5. **Configurar domínio** polimatagrc.com.br no Vercel
-6. **PWA offline**
-7. Upload e leitura de ficha preenchida
-8. Integrar engine na MRC (peso real no modal)
-9. Workflow aprovação (rascunho → em_revisao → aprovado)
-10. Access control suspensos
-11. Flow "Novo Projeto"
-12. Export PDF da MRC
+1. **Continuar importação** das matrizes atualizadas por área
+2. **Bug tela branca após deploy** — precisa fechar/abrir aba após atualização. Investigar cache Vercel ou service worker.
+3. **Revisão de criticidade na F3** — sistema não implementa reavaliação de Impacto/Probabilidade/Criticidade na Fase 3. Precisa de campos ou etapa no fluxo F3.
+4. **Revisão de criticidade na regressão** — quando controle volta para PA (Inefetivo), sistema deve solicitar revisão da criticidade. Precisa de trigger no workflow de regressão.
+5. **Incluir METODOLOGIA.md como seção/página no sistema** — tela "Sobre a Metodologia" ou documento acessível
+6. **Propagação gerente** via Configurações (precisa Configuracoes.jsx)
+7. **Propagação resp_sub** condicional (precisa ModalAtualizar.jsx)
+8. **Configurar domínio** polimatagrc.com.br no Vercel
+9. **PWA offline**
+10. Upload e leitura de ficha preenchida
+11. Integrar engine na MRC (peso real no modal)
+12. Workflow aprovação (rascunho → em_revisao → aprovado)
+13. Access control suspensos
+14. Flow "Novo Projeto"
+15. Export PDF da MRC
 
 ---
 
@@ -259,13 +261,14 @@
 - Navegação Por Área usa area.id (UUID)
 - Gerência e Responsável: DROPDOWN cadastrados (não texto livre)
 - Dashboard.jsx: ~770 linhas
-- Funções helper: impToIdx(), probToIdx(), critToIdx(), getBarGradient(), getUltimaAtualizacao()
 - Componentes removidos: FasesBoxes, GaugeBar, KpisTable, ReguaN1N5, VisaoGeral
 - Card "Planos de Ação": div absoluto com gradiente (borderImage anula borderRadius)
 - Estilos separados: `dashStyles`, `paStyles`, `S` (legado MRC)
-- Export Excel: `src/lib/exportMRC.js` — 2 abas, icon.png (NÃO logotipo)
-- ExcelJS gridlines: `showGridLines: false` DEVE estar dentro de `views[]`
-- Importação MRC: header linha 11, dados linha 12+, arquivo pode ter 97 colunas (F1-F5)
-- Importação: limpa N/A, normaliza imp/prob, parseia crit texto→integer
-- Áreas devem existir antes da importação (criadas em Configurações)
+- Export Excel: `src/lib/exportMRC.js` — 2 abas, icon.png, showGridLines dentro de views[]
+- Importação MRC: header linha 11, dados linha 12+, 97 colunas possíveis (F1-F5)
+- Importação: limpa N/A, normaliza imp/prob, parseia crit texto→int, batches de 50
+- Importação: col 5 (Processo) só aparece no preview, NÃO é inserida no Supabase
+- Áreas devem existir antes da importação
 - Arquivos Excel da Brascabos podem vir criptografados — pedir versão sem senha
+- Tela Importar MRC: tema escuro com cores corrigidas (sessão 4), aviso amarelo, pop-up confirmação
+- Criticidade é dinâmica: revisada em F1, na regressão e na F3 (apenas F1 implementada no sistema)
