@@ -269,43 +269,74 @@ export default function ModalAtualizar({ row, onClose, onSaved, areas, projeto }
     // Helper: section header (navy bar with gold text)
     function sec(r, t) {
       ws.mergeCells(`B${r}:I${r}`)
-      const c = ws.getCell(`B${r}`); c.value = t; c.font = fsSection; c.fill = fN
+      const c = ws.getCell(`B${r}`)
+      c.value = t
+      c.font = fsSection
+      c.fill = fN
       c.alignment = { horizontal: 'left', vertical: 'middle', indent: 1 }
       c.border = { bottom: { style: 'thin', color: { argb: GOLD } } }
     }
+
     // Helper: pre-filled row (label white + value #F8F6F2 with gold left border)
     function pre(r, l, v) {
-      ws.getCell(`B${r}`).value = l; ws.getCell(`B${r}`).font = flLabel; ws.getCell(`B${r}`).fill = fW
-      ws.getCell(`B${r}`).alignment = { vertical: 'middle', indent: 1 }; ws.getCell(`B${r}`).border = bH
+      ws.getCell(`B${r}`).value = l
+      ws.getCell(`B${r}`).font = flLabel
+      ws.getCell(`B${r}`).fill = fW
+      ws.getCell(`B${r}`).alignment = { vertical: 'middle', indent: 1 }
+      ws.getCell(`B${r}`).border = bH
       ws.mergeCells(`C${r}:I${r}`)
-      const c = ws.getCell(`C${r}`); c.value = v || ''; c.font = fvValue; c.fill = fP
+      const c = ws.getCell(`C${r}`)
+      c.value = v || ''
+      c.font = fvValue
+      c.fill = fP
       c.alignment = { vertical: 'middle', wrapText: true, indent: 1 }
       c.border = { ...bH, left: { style: 'medium', color: { argb: GOLD } } }
     }
+
     // Helper: reference row (gold bold text)
     function refR(r, l, v) {
-      ws.getCell(`B${r}`).value = l; ws.getCell(`B${r}`).font = flLabel; ws.getCell(`B${r}`).fill = fW
-      ws.getCell(`B${r}`).alignment = { vertical: 'middle', indent: 1 }; ws.getCell(`B${r}`).border = bH
+      ws.getCell(`B${r}`).value = l
+      ws.getCell(`B${r}`).font = flLabel
+      ws.getCell(`B${r}`).fill = fW
+      ws.getCell(`B${r}`).alignment = { vertical: 'middle', indent: 1 }
+      ws.getCell(`B${r}`).border = bH
       ws.mergeCells(`C${r}:I${r}`)
-      const c = ws.getCell(`C${r}`); c.value = v || ''; c.font = fgGold; c.fill = fP
+      const c = ws.getCell(`C${r}`)
+      c.value = v || ''
+      c.font = fgGold
+      c.fill = fP
       c.alignment = { vertical: 'middle', indent: 1 }
       c.border = { ...bH, left: { style: 'medium', color: { argb: GOLD } } }
     }
+
     // Helper: editable row (label white + value white with gray left border)
     function edit(r, l, p) {
-      ws.getCell(`B${r}`).value = l; ws.getCell(`B${r}`).font = flLabel; ws.getCell(`B${r}`).fill = fW
-      ws.getCell(`B${r}`).alignment = { vertical: 'middle', indent: 1 }; ws.getCell(`B${r}`).border = bH
+      ws.getCell(`B${r}`).value = l
+      ws.getCell(`B${r}`).font = flLabel
+      ws.getCell(`B${r}`).fill = fW
+      ws.getCell(`B${r}`).alignment = { vertical: 'middle', indent: 1 }
+      ws.getCell(`B${r}`).border = bH
       ws.mergeCells(`C${r}:I${r}`)
-      const c = ws.getCell(`C${r}`); c.value = p || ''; c.font = fdDim; c.fill = fW
+      const c = ws.getCell(`C${r}`)
+      c.value = p || ''
+      c.font = fdDim
+      c.fill = fW
       c.alignment = { vertical: 'middle', wrapText: true, indent: 1 }
       c.border = { ...bH, left: { style: 'thin', color: { argb: BORDER_GRAY } } }
     }
+
     // Helper: resultado row (label creme + value white with gold left border)
     function resRow(r, l) {
-      ws.getCell(`B${r}`).value = l; ws.getCell(`B${r}`).font = flLabel; ws.getCell(`B${r}`).fill = fC
-      ws.getCell(`B${r}`).alignment = { vertical: 'middle', indent: 1 }; ws.getCell(`B${r}`).border = bH
+      ws.getCell(`B${r}`).value = l
+      ws.getCell(`B${r}`).font = flLabel
+      ws.getCell(`B${r}`).fill = fC
+      ws.getCell(`B${r}`).alignment = { vertical: 'middle', indent: 1 }
+      ws.getCell(`B${r}`).border = bH
       ws.mergeCells(`C${r}:I${r}`)
-      const c = ws.getCell(`C${r}`); c.value = ''; c.font = fvValue; c.fill = fW
+      const c = ws.getCell(`C${r}`)
+      c.value = ''
+      c.font = fvValue
+      c.fill = fW
       c.alignment = { vertical: 'middle', wrapText: true, indent: 1 }
       c.border = { ...bH, left: { style: 'medium', color: { argb: GOLD } } }
     }
@@ -327,13 +358,15 @@ export default function ModalAtualizar({ row, onClose, onSaved, areas, projeto }
     ws.mergeCells(`B${r}:I${r}`)
     ws.getCell(`B${r}`).value = '          Polímata · Consultoria em GRC'
     ws.getCell(`B${r}`).font = { name: 'Montserrat', size: 10, bold: true, color: { argb: CREAM } }
-    ws.getCell(`B${r}`).fill = fN; ws.getCell(`B${r}`).alignment = { horizontal: 'left', vertical: 'middle', indent: 1 }
+    ws.getCell(`B${r}`).fill = fN
+    ws.getCell(`B${r}`).alignment = { horizontal: 'left', vertical: 'middle', indent: 1 }
     r++
 
     ws.mergeCells(`B${r}:I${r}`)
     ws.getCell(`B${r}`).value = '          FICHA DE RISCO — EXECUÇÃO DO TESTE'
     ws.getCell(`B${r}`).font = { name: 'Montserrat', size: 10, bold: true, color: { argb: GOLD } }
-    ws.getCell(`B${r}`).fill = fN; ws.getCell(`B${r}`).alignment = { horizontal: 'left', vertical: 'middle', indent: 1 }
+    ws.getCell(`B${r}`).fill = fN
+    ws.getCell(`B${r}`).alignment = { horizontal: 'left', vertical: 'middle', indent: 1 }
     ws.getCell(`B${r}`).border = { bottom: { style: 'medium', color: { argb: GOLD } } }
     r++
 
@@ -341,156 +374,218 @@ export default function ModalAtualizar({ row, onClose, onSaved, areas, projeto }
     r++
 
     // ═══ 1. DADOS DO PROJETO ═══
-    sec(r, '1. DADOS DO PROJETO'); r++
-    pre(r, 'CLIENTE', projeto?.clientes?.nome || 'Cliente'); r++
-    pre(r, 'NATUREZA DO PROJETO', projeto?.nome || 'Projeto'); r++
-    pre(r, 'FASE EM CURSO', getProximaFase(row).label); r++
-    pre(r, 'EXECUTOR', perfil?.nome || 'Executor'); r++
-    pre(r, 'DATA E HORÁRIO', dataHora); r++
-    pre(r, 'DOWNLOAD POR', perfil?.email || 'Email'); r++
-    edit(r, 'REVISOR', ''); r++
-    edit(r, 'DATA DA REVISÃO', ''); r++
-
+    sec(r, '1. DADOS DO PROJETO')
+    r++
+    pre(r, 'CLIENTE', projeto?.clientes?.nome || 'Cliente')
+    r++
+    pre(r, 'NATUREZA DO PROJETO', projeto?.nome || 'Projeto')
+    r++
+    pre(r, 'FASE EM CURSO', getProximaFase(row).label)
+    r++
+    pre(r, 'EXECUTOR', perfil?.nome || 'Executor')
+    r++
+    pre(r, 'DATA E HORÁRIO', dataHora)
+    r++
+    pre(r, 'DOWNLOAD POR', perfil?.email || 'Email')
+    r++
+    edit(r, 'REVISOR', '')
+    r++
+    edit(r, 'DATA DA REVISÃO', '')
     r++
 
-    // ═══ 2. IDENTIFICAÇÃO ═══
-    sec(r, '2. IDENTIFICAÇÃO DO RISCO E CONTROLE'); r++
-    pre(r, 'ÁREA', row.area || ''); r++
-    pre(r, 'SUBPROCESSO', row.sub || ''); r++
-    refR(r, 'REF. RISCO', row.rr); r++
-    refR(r, 'REF. CONTROLE', row.rc); r++
-    pre(r, 'GERÊNCIA', row.ger || ''); r++
-    pre(r, 'RESP. SUBPROCESSO', row.resp_sub || ''); r++
-    pre(r, 'DESC. RISCO', row.dr || ''); r++
-    pre(r, 'DESC. CONTROLE', dc); r++
+    // Row: blank spacer
+    r++
 
+    // ═══ 2. IDENTIFICAÇÃO DO RISCO E CONTROLE ═══
+    sec(r, '2. IDENTIFICAÇÃO DO RISCO E CONTROLE')
+    r++
+    const areaRow = areas.find(a => a.id === row.area_id)
+    const areaNome = areaRow?.nome || 'Área'
+    pre(r, 'ÁREA', areaNome)
+    r++
+    pre(r, 'SUBPROCESSO', row.sub || '')
+    r++
+    refR(r, 'REF. RISCO', row.rr || '')
+    r++
+    refR(r, 'REF. CONTROLE', row.rc || '')
+    r++
+    pre(r, 'GERÊNCIA', row.ger || '')
+    r++
+    pre(r, 'RESP. SUBPROCESSO', row.resp_sub || '')
+    r++
+    pre(r, 'DESCRIÇÃO DO RISCO', dr)
+    r++
+    pre(r, 'DESCRIÇÃO DO CONTROLE', dc)
+    r++
+
+    // Row: blank spacer
     r++
 
     // ═══ 3. ATRIBUTOS ═══
-    sec(r, '3. ATRIBUTOS'); r++
-    pre(r, 'CATEGORIA', cat); r++
-    pre(r, 'FREQUÊNCIA', freq); r++
-    pre(r, 'NATUREZA', nat); r++
-    pre(r, 'CARACTERÍSTICA', car); r++
-    pre(r, 'SISTEMA/FERRAMENTA', sis); r++
-    pre(r, 'CONTROLE CHAVE?', chave); r++
+    sec(r, '3. ATRIBUTOS')
+    r++
+    pre(r, 'CATEGORIA', cat)
+    r++
+    pre(r, 'FREQUÊNCIA', freq)
+    r++
+    pre(r, 'NATUREZA', nat)
+    r++
+    pre(r, 'CARACTERÍSTICA', car)
+    r++
+    pre(r, 'SISTEMA', sis)
+    r++
+    pre(r, 'CONTROLE CHAVE?', chave)
+    r++
 
+    // Row: blank spacer
     r++
 
     // ═══ 4. PREMISSAS ═══
-    sec(r, '4. PREMISSAS DO CONTROLE'); r++
-    const premissasTitles = [
-      { k: 'premissa_porque', t: 'POR QUÊ?' },
-      { k: 'premissa_quando', t: 'QUANDO?' },
-      { k: 'premissa_onde', t: 'ONDE?' },
-      { k: 'premissa_quem', t: 'QUEM?' },
-      { k: 'premissa_como', t: 'COMO?' },
-      { k: 'premissa_resultado', t: 'QUAL O RESULTADO?' },
-    ]
-    for (const p of premissasTitles) {
-      edit(r, p.t, premissas[p.k] || row[p.k] || ''); r++
-    }
+    sec(r, '4. PREMISSAS')
+    r++
+    edit(r, 'Quem?', '')
+    r++
+    edit(r, 'Quando?', '')
+    r++
+    edit(r, 'Por quê?', '')
+    r++
+    edit(r, 'Como?', '')
+    r++
+    edit(r, 'Onde?', '')
+    r++
+    edit(r, 'Qual o resultado?', '')
+    r++
 
+    // Row: blank spacer
     r++
 
     // ═══ 5. PASSOS DE TESTE ═══
-    sec(r, '5. PASSOS DE TESTE (10 ATIVIDADES)'); r++
-    ws.getCell(`B${r}`).value = 'ATIVIDADE/PASSO'
+    sec(r, '5. PASSOS DE TESTE')
+    r++
+    ws.getCell(`B${r}`).value = 'ATIVIDADE / PASSO'
     ws.getCell(`B${r}`).font = flLabel
-    ws.getCell(`B${r}`).fill = fP
+    ws.getCell(`B${r}`).fill = fC
     ws.getCell(`B${r}`).border = bH
-    ws.getCell(`B${r}`).alignment = { vertical: 'middle', indent: 1 }
-    ws.mergeCells(`C${r}:D${r}`)
     ws.getCell(`C${r}`).value = 'RESULTADO'
     ws.getCell(`C${r}`).font = flLabel
-    ws.getCell(`C${r}`).fill = fP
+    ws.getCell(`C${r}`).fill = fC
     ws.getCell(`C${r}`).border = bH
-    ws.getCell(`C${r}`).alignment = { vertical: 'middle', indent: 1 }
-    ws.mergeCells(`E${r}:I${r}`)
-    ws.getCell(`E${r}`).value = 'OBSERVAÇÃO'
-    ws.getCell(`E${r}`).font = flLabel
-    ws.getCell(`E${r}`).fill = fP
-    ws.getCell(`E${r}`).border = bH
-    ws.getCell(`E${r}`).alignment = { vertical: 'middle', indent: 1 }
+    ws.mergeCells(`D${r}:I${r}`)
+    ws.getCell(`D${r}`).value = 'OBSERVAÇÃO'
+    ws.getCell(`D${r}`).font = flLabel
+    ws.getCell(`D${r}`).fill = fC
+    ws.getCell(`D${r}`).border = bH
     r++
 
-    for (let i = 1; i <= 10; i++) {
-      edit(r, `Passo ${i}`, ''); r++
-      edit(r, '', ''); r++
+    for (let i = 0; i < 10; i++) {
+      edit(r, '', '')
+      r++
     }
 
+    // Row: blank spacer
     r++
 
-    // ═══ 6. RESULTADO ═══
-    sec(r, '6. RESULTADO DA AUDITORIA'); r++
-    resRow(r, 'RESULTADO'); r++
-    edit(r, 'INCONSISTÊNCIA DETECTADA', ''); r++
-    edit(r, 'MELHORIA SUGERIDA?', ''); r++
-    edit(r, 'DESCRIÇÃO DA MELHORIA', ''); r++
+    // ═══ 6. RESULTADO DO TESTE ═══
+    sec(r, '6. RESULTADO DO TESTE')
+    r++
+    resRow(r, 'RESULTADO (Efetivo / Inefetivo / GAP)')
+    r++
+    resRow(r, 'INCONSISTÊNCIA IDENTIFICADA')
+    r++
+    resRow(r, 'MELHORIA IDENTIFICADA?')
+    r++
+    resRow(r, 'DESCRIÇÃO DA MELHORIA')
+    r++
 
+    // Row: blank spacer
     r++
 
     // ═══ 7. EVIDÊNCIAS ═══
-    sec(r, '7. EVIDÊNCIAS (Espaço Livre)'); r++
-    ws.mergeCells(`B${r}:I${r + 3}`)
-    const eCell = ws.getCell(`B${r}`)
-    eCell.value = ''
-    eCell.fill = fW
-    eCell.border = bH
-    eCell.alignment = { vertical: 'top', wrapText: true, indent: 1 }
+    sec(r, '7. EVIDÊNCIAS')
+    r++
+    for (let i = 0; i < 4; i++) {
+      edit(r, '', '')
+      r++
+    }
 
-    wb.xlsx.writeBuffer().then(buffer => {
-      const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
-      const url = window.URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = `Ficha_${row.rc}_${new Date().toISOString().slice(0, 10)}.xlsx`
-      document.body.appendChild(a)
-      a.click()
-      window.URL.revokeObjectURL(url)
-      a.remove()
-    }).catch(e => console.error('Erro ao gerar Excel:', e))
+    // FOOTER
+    r++
+    ws.mergeCells(`B${r}:I${r}`)
+    ws.getCell(`B${r}`).value = 'Polímata Consultoria em GRC · ' + new Date().toLocaleDateString('pt-BR') + ' · ' + perfil?.email
+    ws.getCell(`B${r}`).font = { name: 'Montserrat', size: 9, color: { argb: '999999' } }
+    ws.getCell(`B${r}`).alignment = { horizontal: 'center', vertical: 'middle' }
+
+    // DOWNLOAD
+    const buffer = await wb.xlsx.writeBuffer()
+    const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `Ficha_Risco_${row.rr || 'controle'}_${new Date().toISOString().slice(0, 10)}.xlsx`
+    a.click()
+    URL.revokeObjectURL(url)
   }
 
   // ────────────────────────────────────────────────────────────────────────────
   // RENDER
   // ────────────────────────────────────────────────────────────────────────────
 
-  const fundo = '#FFFFFF'
-  const navyBold = '#00112C'
+  const navyBold = '#00203E'
   const corBotaoPrimario = '#CC915E'
   const corBotaoSecundario = '#1D3B5C'
 
-  return (
-    <div
-      style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        backgroundColor: 'rgba(0, 0, 0, 0.5)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: 1000,
-        fontFamily: 'Montserrat, sans-serif'
-      }}
-      onClick={onClose}
-    >
-      <div
-        style={{
-          backgroundColor: fundo,
-          borderRadius: 8,
-          padding: 32,
-          maxWidth: 600,
-          width: '90%',
-          maxHeight: '90vh',
-          overflowY: 'auto',
-          boxShadow: '0 20px 60px rgba(0,0,0,0.3)'
+  // Verificar regressão — quando usuário clica "Não" em "Risco continua existente?"
+  const handleRiscoNao = () => {
+    const regressao = detectarRegressao()
+    if (regressao) {
+      setShowRegressao(true)
+    } else {
+      setRiscoChoice('nao')
+      setStep(2)
+    }
+  }
+
+  if (showRegressao) {
+    return (
+      <ModalRegressaoControle
+        row={row}
+        onClose={() => {
+          setShowRegressao(false)
+          onClose()
         }}
-        onClick={(e) => e.stopPropagation()}
-      >
+        onSaved={() => {
+          onSaved?.()
+          onClose()
+        }}
+      />
+    )
+  }
+
+  return (
+    <div style={{
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      backgroundColor: 'rgba(0,0,0,0.5)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      zIndex: 9999,
+      fontFamily: 'Montserrat, sans-serif'
+    }}>
+      <div style={{
+        backgroundColor: '#fff',
+        borderRadius: 8,
+        padding: '32px',
+        maxWidth: '700px',
+        width: '90vw',
+        maxHeight: '90vh',
+        overflowY: 'auto',
+        boxShadow: '0 10px 40px rgba(0,0,0,0.2)'
+      }}>
+
         {/* STEP 1: RISCO */}
         {step === 1 && (
           <>
@@ -498,27 +593,16 @@ export default function ModalAtualizar({ row, onClose, onSaved, areas, projeto }
               Step 1: Status do Risco
             </h2>
 
-            <div style={{ marginBottom: 20, fontSize: 13, color: '#666' }}>
-              <p><strong>Controle:</strong> {row.rc} — {row.dc}</p>
-              <p><strong>Risco:</strong> {row.rr} — {row.dr}</p>
-            </div>
-
             <p style={{ fontSize: 13, color: '#666', marginBottom: 16 }}>
               O risco continua existente?
             </p>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginBottom: 24 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 20 }}>
               <button
-                onClick={() => {
-                  if (detectarRegressao()) {
-                    setShowRegressao(true)
-                    return
-                  }
-                  setRiscoChoice('nao')
-                }}
+                onClick={handleRiscoNao}
                 style={{
                   padding: '12px',
-                  backgroundColor: '#E5E7EB',
+                  backgroundColor: riscoChoice === 'nao' ? '#E5E7EB' : '#E5E7EB',
                   color: navyBold,
                   border: 'none',
                   borderRadius: 4,
@@ -528,14 +612,14 @@ export default function ModalAtualizar({ row, onClose, onSaved, areas, projeto }
                   cursor: 'pointer'
                 }}
               >
-                ✗ Não
+                Não
               </button>
               <button
                 onClick={() => setRiscoChoice('sim')}
                 style={{
                   padding: '12px',
-                  backgroundColor: corBotaoPrimario,
-                  color: '#fff',
+                  backgroundColor: riscoChoice === 'sim' ? corBotaoPrimario : '#E5E7EB',
+                  color: riscoChoice === 'sim' ? '#fff' : navyBold,
                   border: 'none',
                   borderRadius: 4,
                   fontFamily: 'Montserrat, sans-serif',
@@ -544,35 +628,21 @@ export default function ModalAtualizar({ row, onClose, onSaved, areas, projeto }
                   cursor: 'pointer'
                 }}
               >
-                ✓ Sim (Existente)
-              </button>
-              <button
-                onClick={() => setRiscoChoice('outro')}
-                style={{
-                  padding: '12px',
-                  backgroundColor: corBotaoSecundario,
-                  color: '#fff',
-                  border: 'none',
-                  borderRadius: 4,
-                  fontFamily: 'Montserrat, sans-serif',
-                  fontWeight: 600,
-                  fontSize: 12,
-                  cursor: 'pointer'
-                }}
-              >
-                ⊘ Outro
+                Sim
               </button>
             </div>
 
             {riscoChoice === 'sim' && (
               <>
-                <p style={{ fontSize: 13, color: '#666', marginBottom: 12, fontWeight: 600 }}>
-                  Qual status?
+                <p style={{ fontSize: 12, color: '#666', marginBottom: 12 }}>
+                  Qual é a situação do risco?
                 </p>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 24 }}>
+
+                <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
                   <button
                     onClick={() => setStatusChoice('existente')}
                     style={{
+                      flex: 1,
                       padding: '10px',
                       backgroundColor: statusChoice === 'existente' ? corBotaoPrimario : '#E5E7EB',
                       color: statusChoice === 'existente' ? '#fff' : navyBold,
@@ -584,11 +654,29 @@ export default function ModalAtualizar({ row, onClose, onSaved, areas, projeto }
                       cursor: 'pointer'
                     }}
                   >
-                    Existente (editar)
+                    Existente
+                  </button>
+                  <button
+                    onClick={() => setStatusChoice('transferido')}
+                    style={{
+                      flex: 1,
+                      padding: '10px',
+                      backgroundColor: statusChoice === 'transferido' ? '#3B82F6' : '#E5E7EB',
+                      color: statusChoice === 'transferido' ? '#fff' : navyBold,
+                      border: 'none',
+                      borderRadius: 4,
+                      fontFamily: 'Montserrat, sans-serif',
+                      fontWeight: 600,
+                      fontSize: 12,
+                      cursor: 'pointer'
+                    }}
+                  >
+                    Transferido
                   </button>
                   <button
                     onClick={() => setStatusChoice('evitado')}
                     style={{
+                      flex: 1,
                       padding: '10px',
                       backgroundColor: statusChoice === 'evitado' ? '#22C55E' : '#E5E7EB',
                       color: statusChoice === 'evitado' ? '#fff' : navyBold,
@@ -687,18 +775,6 @@ export default function ModalAtualizar({ row, onClose, onSaved, areas, projeto }
               >
                 Próximo
               </button>
-            )}
-
-            {/* Modal de Regressão */}
-            {showRegressao && (
-              <ModalRegressaoControle
-                row={row}
-                onClose={() => setShowRegressao(false)}
-                onSaved={() => {
-                  onSaved && onSaved()
-                  onClose()
-                }}
-              />
             )}
           </>
         )}
