@@ -227,34 +227,38 @@ const ModalAtualizar = ({ row, onClose, onSaved, areas, projeto }) => {
           <button
             style={{
               padding: 12,
-              border: '1px solid #e5e7eb',
+              border: statusChoice === 'nao' ? '2px solid #00203E' : '1px solid #d1d5db',
               borderRadius: 6,
-              background: statusChoice === 'nao' ? '#00203E' : 'white',
-              color: statusChoice === 'nao' ? 'white' : 'inherit',
+              background: statusChoice === 'nao' ? '#00203E' : '#fafbfc',
+              color: statusChoice === 'nao' ? 'white' : '#333',
               cursor: 'pointer',
               textAlign: 'center',
+              transition: 'all 0.2s',
+              fontFamily: 'Montserrat, sans-serif',
             }}
             onClick={() => setStatusChoice('nao')}
           >
             <div style={{ fontSize: 18, marginBottom: 4 }}>✓</div>
-            <div style={{ fontSize: 12, fontWeight: 600 }}>Não</div>
-            <div style={{ fontSize: 10, marginTop: 4, opacity: 0.7 }}>mantém existente</div>
+            <div style={{ fontSize: 13, fontWeight: 700 }}>Não</div>
+            <div style={{ fontSize: 11, marginTop: 4, opacity: statusChoice === 'nao' ? 0.9 : 0.6, fontWeight: 500 }}>mantém existente</div>
           </button>
           <button
             style={{
               padding: 12,
-              border: '1px solid #e5e7eb',
+              border: statusChoice === 'sim' ? '2px solid #00203E' : '1px solid #d1d5db',
               borderRadius: 6,
-              background: statusChoice === 'sim' ? '#00203E' : 'white',
-              color: statusChoice === 'sim' ? 'white' : 'inherit',
+              background: statusChoice === 'sim' ? '#00203E' : '#fafbfc',
+              color: statusChoice === 'sim' ? 'white' : '#333',
               cursor: 'pointer',
               textAlign: 'center',
+              transition: 'all 0.2s',
+              fontFamily: 'Montserrat, sans-serif',
             }}
             onClick={() => setStatusChoice('sim')}
           >
             <div style={{ fontSize: 18, marginBottom: 4 }}>⚡</div>
-            <div style={{ fontSize: 12, fontWeight: 600 }}>Sim</div>
-            <div style={{ fontSize: 10, marginTop: 4, opacity: 0.7 }}>alterou status</div>
+            <div style={{ fontSize: 13, fontWeight: 700 }}>Sim</div>
+            <div style={{ fontSize: 11, marginTop: 4, opacity: statusChoice === 'sim' ? 0.9 : 0.6, fontWeight: 500 }}>alterou status</div>
           </button>
         </div>
       </div>
@@ -269,34 +273,38 @@ const ModalAtualizar = ({ row, onClose, onSaved, areas, projeto }) => {
               <button
                 style={{
                   padding: 12,
-                  border: '1px solid #e5e7eb',
+                  border: newStatus === 'evitado' ? '2px solid #EF4444' : '1px solid #d1d5db',
                   borderRadius: 6,
-                  background: newStatus === 'evitado' ? '#EF4444' : 'white',
-                  color: newStatus === 'evitado' ? 'white' : 'inherit',
+                  background: newStatus === 'evitado' ? '#EF4444' : '#fafbfc',
+                  color: newStatus === 'evitado' ? 'white' : '#333',
                   cursor: 'pointer',
                   textAlign: 'center',
+                  transition: 'all 0.2s',
+                  fontFamily: 'Montserrat, sans-serif',
                 }}
                 onClick={() => setNewStatus('evitado')}
               >
                 <div style={{ fontSize: 18, marginBottom: 4 }}>🚫</div>
-                <div style={{ fontSize: 12, fontWeight: 600 }}>Evitado</div>
-                <div style={{ fontSize: 10, marginTop: 4, opacity: 0.7 }}>descontinuar</div>
+                <div style={{ fontSize: 13, fontWeight: 700 }}>Evitado</div>
+                <div style={{ fontSize: 11, marginTop: 4, opacity: newStatus === 'evitado' ? 0.9 : 0.6, fontWeight: 500 }}>descontinuar</div>
               </button>
               <button
                 style={{
                   padding: 12,
-                  border: '1px solid #e5e7eb',
+                  border: newStatus === 'transferido' ? '2px solid #F59E0B' : '1px solid #d1d5db',
                   borderRadius: 6,
-                  background: newStatus === 'transferido' ? '#F59E0B' : 'white',
-                  color: newStatus === 'transferido' ? 'white' : 'inherit',
+                  background: newStatus === 'transferido' ? '#F59E0B' : '#fafbfc',
+                  color: newStatus === 'transferido' ? 'white' : '#333',
                   cursor: 'pointer',
                   textAlign: 'center',
+                  transition: 'all 0.2s',
+                  fontFamily: 'Montserrat, sans-serif',
                 }}
                 onClick={() => setNewStatus('transferido')}
               >
                 <div style={{ fontSize: 18, marginBottom: 4 }}>↗</div>
-                <div style={{ fontSize: 12, fontWeight: 600 }}>Transferido</div>
-                <div style={{ fontSize: 10, marginTop: 4, opacity: 0.7 }}>mover para outra área</div>
+                <div style={{ fontSize: 13, fontWeight: 700 }}>Transferido</div>
+                <div style={{ fontSize: 11, marginTop: 4, opacity: newStatus === 'transferido' ? 0.9 : 0.6, fontWeight: 500 }}>mover para outra área</div>
               </button>
             </div>
           </div>
@@ -308,7 +316,7 @@ const ModalAtualizar = ({ row, onClose, onSaved, areas, projeto }) => {
                 <strong>⚠️ Atenção:</strong> Ao marcar como evitado, a linha será <strong>inativada</strong> e a referência {row.rr} ficará disponível para reutilização. O controle {row.rc} também será inativado.
               </div>
               <div style={{ marginBottom: 16 }}>
-                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#00203E', marginBottom: 6 }}>Justificativa da descontinuação *</label>
+                <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#00203E', marginBottom: 6 }}>Justificativa da descontinuação *</label>
                 <textarea
                   value={motivoInativacao}
                   onChange={(e) => setMotivoInativacao(e.target.value)}
@@ -335,13 +343,13 @@ const ModalAtualizar = ({ row, onClose, onSaved, areas, projeto }) => {
                 <strong>ℹ️ Informação:</strong> O risco e seu controle serão copiados para a área de destino com nova referência. A linha original será inativada.
               </div>
               <div style={{ marginBottom: 20 }}>
-                <div style={{ fontSize: 12, fontWeight: 600, color: '#00203E', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: '#00203E', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
                   <span style={{ width: 3, height: 16, background: '#CC915E', borderRadius: 2 }}></span>
                   Destino da transferência
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                   <div>
-                    <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#00203E', marginBottom: 6 }}>Área de destino *</label>
+                    <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#00203E', marginBottom: 6 }}>Área de destino *</label>
                     <select
                       value={areaDestino}
                       onChange={(e) => setAreaDestino(e.target.value)}
@@ -354,7 +362,7 @@ const ModalAtualizar = ({ row, onClose, onSaved, areas, projeto }) => {
                     </select>
                   </div>
                   <div>
-                    <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#00203E', marginBottom: 6 }}>Subprocesso *</label>
+                    <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#00203E', marginBottom: 6 }}>Subprocesso *</label>
                     <input type="text" value={subDestino} onChange={(e) => setSubDestino(e.target.value)} placeholder="Subprocesso..." style={{ width: '100%', padding: 10, border: '1px solid #e5e7eb', borderRadius: 6, fontFamily: 'Montserrat, sans-serif', fontSize: 12 }} />
                   </div>
                 </div>
@@ -384,8 +392,8 @@ const ModalAtualizar = ({ row, onClose, onSaved, areas, projeto }) => {
                 onClick={() => setDescChoice('nao')}
               >
                 <div style={{ fontSize: 18, marginBottom: 4 }}>✓</div>
-                <div style={{ fontSize: 12, fontWeight: 600 }}>Não</div>
-                <div style={{ fontSize: 10, marginTop: 4, opacity: 0.7 }}>manter como está</div>
+                <div style={{ fontSize: 13, fontWeight: 700 }}>Não</div>
+                <div style={{ fontSize: 11, marginTop: 4, opacity: 0.8, fontWeight: 500 }}>manter como está</div>
               </button>
               <button
                 style={{
@@ -400,19 +408,19 @@ const ModalAtualizar = ({ row, onClose, onSaved, areas, projeto }) => {
                 onClick={() => setDescChoice('sim')}
               >
                 <div style={{ fontSize: 18, marginBottom: 4 }}>✎</div>
-                <div style={{ fontSize: 12, fontWeight: 600 }}>Sim</div>
-                <div style={{ fontSize: 10, marginTop: 4, opacity: 0.7 }}>houve alteração</div>
+                <div style={{ fontSize: 13, fontWeight: 700 }}>Sim</div>
+                <div style={{ fontSize: 11, marginTop: 4, opacity: 0.8, fontWeight: 500 }}>houve alteração</div>
               </button>
             </div>
           </div>
 
           {descChoice === 'sim' && (
             <div>
-              <div style={{ fontSize: 12, fontWeight: 600, color: '#00203E', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: '#00203E', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
                 <span style={{ width: 3, height: 16, background: '#CC915E', borderRadius: 2 }}></span>
                 Editar descritivo do risco
               </div>
-              <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#00203E', marginBottom: 6 }}>Nova descrição do risco</label>
+              <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#00203E', marginBottom: 6 }}>Nova descrição do risco</label>
               <textarea
                 value={novaDescRisco}
                 onChange={(e) => setNovaDescRisco(e.target.value)}
@@ -473,8 +481,8 @@ const ModalAtualizar = ({ row, onClose, onSaved, areas, projeto }) => {
             onClick={() => setCtrlDescChoice('nao')}
           >
             <div style={{ fontSize: 18, marginBottom: 4 }}>✓</div>
-            <div style={{ fontSize: 12, fontWeight: 600 }}>Não</div>
-            <div style={{ fontSize: 10, marginTop: 4, opacity: 0.7 }}>manter como está</div>
+            <div style={{ fontSize: 13, fontWeight: 700 }}>Não</div>
+            <div style={{ fontSize: 11, marginTop: 4, opacity: 0.8, fontWeight: 500 }}>manter como está</div>
           </button>
           <button
             style={{
@@ -489,8 +497,8 @@ const ModalAtualizar = ({ row, onClose, onSaved, areas, projeto }) => {
             onClick={() => setCtrlDescChoice('sim')}
           >
             <div style={{ fontSize: 18, marginBottom: 4 }}>✎</div>
-            <div style={{ fontSize: 12, fontWeight: 600 }}>Sim</div>
-            <div style={{ fontSize: 10, marginTop: 4, opacity: 0.7 }}>houve alteração</div>
+            <div style={{ fontSize: 13, fontWeight: 700 }}>Sim</div>
+            <div style={{ fontSize: 11, marginTop: 4, opacity: 0.8, fontWeight: 500 }}>houve alteração</div>
           </button>
         </div>
       </div>
@@ -499,11 +507,11 @@ const ModalAtualizar = ({ row, onClose, onSaved, areas, projeto }) => {
       {ctrlDescChoice === 'sim' && (
         <div style={{ animation: 'fadeIn 0.3s ease-in' }}>
           <div style={{ height: 1, background: '#e5e7eb', margin: '20px 0' }} />
-          <div style={{ fontSize: 12, fontWeight: 600, color: '#00203E', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div style={{ fontSize: 13, fontWeight: 700, color: '#00203E', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
             <span style={{ width: 3, height: 16, background: '#CC915E', borderRadius: 2 }}></span>
             Editar descritivo do controle
           </div>
-          <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#00203E', marginBottom: 6 }}>Nova descrição do controle</label>
+          <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#00203E', marginBottom: 6 }}>Nova descrição do controle</label>
           <textarea
             value={novaDescControle}
             onChange={(e) => setNovaDescControle(e.target.value)}
@@ -522,13 +530,13 @@ const ModalAtualizar = ({ row, onClose, onSaved, areas, projeto }) => {
 
           {/* CARACTERÍSTICAS */}
           <div style={{ marginBottom: 20 }}>
-            <div style={{ fontSize: 12, fontWeight: 600, color: '#00203E', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: '#00203E', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
               <span style={{ width: 3, height: 16, background: '#CC915E', borderRadius: 2 }}></span>
               Características do Controle
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
               <div>
-                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#00203E', marginBottom: 6 }}>Categoria *</label>
+                <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#00203E', marginBottom: 6 }}>Categoria *</label>
                 <select value={editCat} onChange={(e) => setEditCat(e.target.value)} style={{ width: '100%', padding: 10, border: '1px solid #e5e7eb', borderRadius: 6, fontFamily: 'Montserrat, sans-serif', fontSize: 12 }}>
                   <option value="">Selecione...</option>
                   <option>Autorização</option>
@@ -544,7 +552,7 @@ const ModalAtualizar = ({ row, onClose, onSaved, areas, projeto }) => {
                 </select>
               </div>
               <div>
-                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#00203E', marginBottom: 6 }}>Frequência *</label>
+                <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#00203E', marginBottom: 6 }}>Frequência *</label>
                 <select value={editFreq} onChange={(e) => setEditFreq(e.target.value)} style={{ width: '100%', padding: 10, border: '1px solid #e5e7eb', borderRadius: 6, fontFamily: 'Montserrat, sans-serif', fontSize: 12 }}>
                   <option value="">Selecione...</option>
                   <option>Sob demanda</option>
@@ -560,7 +568,7 @@ const ModalAtualizar = ({ row, onClose, onSaved, areas, projeto }) => {
                 </select>
               </div>
               <div>
-                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#00203E', marginBottom: 6 }}>Natureza *</label>
+                <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#00203E', marginBottom: 6 }}>Natureza *</label>
                 <select value={editNat} onChange={(e) => setEditNat(e.target.value)} style={{ width: '100%', padding: 10, border: '1px solid #e5e7eb', borderRadius: 6, fontFamily: 'Montserrat, sans-serif', fontSize: 12 }}>
                   <option value="">Selecione...</option>
                   <option>Preventivo</option>
@@ -569,7 +577,7 @@ const ModalAtualizar = ({ row, onClose, onSaved, areas, projeto }) => {
                 </select>
               </div>
               <div>
-                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#00203E', marginBottom: 6 }}>Característica *</label>
+                <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#00203E', marginBottom: 6 }}>Característica *</label>
                 <select value={editCar} onChange={(e) => setEditCar(e.target.value)} style={{ width: '100%', padding: 10, border: '1px solid #e5e7eb', borderRadius: 6, fontFamily: 'Montserrat, sans-serif', fontSize: 12 }}>
                   <option value="">Selecione...</option>
                   <option>Manual</option>
@@ -579,7 +587,7 @@ const ModalAtualizar = ({ row, onClose, onSaved, areas, projeto }) => {
                 </select>
               </div>
               <div>
-                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#00203E', marginBottom: 6 }}>Sistema *</label>
+                <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#00203E', marginBottom: 6 }}>Sistema *</label>
                 <select value={editSis} onChange={(e) => setEditSis(e.target.value)} style={{ width: '100%', padding: 10, border: '1px solid #e5e7eb', borderRadius: 6, fontFamily: 'Montserrat, sans-serif', fontSize: 12 }}>
                   <option value="">Selecione...</option>
                   <option>IBID</option>
@@ -589,7 +597,7 @@ const ModalAtualizar = ({ row, onClose, onSaved, areas, projeto }) => {
                 </select>
               </div>
               <div>
-                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#00203E', marginBottom: 6 }}>Controle Chave *</label>
+                <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#00203E', marginBottom: 6 }}>Controle Chave *</label>
                 <select value={editChave} onChange={(e) => setEditChave(e.target.value)} style={{ width: '100%', padding: 10, border: '1px solid #e5e7eb', borderRadius: 6, fontFamily: 'Montserrat, sans-serif', fontSize: 12 }}>
                   <option value="">Selecione...</option>
                   <option>Controle Chave</option>
@@ -602,13 +610,13 @@ const ModalAtualizar = ({ row, onClose, onSaved, areas, projeto }) => {
 
           {/* 6 PREMISSAS */}
           <div style={{ marginBottom: 20 }}>
-            <div style={{ fontSize: 12, fontWeight: 600, color: '#00203E', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: '#00203E', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
               <span style={{ width: 3, height: 16, background: '#CC915E', borderRadius: 2 }}></span>
               6 Premissas do Controle
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
               <div>
-                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#00203E', marginBottom: 6 }}>1. Quem faz? *</label>
+                <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#00203E', marginBottom: 6 }}>1. Quem faz? *</label>
                 <textarea
                   value={quem}
                   onChange={(e) => setQuem(e.target.value)}
@@ -627,7 +635,7 @@ const ModalAtualizar = ({ row, onClose, onSaved, areas, projeto }) => {
                 />
               </div>
               <div>
-                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#00203E', marginBottom: 6 }}>2. Quando faz? *</label>
+                <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#00203E', marginBottom: 6 }}>2. Quando faz? *</label>
                 <textarea
                   value={quando}
                   onChange={(e) => setQuando(e.target.value)}
@@ -636,7 +644,7 @@ const ModalAtualizar = ({ row, onClose, onSaved, areas, projeto }) => {
                 />
               </div>
               <div>
-                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#00203E', marginBottom: 6 }}>3. Por quê faz? *</label>
+                <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#00203E', marginBottom: 6 }}>3. Por quê faz? *</label>
                 <textarea
                   value={pq}
                   onChange={(e) => setPq(e.target.value)}
@@ -645,7 +653,7 @@ const ModalAtualizar = ({ row, onClose, onSaved, areas, projeto }) => {
                 />
               </div>
               <div>
-                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#00203E', marginBottom: 6 }}>4. Como faz? *</label>
+                <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#00203E', marginBottom: 6 }}>4. Como faz? *</label>
                 <textarea
                   value={como}
                   onChange={(e) => setComo(e.target.value)}
@@ -654,7 +662,7 @@ const ModalAtualizar = ({ row, onClose, onSaved, areas, projeto }) => {
                 />
               </div>
               <div>
-                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#00203E', marginBottom: 6 }}>5. Onde faz? *</label>
+                <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#00203E', marginBottom: 6 }}>5. Onde faz? *</label>
                 <textarea
                   value={onde}
                   onChange={(e) => setOnde(e.target.value)}
@@ -663,7 +671,7 @@ const ModalAtualizar = ({ row, onClose, onSaved, areas, projeto }) => {
                 />
               </div>
               <div>
-                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#00203E', marginBottom: 6 }}>6. Qual o resultado? *</label>
+                <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#00203E', marginBottom: 6 }}>6. Qual o resultado? *</label>
                 <textarea
                   value={resultado}
                   onChange={(e) => setResultado(e.target.value)}
@@ -797,7 +805,7 @@ const ModalAtualizar = ({ row, onClose, onSaved, areas, projeto }) => {
         <div style={{ display: 'flex', gap: 8, padding: 24, borderTop: '1px solid #e5e7eb', background: '#fafbfc' }}>
           <button
             onClick={onClose}
-            style={{ flex: 1, padding: '12px 16px', border: '1px solid #e5e7eb', borderRadius: 6, fontFamily: 'Montserrat, sans-serif', fontSize: 12, fontWeight: 600, cursor: 'pointer', background: 'white', color: '#00203E' }}
+            style={{ flex: 1, padding: '12px 16px', border: '1px solid #e5e7eb', borderRadius: 6, fontFamily: 'Montserrat, sans-serif', fontSize: 13, fontWeight: 700, cursor: 'pointer', background: 'white', color: '#00203E' }}
           >
             Cancelar
           </button>
@@ -809,7 +817,7 @@ const ModalAtualizar = ({ row, onClose, onSaved, areas, projeto }) => {
                 else if (newStatus === 'transferido') handleTransferido()
               }}
               disabled={saving}
-              style={{ flex: 1, padding: '12px 16px', border: 'none', borderRadius: 6, fontFamily: 'Montserrat, sans-serif', fontSize: 12, fontWeight: 600, cursor: 'pointer', background: '#CC915E', color: 'white' }}
+              style={{ flex: 1, padding: '12px 16px', border: 'none', borderRadius: 6, fontFamily: 'Montserrat, sans-serif', fontSize: 13, fontWeight: 700, cursor: 'pointer', background: '#CC915E', color: 'white' }}
             >
               {saving ? 'Salvando...' : newStatus === 'evitado' ? 'Inativar' : 'Transferir'}
             </button>
@@ -818,14 +826,14 @@ const ModalAtualizar = ({ row, onClose, onSaved, areas, projeto }) => {
               <button
                 onClick={prevStep}
                 disabled={step === 1}
-                style={{ flex: 1, padding: '12px 16px', border: '1px solid #e5e7eb', borderRadius: 6, fontFamily: 'Montserrat, sans-serif', fontSize: 12, fontWeight: 600, cursor: 'pointer', background: 'white', color: '#00203E', opacity: step === 1 ? 0.5 : 1 }}
+                style={{ flex: 1, padding: '12px 16px', border: '1px solid #e5e7eb', borderRadius: 6, fontFamily: 'Montserrat, sans-serif', fontSize: 13, fontWeight: 700, cursor: 'pointer', background: 'white', color: '#00203E', opacity: step === 1 ? 0.5 : 1 }}
               >
                 ← Voltar
               </button>
               <button
                 onClick={nextStep}
                 disabled={step === 1 ? !canAdvanceStep1 : step === 2 ? !canAdvanceStep2 : false}
-                style={{ flex: 1, padding: '12px 16px', border: 'none', borderRadius: 6, fontFamily: 'Montserrat, sans-serif', fontSize: 12, fontWeight: 600, cursor: 'pointer', background: '#CC915E', color: 'white', opacity: (step === 1 && !canAdvanceStep1) || (step === 2 && !canAdvanceStep2) ? 0.5 : 1 }}
+                style={{ flex: 1, padding: '12px 16px', border: 'none', borderRadius: 6, fontFamily: 'Montserrat, sans-serif', fontSize: 13, fontWeight: 700, cursor: 'pointer', background: '#CC915E', color: 'white', opacity: (step === 1 && !canAdvanceStep1) || (step === 2 && !canAdvanceStep2) ? 0.5 : 1 }}
               >
                 {step === 3 ? 'Finalizar' : 'Próximo →'}
               </button>
