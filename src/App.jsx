@@ -1,6 +1,5 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { useAuth } from './contexts/AuthContext'
-import { useServiceWorkerCleanup } from './hooks/useServiceWorkerCleanup'
 import Login from './pages/Login'
 import RedefinirSenha from './pages/RedefinirSenha'
 import Dashboard from './pages/Dashboard'
@@ -12,7 +11,6 @@ function PrivateRoute({ children }) {
 }
 
 export default function App() {
-  useServiceWorkerCleanup()
   const { user, loading } = useAuth()
   if (loading) return <div className="loading-screen"><div className="spinner" /></div>
 
