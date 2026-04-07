@@ -206,80 +206,72 @@ const ModalAtualizar = ({ row, onClose, onSaved, areas, projeto }) => {
     workbook.creator = 'Polímata GRC'
     workbook.created = new Date()
 
-    // ── Cores ──
     const NAVY   = 'FF00203E'
     const GOLD   = 'FFCC915E'
     const CREAM  = 'FFF3EEE4'
-    const F8     = 'FFF8F6F2'   // fill pré-preenchido
+    const F8     = 'FFF8F6F2'
     const WHITE  = 'FFFFFFFF'
     const GRAY33 = 'FF333333'
     const GRAYBB = 'FFBBBBBB'
-    const BORDER_CREAM = 'FFF0EDE8'
-    const BORDER_GRAY  = 'FFD5CFC6'
+    const HAIR   = 'FFF0EDE8'
+    const BGRAY  = 'FFD5CFC6'
 
-    // ── Helpers de estilo ──
     const fontBase = (opts = {}) => ({ name: 'Montserrat', size: 10, ...opts })
-    const hairBorder = { style: 'hair', color: { argb: BORDER_CREAM } }
+    const hairBorder = { style: 'hair', color: { argb: HAIR } }
     const allHair = { top: hairBorder, bottom: hairBorder, left: hairBorder, right: hairBorder }
     const fillSolid = (argb) => ({ type: 'pattern', pattern: 'solid', fgColor: { argb } })
     const alignVC = { vertical: 'middle' }
     const alignVCWrap = { vertical: 'middle', wrapText: true }
 
-    function applySection(ws, row, text) {
-      const c = ws.getCell(row, 2)
+    function applySection(ws, r, text) {
+      ws.mergeCells(r, 2, r, 9)
+      const c = ws.getCell(r, 2)
       c.value = text
       c.font = fontBase({ bold: true, color: { argb: GOLD } })
       c.fill = fillSolid(NAVY)
       c.alignment = { horizontal: 'left', vertical: 'middle' }
       c.border = allHair
-      ws.mergeCells(row, 2, row, 9)
-      ws.getRow(row).height = 15
+      ws.getRow(r).height = 15
     }
 
-    function applyLabel(ws, row, text) {
-      const c = ws.getCell(row, 2)
-      c.value = text
-      c.font = fontBase({ bold: true, color: { argb: NAVY } })
-      c.fill = fillSolid(WHITE)
-      c.alignment = alignVC
-      c.border = allHair
-      ws.getRow(row).height = 15
-    }
-
-    function applyValue(ws, row, text, editable = false) {
-      ws.mergeCells(row, 3, row, 9)
-      const c = ws.getCell(row, 3)
-      c.value = text || ''
-      c.font = fontBase({ color: { argb: GRAY33 } })
-      c.fill = fillSolid(editable ? WHITE : F8)
-      c.alignment = alignVCWrap
-      c.border = {
+    function applyRow(ws, r, labelText, valueText, editable = false) {
+      // Label
+      const lc = ws.getCell(r, 2)
+      lc.value = labelText
+      lc.font = fontBase({ bold: true, color: { argb: NAVY } })
+      lc.fill = fillSolid(WHITE)
+      lc.alignment = alignVC
+      lc.border = allHair
+      // Value
+      ws.mergeCells(r, 3, r, 9)
+      const vc = ws.getCell(r, 3)
+      vc.value = valueText || ''
+      vc.font = fontBase({ color: { argb: GRAY33 } })
+      vc.fill = fillSolid(editable ? WHITE : F8)
+      vc.alignment = alignVCWrap
+      vc.border = {
         ...allHair,
-        left: { style: editable ? 'thin' : 'medium', color: { argb: editable ? BORDER_GRAY : GOLD.replace('FF','FF') } }
+        left: { style: editable ? 'thin' : 'medium', color: { argb: editable ? BGRAY : GOLD } }
       }
+      ws.getRow(r).height = 15
     }
 
-    function applyRow(ws, row, label, value, editable = false) {
-      applyLabel(ws, row, label)
-      applyValue(ws, row, value, editable)
-    }
-
-    // ── Aba principal ──
+    // ── ABA PRINCIPAL ──
     const ws = workbook.addWorksheet('📋 Ficha de Risco', {
       pageSetup: { orientation: 'landscape', fitToPage: true, fitToWidth: 1, fitToHeight: 0 },
       views: [{ showGridLines: false }],
     })
 
-    // Larguras (A=3, B=34, C=20, D=22, E=20, F=22, G=20, H=10, I=28)
+    // Larguras — col A = 2.36 (medida Excel), B-I conforme modelo
     ws.columns = [
-      { width: 3 }, { width: 34 }, { width: 20 }, { width: 22 },
+      { width: 2.36 }, { width: 34 }, { width: 20 }, { width: 22 },
       { width: 20 }, { width: 22 }, { width: 20 }, { width: 10 }, { width: 28 },
     ]
 
     const now = new Date()
     const dtStr = now.toLocaleDateString('pt-BR') + ' · ' + now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
 
-    // ── LINHA 1 — Header empresa ──
+    // ── Linhas 1-2: Header ──
     ws.mergeCells(1, 2, 1, 9)
     const h1 = ws.getCell(1, 2)
     h1.value = '          Polímata · Consultoria em GRC'
@@ -289,7 +281,6 @@ const ModalAtualizar = ({ row, onClose, onSaved, areas, projeto }) => {
     h1.border = allHair
     ws.getRow(1).height = 15
 
-    // ── LINHA 2 — Título ──
     ws.mergeCells(2, 2, 2, 9)
     const h2 = ws.getCell(2, 2)
     h2.value = '          FICHA DE RISCO — EXECUÇÃO DO TESTE'
@@ -299,81 +290,56 @@ const ModalAtualizar = ({ row, onClose, onSaved, areas, projeto }) => {
     h2.border = allHair
     ws.getRow(2).height = 15
 
-    // Linha 3 — vazia
     ws.getRow(3).height = 5
 
-    // ── BLOCO 1 — DADOS DO PROJETO (linhas 4-12) ──
+    // ── Bloco 1: DADOS DO PROJETO (4-12) ──
     applySection(ws, 4, '1. DADOS DO PROJETO')
-
-    const projetoRows = [
-      [5,  'CLIENTE',              projeto?.clientes?.nome || '—',         false],
-      [6,  'NATUREZA DO PROJETO',  projeto?.nome || '—',                   false],
-      [7,  'FASE EM CURSO',        'F2-E1 — Plano de Ação',                false],
-      [8,  'EXECUTOR',             perfil?.nome || '—',                    false],
-      [9,  'DATA E HORÁRIO',       dtStr,                                  false],
-      [10, 'DOWNLOAD POR',         perfil?.email || '—',                   false],
-      [11, 'REVISOR',              '',                                     true],
-      [12, 'DATA DA REVISÃO',      '',                                     true],
-    ]
-    for (const [r, lbl, val, ed] of projetoRows) applyRow(ws, r, lbl, val, ed)
-
-    // Linha 13 — vazia
+    applyRow(ws, 5,  'CLIENTE',             projeto?.clientes?.nome || '—', false)
+    applyRow(ws, 6,  'NATUREZA DO PROJETO', projeto?.nome || '—',           false)
+    applyRow(ws, 7,  'FASE EM CURSO',       'F2-E1 — Plano de Ação',        false)
+    applyRow(ws, 8,  'EXECUTOR',            perfil?.nome || '—',            false)
+    applyRow(ws, 9,  'DATA E HORÁRIO',      dtStr,                          false)
+    applyRow(ws, 10, 'DOWNLOAD POR',        perfil?.email || '—',           false)
+    applyRow(ws, 11, 'REVISOR',             '',                             true)
+    applyRow(ws, 12, 'DATA DA REVISÃO',     '',                             true)
     ws.getRow(13).height = 5
 
-    // ── BLOCO 2 — IDENTIFICAÇÃO (linhas 14-22) ──
+    // ── Bloco 2: IDENTIFICAÇÃO (14-22) ──
     applySection(ws, 14, '2. IDENTIFICAÇÃO DO RISCO E CONTROLE')
-
-    const idRows = [
-      [15, 'ÁREA / PROCESSO',     row.area || '—',                                              false],
-      [16, 'SUBPROCESSO',         row.sub  || '—',                                              false],
-      [17, 'REF. RISCO',          row.rr   || '—',                                              false],
-      [18, 'REF. CONTROLE',       row.rc   || '—',                                              false],
-      [19, 'GERÊNCIA',            row.ger  || '—',                                              false],
-      [20, 'RESP. SUBPROCESSO',   row.resp_sub || '—',                                          false],
-      [21, 'DESCRIÇÃO DO RISCO',  (novaDescRisco || row.dr || '—'),                             false],
-      [22, 'DESCRIÇÃO DO CONTROLE', (novaDescControle || row.dc || '—'),                        false],
-    ]
-    for (const [r, lbl, val, ed] of idRows) applyRow(ws, r, lbl, val, ed)
-
-    // Linha 23 — vazia
+    applyRow(ws, 15, 'ÁREA / PROCESSO',      row.area || '—',                          false)
+    applyRow(ws, 16, 'SUBPROCESSO',          row.sub  || '—',                          false)
+    applyRow(ws, 17, 'REF. RISCO',           row.rr   || '—',                          false)
+    applyRow(ws, 18, 'REF. CONTROLE',        row.rc   || '—',                          false)
+    applyRow(ws, 19, 'GERÊNCIA',             row.ger  || '—',                          false)
+    applyRow(ws, 20, 'RESP. SUBPROCESSO',    row.resp_sub || '—',                      false)
+    applyRow(ws, 21, 'DESCRIÇÃO DO RISCO',   novaDescRisco || row.dr || '—',           false)
+    applyRow(ws, 22, 'DESCRIÇÃO DO CONTROLE',novaDescControle || row.dc || '—',        false)
     ws.getRow(23).height = 5
 
-    // ── BLOCO 3 — ATRIBUTOS (linhas 24-30) ──
+    // ── Bloco 3: ATRIBUTOS (24-30) ──
     applySection(ws, 24, '3. ATRIBUTOS DO CONTROLE')
-
-    const atribRows = [
-      [25, 'CATEGORIA',        editCat   || row.cat   || '—', false],
-      [26, 'FREQUÊNCIA',       editFreq  || row.freq  || '—', false],
-      [27, 'NATUREZA',         editNat   || row.nat   || '—', false],
-      [28, 'CARACTERÍSTICA',   editCar   || row.car   || '—', false],
-      [29, 'SISTEMA',          editSis   || row.sis   || '—', false],
-      [30, 'CONTROLE CHAVE?',  editChave || row.chave || '—', false],
-    ]
-    for (const [r, lbl, val, ed] of atribRows) applyRow(ws, r, lbl, val, ed)
-
-    // Linha 31 — vazia
+    applyRow(ws, 25, 'CATEGORIA',       editCat   || row.cat   || '—', false)
+    applyRow(ws, 26, 'FREQUÊNCIA',      editFreq  || row.freq  || '—', false)
+    applyRow(ws, 27, 'NATUREZA',        editNat   || row.nat   || '—', false)
+    applyRow(ws, 28, 'CARACTERÍSTICA',  editCar   || row.car   || '—', false)
+    applyRow(ws, 29, 'SISTEMA',         editSis   || row.sis   || '—', false)
+    applyRow(ws, 30, 'CONTROLE CHAVE?', editChave || row.chave || '—', false)
     ws.getRow(31).height = 5
 
-    // ── BLOCO 4 — PREMISSAS (linhas 32-38) ──
+    // ── Bloco 4: PREMISSAS (32-38) ──
     applySection(ws, 32, '4. AS 6 PREMISSAS DO CONTROLE — VALIDAÇÃO METODOLÓGICA')
-
-    const premRows = [
-      [33, '1. QUEM FAZ',        isAutomatic ? 'N/A (Controle Automatizado)' : (quem || row.premissa_quem || ''), true],
-      [34, '2. QUANDO FAZ',      quando    || row.premissa_quando   || '', true],
-      [35, '3. POR QUÊ FAZ',     pq        || row.premissa_porque   || '', true],
-      [36, '4. COMO FAZ',        como      || row.premissa_como     || '', true],
-      [37, '5. ONDE FAZ',        onde      || row.premissa_onde     || '', true],
-      [38, '6. QUAL O RESULTADO', resultado || row.premissa_resultado || '', true],
-    ]
-    for (const [r, lbl, val, ed] of premRows) applyRow(ws, r, lbl, val, ed)
-
-    // Linha 39 — vazia
+    applyRow(ws, 33, '1. QUEM FAZ',         isAutomatic ? 'N/A (Controle Automatizado)' : (quem || row.premissa_quem || ''),  true)
+    applyRow(ws, 34, '2. QUANDO FAZ',       quando    || row.premissa_quando    || '', true)
+    applyRow(ws, 35, '3. POR QUÊ FAZ',      pq        || row.premissa_porque    || '', true)
+    applyRow(ws, 36, '4. COMO FAZ',         como      || row.premissa_como      || '', true)
+    applyRow(ws, 37, '5. ONDE FAZ',         onde      || row.premissa_onde      || '', true)
+    applyRow(ws, 38, '6. QUAL O RESULTADO', resultado || row.premissa_resultado || '', true)
     ws.getRow(39).height = 5
 
-    // ── BLOCO 5 — PASSOS DE TESTE (linhas 40-52) ──
+    // ── Bloco 5: PASSOS DE TESTE (40-52) ──
     applySection(ws, 40, '5. PASSOS DE TESTE')
 
-    // Header colunas passos (linha 41)
+    // Header linha 41
     ws.mergeCells(41, 2, 41, 7)
     const ph1 = ws.getCell(41, 2)
     ph1.value = 'Atividade / Passo'
@@ -397,17 +363,17 @@ const ModalAtualizar = ({ row, onClose, onSaved, areas, projeto }) => {
     ph3.border = allHair
     ws.getRow(41).height = 15
 
-    // Linha 42 — legenda
+    // Legenda linha 42
     ws.mergeCells(42, 2, 42, 9)
-    const legenda = ws.getCell(42, 2)
-    legenda.value = '✓ = Teste realizado com sucesso · ✗ = Não foi possível realizar o teste'
-    legenda.font = fontBase({ size: 8, color: { argb: GOLD } })
-    legenda.fill = fillSolid(F8)
-    legenda.alignment = { horizontal: 'center', vertical: 'middle' }
-    legenda.border = allHair
+    const leg = ws.getCell(42, 2)
+    leg.value = '✓ = Teste realizado com sucesso · ✗ = Não foi possível realizar o teste'
+    leg.font = fontBase({ size: 8, color: { argb: GOLD } })
+    leg.fill = fillSolid(F8)
+    leg.alignment = { horizontal: 'center', vertical: 'middle' }
+    leg.border = allHair
     ws.getRow(42).height = 15
 
-    // 10 passos (linhas 43-52)
+    // 10 passos (43-52)
     for (let i = 0; i < 10; i++) {
       const r = 43 + i
       ws.mergeCells(r, 2, r, 7)
@@ -418,37 +384,67 @@ const ModalAtualizar = ({ row, onClose, onSaved, areas, projeto }) => {
       pc.alignment = alignVCWrap
       pc.border = allHair
 
-      const rc = ws.getCell(r, 8)
-      rc.value = ''
-      rc.fill = fillSolid(WHITE)
-      rc.alignment = { horizontal: 'center', vertical: 'middle' }
-      rc.border = allHair
+      const hc = ws.getCell(r, 8)
+      hc.value = ''
+      hc.fill = fillSolid(WHITE)
+      hc.alignment = { horizontal: 'center', vertical: 'middle' }
+      hc.border = allHair
 
       const oc = ws.getCell(r, 9)
       oc.value = ''
       oc.fill = fillSolid(WHITE)
       oc.alignment = alignVCWrap
       oc.border = allHair
-
       ws.getRow(r).height = 15
     }
 
-    // Linhas 53-54 — vazias
+    // Validação lista ✓/✗ em H43:H52
+    ws.dataValidations.add({
+      type: 'list',
+      allowBlank: true,
+      sqref: 'H43:H52',
+      formulae: ['"✓,✗"'],
+      showDropDown: false,
+      showErrorMessage: true,
+      errorTitle: 'Valor inválido',
+      error: 'Selecione ✓ ou ✗',
+    })
+
     ws.getRow(53).height = 5
     ws.getRow(54).height = 5
 
-    // ── BLOCO 6 — RESULTADO (linhas 55-60) ──
+    // ── Bloco 6: RESULTADO (55-60) ──
     applySection(ws, 55, '6. RESULTADO')
+    applyRow(ws, 56, 'RESULTADO',                  '', true)
+    applyRow(ws, 57, 'INCONSISTÊNCIA IDENTIFICADA','', true)
+    applyRow(ws, 58, 'MELHORIA IDENTIFICADA?',     '', true)
+    applyRow(ws, 59, 'DESCRIÇÃO DA MELHORIA',      '', true)
 
-    const resultRows = [
-      [56, 'RESULTADO',                  '', true],
-      [57, 'INCONSISTÊNCIA IDENTIFICADA','', true],
-      [58, 'MELHORIA IDENTIFICADA?',     '', true],
-      [59, 'DESCRIÇÃO DA MELHORIA',      '', true],
-    ]
-    for (const [r, lbl, val, ed] of resultRows) applyRow(ws, r, lbl, val, ed)
+    // Validação Resultado C56:I56
+    ws.dataValidations.add({
+      type: 'list',
+      allowBlank: true,
+      sqref: 'C56:I56',
+      formulae: ['"Efetivo,Inefetivo,GAP"'],
+      showDropDown: false,
+      showErrorMessage: true,
+      errorTitle: 'Valor inválido',
+      error: 'Selecione Efetivo, Inefetivo ou GAP',
+    })
 
-    // Linha 60 — nota
+    // Validação Melhoria C58:I58
+    ws.dataValidations.add({
+      type: 'list',
+      allowBlank: true,
+      sqref: 'C58:I58',
+      formulae: ['"Sim,Não"'],
+      showDropDown: false,
+      showErrorMessage: true,
+      errorTitle: 'Valor inválido',
+      error: 'Selecione Sim ou Não',
+    })
+
+    // Nota linha 60
     ws.mergeCells(60, 2, 60, 9)
     const nota = ws.getCell(60, 2)
     nota.value = '↑ Preencher apenas quando "Melhoria Identificada?" = Sim'
@@ -458,7 +454,7 @@ const ModalAtualizar = ({ row, onClose, onSaved, areas, projeto }) => {
     nota.border = allHair
     ws.getRow(60).height = 15
 
-    // ── LINHA 61 — FOOTER ──
+    // ── Linha 61: Footer ──
     ws.mergeCells(61, 2, 61, 5)
     const ft1 = ws.getCell(61, 2)
     ft1.value = 'Polímata Consultoria em GRC · Ficha de Risco'
@@ -476,22 +472,23 @@ const ModalAtualizar = ({ row, onClose, onSaved, areas, projeto }) => {
     ft2.border = allHair
     ws.getRow(61).height = 15
 
-    // Tentar logo
+    // ── Logo ícone embutido em base64 ──
     try {
-      const resp = await fetch('/logotipo-2cores.png')
-      if (resp.ok) {
-        const buf = await resp.arrayBuffer()
-        const imgId = workbook.addImage({ buffer: buf, extension: 'png' })
-        ws.addImage(imgId, {
-          tl: { col: 1, row: 0 },
-          br: { col: 2, row: 2 },
-          editAs: 'oneCell',
-        })
-      }
+      const LOGO_B64 = 'iVBORw0KGgoAAAANSUhEUgAAAfUAAAH0CAYAAAAkFLS0AAAACXBIWXMAAAsSAAALEgHS3X78AAAXRElEQVR4nO3d4XEc15WA0UuX/kOOgHAEhGoCIDYC0RH0OIERFIFGERieBISJwGAEHgQwZSACAxGYiAD7YxpemEuRIDE99/Xtc6qm5Krdrb5bYvnj6379+tXDw0MAAOP3h+wBAID9EHUAKELUAaAIUQeAIkQdAIoQdQAoQtQBoAhRB4AiRB0AihB1AChC1AGgCFEHgCJEHQCKEHUAKELUAaAIUQeAIkQdAIoQdQAoQtQBoAhRB4AiRB0AihB1AChC1AGgCFEHgCJEHQCKEHUAKELUAaAIUQeAIkQdAIoQdQAoQtQBoAhRB4AiRB0AihB1AChC1AGgCFEHgCJEHQCKEHUAKELUAaAIUQeAIkQdAIoQdQAoQtQBoAhRB4AiRB0AihB1AChC1AGgCFEHgCJEHQCKEHUAKELUAaAIUQeAIkQdAIoQdQAoQtQBoAhRB4AiRB0AihB1AChC1AGgCFEHgCJEHQCKEHUAKELUAaAIUQeAIkQdAIoQdQAoQtQBoAhRB4AiRB0AihB1AChC1AGgCFEHgCJEHQCKEHUAKELUAaAIUQeAIkQdAIoQdQAoQtQBoAhRB4AiRB0AihB1AChC1AGgCFEHgCJEHQCKEHUAKELUAaAIUQeAIkQdAIoQdQAoQtQBoAhRB4AiRB0AihB1AChC1AGgCFEHgCJEHQCKEHUAKELUAaAIUQeAIkQdAIoQdQAoQtQBoAhRB4AiRB0AihB1AChC1AGgCFEHgCJEHQCKEHUAKOK77AGoabvqNhHxNnsODuouIm77/7x58s8Ps8X6OmEemJxXDw8P2TNQkKjzCTcRcf34my3Wm9xxoB5RZxCizjNdxW41vxF5eDlRZxCizje4j4jL2EX+crZYf8gdB8ZH1BmEqLMH72MX94vsQWAsRJ1BiDp79LiCP7fhDj7PK21A644ioouIf25X3Wa76ubJ80CzrNQZhJU6A7uLiPOIuPDsHf6PlTowRq8j4q8Rcbtddcvtqvs+eyBogagDY3YUEb/ELu7z5FkgnagDFRxFxG/bVXe7XXXvsoeBLKIOVPI6Iv7eb6g7zh4GDk3UgYreRsS/tqtumT0IHJKoA5X9sl1119tVd5I9CByCqAPVvYndO+7L7EFgaKIOTMXjqv04exAYiqgzlNvsAeAT3kTEtR3yVCXqDOU2ewD4HUex2yG/zB4E9k3Ugan6ZbvqLp1GRyWiDkzZjxHhnXbKEHVg6h6fs3vtjdETdYbiu9eMyVHsVuzCzqiJOkPxOUzG5jHs8+xB4FuJOkMRdcbo8cMw8+xB4Fu8enh4yJ6Borarzh8uxuwvs8X6InsI+BpW6gzpPnsAeIHftqvuNHsI+BqizpBslmPsLm2eY0xEnSHdZg8AL2RXPKMi6gzpNnsA2IOjiLhw8hxj8F32AJS2iYhfEq57FxHzhOtO1XH/+z4iTvr//DpvnEG8id2fZyt2mmb3O4PpVzb/Trr8n2aL9W3StSev/3d/EhGn/e9t5jx7tJ4t1vPsIeD3iDqD2q6628hZtf08W6zPE67L7+g/d3oaEe9i3Ct5r7rRLFFnUNtVdxm7j2Yc2s1ssXartFF94N9FRJc9yzf6YbZYe7uD5tgox9A2Sdd9Y8dyu2aL9WV/G/uPEfFz7PZBjIlPttIkUWdom8RrnyVem2eYLdYfZov1+WyxPo6Iv8R44v46IjzeoTluvzO47ar7ELvXgg7tPiKOZ4u1c+hHpD93/Txy/sx8rT/PFuvL7CHgkZU6h7BJuu5RWK2PTr8J7Tgifs2d5Fm8v05TRJ1DyFzJnPkv3fHpb8svI+KHiLhKHudzjiLiInsIeCTqHEJm1K3WR2y2WF/PFuvTaHvV/qMPv9AKUWdw/TPtm8QRrNZH7smqvdWNdBfZA0CEqHM4F4nXPoqIZeL12YP+vfCTiHifPcsnvN6uumX2EGD3OwexXXXHEfGv5DEcGFLEdtWdR8RP2XN85D4iThxPTCYrdQ6i/y+67A1PF8nXZ09mi/VZ7N5rb4k7QqQTdQ7pIvn6b7arzqa5IvpX31oLe9fflYIUos4hXcbuFmWmvzo+to5Gw77MHoDpEnUOpt8F38LpWw4MKaTBsFutk0bUObRl9gAR8Sac211Kg2FfZg/ANIk6B9XIhrmI3WrK8/VC+rD/nD1Hz2qdFKJOhmX2AL2/9t/1pojZYn0eEevsOXrL7AGYHu+pk2K76q5jdxs8231EnHp/vZZG/nz5SiAHZ6VOllaeaR9FxMaO+HLeRf6bFkcRMU+egYkRdVL0zz9bOcdb2Ivp927Mk8eI8DEhDkzUyTTPHuAJYS9mtlhfRv458a/9meKQRJ00s8V6E23shH8k7PXMI/82vNU6ByPqZFtmD/CRo4j453bVzbMH4eX6TWrZUfWGBQcj6qTqV+utvIL01G/9l8AYuX7/RuYdoSOvTnIook4LlpF/i/RTftquuo0jZUtYJl9f1DkIUSddv1N5mTzG73kbEbdWWuPWwB0hf344CIfP0IxGDgz5nPcRMXeYyDj1x7b+K3GE/+n/cgGDsVKnJfPsAb7gx9it2rM3XvEN+jtCVuuUJuo0oz+q9dfsOb7gKHZnxl9vV91p9jB8tYvEa58mXpuJcPud5ozgNvxTVxGxdFt1PJL/fP3R4xuGZKVOi1o4t/u53kbEP/pd8vPsYXiWzFcVTxOvzQSIOs1p6Nzur/E2du+2f9iuunPf0m7aZeT9pfE06bpMhNvvNKs//OWn7Dle4CZ2Abn0ade2bFfdRUR0CZe+mi3WpwnXZSJEnaaN7Pn659zHLvDXEbER+Vz9uQN/z7j2bLF+lXFdpkHUaVp/mtt1RLzOnmUANxFxG7v//yIiNh/9z69tqhrOdtV9iN3bDIf2g7/UMRRRp3n9V9M2kfNfwLxck7ect6vuMnZnDxzan/vPwsLe2ShH8/pVzTx7Dr5Zq3cbNknX9WlfBiPqjEK/svlL9hx8k1ZvNW+SrivqDEbUGY3+E5rCPj6b7AE+pb8DlPFqm6/+MRhRZ1SEfXwaP20v4y7C24RrMhGizugI+6i8zx7gCzbZA8A+iTqjJOyj0fou79uMi/ZvdMDeiTqjJezNezxwp2W3Sdf1XJ1BiDqj9iTsY/kAzJRcjuDwnFZ35sM3EXVGrw/7aQh7a5bZA3xJ4l863H5nEKJOCf3rSSexO3qVfFf91/bGwGttlCHqlNFH5DTa33E9BfPsAb6CW/CUIeqUMlusP8wW63cR8XP2LBO2HtEqHUoRdUqaLdbnEfFDRNxlzzIx9xFxlj0ETJWoU9aT5+xuxx/OfAQ73qEsUae0J7fj/xx2xw9t7ZOikEvUmYQ+NscRsU4epaqbcNsd0ok6k9Gv2ucR8T/hWfs+3UfEO7fdIZ+oMzmzxXozW6yPY7dD3i35l7mPiNOR73Z3EAxliDqT1e+QP46IX5NHGavHoI/9Pe+j7AFgX0SdSetvyS8j4k/hefvXKBH07arLOtltk3RdihN1iN1pdP3z9j/FbuXutvzvu4sCQe+59U4pog5P9HFfxu62/M9hQ93HriLipEjQI3b/nqGMVw8PD9kzQNO2q+5d7M4y/zF5lGy/9n/hKWO76pYR8cuhrztbrF8d+ppMg5U6fMFssb7sD7D5Y+xW71P7EtxVRPxQLei90+wBYJ++yx4AxqJ/D/s8Is63q+44It71v7eZcw3oLiLOip8Sl/FM/SrhmkyE2+/wQv0O6tMnvzeJ4+zDVURczBbri+xBhrRddScR8c+ES7/v7/zA3lmpwwv1K/jL/vc08if9P48j4nXOdM92F7v5z0d+kMzXOE26bpVNhjRI1GHPPo58xH9CfxK7wD/9RRz+9v197MLy+NtMKORPnSZd9zbpukyAqMMB9KHfPOd/t78tvO9DUT4Ueg1tX06TruvfA4PxTB2YnP41xb9nXNvrbAzJK23AFGVtVLPznUGJOjBFWVF3651BiTowKdtVN4+8L7Ntkq7LRIg6MDXzxGtvEq/NBIg6MBn9mwVZJwDe9G9BwGBEHZiSs8RrbxKvzUSIOjAJ/Xn9XeIIm8RrMxGiDkzFMvHa98U/jEMjRB0or3+WnrlKF3QOQtSBKThPvr6ocxCOiQVKyzwStnc/W6z3fZY/fJKVOlBW/3W8i+QxrNI5GFEHKjuPvNPjHl0kX58JcfsdKKmB2+4REXezxfo4eQYmxEodKKd/J/0ieYyI/A16TIyoAxVdRv5t9/to4y8WTIioA6VsV91FRLzJniMiLp31zqGJOlBG/1nVzENmnlpmD8D0iDpQQh/037Ln6K1ni/Vt9hBMj6gDo9cfA9tK0CM8SyeJqAOj1gd9kz3HE1ezxXqTPQTTJOrAaG1X3Wnsgp690/2pefYATJeoA6PUP0P/R7QVdM/SSSXqwOhsV90y2nqGHrF7L32ZPQTT9l32AADP1X+g5TzaeW3tqXOrdLKJOjAK/Ya4i2jjYJmP3YUjYWmA2+9A87ar7ix2G+JaDHpExJnT42iBlTrQrCcfZnmbO8lnvZ8t1r6ZThNEHWhO/+z8rP+1tLv9Y/fhFTYaIupAU/pX1ZYR8Tp3kmeZu+1OS0QdaMLIYh7htjsNEnUgTX+b/V2MK+YRu93u8+wh4GOiDhxc/3raWeyC3vIz89/zzm13WiTqwEH057S/639jWpV/7OfZYn2dPQR8yquHh4fsGYCC+oifRMRp/xvjivxj69liPc8eAn6PlTrw1fpgP3X65J/fR7uHxLzETeweGUCzrNSZvP757nHsVpUnsYvScYz7FjH7dR8Rx56j0zordSanX2U+/lo+qYw23EfEqaAzBqLOJGxX3eMGrbHutibHY9BtjGMURJ2yCrw2Rb4zQWdMRJ1y+pPJ5uHWOi/zl9lifZE9BHwNUaeMER4zSrsEnVESdUav3/h2EWLOfgg6oyXqjNZIvrXNeNzH7qtrPtLCaIk6o7Rddcto/1vbjIdd7pQg6oxKvzq/jJonlpHjJnYrdEFn9P6QPQA8V78R7joEnf25Cit0CrFSZxS2q+48In7KnoNS/jZbrJ3lTimiTtO2q+772N1utxmOfbmP3aEyF9mDwL6JOs3qg74Jt9vZH8/PKU3UaVJ/xOsm7G5nf9xupzxRpzmCzp7dxW51vskeBIZm9ztNEXT27NeIOBF0puLVw8ND9gwQEf95hn4djnvl5a7CF9aYILffacKTTXGCzkvcRcTSznamStRpxUXY5c63u4+I89livcweBDKJOun6c9x/zJ6DUbqPiPPYBf1D9jCQzTN1UvWfTf1H9hyMjpjDJ4g6afrn6LdhpzvPdxO7kF9kDwItcvudTBch6HzZfeyOCr7wahp8nqiTYrvq3oXn6Hze+9jF/NItdnget985OO+j8xlCDi9gpU6GsxB0dm5idz7BZrZYXybPAqNnpc5BbVfdcUT8K3sOUtzF7g7NdexCfm01Dvtlpc6hLbMHYFBX/T9vn/5scIPDsFLnYEa2Sr+K3WryQ+xWlvx/H5ytDm2xUueQltkDfME6dhu0PNsFRslKnYNoeJXuZDKgDCt1DmWePcAn/BpiDhQi6hzKWfYAT9xExNzzYKCaP2QPQH3bVTePdo6DXUfEqaADFVmpcwjvsgfo/W22WLd0xwBgr2yUY1D9kbD/zp4jIn6eLdbn2UMADMntd4bWwip9LejAFIg6QztNvv7VbLGeJ88AcBCiztAyV+r3ydcHOChRZzDbVXcSubve595BB6ZE1BnSaeK1rxz3CkyNqDOkk8Rre3UNmBxRZ0hZUb9yuAwwRaLOkN4kXdfra8AkiTqD6DfJZbjzLB2YKlFnKN8nXVfQgckSdYaStVLfJF0XIJ2oM5Sslfom6boA6USdSu4cNgNMmagzlIzb77cJ1/ys7ar7frvqjrPnAKbB99QZStbt99acRMQ/tqsuIuIqIq4jYmOHPjAEUaeSTfYAX/C2//3UR34dEZcCD+yL2++Qp4uIv29X3e121c2zhwHGT9Qh3+uI+E3cgZcSdWjHY9yvE0/kA0ZM1KE9byLin9tVt8weBBgXUYd2/dKv2o+zBwHGQdShbW8iwu144FlEHdp3FBEbm+iALxF1GIej2G2im2cPArRL1GFcftuuunfZQwBtEnUYnwvP2IFPEXUYn8dn7M7XB/6LqMM4HUWEM+OB/yLqMF5vt6vuLHsIoB2iDuO2dDgN8EjUYdyOIuI8ewigDaIO4/fjdtWdZg8B5BN1qGGZPQCQT9RhWKcHus5bq3VA1KGOefYAQC5Rhzo6B9LAtIk61OJceJgwUYdaRB0mTNShltPsAYA8og61HPmCG0yXqEM9og4TJepQz3H2AEAOUYd6rNRhokQd6vGuOkyUqANAEaIOAEWIOgAUIeoAUISoA0ARog4ARYg6ABQh6gBQhKgDQBGiDvW8zR4AyCHqUM9N9gBADlGHej5kDwDkEHUAKELUYVin2QMA0yHqMKzj7AGA6RB1GMh21R1HxOuES28Srgk0QNRhOKfZAwDTIuownHdJ171Oui6QTNRhAP2t9x+TLn+bdF0gmajDMOZZF54t1lbqMFGiDnu2XXXfR8RZ0uWdJgcTJuqwf2cRcZR0bat0mDBRhz3arrqTiPglcYRN4rWBZKIO+3WRfP1N8vWBRKIOe7JddecR8SZxhJvZYn2beH0gmajDHmxX3TwifkoeY5N8fSCZqMML9UH/LXuOyL/1DyQTdXiBhoJ+5/10QNThG21X3TLaCHqEVToQEd9lDwBj0x8BexERb3Mn+S8X2QMA+azU4StsV91Z7A54aSno7+16ByKs1OFZ+mfny8j5PvqXnGcPALRB1OF39KfDzftf1rGvX3I3W6w32UMAbRB1KjnerrrTl/zf97/TiDiJdkP+1DJ7AKAdok4lXf+birvZYn2RPQTQDhvlYLzm2QMAbRF1GKcrz9KBj4k6jNM8ewCgPaIO4/Or99KBTxF1GJeb2WK9zB4CaJOow7jMswcA2iXqMB4/+xIb8DmiDuPwfrZYOw4W+CxRh/bdhNvuwDOIOrTtPiLezRbrD9mDAO0TdWjXfUScen0NeC5RhzY9Bt3GOODZRB3adCbowNfylTZoixU68M2s1KEdgg68iKhDG25C0IEXEnXI9z4EHdgDz9Qh168+0ALsi6hDjruImM8W6032IEAdbr/D4f0tIk4EHdg3K3U4nJvYvX++yR4EqEnUYXh3EbGcLdYX2YMAtYk6DOc+Is4j4twHWYBDEHXYv7uIWEbEpZgDhyTqsD/riLjwzBzIIurwMu8j4jKsyoEGiDp8nauIuI6IzWyxvsweBuApUYf/7z524Y6I2ETEbUTcuq0OtO7Vw8ND9gwAwB44UQ4AihB1AChC1AGgCFEHgCJEHQCKEHUAKELUAaAIUQeAIkQdAIoQdQAoQtQBoAhRB4AiRB0AihB1AChC1AGgCFEHgCJEHQCKEHUAKELUAaAIUQeAIkQdAIoQdQAoQtQBoAhRB4AiRB0AihB1AChC1AGgCFEHgCJEHQCKEHUAKELUAaAIUQeAIkQdAIoQdQAoQtQBoAhRB4AiRB0AihB1AChC1AGgCFEHgCJEHQCKEHUAKELUAaAIUQeAIkQdAIoQdQAoQtQBoAhRB4AiRB0AihB1AChC1AGgCFEHgCJEHQCKEHUAKELUAaAIUQeAIkQdAIoQdQAoQtQBoAhRB4AiRB0AihB1AChC1AGgCFEHgCJEHQCKEHUAKELUAaAIUQeAIkQdAIoQdQAoQtQBoAhRB4AiRB0AihB1AChC1AGgCFEHgCJEHQCKEHUAKELUAaAIUQeAIkQdAIoQdQAoQtQBoAhRB4AiRB0AihB1AChC1AGgCFEHgCJEHQCKEHUAKELUAaAIUQeAIkQdAIoQdQAoQtQBoAhRB4AiRB0AihB1AChC1AGgCFEHgCJEHQCKEHUAKELUAaAIUQeAIkQdAIoQdQAoQtQBoAhRB4AiRB0AihB1ACjifwH4EYS/NgI0sQAAAABJRU5ErkJggg=='
+      const byteStr = atob(LOGO_B64)
+      const bytes = new Uint8Array(byteStr.length)
+      for (let i = 0; i < byteStr.length; i++) bytes[i] = byteStr.charCodeAt(i)
+      const imgId = workbook.addImage({ buffer: bytes.buffer, extension: 'png' })
+      ws.addImage(imgId, {
+        tl: { col: 1, row: 0 },
+        ext: { width: 30, height: 30 },
+        editAs: 'oneCell',
+      })
     } catch (_) {}
 
-    // ── Aba Teste (vazia) ──
+    // ── Aba Teste ──
     const ws2 = workbook.addWorksheet('Teste', { views: [{ showGridLines: false }] })
+    ws2.columns = [{ width: 2.36 }, { width: 13 }]
     ws2.mergeCells(2, 2, 2, 18)
     const t1 = ws2.getCell(2, 2)
     t1.value = '7. EXECUÇÃO DO TESTE E EVIDÊNCIAS'
@@ -500,7 +497,7 @@ const ModalAtualizar = ({ row, onClose, onSaved, areas, projeto }) => {
     t1.alignment = { horizontal: 'left', vertical: 'middle' }
     ws2.getRow(2).height = 15
 
-    // ── DOWNLOAD ──
+    // ── Download ──
     const buffer = await workbook.xlsx.writeBuffer()
     const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
     const url = URL.createObjectURL(blob)
@@ -512,7 +509,6 @@ const ModalAtualizar = ({ row, onClose, onSaved, areas, projeto }) => {
     document.body.removeChild(a)
     URL.revokeObjectURL(url)
   }
-
 
   async function handleSaveSemFicha() {
     setSaving(true)
