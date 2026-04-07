@@ -155,7 +155,8 @@ export default function Dashboard() {
       const f1c = ca.length > 0 && ca.every(c => c.r1 && c.r1 !== 'Teste Não Realizado')
       return { ...a, controles: ca, calc: calcularPercentualArea(ca, f1c) }
     })
-    setAreasCalc(res); setTodosControles(controles); setLoading(false)
+    const resOrdenado = [...res].sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'))
+    setAreasCalc(resOrdenado); setTodosControles(controles); setLoading(false)
   }
 
   const isAdmin = perfil?.papel === 'admin_polimata'
