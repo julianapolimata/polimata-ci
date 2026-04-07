@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
+import ExcelJS from 'exceljs'
 
 const ModalAtualizar = ({ row, onClose, onSaved, areas, projeto }) => {
   // ═══ STATE ═══
@@ -71,8 +72,33 @@ const ModalAtualizar = ({ row, onClose, onSaved, areas, projeto }) => {
   // ═══ LOGIC ═══
   const isAutomatic = editCar === 'Automatizado'
   const isEndFlow = statusChoice === 'sim' && (newStatus === 'evitado' || newStatus === 'transferido')
-  const canAdvanceStep1 = statusChoice !== null
-  const canAdvanceStep2 = ctrlDescChoice !== null
+
+  // Validação Step 1
+  const canAdvanceStep1 = (() => {
+    if (statusChoice === null) return false
+    if (statusChoice === 'sim') {
+      if (!newStatus) return false
+      if (newStatus === 'evitado' && !motivoInativacao.trim()) return false
+      if (newStatus === 'transferido' && (!areaDestino || !subDestino)) return false
+    }
+    if (statusChoice === 'nao') {
+      if (descChoice === null) return false
+      if (descChoice === 'sim' && !novaDescRisco.trim()) return false
+    }
+    return true
+  })()
+
+  // Validação Step 2
+  const canAdvanceStep2 = (() => {
+    if (ctrlDescChoice === null) return false
+    if (ctrlDescChoice === 'sim') {
+      if (!novaDescControle.trim()) return false
+      if (!editCat || !editFreq || !editNat || !editCar || !editSis || !editChave) return false
+      if (!isAutomatic && !quem.trim()) return false
+      if (!quando.trim() || !pq.trim() || !como.trim() || !onde.trim() || !resultado.trim()) return false
+    }
+    return true
+  })()
 
   function nextStep() {
     if (step < 3) setStep(step + 1)
@@ -165,8 +191,7 @@ const ModalAtualizar = ({ row, onClose, onSaved, areas, projeto }) => {
         atualizado_por: perfil?.id,
       }
       await supabase.from('mrc').update(updates).eq('id', row.id)
-      // TODO: Gerar e baixar Ficha Excel
-      alert('✅ Salvo com sucesso! Status: EM ANÁLISE')
+      await gerarFichaExcel()
       onSaved && onSaved()
       onClose && onClose()
     } catch (err) {
@@ -174,6 +199,273 @@ const ModalAtualizar = ({ row, onClose, onSaved, areas, projeto }) => {
     } finally {
       setSaving(false)
     }
+  }
+
+  async function gerarFichaExcel() {
+    const workbook = new ExcelJS.Workbook()
+    const ws = workbook.addWorksheet('Ficha de Risco', {
+      pageSetup: { orientation: 'landscape', fitToPage: true, fitToWidth: 1, fitToHeight: 0 },
+      views: [{ showGridLines: false }],
+    })
+
+    // Cores
+    const NAVY = '00203E'
+    const GOLD = 'CC915E'
+    const CREAM = 'F8F6F2'
+    const GRAY_BORDER = 'D1D5DB'
+    const WHITE = 'FFFFFF'
+
+    // Larguras das colunas
+    ws.columns = [
+      { width: 3 },   // A - margem
+      { width: 22 },  // B - label
+      { width: 30 },  // C - valor 1
+      { width: 3 },   // D - separador
+      { width: 22 },  // E - label
+      { width: 30 },  // F - valor 2
+      { width: 3 },   // G - margem
+    ]
+
+    let row_num = 1
+
+    // ── Helpers ──
+    function cell(r, c) { return ws.getCell(r, c) }
+    function merge(r1, c1, r2, c2) { ws.mergeCells(r1, c1, r2, c2) }
+    function setH(r, h) { ws.getRow(r).height = h }
+    function label(r, c, text) {
+      const cel = cell(r, c)
+      cel.value = text
+      cel.font = { name: 'Calibri', bold: true, color: { argb: 'FF' + NAVY }, size: 9 }
+      cel.alignment = { vertical: 'middle', horizontal: 'left' }
+    }
+    function valor(r, c, text, editable = false) {
+      const cel = cell(r, c)
+      cel.value = text || ''
+      cel.font = { name: 'Calibri', size: 10, color: { argb: 'FF333333' } }
+      cel.alignment = { vertical: 'middle', horizontal: 'left', wrapText: true }
+      cel.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF' + (editable ? WHITE : CREAM) } }
+      if (!editable) {
+        cel.border = { left: { style: 'medium', color: { argb: 'FF' + GOLD } } }
+      } else {
+        cel.border = {
+          top: { style: 'thin', color: { argb: 'FF' + GRAY_BORDER } },
+          bottom: { style: 'thin', color: { argb: 'FF' + GRAY_BORDER } },
+          left: { style: 'thin', color: { argb: 'FF' + GRAY_BORDER } },
+          right: { style: 'thin', color: { argb: 'FF' + GRAY_BORDER } },
+        }
+      }
+    }
+    function secTitle(r, text) {
+      merge(r, 1, r, 7)
+      const cel = cell(r, 1)
+      cel.value = text
+      cel.font = { name: 'Calibri', bold: true, color: { argb: 'FF' + WHITE }, size: 10 }
+      cel.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF' + NAVY } }
+      cel.alignment = { vertical: 'middle', horizontal: 'left', indent: 1 }
+      setH(r, 22)
+    }
+    function blankRow(r, h = 6) { merge(r, 1, r, 7); setH(r, h) }
+
+    // ── HEADER ──
+    // Tentar carregar logo
+    try {
+      const resp = await fetch('/logotipo-2cores.png')
+      if (resp.ok) {
+        const buf = await resp.arrayBuffer()
+        const imgId = workbook.addImage({ buffer: buf, extension: 'png' })
+        merge(1, 1, 3, 2)
+        ws.addImage(imgId, { tl: { col: 0, row: 0 }, br: { col: 2, row: 3 }, editAs: 'oneCell' })
+      }
+    } catch (_) {}
+
+    merge(1, 3, 1, 7)
+    const hdr1 = cell(1, 3)
+    hdr1.value = 'Polímata · Consultoria em GRC'
+    hdr1.font = { name: 'Calibri', bold: true, color: { argb: 'FF' + NAVY }, size: 11 }
+    hdr1.alignment = { vertical: 'bottom', horizontal: 'left' }
+
+    merge(2, 3, 2, 7)
+    const hdr2 = cell(2, 3)
+    hdr2.value = 'FICHA DE RISCO — EXECUÇÃO DO TESTE'
+    hdr2.font = { name: 'Calibri', bold: true, color: { argb: 'FF' + GOLD }, size: 14 }
+    hdr2.alignment = { vertical: 'middle', horizontal: 'left' }
+
+    merge(3, 3, 3, 7)
+    const hdr3 = cell(3, 3)
+    hdr3.value = `Referência: ${row.rr || '—'}  ·  Controle: ${row.rc || '—'}`
+    hdr3.font = { name: 'Calibri', color: { argb: 'FF666666' }, size: 9 }
+    hdr3.alignment = { vertical: 'top', horizontal: 'left' }
+
+    setH(1, 24); setH(2, 28); setH(3, 18)
+    row_num = 4
+
+    blankRow(row_num); row_num++
+
+    // ── BLOCO 1: PROJETO ──
+    secTitle(row_num, '1. PROJETO'); row_num++
+    const now = new Date()
+    const dtStr = now.toLocaleDateString('pt-BR') + ' · ' + now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+
+    const projetoData = [
+      ['CLIENTE', projeto?.clientes?.nome || '—', 'EXECUTOR', perfil?.nome || '—'],
+      ['NATUREZA DO PROJETO', projeto?.nome || '—', 'DATA E HORÁRIO', dtStr],
+      ['FASE EM CURSO', 'F2-E1 — Plano de Ação e Aderência', 'DOWNLOAD POR', perfil?.email || '—'],
+      ['REVISOR', '', 'DATA DA REVISÃO', ''],
+    ]
+
+    for (const [l1, v1, l2, v2] of projetoData) {
+      label(row_num, 2, l1)
+      merge(row_num, 3, row_num, 3); valor(row_num, 3, v1)
+      label(row_num, 5, l2)
+      merge(row_num, 6, row_num, 6); valor(row_num, 6, v2, l1 === 'REVISOR')
+      setH(row_num, 18)
+      row_num++
+    }
+    blankRow(row_num); row_num++
+
+    // ── BLOCO 2: IDENTIFICAÇÃO ──
+    secTitle(row_num, '2. IDENTIFICAÇÃO DO RISCO E CONTROLE'); row_num++
+
+    const idData = [
+      ['ÁREA', row.area || '—', 'SUBPROCESSO', row.sub || '—'],
+      ['REF. RISCO', row.rr || '—', 'REF. CONTROLE', row.rc || '—'],
+      ['GERÊNCIA', row.ger || '—', 'RESP. SUBPROCESSO', row.resp_sub || '—'],
+    ]
+    for (const [l1, v1, l2, v2] of idData) {
+      label(row_num, 2, l1); valor(row_num, 3, v1)
+      label(row_num, 5, l2); valor(row_num, 6, v2)
+      setH(row_num, 18); row_num++
+    }
+
+    // Desc. Risco (full width)
+    label(row_num, 2, 'DESCRIÇÃO DO RISCO')
+    merge(row_num, 3, row_num, 6); valor(row_num, 3, novaDescRisco || row.dr)
+    setH(row_num, 40); row_num++
+
+    label(row_num, 2, 'DESCRIÇÃO DO CONTROLE')
+    merge(row_num, 3, row_num, 6); valor(row_num, 3, novaDescControle || row.dc)
+    setH(row_num, 40); row_num++
+    blankRow(row_num); row_num++
+
+    // ── BLOCO 3: ATRIBUTOS ──
+    secTitle(row_num, '3. ATRIBUTOS DO CONTROLE'); row_num++
+    const atribData = [
+      ['CATEGORIA', editCat || row.cat || '—', 'FREQUÊNCIA', editFreq || row.freq || '—'],
+      ['NATUREZA', editNat || row.nat || '—', 'CARACTERÍSTICA', editCar || row.car || '—'],
+      ['SISTEMA / FERRAMENTA', editSis || row.sis || '—', 'CONTROLE CHAVE?', editChave || row.chave || '—'],
+    ]
+    for (const [l1, v1, l2, v2] of atribData) {
+      label(row_num, 2, l1); valor(row_num, 3, v1)
+      label(row_num, 5, l2); valor(row_num, 6, v2)
+      setH(row_num, 18); row_num++
+    }
+    blankRow(row_num); row_num++
+
+    // ── BLOCO 4: PREMISSAS ──
+    secTitle(row_num, '4. PREMISSAS DO CONTROLE'); row_num++
+    const premissas = [
+      ['1. QUEM FAZ?', isAutomatic ? 'N/A (Controle Automatizado)' : (quem || row.premissa_quem || '')],
+      ['2. QUANDO FAZ?', quando || row.premissa_quando || ''],
+      ['3. POR QUÊ FAZ?', pq || row.premissa_porque || ''],
+      ['4. COMO FAZ?', como || row.premissa_como || ''],
+      ['5. ONDE FAZ?', onde || row.premissa_onde || ''],
+      ['6. QUAL O RESULTADO?', resultado || row.premissa_resultado || ''],
+    ]
+    for (const [lbl, val] of premissas) {
+      label(row_num, 2, lbl)
+      merge(row_num, 3, row_num, 6); valor(row_num, 3, val, true)
+      setH(row_num, 42); row_num++
+    }
+    blankRow(row_num); row_num++
+
+    // ── BLOCO 5: PASSOS DE TESTE ──
+    secTitle(row_num, '5. PASSOS DE TESTE'); row_num++
+
+    // Header passos
+    const passoHdrCells = [[2, 'ATIVIDADE / PASSO'], [5, 'RESULTADO'], [6, 'OBSERVAÇÃO']]
+    for (const [col, txt] of passoHdrCells) {
+      const c = cell(row_num, col)
+      c.value = txt
+      c.font = { name: 'Calibri', bold: true, color: { argb: 'FFFFFFFF' }, size: 9 }
+      c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1D3B5C' } }
+      c.alignment = { vertical: 'middle', horizontal: 'center' }
+    }
+    merge(row_num, 2, row_num, 4)
+    setH(row_num, 18); row_num++
+
+    for (let i = 1; i <= 10; i++) {
+      merge(row_num, 2, row_num, 4)
+      const pCell = cell(row_num, 2)
+      pCell.value = `${i}.`
+      pCell.font = { name: 'Calibri', size: 10, color: { argb: 'FF333333' } }
+      pCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF' + WHITE } }
+      pCell.border = { top: { style: 'thin', color: { argb: 'FF' + GRAY_BORDER } }, bottom: { style: 'thin', color: { argb: 'FF' + GRAY_BORDER } }, left: { style: 'thin', color: { argb: 'FF' + GRAY_BORDER } }, right: { style: 'thin', color: { argb: 'FF' + GRAY_BORDER } } }
+      pCell.alignment = { vertical: 'top', wrapText: true }
+
+      const rCell = cell(row_num, 5)
+      rCell.value = ''
+      rCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFFFFF' } }
+      rCell.border = { top: { style: 'thin', color: { argb: 'FF' + GRAY_BORDER } }, bottom: { style: 'thin', color: { argb: 'FF' + GRAY_BORDER } }, left: { style: 'thin', color: { argb: 'FF' + GRAY_BORDER } }, right: { style: 'thin', color: { argb: 'FF' + GRAY_BORDER } } }
+      rCell.alignment = { vertical: 'middle', horizontal: 'center' }
+
+      const oCell = cell(row_num, 6)
+      oCell.value = ''
+      oCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFFFFF' } }
+      oCell.border = { top: { style: 'thin', color: { argb: 'FF' + GRAY_BORDER } }, bottom: { style: 'thin', color: { argb: 'FF' + GRAY_BORDER } }, left: { style: 'thin', color: { argb: 'FF' + GRAY_BORDER } }, right: { style: 'thin', color: { argb: 'FF' + GRAY_BORDER } } }
+      oCell.alignment = { vertical: 'top', wrapText: true }
+
+      setH(row_num, 36); row_num++
+    }
+    blankRow(row_num); row_num++
+
+    // ── BLOCO 6: RESULTADO ──
+    secTitle(row_num, '6. RESULTADO DO TESTE'); row_num++
+    const resultFields = [
+      ['RESULTADO GERAL', '', true],
+      ['INCONSISTÊNCIA IDENTIFICADA', '', true],
+      ['MELHORIA IDENTIFICADA?', '', true],
+      ['DESCRIÇÃO DA MELHORIA', '', true],
+    ]
+    for (const [lbl, val, ed] of resultFields) {
+      label(row_num, 2, lbl)
+      merge(row_num, 3, row_num, 6); valor(row_num, 3, val, ed)
+      setH(row_num, 36); row_num++
+    }
+    blankRow(row_num); row_num++
+
+    // ── BLOCO 7: EVIDÊNCIAS ──
+    secTitle(row_num, '7. EVIDÊNCIAS'); row_num++
+    merge(row_num, 2, row_num + 3, 6)
+    const evCell = cell(row_num, 2)
+    evCell.value = 'Descreva ou liste as evidências coletadas durante o teste...'
+    evCell.font = { name: 'Calibri', size: 10, color: { argb: 'FFAAAAAA' } }
+    evCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFFFFF' } }
+    evCell.border = { top: { style: 'thin', color: { argb: 'FF' + GRAY_BORDER } }, bottom: { style: 'thin', color: { argb: 'FF' + GRAY_BORDER } }, left: { style: 'thin', color: { argb: 'FF' + GRAY_BORDER } }, right: { style: 'thin', color: { argb: 'FF' + GRAY_BORDER } } }
+    evCell.alignment = { vertical: 'top', horizontal: 'left', wrapText: true, indent: 1 }
+    setH(row_num, 36); setH(row_num + 1, 36); setH(row_num + 2, 36); setH(row_num + 3, 36)
+    row_num += 4
+    blankRow(row_num); row_num++
+
+    // ── FOOTER ──
+    merge(row_num, 1, row_num, 7)
+    const ftr = cell(row_num, 1)
+    ftr.value = `Polímata Consultoria em GRC  ·  Gerado em ${dtStr}  ·  ${perfil?.email || ''}`
+    ftr.font = { name: 'Calibri', size: 8, color: { argb: 'FF999999' } }
+    ftr.alignment = { vertical: 'middle', horizontal: 'center' }
+    ftr.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF3EEE4' } }
+    setH(row_num, 16)
+
+    // ── DOWNLOAD ──
+    const buffer = await workbook.xlsx.writeBuffer()
+    const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = \`Ficha_de_Risco_\${row.rc || 'controle'}_\${new Date().toISOString().slice(0, 10)}.xlsx\`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
   }
 
   async function handleSaveSemFicha() {
