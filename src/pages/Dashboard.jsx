@@ -512,6 +512,18 @@ function PorArea({ projeto, areasCalc, todosControles, loading, navigate, loadDa
   const [atualizarRow, setAtualizarRow] = useState(null)
   const canEdit = perfil?.papel === 'admin_polimata' || perfil?.papel === 'consultor_polimata'
 
+  // ⚠️ HOOKS ANTES DE QUALQUER RETURN CONDICIONAL (regra dos hooks React)
+  const ultAtualArea = useMemo(() => getUltimaAtualizacao(area?.controles || []), [area])
+
+  const areaHeatmap = useMemo(() => {
+    const grid = Array.from({ length: 4 }, () => Array(4).fill(0))
+    ;(area?.controles || []).forEach(c => {
+      const ri = impToIdx(c.imp), ci = probToIdx(c.prob)
+      if (ri >= 0 && ci >= 0) grid[ri][ci]++
+    })
+    return grid
+  }, [area])
+
   if (loading) return <Spinner />
   if (!projeto) return <NoProjeto />
   if (!area) return <div style={{ background: '#00112C', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 12, fontFamily: "'Montserrat', sans-serif" }}><div style={{ color: 'rgba(243,238,228,0.4)' }}>Área não encontrada.</div><button onClick={() => navigate('/')} style={{ marginTop: 12, padding: '6px 16px', borderRadius: 4, border: '1px solid rgba(243,238,228,0.1)', background: 'rgba(255,255,255,0.05)', color: '#F3EEE4', cursor: 'pointer', fontFamily: 'inherit', fontSize: 11 }}>← Voltar</button></div>
@@ -526,18 +538,6 @@ function PorArea({ projeto, areasCalc, todosControles, loading, navigate, loadDa
     else if (isGap(c.r1)) gaps++
     if (precisaPlanoAcao(c) && !planoAcaoConcluido(c)) planosAcao++
   })
-
-  const ultAtualArea = useMemo(() => getUltimaAtualizacao(area.controles), [area.controles])
-
-  // Heatmap da área
-  const areaHeatmap = useMemo(() => {
-    const grid = Array.from({ length: 4 }, () => Array(4).fill(0))
-    area.controles.forEach(c => {
-      const ri = impToIdx(c.imp), ci = probToIdx(c.prob)
-      if (ri >= 0 && ci >= 0) grid[ri][ci]++
-    })
-    return grid
-  }, [area.controles])
 
   const cf = area.controles.filter(c => {
     if (busca) { const b = busca.toLowerCase(); if (![c.rr,c.rc,c.dr,c.dc,c.incons,c.rec].some(f => (f||'').toLowerCase().includes(b))) return false }
