@@ -203,257 +203,302 @@ const ModalAtualizar = ({ row, onClose, onSaved, areas, projeto }) => {
 
   async function gerarFichaExcel() {
     const workbook = new ExcelJS.Workbook()
-    const ws = workbook.addWorksheet('Ficha de Risco', {
+    workbook.creator = 'Polímata GRC'
+    workbook.created = new Date()
+
+    // ── Cores ──
+    const NAVY   = 'FF00203E'
+    const GOLD   = 'FFCC915E'
+    const CREAM  = 'FFF3EEE4'
+    const F8     = 'FFF8F6F2'   // fill pré-preenchido
+    const WHITE  = 'FFFFFFFF'
+    const GRAY33 = 'FF333333'
+    const GRAYBB = 'FFBBBBBB'
+    const BORDER_CREAM = 'FFF0EDE8'
+    const BORDER_GRAY  = 'FFD5CFC6'
+
+    // ── Helpers de estilo ──
+    const fontBase = (opts = {}) => ({ name: 'Montserrat', size: 10, ...opts })
+    const hairBorder = { style: 'hair', color: { argb: BORDER_CREAM } }
+    const allHair = { top: hairBorder, bottom: hairBorder, left: hairBorder, right: hairBorder }
+    const fillSolid = (argb) => ({ type: 'pattern', pattern: 'solid', fgColor: { argb } })
+    const alignVC = { vertical: 'middle' }
+    const alignVCWrap = { vertical: 'middle', wrapText: true }
+
+    function applySection(ws, row, text) {
+      const c = ws.getCell(row, 2)
+      c.value = text
+      c.font = fontBase({ bold: true, color: { argb: GOLD } })
+      c.fill = fillSolid(NAVY)
+      c.alignment = { horizontal: 'left', vertical: 'middle' }
+      c.border = allHair
+      ws.mergeCells(row, 2, row, 9)
+      ws.getRow(row).height = 15
+    }
+
+    function applyLabel(ws, row, text) {
+      const c = ws.getCell(row, 2)
+      c.value = text
+      c.font = fontBase({ bold: true, color: { argb: NAVY } })
+      c.fill = fillSolid(WHITE)
+      c.alignment = alignVC
+      c.border = allHair
+      ws.getRow(row).height = 15
+    }
+
+    function applyValue(ws, row, text, editable = false) {
+      ws.mergeCells(row, 3, row, 9)
+      const c = ws.getCell(row, 3)
+      c.value = text || ''
+      c.font = fontBase({ color: { argb: GRAY33 } })
+      c.fill = fillSolid(editable ? WHITE : F8)
+      c.alignment = alignVCWrap
+      c.border = {
+        ...allHair,
+        left: { style: editable ? 'thin' : 'medium', color: { argb: editable ? BORDER_GRAY : GOLD.replace('FF','FF') } }
+      }
+    }
+
+    function applyRow(ws, row, label, value, editable = false) {
+      applyLabel(ws, row, label)
+      applyValue(ws, row, value, editable)
+    }
+
+    // ── Aba principal ──
+    const ws = workbook.addWorksheet('📋 Ficha de Risco', {
       pageSetup: { orientation: 'landscape', fitToPage: true, fitToWidth: 1, fitToHeight: 0 },
       views: [{ showGridLines: false }],
     })
 
-    // Cores
-    const NAVY = '00203E'
-    const GOLD = 'CC915E'
-    const CREAM = 'F8F6F2'
-    const GRAY_BORDER = 'D1D5DB'
-    const WHITE = 'FFFFFF'
-
-    // Larguras das colunas
+    // Larguras (A=3, B=34, C=20, D=22, E=20, F=22, G=20, H=10, I=28)
     ws.columns = [
-      { width: 3 },   // A - margem
-      { width: 22 },  // B - label
-      { width: 30 },  // C - valor 1
-      { width: 3 },   // D - separador
-      { width: 22 },  // E - label
-      { width: 30 },  // F - valor 2
-      { width: 3 },   // G - margem
+      { width: 3 }, { width: 34 }, { width: 20 }, { width: 22 },
+      { width: 20 }, { width: 22 }, { width: 20 }, { width: 10 }, { width: 28 },
     ]
 
-    let row_num = 1
+    const now = new Date()
+    const dtStr = now.toLocaleDateString('pt-BR') + ' · ' + now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
 
-    // ── Helpers ──
-    function cell(r, c) { return ws.getCell(r, c) }
-    function merge(r1, c1, r2, c2) { ws.mergeCells(r1, c1, r2, c2) }
-    function setH(r, h) { ws.getRow(r).height = h }
-    function label(r, c, text) {
-      const cel = cell(r, c)
-      cel.value = text
-      cel.font = { name: 'Calibri', bold: true, color: { argb: 'FF' + NAVY }, size: 9 }
-      cel.alignment = { vertical: 'middle', horizontal: 'left' }
-    }
-    function valor(r, c, text, editable = false) {
-      const cel = cell(r, c)
-      cel.value = text || ''
-      cel.font = { name: 'Calibri', size: 10, color: { argb: 'FF333333' } }
-      cel.alignment = { vertical: 'middle', horizontal: 'left', wrapText: true }
-      cel.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF' + (editable ? WHITE : CREAM) } }
-      if (!editable) {
-        cel.border = { left: { style: 'medium', color: { argb: 'FF' + GOLD } } }
-      } else {
-        cel.border = {
-          top: { style: 'thin', color: { argb: 'FF' + GRAY_BORDER } },
-          bottom: { style: 'thin', color: { argb: 'FF' + GRAY_BORDER } },
-          left: { style: 'thin', color: { argb: 'FF' + GRAY_BORDER } },
-          right: { style: 'thin', color: { argb: 'FF' + GRAY_BORDER } },
-        }
-      }
-    }
-    function secTitle(r, text) {
-      merge(r, 1, r, 7)
-      const cel = cell(r, 1)
-      cel.value = text
-      cel.font = { name: 'Calibri', bold: true, color: { argb: 'FF' + WHITE }, size: 10 }
-      cel.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF' + NAVY } }
-      cel.alignment = { vertical: 'middle', horizontal: 'left', indent: 1 }
-      setH(r, 22)
-    }
-    function blankRow(r, h = 6) { merge(r, 1, r, 7); setH(r, h) }
+    // ── LINHA 1 — Header empresa ──
+    ws.mergeCells(1, 2, 1, 9)
+    const h1 = ws.getCell(1, 2)
+    h1.value = '          Polímata · Consultoria em GRC'
+    h1.font = fontBase({ bold: true, color: { argb: CREAM } })
+    h1.fill = fillSolid(NAVY)
+    h1.alignment = { horizontal: 'left', vertical: 'middle' }
+    h1.border = allHair
+    ws.getRow(1).height = 15
 
-    // ── HEADER ──
-    // Tentar carregar logo
+    // ── LINHA 2 — Título ──
+    ws.mergeCells(2, 2, 2, 9)
+    const h2 = ws.getCell(2, 2)
+    h2.value = '          FICHA DE RISCO — EXECUÇÃO DO TESTE'
+    h2.font = fontBase({ bold: true, color: { argb: GOLD } })
+    h2.fill = fillSolid(NAVY)
+    h2.alignment = { horizontal: 'left', vertical: 'middle' }
+    h2.border = allHair
+    ws.getRow(2).height = 15
+
+    // Linha 3 — vazia
+    ws.getRow(3).height = 5
+
+    // ── BLOCO 1 — DADOS DO PROJETO (linhas 4-12) ──
+    applySection(ws, 4, '1. DADOS DO PROJETO')
+
+    const projetoRows = [
+      [5,  'CLIENTE',              projeto?.clientes?.nome || '—',         false],
+      [6,  'NATUREZA DO PROJETO',  projeto?.nome || '—',                   false],
+      [7,  'FASE EM CURSO',        'F2-E1 — Plano de Ação',                false],
+      [8,  'EXECUTOR',             perfil?.nome || '—',                    false],
+      [9,  'DATA E HORÁRIO',       dtStr,                                  false],
+      [10, 'DOWNLOAD POR',         perfil?.email || '—',                   false],
+      [11, 'REVISOR',              '',                                     true],
+      [12, 'DATA DA REVISÃO',      '',                                     true],
+    ]
+    for (const [r, lbl, val, ed] of projetoRows) applyRow(ws, r, lbl, val, ed)
+
+    // Linha 13 — vazia
+    ws.getRow(13).height = 5
+
+    // ── BLOCO 2 — IDENTIFICAÇÃO (linhas 14-22) ──
+    applySection(ws, 14, '2. IDENTIFICAÇÃO DO RISCO E CONTROLE')
+
+    const idRows = [
+      [15, 'ÁREA / PROCESSO',     row.area || '—',                                              false],
+      [16, 'SUBPROCESSO',         row.sub  || '—',                                              false],
+      [17, 'REF. RISCO',          row.rr   || '—',                                              false],
+      [18, 'REF. CONTROLE',       row.rc   || '—',                                              false],
+      [19, 'GERÊNCIA',            row.ger  || '—',                                              false],
+      [20, 'RESP. SUBPROCESSO',   row.resp_sub || '—',                                          false],
+      [21, 'DESCRIÇÃO DO RISCO',  (novaDescRisco || row.dr || '—'),                             false],
+      [22, 'DESCRIÇÃO DO CONTROLE', (novaDescControle || row.dc || '—'),                        false],
+    ]
+    for (const [r, lbl, val, ed] of idRows) applyRow(ws, r, lbl, val, ed)
+
+    // Linha 23 — vazia
+    ws.getRow(23).height = 5
+
+    // ── BLOCO 3 — ATRIBUTOS (linhas 24-30) ──
+    applySection(ws, 24, '3. ATRIBUTOS DO CONTROLE')
+
+    const atribRows = [
+      [25, 'CATEGORIA',        editCat   || row.cat   || '—', false],
+      [26, 'FREQUÊNCIA',       editFreq  || row.freq  || '—', false],
+      [27, 'NATUREZA',         editNat   || row.nat   || '—', false],
+      [28, 'CARACTERÍSTICA',   editCar   || row.car   || '—', false],
+      [29, 'SISTEMA',          editSis   || row.sis   || '—', false],
+      [30, 'CONTROLE CHAVE?',  editChave || row.chave || '—', false],
+    ]
+    for (const [r, lbl, val, ed] of atribRows) applyRow(ws, r, lbl, val, ed)
+
+    // Linha 31 — vazia
+    ws.getRow(31).height = 5
+
+    // ── BLOCO 4 — PREMISSAS (linhas 32-38) ──
+    applySection(ws, 32, '4. AS 6 PREMISSAS DO CONTROLE — VALIDAÇÃO METODOLÓGICA')
+
+    const premRows = [
+      [33, '1. QUEM FAZ',        isAutomatic ? 'N/A (Controle Automatizado)' : (quem || row.premissa_quem || ''), true],
+      [34, '2. QUANDO FAZ',      quando    || row.premissa_quando   || '', true],
+      [35, '3. POR QUÊ FAZ',     pq        || row.premissa_porque   || '', true],
+      [36, '4. COMO FAZ',        como      || row.premissa_como     || '', true],
+      [37, '5. ONDE FAZ',        onde      || row.premissa_onde     || '', true],
+      [38, '6. QUAL O RESULTADO', resultado || row.premissa_resultado || '', true],
+    ]
+    for (const [r, lbl, val, ed] of premRows) applyRow(ws, r, lbl, val, ed)
+
+    // Linha 39 — vazia
+    ws.getRow(39).height = 5
+
+    // ── BLOCO 5 — PASSOS DE TESTE (linhas 40-52) ──
+    applySection(ws, 40, '5. PASSOS DE TESTE')
+
+    // Header colunas passos (linha 41)
+    ws.mergeCells(41, 2, 41, 7)
+    const ph1 = ws.getCell(41, 2)
+    ph1.value = 'Atividade / Passo'
+    ph1.font = fontBase({ bold: true, color: { argb: CREAM } })
+    ph1.fill = fillSolid(NAVY)
+    ph1.alignment = { horizontal: 'left', vertical: 'middle' }
+    ph1.border = allHair
+
+    const ph2 = ws.getCell(41, 8)
+    ph2.value = '✓ / ✗'
+    ph2.font = fontBase({ bold: true, color: { argb: CREAM } })
+    ph2.fill = fillSolid(NAVY)
+    ph2.alignment = { horizontal: 'center', vertical: 'middle' }
+    ph2.border = allHair
+
+    const ph3 = ws.getCell(41, 9)
+    ph3.value = 'Observação'
+    ph3.font = fontBase({ bold: true, color: { argb: CREAM } })
+    ph3.fill = fillSolid(NAVY)
+    ph3.alignment = { horizontal: 'left', vertical: 'middle' }
+    ph3.border = allHair
+    ws.getRow(41).height = 15
+
+    // Linha 42 — legenda
+    ws.mergeCells(42, 2, 42, 9)
+    const legenda = ws.getCell(42, 2)
+    legenda.value = '✓ = Teste realizado com sucesso · ✗ = Não foi possível realizar o teste'
+    legenda.font = fontBase({ size: 8, color: { argb: GOLD } })
+    legenda.fill = fillSolid(F8)
+    legenda.alignment = { horizontal: 'center', vertical: 'middle' }
+    legenda.border = allHair
+    ws.getRow(42).height = 15
+
+    // 10 passos (linhas 43-52)
+    for (let i = 0; i < 10; i++) {
+      const r = 43 + i
+      ws.mergeCells(r, 2, r, 7)
+      const pc = ws.getCell(r, 2)
+      pc.value = `Passo ${i + 1}`
+      pc.font = fontBase({ color: { argb: GRAYBB } })
+      pc.fill = fillSolid(WHITE)
+      pc.alignment = alignVCWrap
+      pc.border = allHair
+
+      const rc = ws.getCell(r, 8)
+      rc.value = ''
+      rc.fill = fillSolid(WHITE)
+      rc.alignment = { horizontal: 'center', vertical: 'middle' }
+      rc.border = allHair
+
+      const oc = ws.getCell(r, 9)
+      oc.value = ''
+      oc.fill = fillSolid(WHITE)
+      oc.alignment = alignVCWrap
+      oc.border = allHair
+
+      ws.getRow(r).height = 15
+    }
+
+    // Linhas 53-54 — vazias
+    ws.getRow(53).height = 5
+    ws.getRow(54).height = 5
+
+    // ── BLOCO 6 — RESULTADO (linhas 55-60) ──
+    applySection(ws, 55, '6. RESULTADO')
+
+    const resultRows = [
+      [56, 'RESULTADO',                  '', true],
+      [57, 'INCONSISTÊNCIA IDENTIFICADA','', true],
+      [58, 'MELHORIA IDENTIFICADA?',     '', true],
+      [59, 'DESCRIÇÃO DA MELHORIA',      '', true],
+    ]
+    for (const [r, lbl, val, ed] of resultRows) applyRow(ws, r, lbl, val, ed)
+
+    // Linha 60 — nota
+    ws.mergeCells(60, 2, 60, 9)
+    const nota = ws.getCell(60, 2)
+    nota.value = '↑ Preencher apenas quando "Melhoria Identificada?" = Sim'
+    nota.font = fontBase({ size: 8, color: { argb: GOLD } })
+    nota.fill = fillSolid(F8)
+    nota.alignment = { horizontal: 'left', vertical: 'middle' }
+    nota.border = allHair
+    ws.getRow(60).height = 15
+
+    // ── LINHA 61 — FOOTER ──
+    ws.mergeCells(61, 2, 61, 5)
+    const ft1 = ws.getCell(61, 2)
+    ft1.value = 'Polímata Consultoria em GRC · Ficha de Risco'
+    ft1.font = fontBase({ size: 7, color: { argb: NAVY } })
+    ft1.fill = fillSolid(CREAM)
+    ft1.alignment = alignVC
+    ft1.border = allHair
+
+    ws.mergeCells(61, 6, 61, 9)
+    const ft2 = ws.getCell(61, 6)
+    ft2.value = `Gerado em: ${dtStr} · Por: ${perfil?.email || ''}`
+    ft2.font = fontBase({ size: 7, color: { argb: NAVY } })
+    ft2.fill = fillSolid(CREAM)
+    ft2.alignment = { horizontal: 'right', vertical: 'middle' }
+    ft2.border = allHair
+    ws.getRow(61).height = 15
+
+    // Tentar logo
     try {
       const resp = await fetch('/logotipo-2cores.png')
       if (resp.ok) {
         const buf = await resp.arrayBuffer()
         const imgId = workbook.addImage({ buffer: buf, extension: 'png' })
-        merge(1, 1, 3, 2)
-        ws.addImage(imgId, { tl: { col: 0, row: 0 }, br: { col: 2, row: 3 }, editAs: 'oneCell' })
+        ws.addImage(imgId, {
+          tl: { col: 1, row: 0 },
+          br: { col: 2, row: 2 },
+          editAs: 'oneCell',
+        })
       }
     } catch (_) {}
 
-    merge(1, 3, 1, 7)
-    const hdr1 = cell(1, 3)
-    hdr1.value = 'Polímata · Consultoria em GRC'
-    hdr1.font = { name: 'Calibri', bold: true, color: { argb: 'FF' + NAVY }, size: 11 }
-    hdr1.alignment = { vertical: 'bottom', horizontal: 'left' }
-
-    merge(2, 3, 2, 7)
-    const hdr2 = cell(2, 3)
-    hdr2.value = 'FICHA DE RISCO — EXECUÇÃO DO TESTE'
-    hdr2.font = { name: 'Calibri', bold: true, color: { argb: 'FF' + GOLD }, size: 14 }
-    hdr2.alignment = { vertical: 'middle', horizontal: 'left' }
-
-    merge(3, 3, 3, 7)
-    const hdr3 = cell(3, 3)
-    hdr3.value = `Referência: ${row.rr || '—'}  ·  Controle: ${row.rc || '—'}`
-    hdr3.font = { name: 'Calibri', color: { argb: 'FF666666' }, size: 9 }
-    hdr3.alignment = { vertical: 'top', horizontal: 'left' }
-
-    setH(1, 24); setH(2, 28); setH(3, 18)
-    row_num = 4
-
-    blankRow(row_num); row_num++
-
-    // ── BLOCO 1: PROJETO ──
-    secTitle(row_num, '1. PROJETO'); row_num++
-    const now = new Date()
-    const dtStr = now.toLocaleDateString('pt-BR') + ' · ' + now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
-
-    const projetoData = [
-      ['CLIENTE', projeto?.clientes?.nome || '—', 'EXECUTOR', perfil?.nome || '—'],
-      ['NATUREZA DO PROJETO', projeto?.nome || '—', 'DATA E HORÁRIO', dtStr],
-      ['FASE EM CURSO', 'F2-E1 — Plano de Ação e Aderência', 'DOWNLOAD POR', perfil?.email || '—'],
-      ['REVISOR', '', 'DATA DA REVISÃO', ''],
-    ]
-
-    for (const [l1, v1, l2, v2] of projetoData) {
-      label(row_num, 2, l1)
-      merge(row_num, 3, row_num, 3); valor(row_num, 3, v1)
-      label(row_num, 5, l2)
-      merge(row_num, 6, row_num, 6); valor(row_num, 6, v2, l1 === 'REVISOR')
-      setH(row_num, 18)
-      row_num++
-    }
-    blankRow(row_num); row_num++
-
-    // ── BLOCO 2: IDENTIFICAÇÃO ──
-    secTitle(row_num, '2. IDENTIFICAÇÃO DO RISCO E CONTROLE'); row_num++
-
-    const idData = [
-      ['ÁREA', row.area || '—', 'SUBPROCESSO', row.sub || '—'],
-      ['REF. RISCO', row.rr || '—', 'REF. CONTROLE', row.rc || '—'],
-      ['GERÊNCIA', row.ger || '—', 'RESP. SUBPROCESSO', row.resp_sub || '—'],
-    ]
-    for (const [l1, v1, l2, v2] of idData) {
-      label(row_num, 2, l1); valor(row_num, 3, v1)
-      label(row_num, 5, l2); valor(row_num, 6, v2)
-      setH(row_num, 18); row_num++
-    }
-
-    // Desc. Risco (full width)
-    label(row_num, 2, 'DESCRIÇÃO DO RISCO')
-    merge(row_num, 3, row_num, 6); valor(row_num, 3, novaDescRisco || row.dr)
-    setH(row_num, 40); row_num++
-
-    label(row_num, 2, 'DESCRIÇÃO DO CONTROLE')
-    merge(row_num, 3, row_num, 6); valor(row_num, 3, novaDescControle || row.dc)
-    setH(row_num, 40); row_num++
-    blankRow(row_num); row_num++
-
-    // ── BLOCO 3: ATRIBUTOS ──
-    secTitle(row_num, '3. ATRIBUTOS DO CONTROLE'); row_num++
-    const atribData = [
-      ['CATEGORIA', editCat || row.cat || '—', 'FREQUÊNCIA', editFreq || row.freq || '—'],
-      ['NATUREZA', editNat || row.nat || '—', 'CARACTERÍSTICA', editCar || row.car || '—'],
-      ['SISTEMA / FERRAMENTA', editSis || row.sis || '—', 'CONTROLE CHAVE?', editChave || row.chave || '—'],
-    ]
-    for (const [l1, v1, l2, v2] of atribData) {
-      label(row_num, 2, l1); valor(row_num, 3, v1)
-      label(row_num, 5, l2); valor(row_num, 6, v2)
-      setH(row_num, 18); row_num++
-    }
-    blankRow(row_num); row_num++
-
-    // ── BLOCO 4: PREMISSAS ──
-    secTitle(row_num, '4. PREMISSAS DO CONTROLE'); row_num++
-    const premissas = [
-      ['1. QUEM FAZ?', isAutomatic ? 'N/A (Controle Automatizado)' : (quem || row.premissa_quem || '')],
-      ['2. QUANDO FAZ?', quando || row.premissa_quando || ''],
-      ['3. POR QUÊ FAZ?', pq || row.premissa_porque || ''],
-      ['4. COMO FAZ?', como || row.premissa_como || ''],
-      ['5. ONDE FAZ?', onde || row.premissa_onde || ''],
-      ['6. QUAL O RESULTADO?', resultado || row.premissa_resultado || ''],
-    ]
-    for (const [lbl, val] of premissas) {
-      label(row_num, 2, lbl)
-      merge(row_num, 3, row_num, 6); valor(row_num, 3, val, true)
-      setH(row_num, 42); row_num++
-    }
-    blankRow(row_num); row_num++
-
-    // ── BLOCO 5: PASSOS DE TESTE ──
-    secTitle(row_num, '5. PASSOS DE TESTE'); row_num++
-
-    // Header passos
-    const passoHdrCells = [[2, 'ATIVIDADE / PASSO'], [5, 'RESULTADO'], [6, 'OBSERVAÇÃO']]
-    for (const [col, txt] of passoHdrCells) {
-      const c = cell(row_num, col)
-      c.value = txt
-      c.font = { name: 'Calibri', bold: true, color: { argb: 'FFFFFFFF' }, size: 9 }
-      c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1D3B5C' } }
-      c.alignment = { vertical: 'middle', horizontal: 'center' }
-    }
-    merge(row_num, 2, row_num, 4)
-    setH(row_num, 18); row_num++
-
-    for (let i = 1; i <= 10; i++) {
-      merge(row_num, 2, row_num, 4)
-      const pCell = cell(row_num, 2)
-      pCell.value = `${i}.`
-      pCell.font = { name: 'Calibri', size: 10, color: { argb: 'FF333333' } }
-      pCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF' + WHITE } }
-      pCell.border = { top: { style: 'thin', color: { argb: 'FF' + GRAY_BORDER } }, bottom: { style: 'thin', color: { argb: 'FF' + GRAY_BORDER } }, left: { style: 'thin', color: { argb: 'FF' + GRAY_BORDER } }, right: { style: 'thin', color: { argb: 'FF' + GRAY_BORDER } } }
-      pCell.alignment = { vertical: 'top', wrapText: true }
-
-      const rCell = cell(row_num, 5)
-      rCell.value = ''
-      rCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFFFFF' } }
-      rCell.border = { top: { style: 'thin', color: { argb: 'FF' + GRAY_BORDER } }, bottom: { style: 'thin', color: { argb: 'FF' + GRAY_BORDER } }, left: { style: 'thin', color: { argb: 'FF' + GRAY_BORDER } }, right: { style: 'thin', color: { argb: 'FF' + GRAY_BORDER } } }
-      rCell.alignment = { vertical: 'middle', horizontal: 'center' }
-
-      const oCell = cell(row_num, 6)
-      oCell.value = ''
-      oCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFFFFF' } }
-      oCell.border = { top: { style: 'thin', color: { argb: 'FF' + GRAY_BORDER } }, bottom: { style: 'thin', color: { argb: 'FF' + GRAY_BORDER } }, left: { style: 'thin', color: { argb: 'FF' + GRAY_BORDER } }, right: { style: 'thin', color: { argb: 'FF' + GRAY_BORDER } } }
-      oCell.alignment = { vertical: 'top', wrapText: true }
-
-      setH(row_num, 36); row_num++
-    }
-    blankRow(row_num); row_num++
-
-    // ── BLOCO 6: RESULTADO ──
-    secTitle(row_num, '6. RESULTADO DO TESTE'); row_num++
-    const resultFields = [
-      ['RESULTADO GERAL', '', true],
-      ['INCONSISTÊNCIA IDENTIFICADA', '', true],
-      ['MELHORIA IDENTIFICADA?', '', true],
-      ['DESCRIÇÃO DA MELHORIA', '', true],
-    ]
-    for (const [lbl, val, ed] of resultFields) {
-      label(row_num, 2, lbl)
-      merge(row_num, 3, row_num, 6); valor(row_num, 3, val, ed)
-      setH(row_num, 36); row_num++
-    }
-    blankRow(row_num); row_num++
-
-    // ── BLOCO 7: EVIDÊNCIAS ──
-    secTitle(row_num, '7. EVIDÊNCIAS'); row_num++
-    merge(row_num, 2, row_num + 3, 6)
-    const evCell = cell(row_num, 2)
-    evCell.value = 'Descreva ou liste as evidências coletadas durante o teste...'
-    evCell.font = { name: 'Calibri', size: 10, color: { argb: 'FFAAAAAA' } }
-    evCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFFFFF' } }
-    evCell.border = { top: { style: 'thin', color: { argb: 'FF' + GRAY_BORDER } }, bottom: { style: 'thin', color: { argb: 'FF' + GRAY_BORDER } }, left: { style: 'thin', color: { argb: 'FF' + GRAY_BORDER } }, right: { style: 'thin', color: { argb: 'FF' + GRAY_BORDER } } }
-    evCell.alignment = { vertical: 'top', horizontal: 'left', wrapText: true, indent: 1 }
-    setH(row_num, 36); setH(row_num + 1, 36); setH(row_num + 2, 36); setH(row_num + 3, 36)
-    row_num += 4
-    blankRow(row_num); row_num++
-
-    // ── FOOTER ──
-    merge(row_num, 1, row_num, 7)
-    const ftr = cell(row_num, 1)
-    ftr.value = `Polímata Consultoria em GRC  ·  Gerado em ${dtStr}  ·  ${perfil?.email || ''}`
-    ftr.font = { name: 'Calibri', size: 8, color: { argb: 'FF999999' } }
-    ftr.alignment = { vertical: 'middle', horizontal: 'center' }
-    ftr.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF3EEE4' } }
-    setH(row_num, 16)
+    // ── Aba Teste (vazia) ──
+    const ws2 = workbook.addWorksheet('Teste', { views: [{ showGridLines: false }] })
+    ws2.mergeCells(2, 2, 2, 18)
+    const t1 = ws2.getCell(2, 2)
+    t1.value = '7. EXECUÇÃO DO TESTE E EVIDÊNCIAS'
+    t1.font = fontBase({ bold: true, color: { argb: GOLD } })
+    t1.fill = fillSolid(NAVY)
+    t1.alignment = { horizontal: 'left', vertical: 'middle' }
+    ws2.getRow(2).height = 15
 
     // ── DOWNLOAD ──
     const buffer = await workbook.xlsx.writeBuffer()
@@ -467,6 +512,7 @@ const ModalAtualizar = ({ row, onClose, onSaved, areas, projeto }) => {
     document.body.removeChild(a)
     URL.revokeObjectURL(url)
   }
+
 
   async function handleSaveSemFicha() {
     setSaving(true)
