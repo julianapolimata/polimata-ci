@@ -151,16 +151,22 @@ export default function Dashboard() {
 
   async function loadDados(pid) {
     setLoading(true)
-    const { data: ad } = await supabase.from('areas').select('id, nome, prefixo, peso, gerente, ordem').eq('projeto_id', pid).order('ordem')
-    const { data: md } = await supabase.from('mrc').select('*').eq('projeto_id', pid).neq('ativo', false)
-    const controles = md || [], areas = ad || []
-    const res = areas.map(a => {
-      const ca = controles.filter(c => c.area_id === a.id || c.area === a.nome)
-      const f1c = ca.length > 0 && ca.every(c => c.r1 && c.r1 !== 'Teste Não Realizado')
-      return { ...a, controles: ca, calc: calcularPercentualArea(ca, f1c, { requireAprovado: true }) }
-    })
-    const resOrdenado = [...res].sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'))
-    setAreasCalc(resOrdenado); setTodosControles(controles); setLoading(false)
+    try {
+      const { data: ad } = await supabase.from('areas').select('id, nome, prefixo, peso, gerente, ordem').eq('projeto_id', pid).order('ordem')
+      const { data: md } = await supabase.from('mrc').select('*').eq('projeto_id', pid).neq('ativo', false)
+      const controles = md || [], areas = ad || []
+      const res = areas.map(a => {
+        const ca = controles.filter(c => c.area_id === a.id || c.area === a.nome)
+        const f1c = ca.length > 0 && ca.every(c => c.r1 && c.r1 !== 'Teste Não Realizado')
+        return { ...a, controles: ca, calc: calcularPercentualArea(ca, f1c, { requireAprovado: true }) }
+      })
+      const resOrdenado = [...res].sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'))
+      setAreasCalc(resOrdenado); setTodosControles(controles)
+    } catch (err) {
+      console.error('Erro ao carregar dados:', err)
+    } finally {
+      setLoading(false)
+    }
   }
 
   const isAdmin = perfil?.papel === 'admin_polimata'
@@ -171,7 +177,7 @@ export default function Dashboard() {
 
   return (
     <div style={{ display: 'flex', height: '100vh', overflow: 'hidden' }}>
-      <aside style={{ width: sw, minWidth: sw, background: 'var(--bg1)', borderRight: '1px solid var(--brd)', display: 'flex', flexDirection: 'column', overflow: 'hidden', transition: 'width .25s ease, min-width .25s ease' }}>
+      <aside style={{ width: sw, minWidth: sw, background: 'var(--bg1)', borderRight: '1px solid var(--brd)', display: 'flex', flexDirection: 'column', overflow: 'hidden', transition: 'width .25s ease, min-width .25s ease', position: 'relative', zIndex: 250 }}>
         <div style={{ padding: sidebarOpen ? '12px' : '12px 8px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderBottom: '1px solid var(--brd)', minHeight: 56 }}>
           {sidebarOpen
             ? <img src="/logotipo-2cores.png" alt="Polímata" style={{ width: '100%', maxWidth: 180, height: 'auto', objectFit: 'contain' }} />
@@ -258,7 +264,7 @@ function NivelBadge({ pct, nivel }) {
   return <div style={{ fontSize: 9, fontWeight: 700, color: '#fff', background: getCorNivel(pct), padding: '2px 8px', borderRadius: 999, marginTop: 3, textTransform: 'uppercase', display: 'inline-block' }}>{nivel.nivel} — {nivel.nome}</div>
 }
 
-function Spinner() { return <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: 'var(--bg0)' }}><div className="spinner" /></div> }
+function Spinner({ light }) { return <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: light ? 'var(--lt-bg)' : 'var(--bg0)' }}><div className="spinner" /></div> }
 function NoProjeto() { return <div style={{ background: 'var(--bg0)', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 12 }}><div style={{ fontSize: 48, opacity: 0.3 }}>📊</div><div style={{ fontSize: 15, fontWeight: 600, color: 'var(--cream)' }}>Nenhum projeto ativo</div></div> }
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -544,7 +550,7 @@ function PorArea({ projeto, areasCalc, todosControles, loading, navigate, loadDa
     return 'Em Análise' // em_analise, teste_pendente, ficha_gerada, em_revisao, reprovado
   }
 
-  if (loading) return <Spinner />
+  if (loading) return <Spinner light />
   if (!projeto) return <NoProjeto />
   if (!area) return <div style={{ background: 'var(--lt-bg)', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 12, fontFamily: "'Montserrat', sans-serif" }}><div style={{ color: 'var(--lt-text3)' }}>Área não encontrada.</div><button onClick={() => navigate('/')} style={{ marginTop: 12, padding: '6px 16px', borderRadius: 999, border: '1px solid var(--lt-border)', background: 'var(--lt-card)', color: 'var(--lt-text)', cursor: 'pointer', fontFamily: 'inherit', fontSize: 11 }}>← Voltar</button></div>
 

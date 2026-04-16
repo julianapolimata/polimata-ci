@@ -282,7 +282,22 @@ body {
 
 /* ── Main areas ── */
 .main { flex: 1; overflow-y: auto; background: var(--bg0); }
-.main-light { flex: 1; overflow-y: auto; background: var(--lt-bg); }
+.main-light {
+  flex: 1; overflow-y: auto; background: var(--lt-bg);
+  /* Override dark-theme text tokens for light context */
+  --txt1: var(--lt-text);
+  --txt2: var(--lt-text2);
+  --txt3: var(--lt-text3);
+  --bg0: var(--lt-bg);
+  --bg1: var(--lt-bg);
+  --bg2: var(--lt-card);
+  --bg3: var(--lt-elevated);
+  --brd: var(--lt-border);
+  --brd2: var(--lt-border2);
+  --gold: #C8895C;
+  --gold-md: #B5794E;
+  color: var(--lt-text);
+}
 
 /* ── Top bar (sticky, with notification bell) ── */
 .top-bar {
