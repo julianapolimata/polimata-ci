@@ -545,6 +545,18 @@ function PorArea({ projeto, areasCalc, todosControles, loading, navigate, loadDa
   const isAdmin = perfil?.papel === 'admin_polimata'
   const isCliente = perfil?.papel === 'gestor_cliente' || perfil?.papel === 'usuario_cliente'
 
+  // HOOKS devem ficar ANTES de qualquer early return (React rules of hooks)
+  const controles = area?.controles || []
+  const ultAtualArea = useMemo(() => getUltimaAtualizacao(controles), [controles])
+  const areaHeatmap = useMemo(() => {
+    const grid = Array.from({ length: 4 }, () => Array(4).fill(0))
+    controles.forEach(c => {
+      const ri = impToIdx(c.imp), ci = probToIdx(c.prob)
+      if (ri >= 0 && ci >= 0) grid[ri][ci]++
+    })
+    return grid
+  }, [controles])
+
   // Mapeia status para visão simplificada do cliente
   function statusCliente(sw) {
     if (!sw || sw === 'rascunho') return 'Não Iniciado'
@@ -566,18 +578,6 @@ function PorArea({ projeto, areasCalc, todosControles, loading, navigate, loadDa
     else if (isGap(c.r1)) gaps++
     if (precisaPlanoAcao(c) && !planoAcaoConcluido(c)) planosAcao++
   })
-
-  const ultAtualArea = useMemo(() => getUltimaAtualizacao(area.controles), [area.controles])
-
-  // Heatmap da área
-  const areaHeatmap = useMemo(() => {
-    const grid = Array.from({ length: 4 }, () => Array(4).fill(0))
-    area.controles.forEach(c => {
-      const ri = impToIdx(c.imp), ci = probToIdx(c.prob)
-      if (ri >= 0 && ci >= 0) grid[ri][ci]++
-    })
-    return grid
-  }, [area.controles])
 
   const cf = area.controles.filter(c => {
     if (busca) { const b = busca.toLowerCase(); if (![c.rr,c.rc,c.dr,c.dc,c.incons,c.rec].some(f => (f||'').toLowerCase().includes(b))) return false }
