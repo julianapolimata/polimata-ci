@@ -128,7 +128,7 @@ body {
 /* ── Loading ── */
 .loading-screen {
   height: 100vh;
-  display: flex; align-items: center; justify-content: center;
+  display: flex; align-items: center; justify-content: center; flex-direction: column;
   background: var(--bg0);
 }
 .spinner {

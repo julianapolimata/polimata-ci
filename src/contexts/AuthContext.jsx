@@ -10,11 +10,16 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     // Sessão inicial
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null)
-      if (session?.user) loadPerfil(session.user.id)
-      else setLoading(false)
-    })
+    supabase.auth.getSession()
+      .then(({ data: { session } }) => {
+        setUser(session?.user ?? null)
+        if (session?.user) loadPerfil(session.user.id)
+        else setLoading(false)
+      })
+      .catch((err) => {
+        console.error('Erro ao obter sessão:', err)
+        setLoading(false)
+      })
 
     // Listener de mudanças
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -27,13 +32,18 @@ export function AuthProvider({ children }) {
   }, [])
 
   async function loadPerfil(userId) {
-    const { data } = await supabase
-      .from('perfis')
-      .select('*, clientes(*)')
-      .eq('id', userId)
-      .single()
-    setPerfil(data)
-    setLoading(false)
+    try {
+      const { data } = await supabase
+        .from('perfis')
+        .select('*, clientes(*)')
+        .eq('id', userId)
+        .single()
+      setPerfil(data)
+    } catch (err) {
+      console.error('Erro ao carregar perfil:', err)
+    } finally {
+      setLoading(false)
+    }
   }
 
   async function signIn(email, password) {
