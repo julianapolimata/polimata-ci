@@ -7,6 +7,7 @@ export function AuthProvider({ children }) {
   const [user, setUser]     = useState(null)
   const [perfil, setPerfil] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [needsPasswordSetup, setNeedsPasswordSetup] = useState(false)
 
   useEffect(() => {
     // Sessão inicial
@@ -22,7 +23,10 @@ export function AuthProvider({ children }) {
       })
 
     // Listener de mudanças
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'PASSWORD_RECOVERY') {
+        setNeedsPasswordSetup(true)
+      }
       setUser(session?.user ?? null)
       if (session?.user) loadPerfil(session.user.id)
       else { setPerfil(null); setLoading(false) }
@@ -55,8 +59,14 @@ export function AuthProvider({ children }) {
     await supabase.auth.signOut()
   }
 
+  async function updatePassword(newPassword) {
+    const { error } = await supabase.auth.updateUser({ password: newPassword })
+    if (!error) setNeedsPasswordSetup(false)
+    return { error }
+  }
+
   return (
-    <AuthContext.Provider value={{ user, perfil, setPerfil, loading, signIn, signOut }}>
+    <AuthContext.Provider value={{ user, perfil, setPerfil, loading, signIn, signOut, needsPasswordSetup, updatePassword }}>
       {children}
     </AuthContext.Provider>
   )
