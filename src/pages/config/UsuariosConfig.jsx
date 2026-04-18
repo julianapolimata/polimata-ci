@@ -380,8 +380,8 @@ function EditarUsuarioForm({ usuario, clientes, areas, projetos, onSave, onCance
       {/* Campos read-only */}
       <div className="cfg-row2" style={{ marginBottom: 12 }}>
         <div className="cfg-field">
-          <label style={{ fontSize: 10, color: '#999' }}>ID do Usuário</label>
-          <div style={{ fontSize: 11, color: '#888', fontFamily: 'monospace', padding: '6px 0' }}>{usuario.id?.substring(0, 8)}...</div>
+          <label style={{ fontSize: 10, color: '#999' }}>Usuário</label>
+          <div style={{ fontSize: 12, color: '#888', padding: '6px 0' }}>{usuario.email?.split('@')[0] || '—'}</div>
         </div>
         <div className="cfg-field">
           <label style={{ fontSize: 10, color: '#999' }}>Cadastrado em</label>
