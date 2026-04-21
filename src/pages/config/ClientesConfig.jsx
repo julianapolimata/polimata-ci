@@ -272,10 +272,16 @@ function DetalheCliente({ cliente, onBack }) {
 
   async function salvarProjeto(proj) {
     setSaving(true)
+    const payload = {
+      nome: proj.nome,
+      ativo: proj.ativo,
+      num_fases: proj.num_fases ?? 5,
+      matriz_tamanho: proj.matriz_tamanho ?? 4,
+    }
     if (proj.id) {
-      await supabase.from('projetos').update({ nome: proj.nome, ativo: proj.ativo }).eq('id', proj.id)
+      await supabase.from('projetos').update(payload).eq('id', proj.id)
     } else {
-      await supabase.from('projetos').insert({ cliente_id: cliente.id, nome: proj.nome, ativo: true })
+      await supabase.from('projetos').insert({ cliente_id: cliente.id, ...payload })
     }
     setEditandoProj(null); setNovoProj(false); await loadDados(); setSaving(false)
   }
@@ -373,18 +379,20 @@ function DetalheCliente({ cliente, onBack }) {
 
               <div className="cfg-table-wrap">
                 <table className="cfg-table">
-                  <thead><tr><th>Nome do Projeto</th><th>Status</th><th style={{width:80}}></th></tr></thead>
+                  <thead><tr><th>Nome do Projeto</th><th>Fases</th><th>Matriz</th><th>Status</th><th style={{width:80}}></th></tr></thead>
                   <tbody>
                     {projetos.map(p => (
                       editandoProj?.id === p.id ? (
                         <tr key={p.id}>
-                          <td colSpan={3}>
+                          <td colSpan={5}>
                             <ProjetoForm projeto={editandoProj} onSave={salvarProjeto} onCancel={()=>setEditandoProj(null)} saving={saving} inline />
                           </td>
                         </tr>
                       ) : (
                         <tr key={p.id}>
                           <td style={{fontWeight:500}}>{p.nome}</td>
+                          <td style={{textAlign:'center'}}>{p.num_fases ?? 5}</td>
+                          <td style={{textAlign:'center'}}>{(p.matriz_tamanho ?? 4)}×{(p.matriz_tamanho ?? 4)}</td>
                           <td>{p.ativo ? <span className="badge-ativo">Ativo</span> : <span className="badge-inativo">Inativo</span>}</td>
                           <td>
                             <div style={{display:'flex',gap:6}}>
@@ -395,7 +403,7 @@ function DetalheCliente({ cliente, onBack }) {
                         </tr>
                       )
                     ))}
-                    {!projetos.length && <tr><td colSpan={3} style={{textAlign:'center',color:'var(--txt3)',padding:24}}>Nenhum projeto cadastrado.</td></tr>}
+                    {!projetos.length && <tr><td colSpan={5} style={{textAlign:'center',color:'var(--txt3)',padding:24}}>Nenhum projeto cadastrado.</td></tr>}
                   </tbody>
                 </table>
               </div>
@@ -438,7 +446,12 @@ function AreaForm({ area, onSave, onCancel, saving, inline }) {
 // FORM PROJETO
 // ══════════════════════════════════════════════════════
 function ProjetoForm({ projeto, onSave, onCancel, saving, inline }) {
-  const [form, setForm] = useState({ nome: projeto.nome || '', ativo: projeto.ativo !== false })
+  const [form, setForm] = useState({
+    nome: projeto.nome || '',
+    ativo: projeto.ativo !== false,
+    num_fases: projeto.num_fases ?? 5,
+    matriz_tamanho: projeto.matriz_tamanho ?? 4,
+  })
   const u = (f,v) => setForm(p=>({...p,[f]:v}))
   return (
     <div className={inline ? 'area-form-inline' : 'cfg-area-block'} style={{marginBottom:12}}>
@@ -452,6 +465,23 @@ function ProjetoForm({ projeto, onSave, onCancel, saving, inline }) {
           <select className="input-light" value={form.ativo ? 'ativo' : 'inativo'} onChange={e=>u('ativo', e.target.value === 'ativo')}>
             <option value="ativo">Ativo</option>
             <option value="inativo">Inativo</option>
+          </select>
+        </div>
+      </div>
+      <div className="cfg-row2" style={{marginTop:10}}>
+        <div className="cfg-field">
+          <label>Fases da Trilha</label>
+          <select className="input-light" value={form.num_fases} onChange={e=>u('num_fases', parseInt(e.target.value))}>
+            {[1,2,3,4,5].map(n => (
+              <option key={n} value={n}>{n} {n===1?'fase':'fases'} — até F{n}</option>
+            ))}
+          </select>
+        </div>
+        <div className="cfg-field">
+          <label>Matriz de Calor</label>
+          <select className="input-light" value={form.matriz_tamanho} onChange={e=>u('matriz_tamanho', parseInt(e.target.value))}>
+            <option value={4}>4 × 4 (Padrão)</option>
+            <option value={5}>5 × 5</option>
           </select>
         </div>
       </div>
