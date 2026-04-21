@@ -573,7 +573,7 @@ const ModalRegistrarResultado = ({ row, onClose, onSaved, responsaveis }) => {
             )}
           </div>
 
-          {/* Plano de Ação (se Inefetivo/GAP) */}
+          {/* Plano de Ação — TOD (se Inefetivo/GAP) */}
           {showPA && (
             <div style={{
               background: '#F9F7F3',
@@ -589,7 +589,7 @@ const ModalRegistrarResultado = ({ row, onClose, onSaved, responsaveis }) => {
                 marginBottom: '1rem',
                 letterSpacing: '0.5px'
               }}>
-                3. Plano de Ação
+                3. Plano de Ação (TOD)
               </div>
               <label style={{
                 display: 'block',
@@ -735,7 +735,7 @@ const ModalRegistrarResultado = ({ row, onClose, onSaved, responsaveis }) => {
                     >
                       <option value="pendente">Pendente</option>
                       <option value="desenvolvimento">Em Desenvolvimento</option>
-                      <option value="concluido">Concluído</option>
+                      <option value="efetivo">Efetivo</option>
                     </select>
                   </div>
                 </div>

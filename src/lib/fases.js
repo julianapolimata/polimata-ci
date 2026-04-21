@@ -67,12 +67,12 @@ export function getFaseInfo(c) {
     }
   }
 
-  // F2-E1 → Plano de Ação e Teste de Desenho
+  // F2-E1 → Plano de Ação (TOD)
   if (c.st_pa && c.st_pa !== '') {
     return {
       codigo: 'F2E1', numero: 2,
-      nome: 'Plano de A\u00E7\u00E3o e Teste de Desenho',
-      label: 'F2-E1 \u2014 Plano de A\u00E7\u00E3o',
+      nome: 'Plano de A\u00E7\u00E3o (TOD)',
+      label: 'F2-E1 \u2014 Plano de A\u00E7\u00E3o (TOD)',
       resultado: c.st_pa || '\u2014',
       cor: 'var(--f2e1c, #34D399)',
     }

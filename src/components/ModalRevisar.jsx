@@ -327,10 +327,10 @@ const ModalRevisar = ({ row, onClose, onAction }) => {
             </div>
           </div>
 
-          {/* Plano de Ação */}
+          {/* Plano de Ação (TOD) */}
           {row?.dem_pa && (
             <div style={S.section}>
-              <div style={S.sectionTitle}>Plano de Ação</div>
+              <div style={S.sectionTitle}>Plano de Ação (TOD)</div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                 <div><div style={S.label}>Descrição</div><div style={{ ...S.value, whiteSpace: 'pre-wrap' }}>{row.dem_pa}</div></div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>

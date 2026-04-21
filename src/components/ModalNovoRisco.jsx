@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
 import ExcelJS from 'exceljs'
 
-const ModalNovoRisco = ({ onClose, onSaved, areas, projeto }) => {
+const ModalNovoRisco = ({ onClose, onSaved, areas, projeto, areaFixa }) => {
   // ═══ STATE ═══
   const [step, setStep] = useState(1)
   const [saving, setSaving] = useState(false)
@@ -13,7 +13,7 @@ const ModalNovoRisco = ({ onClose, onSaved, areas, projeto }) => {
   const [subprocessos, setSubprocessos] = useState([])
 
   // PASSO 1: Identificação
-  const [area, setArea] = useState('')
+  const [area, setArea] = useState(areaFixa?.id || '')
   const [subprocesso, setSubprocesso] = useState('')
   const [descRisco, setDescRisco] = useState('')
   const [gerencia, setGerencia] = useState('')
@@ -363,6 +363,20 @@ const ModalNovoRisco = ({ onClose, onSaved, areas, projeto }) => {
                 }}>
                   Área <span style={{ color: '#E24B4A' }}>*</span>
                 </label>
+                {areaFixa ? (
+                  <div style={{
+                    padding: '0.8rem',
+                    border: '1px solid #D0D0D0',
+                    borderRadius: '4px',
+                    fontFamily: 'Montserrat, sans-serif',
+                    fontSize: '14px',
+                    background: '#F5F5F5',
+                    color: '#1D3B5C',
+                    fontWeight: 600
+                  }}>
+                    {areaFixa.nome}
+                  </div>
+                ) : (
                 <select
                   value={area}
                   onChange={e => setArea(e.target.value)}
@@ -381,6 +395,7 @@ const ModalNovoRisco = ({ onClose, onSaved, areas, projeto }) => {
                     <option key={a.id} value={a.id}>{a.nome}</option>
                   ))}
                 </select>
+                )}
               </div>
 
               <div style={{ marginBottom: '2rem' }}>
@@ -992,7 +1007,7 @@ const ModalNovoRisco = ({ onClose, onSaved, areas, projeto }) => {
                 )}
               </div>
 
-              {/* Plano de Ação (se Inefetivo/GAP) */}
+              {/* Plano de Ação — TOD (se Inefetivo/GAP) */}
               {showPA && (
                 <div style={{
                   background: '#F9F7F3',
@@ -1008,7 +1023,7 @@ const ModalNovoRisco = ({ onClose, onSaved, areas, projeto }) => {
                     marginBottom: '1rem',
                     letterSpacing: '0.5px'
                   }}>
-                    6. Plano de Ação
+                    6. Plano de Ação (TOD)
                   </div>
                   <label style={{
                     display: 'block',
@@ -1154,7 +1169,7 @@ const ModalNovoRisco = ({ onClose, onSaved, areas, projeto }) => {
                         >
                           <option value="pendente">Pendente</option>
                           <option value="desenvolvimento">Em Desenvolvimento</option>
-                          <option value="concluido">Concluído</option>
+                          <option value="efetivo">Efetivo</option>
                         </select>
                       </div>
                     </div>

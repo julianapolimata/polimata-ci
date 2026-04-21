@@ -135,7 +135,7 @@ export function calcularPesosControles(controlesArea) {
  * 
  * Campos esperados no controle (mapeados da tabela mrc):
  *   r1          - resultado F1 (Efetivo/Inefetivo/GAP)
- *   st_pa       - status plano de ação F2-E1 (Concluído/etc)
+ *   st_pa       - status plano de ação F2-E1 (Efetivo/Concluído)
  *   r_ader      - resultado F2-E2 (Efetivo/Inefetivo/GAP)
  *   r3          - resultado F3 (Efetivo/Inefetivo/GAP)
  *   r_f4c1      - resultado F4-C1 (Efetivo/Inefetivo/GAP)
@@ -224,15 +224,15 @@ export function calcularContribuicaoControle(controle, pesoControle, options = {
     // ── F2-E1: Plano de Ação e Teste de Desenho ──
     const stPa = controle.st_pa
     const r2e1 = controle.r2e1 // resultado do teste de desenho, se existir
-    // F2-E1 é "concluído" quando o PA está concluído e/ou há resultado efetivo
-    const f2e1Concluido = (stPa && stPa.toLowerCase() === 'concluído') || isEfetivo(r2e1)
+    // F2-E1 é "efetivo" quando o TOD é efetivo (ou legado "concluído")
+    const f2e1Concluido = (stPa && (stPa.toLowerCase() === 'concluído' || isEfetivo(stPa))) || isEfetivo(r2e1)
 
     if (!f2e1Concluido) {
       resultado.detalheFases.F2E1 = { resultado: stPa || null, contribuicao: 0 }
       return resultado
     }
 
-    // F2-E1 efetivo (PA concluído)
+    // F2-E1 efetivo (TOD efetivo)
     resultado.detalheFases.F2E1 = { resultado: 'Efetivo', contribuicao: pesoControle * PESO_FASE.F2E1 }
     resultado.contribuicao += pesoControle * PESO_FASE.F2E1
     resultado.faseAtual = 'F2-E2'

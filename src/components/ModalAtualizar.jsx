@@ -298,7 +298,7 @@ const ModalAtualizar = ({ row, onClose, onSaved, areas, projeto }) => {
     applySection(ws, 4, '1. DADOS DO PROJETO')
     applyRow(ws, 5,  'CLIENTE',             projeto?.clientes?.nome || '—', false)
     applyRow(ws, 6,  'NATUREZA DO PROJETO', projeto?.nome || '—',           false)
-    applyRow(ws, 7,  'FASE EM CURSO',       'F2-E1 — Plano de Ação',        false, { valueBold: true, valueColor: COPPER })
+    applyRow(ws, 7,  'FASE EM CURSO',       'F2-E1 — Plano de Ação (TOD)',   false, { valueBold: true, valueColor: COPPER })
     applyRow(ws, 8,  'EXECUTOR',            perfil?.nome || '—',            false)
     applyRow(ws, 9,  'DATA E HORÁRIO',      dtStr,                          false)
     applyRow(ws, 10, 'DOWNLOAD POR',        perfil?.email || '—',           false)
