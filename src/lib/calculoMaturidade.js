@@ -224,8 +224,8 @@ export function calcularContribuicaoControle(controle, pesoControle, options = {
     // ── F2-E1: Plano de Ação e Teste de Desenho ──
     const stPa = controle.st_pa
     const r2e1 = controle.r2e1 // resultado do teste de desenho, se existir
-    // F2-E1 é "efetivo" quando o TOD é efetivo (ou legado "concluído")
-    const f2e1Concluido = (stPa && (stPa.toLowerCase() === 'concluído' || isEfetivo(stPa))) || isEfetivo(r2e1)
+    // F2-E1 progride quando o TOD é efetivo
+    const f2e1Concluido = isEfetivo(stPa) || isEfetivo(r2e1)
 
     if (!f2e1Concluido) {
       resultado.detalheFases.F2E1 = { resultado: stPa || null, contribuicao: 0 }
