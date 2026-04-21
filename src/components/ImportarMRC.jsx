@@ -202,7 +202,7 @@ export default function ImportarMRC({ projetoId, areas, onImported }) {
           projeto_id: projetoId,
           area_id: areaObj.id,
           ativo: true,
-          status_workflow: 'rascunho',
+          status_workflow: 'nao_iniciado',
           criado_por: perfil?.id || null,
           atualizado_por: perfil?.id || null,
         }

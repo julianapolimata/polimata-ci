@@ -19,6 +19,7 @@ import {
   PESO_FASE,
 } from '../lib/calculoMaturidade'
 import { exportarMRCExcel } from '../lib/exportMRC'
+import { getStatusConfig, canEditControl, canRegisterResult, isDevolvido, isAguardandoRevisao, STATUS } from '../lib/statusWorkflow'
 
 // ══════════════════════════════════════════════════════════════════════════════
 // CONSTANTES
@@ -552,11 +553,9 @@ function PorArea({ projeto, areasCalc, todosControles, loading, navigate, loadDa
     return grid
   }, [controles])
 
-  // Mapeia status para visão simplificada do cliente
-  function statusCliente(sw) {
-    if (!sw || sw === 'rascunho') return 'Não Iniciado'
-    if (sw === 'aprovado') return 'Concluído'
-    return 'Em Análise' // em_analise, teste_pendente, ficha_gerada, em_revisao, reprovado
+  // Retorna config de status (label, color, bg) baseado no perfil do usuário
+  function getStatusBadge(sw) {
+    return getStatusConfig(sw, perfil?.papel)
   }
 
   if (loading) return <Spinner light />
@@ -745,29 +744,23 @@ function PorArea({ projeto, areasCalc, todosControles, loading, navigate, loadDa
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 3, alignItems: 'center' }}>
                       <button onClick={() => setModalRow(c)} style={{ background: 'var(--lt-card)', border: '1px solid var(--lt-border)', borderRadius: 4, padding: '2px 10px', fontSize: 10, fontWeight: 600, color: 'var(--lt-text2)', cursor: 'pointer', fontFamily: 'inherit', width: '100%' }}>Ver</button>
                       {(() => {
-                        const sc = statusCliente(c.status_workflow)
-                        const scCfg = {
-                          'Não Iniciado': { color: 'var(--lt-text3)', bg: 'rgba(10,37,64,0.05)' },
-                          'Em Análise': { color: 'var(--copper)', bg: 'rgba(204,145,94,0.1)' },
-                          'Concluído': { color: '#16A34A', bg: 'rgba(34,197,94,0.1)' },
-                        }[sc]
-                        return <span style={{ fontSize: 8, fontWeight: 700, color: scCfg.color, background: scCfg.bg, padding: '2px 8px', borderRadius: 999, textTransform: 'uppercase', letterSpacing: 0.5 }}>{sc}</span>
+                        const cfg = getStatusBadge(c.status_workflow)
+                        return <span style={{ fontSize: 8, fontWeight: 700, color: cfg.color, background: cfg.bg, padding: '2px 8px', borderRadius: 999, textTransform: 'uppercase', letterSpacing: 0.5 }}>{cfg.label}</span>
                       })()}
                     </div>
                   ) : (
                     /* ── Visão admin/consultor: ações + status detalhado ── */
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 3, alignItems: 'center' }}>
                       <button onClick={() => setModalRow(c)} style={{ background: 'var(--lt-card)', border: '1px solid var(--lt-border)', borderRadius: 4, padding: '2px 10px', fontSize: 10, fontWeight: 600, color: 'var(--lt-text2)', cursor: 'pointer', fontFamily: 'inherit', width: '100%' }}>Ver</button>
-                      {canEdit && !['em_revisao','aprovado'].includes(c.status_workflow) && <button onClick={() => setAtualizarRow(c)} style={{ background: 'rgba(204,145,94,0.08)', border: '1px solid rgba(204,145,94,0.2)', borderRadius: 4, padding: '2px 10px', fontSize: 10, fontWeight: 600, color: 'var(--copper)', cursor: 'pointer', fontFamily: 'inherit', width: '100%' }}>Atualizar</button>}
-                      {canEdit && (c.status_workflow === 'ficha_gerada' || c.status_workflow === 'reprovado') && <button onClick={() => setRowRegistrarResultado(c)} style={{ background: 'rgba(204,145,94,0.08)', border: '1px solid rgba(204,145,94,0.2)', borderRadius: 4, padding: '2px 10px', fontSize: 9, fontWeight: 600, color: 'var(--copper)', cursor: 'pointer', fontFamily: 'inherit', width: '100%' }}>{c.status_workflow === 'reprovado' ? '↩ Editar' : 'Resultado'}</button>}
-                      {isAdmin && c.status_workflow === 'em_revisao' && <button onClick={() => setRowRevisar(c)} style={{ background: 'rgba(59,130,246,0.08)', border: '1px solid rgba(59,130,246,0.2)', borderRadius: 4, padding: '2px 10px', fontSize: 9, fontWeight: 700, color: '#2563EB', cursor: 'pointer', fontFamily: 'inherit', width: '100%' }}>🔍 Revisar</button>}
-                      {/* Badges de status */}
-                      {c.status_workflow === 'em_analise' && <span style={{ fontSize: 8, fontWeight: 700, color: 'var(--copper)', background: 'rgba(204,145,94,0.1)', padding: '1px 6px', borderRadius: 999, textTransform: 'uppercase', letterSpacing: 0.5 }}>Em Análise</span>}
-                      {c.status_workflow === 'teste_pendente' && <span style={{ fontSize: 8, fontWeight: 700, color: '#CA8A04', background: 'rgba(234,179,8,0.1)', padding: '1px 6px', borderRadius: 999, textTransform: 'uppercase', letterSpacing: 0.5 }}>Teste Pendente</span>}
-                      {c.status_workflow === 'ficha_gerada' && <span style={{ fontSize: 8, fontWeight: 700, color: 'var(--lt-text2)', background: 'rgba(10,37,64,0.06)', padding: '1px 6px', borderRadius: 999, textTransform: 'uppercase', letterSpacing: 0.5 }}>Ficha Gerada</span>}
-                      {c.status_workflow === 'em_revisao' && <span style={{ fontSize: 8, fontWeight: 700, color: '#2563EB', background: 'rgba(59,130,246,0.08)', padding: '1px 6px', borderRadius: 999, textTransform: 'uppercase', letterSpacing: 0.5 }}>Em Revisão</span>}
-                      {c.status_workflow === 'aprovado' && <span style={{ fontSize: 8, fontWeight: 700, color: '#16A34A', background: 'rgba(34,197,94,0.1)', padding: '1px 6px', borderRadius: 999, textTransform: 'uppercase', letterSpacing: 0.5 }}>Aprovado</span>}
-                      {c.status_workflow === 'reprovado' && <span style={{ fontSize: 8, fontWeight: 700, color: '#DC2626', background: 'rgba(239,68,68,0.1)', padding: '1px 6px', borderRadius: 999, textTransform: 'uppercase', letterSpacing: 0.5 }}>Reprovado</span>}
+                      {canEdit && canEditControl(c.status_workflow) && <button onClick={() => setAtualizarRow(c)} style={{ background: 'rgba(204,145,94,0.08)', border: '1px solid rgba(204,145,94,0.2)', borderRadius: 4, padding: '2px 10px', fontSize: 10, fontWeight: 600, color: 'var(--copper)', cursor: 'pointer', fontFamily: 'inherit', width: '100%' }}>Atualizar</button>}
+                      {canEdit && canRegisterResult(c.status_workflow) && <button onClick={() => setRowRegistrarResultado(c)} style={{ background: 'rgba(204,145,94,0.08)', border: '1px solid rgba(204,145,94,0.2)', borderRadius: 4, padding: '2px 10px', fontSize: 9, fontWeight: 600, color: 'var(--copper)', cursor: 'pointer', fontFamily: 'inherit', width: '100%' }}>Resultado</button>}
+                      {canEdit && isDevolvido(c.status_workflow) && <button onClick={() => setRowRegistrarResultado(c)} style={{ background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 4, padding: '2px 10px', fontSize: 9, fontWeight: 600, color: '#DC2626', cursor: 'pointer', fontFamily: 'inherit', width: '100%' }}>↩ Editar</button>}
+                      {isAdmin && isAguardandoRevisao(c.status_workflow) && <button onClick={() => setRowRevisar(c)} style={{ background: 'rgba(59,130,246,0.08)', border: '1px solid rgba(59,130,246,0.2)', borderRadius: 4, padding: '2px 10px', fontSize: 9, fontWeight: 700, color: '#2563EB', cursor: 'pointer', fontFamily: 'inherit', width: '100%' }}>🔍 Revisar</button>}
+                      {/* Badge de status */}
+                      {(() => {
+                        const cfg = getStatusBadge(c.status_workflow)
+                        return <span style={{ fontSize: 8, fontWeight: 700, color: cfg.color, background: cfg.bg, padding: '1px 6px', borderRadius: 999, textTransform: 'uppercase', letterSpacing: 0.5 }}>{cfg.label}</span>
+                      })()}
                     </div>
                   )}
                 </td>

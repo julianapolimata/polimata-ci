@@ -110,8 +110,8 @@ const ModalRegistrarResultado = ({ row, onClose, onSaved, responsaveis }) => {
     setSaving(true)
     try {
       const payload = buildUpdatePayload()
-      // Se estava reprovado, manter reprovado; senão manter status atual ou em_analise
-      if (!row.status_workflow || row.status_workflow === 'ficha_gerada') {
+      // Se não tinha status ou era nao_iniciado, mover para em_analise
+      if (!row.status_workflow || row.status_workflow === 'nao_iniciado') {
         payload.status_workflow = 'em_analise'
       }
       // Se reprovado, manter reprovado (consultor só salva, não resubmete ainda)
@@ -156,7 +156,7 @@ const ModalRegistrarResultado = ({ row, onClose, onSaved, responsaveis }) => {
           autor_id: user?.id,
           tipo: 'submissao',
           nota: null,
-          status_antes: row.status_workflow || 'ficha_gerada',
+          status_antes: row.status_workflow || 'em_analise',
           status_depois: 'em_revisao',
           fase: faseAtual,
         })

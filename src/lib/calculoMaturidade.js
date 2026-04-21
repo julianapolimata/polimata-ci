@@ -114,7 +114,7 @@ export function calcularPesosControles(controlesArea) {
  *   r_f4c2      - resultado F4-C2 (Efetivo/Inefetivo/GAP)
  *   r_f5        - resultado F5 (Efetivo/Inefetivo/GAP)
  *   status_risco - Existente/Descontinuado
- *   status_workflow - rascunho/em_revisao/aprovado/reprovado (opcional)
+ *   status_workflow - nao_iniciado/em_analise/teste_pendente/em_revisao/aprovado/reprovado (opcional)
  * 
  * @param {Object} controle - dados do controle
  * @param {number} pesoControle - peso proporcional (0 a 1)
@@ -128,7 +128,7 @@ export function calcularContribuicaoControle(controle, pesoControle, options = {
   if (requireAprovado && controle.status_workflow && controle.status_workflow !== 'aprovado') {
     return {
       contribuicao: 0,
-      faseAtual: 'rascunho',
+      faseAtual: 'nao_iniciado',
       detalheFases: {},
       regrediu: false,
       atalhoF1: false,

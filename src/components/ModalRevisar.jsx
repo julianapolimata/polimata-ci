@@ -65,8 +65,7 @@ const ModalRevisar = ({ row, onClose, onAction }) => {
       })
 
       // 3. Status fica 'aprovado' — o cálculo de maturidade conta a contribuição.
-      // O reset para 'rascunho' acontece naturalmente quando o consultor
-      // submeter a análise da próxima fase (saveAndSubmit no ModalRegistrarResultado).
+      // O reset para 'nao_iniciado' acontecerá ao avançar de fase.
 
       // 4. Notificar consultor que submeteu
       if (row.submetido_por) {

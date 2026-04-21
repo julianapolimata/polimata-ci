@@ -1,0 +1,2257 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Polímata CI — Mockup Redesign Sistema</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&family=Raleway:wght@100;200;300;400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════
+   RESET & BASE
+═══════════════════════════════════════ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 14px;
+  line-height: 1.6;
+  background: #0A1628;
+  color: #F3EEE4;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ═══════════════════════════════════════
+   DESIGN TOKENS (site-aligned)
+═══════════════════════════════════════ */
+:root {
+  /* Core palette — matching site */
+  --navy: #0A2540;
+  --navy-deep: #071A2E;
+  --navy-soft: #15365A;
+  --copper: #C8895C;
+  --copper-soft: #D89E74;
+  --copper-deep: #A66F44;
+  --cream: #F7F3EE;
+  --sand: #EFE7DC;
+
+  /* System dark theme (refinado) */
+  --bg-base: #060E1A;
+  --bg-card: #0C1829;
+  --bg-elevated: #111F35;
+  --bg-input: #0F1A2D;
+  --bg-hover: rgba(200,137,92,0.06);
+
+  --text-primary: #F3EEE4;
+  --text-secondary: rgba(243,238,228,0.65);
+  --text-muted: rgba(243,238,228,0.35);
+
+  --border: rgba(200,137,92,0.10);
+  --border-hover: rgba(200,137,92,0.22);
+  --border-focus: var(--copper);
+
+  /* Methodology colors (MANTIDAS) */
+  --efetivo: #22D4A0;
+  --inefetivo: #F05656;
+  --gap: #F5B942;
+  --crit-4: #EF4444;   /* Crítico */
+  --crit-3: #F97316;   /* Significativo */
+  --crit-2: #D4A030;   /* Moderado */
+  --crit-1: #22D4A0;   /* Baixo */
+  --imp-4: #EF4444;
+  --imp-3: #F97316;
+  --imp-2: #EAB308;
+  --imp-1: #22C55E;
+
+  /* Fases */
+  --f1: #5B8FF9;
+  --f2e1: #7C6CF0;
+  --f2e2: #A78BFA;
+  --f3: #22D4A0;
+
+  /* Radius — site-aligned */
+  --radius-sm: 6px;
+  --radius: 12px;
+  --radius-lg: 16px;
+  --radius-pill: 999px;
+
+  /* Shadows — site-aligned (softer) */
+  --shadow-sm: 0 2px 8px rgba(0,0,0,0.12);
+  --shadow: 0 8px 32px rgba(0,0,0,0.18);
+  --shadow-lg: 0 20px 60px rgba(0,0,0,0.28);
+
+  --sidebar-w: 260px;
+}
+
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-thumb { background: rgba(200,137,92,0.18); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(200,137,92,0.35); }
+
+/* ═══════════════════════════════════════
+   TYPOGRAPHY — site-aligned
+═══════════════════════════════════════ */
+h1, h2, h3, h4, h5 {
+  font-family: 'Raleway', sans-serif;
+  font-weight: 300;
+  letter-spacing: -0.015em;
+  line-height: 1.2;
+  color: var(--text-primary);
+}
+
+.eyebrow {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--copper);
+  display: inline-block;
+}
+
+/* ═══════════════════════════════════════
+   BUTTONS — site-aligned (pill)
+═══════════════════════════════════════ */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: none;
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 500;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  letter-spacing: 0.01em;
+}
+.btn-pill {
+  padding: 10px 24px;
+  border-radius: var(--radius-pill);
+}
+.btn-sm {
+  padding: 7px 16px;
+  font-size: 0.78rem;
+  border-radius: var(--radius-pill);
+}
+.btn-primary {
+  background: var(--copper);
+  color: #fff;
+}
+.btn-primary:hover {
+  background: var(--copper-deep);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(200,137,92,0.3);
+}
+.btn-secondary {
+  background: transparent;
+  color: var(--text-primary);
+  border: 1.5px solid var(--border-hover);
+}
+.btn-secondary:hover {
+  border-color: var(--copper);
+  color: var(--copper);
+}
+.btn-ghost {
+  background: transparent;
+  color: var(--text-secondary);
+  padding: 7px 14px;
+  border-radius: var(--radius-sm);
+}
+.btn-ghost:hover {
+  background: var(--bg-hover);
+  color: var(--copper);
+}
+
+/* ═══════════════════════════════════════
+   TAB NAVIGATION (mockup sections)
+═══════════════════════════════════════ */
+.mockup-tabs {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 9999;
+  background: var(--navy-deep);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+  gap: 2px;
+}
+.mockup-tabs .label {
+  font-family: 'Raleway', sans-serif;
+  font-weight: 300;
+  font-size: 14px;
+  color: var(--copper);
+  padding: 12px 16px;
+  letter-spacing: 0.5px;
+}
+.mockup-tab {
+  padding: 12px 18px;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-muted);
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.mockup-tab:hover { color: var(--text-secondary); }
+.mockup-tab.active {
+  color: var(--copper);
+  border-bottom-color: var(--copper);
+}
+
+.mockup-content {
+  margin-top: 46px;
+}
+.section { display: none; }
+.section.active { display: block; }
+
+/* ═══════════════════════════════════════
+   1. SIDEBAR REDESIGN
+═══════════════════════════════════════ */
+.app-layout {
+  display: flex;
+  height: calc(100vh - 46px);
+  overflow: hidden;
+}
+
+.sidebar {
+  width: var(--sidebar-w);
+  min-width: var(--sidebar-w);
+  background: var(--navy-deep);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.sb-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 22px 20px 18px;
+  border-bottom: 1px solid var(--border);
+}
+.sb-logo {
+  width: 38px;
+  height: 38px;
+  background: rgba(200,137,92,0.08);
+  border: 1px solid rgba(200,137,92,0.15);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  color: var(--copper);
+}
+.sb-brand-text h3 {
+  font-family: 'Raleway', sans-serif;
+  font-size: 16px;
+  font-weight: 300;
+  color: var(--cream);
+  letter-spacing: 0.5px;
+}
+.sb-brand-text span {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 9px;
+  font-weight: 600;
+  color: var(--copper);
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+}
+
+.sb-project {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+}
+.sb-project-label {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-muted);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+.sb-project-select {
+  width: 100%;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-family: 'Montserrat', sans-serif;
+  font-size: 12px;
+  padding: 8px 10px;
+  outline: none;
+  cursor: pointer;
+}
+.sb-project-select:focus { border-color: var(--copper); }
+
+.sb-nav {
+  flex: 1;
+  overflow-y: auto;
+  padding: 10px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.sb-section-label {
+  font-size: 9px;
+  font-weight: 600;
+  color: var(--text-muted);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  padding: 16px 18px 6px;
+}
+
+.sb-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 10px 18px;
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  font-family: 'Montserrat', sans-serif;
+  font-size: 13px;
+  font-weight: 400;
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+  transition: all 0.15s;
+  border-left: 3px solid transparent;
+}
+.sb-nav-item:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+.sb-nav-item.active {
+  background: rgba(200,137,92,0.08);
+  color: var(--copper);
+  border-left-color: var(--copper);
+}
+.sb-nav-icon {
+  font-size: 16px;
+  width: 20px;
+  text-align: center;
+}
+.sb-nav-badge {
+  margin-left: auto;
+  background: rgba(200,137,92,0.12);
+  color: var(--copper);
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: var(--radius-pill);
+}
+
+.sb-footer {
+  padding: 14px 16px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.sb-avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--copper-deep), var(--copper));
+  color: var(--navy-deep);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+.sb-user-info {
+  flex: 1;
+  min-width: 0;
+}
+.sb-user-name {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.sb-user-role {
+  font-size: 10px;
+  color: var(--copper);
+  font-weight: 500;
+}
+.sb-logout {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  border-radius: var(--radius-sm);
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 14px;
+  flex-shrink: 0;
+  transition: all 0.15s;
+}
+.sb-logout:hover { border-color: var(--inefetivo); color: var(--inefetivo); }
+
+/* ═══════════════════════════════════════
+   MAIN AREA
+═══════════════════════════════════════ */
+.main {
+  flex: 1;
+  overflow-y: auto;
+  background: var(--bg-base);
+}
+.page-wrap {
+  padding: 32px 36px;
+  max-width: 1400px;
+}
+
+/* Page header */
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 28px;
+}
+.page-header-left {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.page-header h2 {
+  font-family: 'Raleway', sans-serif;
+  font-size: 24px;
+  font-weight: 300;
+  color: var(--text-primary);
+}
+.page-header .subtitle {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+/* Top bar with notification */
+.top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 12px 36px;
+  border-bottom: 1px solid var(--border);
+  gap: 12px;
+}
+.notif-btn {
+  position: relative;
+  width: 38px;
+  height: 38px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 16px;
+  transition: all 0.15s;
+}
+.notif-btn:hover {
+  background: var(--bg-hover);
+  border-color: var(--border-hover);
+}
+.notif-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  background: var(--crit-4);
+  color: #fff;
+  font-size: 9px;
+  font-weight: 700;
+  padding: 1px 5px;
+  border-radius: 8px;
+  min-width: 16px;
+  text-align: center;
+  line-height: 14px;
+}
+
+/* ═══════════════════════════════════════
+   KPI CARDS
+═══════════════════════════════════════ */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 28px;
+}
+.kpi-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px 22px;
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  transition: border-color 0.15s;
+}
+.kpi-card:hover { border-color: var(--border-hover); }
+.kpi-icon {
+  font-size: 24px;
+  margin-top: 2px;
+}
+.kpi-body { flex: 1; }
+.kpi-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+.kpi-value {
+  font-family: 'Raleway', sans-serif;
+  font-size: 28px;
+  font-weight: 300;
+  line-height: 1;
+  margin-bottom: 4px;
+}
+.kpi-sub {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+/* ═══════════════════════════════════════
+   SECTION CARDS
+═══════════════════════════════════════ */
+.section-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  margin-bottom: 14px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+}
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 22px 24px;
+  transition: border-color 0.15s;
+}
+.card:hover { border-color: var(--border-hover); }
+.card-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  margin-bottom: 16px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+}
+
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-bottom: 28px; }
+
+/* ═══════════════════════════════════════
+   PHASE BARS
+═══════════════════════════════════════ */
+.phase-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 28px;
+}
+.phase-bar {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px 20px;
+}
+.phase-bar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+.phase-badge {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: var(--radius-sm);
+  letter-spacing: 0.3px;
+}
+.phase-name {
+  font-size: 13px;
+  color: var(--text-primary);
+  font-weight: 400;
+}
+.phase-weight {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+.phase-pct {
+  font-family: 'Raleway', sans-serif;
+  font-size: 16px;
+  font-weight: 400;
+  min-width: 50px;
+  text-align: right;
+}
+.phase-track {
+  height: 6px;
+  background: var(--bg-elevated);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.phase-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.6s ease;
+}
+
+/* ═══════════════════════════════════════
+   AREA CARDS (dashboard home)
+═══════════════════════════════════════ */
+.area-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 16px;
+  margin-bottom: 28px;
+}
+.area-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 22px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.area-card:hover {
+  border-color: var(--border-hover);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow);
+}
+.area-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+.area-card-name {
+  font-family: 'Raleway', sans-serif;
+  font-size: 16px;
+  font-weight: 400;
+  color: var(--text-primary);
+}
+.area-card-controls {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+.area-card-bar {
+  height: 6px;
+  background: var(--bg-elevated);
+  border-radius: 3px;
+  overflow: hidden;
+  margin-bottom: 12px;
+}
+.area-card-bar-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.5s;
+}
+.area-card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.area-card-pct {
+  font-family: 'Raleway', sans-serif;
+  font-size: 22px;
+  font-weight: 300;
+}
+.area-card-nivel {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: var(--radius-pill);
+  letter-spacing: 0.3px;
+}
+
+/* ═══════════════════════════════════════
+   TABLE (MRC)
+═══════════════════════════════════════ */
+.table-wrap {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.table-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 22px;
+  border-bottom: 1px solid var(--border);
+}
+.table-header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.table-filter {
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  color: var(--text-primary);
+  font-family: 'Montserrat', sans-serif;
+  font-size: 12px;
+  padding: 7px 14px;
+  outline: none;
+  min-width: 200px;
+}
+.table-filter:focus { border-color: var(--copper); }
+.table-filter::placeholder { color: var(--text-muted); }
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+th {
+  text-align: left;
+  padding: 12px 16px;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-muted);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  background: rgba(200,137,92,0.03);
+  border-bottom: 1px solid var(--border);
+}
+td {
+  padding: 14px 16px;
+  font-size: 12.5px;
+  color: var(--text-secondary);
+  border-bottom: 1px solid rgba(255,255,255,0.02);
+}
+tr:hover td { background: var(--bg-hover); }
+
+/* Badges */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  border-radius: var(--radius-pill);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+}
+.badge-efetivo { background: rgba(34,212,160,0.12); color: var(--efetivo); }
+.badge-inefetivo { background: rgba(240,86,86,0.12); color: var(--inefetivo); }
+.badge-gap { background: rgba(245,185,66,0.12); color: var(--gap); }
+.badge-pendente { background: rgba(243,238,228,0.06); color: var(--text-muted); }
+.badge-crit-4 { background: rgba(239,68,68,0.12); color: var(--crit-4); }
+.badge-crit-3 { background: rgba(249,115,22,0.12); color: var(--crit-3); }
+.badge-crit-2 { background: rgba(212,160,48,0.12); color: var(--crit-2); }
+.badge-crit-1 { background: rgba(34,212,160,0.12); color: var(--crit-1); }
+
+/* Workflow badges */
+.badge-rascunho { background: rgba(243,238,228,0.06); color: var(--text-muted); }
+.badge-em-revisao { background: rgba(91,143,249,0.12); color: #5B8FF9; }
+.badge-aprovado { background: rgba(34,212,160,0.12); color: var(--efetivo); }
+.badge-reprovado { background: rgba(240,86,86,0.12); color: var(--inefetivo); }
+
+/* Action buttons */
+.action-btn {
+  padding: 5px 12px;
+  border-radius: var(--radius-pill);
+  font-size: 11px;
+  font-weight: 500;
+  font-family: 'Montserrat', sans-serif;
+  border: none;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.action-btn-primary {
+  background: rgba(200,137,92,0.12);
+  color: var(--copper);
+}
+.action-btn-primary:hover {
+  background: rgba(200,137,92,0.2);
+}
+.action-btn-review {
+  background: rgba(91,143,249,0.12);
+  color: #5B8FF9;
+}
+.action-btn-review:hover {
+  background: rgba(91,143,249,0.2);
+}
+
+/* ═══════════════════════════════════════
+   HEATMAP
+═══════════════════════════════════════ */
+.heatmap-container {
+  display: flex;
+  gap: 6px;
+  align-items: flex-start;
+}
+.heatmap-ylabel {
+  font-size: 10px;
+  color: var(--text-muted);
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  letter-spacing: 0.5px;
+  margin-top: 10px;
+  font-weight: 500;
+}
+.heatmap-main { flex: 1; }
+.heatmap-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 4px;
+  margin-bottom: 6px;
+}
+.heatmap-cell {
+  aspect-ratio: 1;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 600;
+  min-height: 42px;
+  cursor: default;
+  transition: transform 0.15s;
+}
+.heatmap-cell:hover { transform: scale(1.05); }
+.heatmap-xlabels {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 4px;
+}
+.heatmap-xlabel {
+  text-align: center;
+  font-size: 9px;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+.heatmap-ylabels {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  justify-content: center;
+}
+.heatmap-ylbl {
+  font-size: 9px;
+  color: var(--text-muted);
+  text-align: right;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  min-height: 42px;
+  font-weight: 500;
+}
+
+/* ═══════════════════════════════════════
+   MODAL
+═══════════════════════════════════════ */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(6,14,26,0.85);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+.modal {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  width: 95%;
+  max-width: 680px;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+}
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--border);
+}
+.modal-header h3 {
+  font-family: 'Raleway', sans-serif;
+  font-size: 18px;
+  font-weight: 300;
+  color: var(--text-primary);
+}
+.modal-close {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 18px;
+  cursor: pointer;
+  padding: 4px;
+  transition: color 0.15s;
+}
+.modal-close:hover { color: var(--text-primary); }
+.modal-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px;
+}
+.modal-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 16px 24px;
+  border-top: 1px solid var(--border);
+}
+
+/* Modal form fields */
+.form-group {
+  margin-bottom: 18px;
+}
+.form-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+.form-input, .form-select, .form-textarea {
+  width: 100%;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-family: 'Montserrat', sans-serif;
+  font-size: 13px;
+  padding: 10px 14px;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.form-input:focus, .form-select:focus, .form-textarea:focus { border-color: var(--copper); }
+.form-textarea { resize: vertical; min-height: 80px; line-height: 1.5; }
+
+/* Rejection banner */
+.rejection-banner {
+  background: rgba(240,86,86,0.06);
+  border: 1px solid rgba(240,86,86,0.15);
+  border-radius: var(--radius);
+  padding: 14px 18px;
+  margin-bottom: 20px;
+}
+.rejection-banner-title {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--inefetivo);
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+.rejection-banner-text {
+  font-size: 12px;
+  color: rgba(240,86,86,0.8);
+  line-height: 1.5;
+}
+
+/* Phase indicator bar */
+.phase-indicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  background: rgba(91,143,249,0.06);
+  border-radius: var(--radius-sm);
+  margin-bottom: 20px;
+}
+.phase-indicator-label {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-muted);
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+}
+.phase-indicator-value {
+  font-size: 12px;
+  font-weight: 500;
+  color: #5B8FF9;
+}
+
+/* ═══════════════════════════════════════
+   LOGIN PAGE
+═══════════════════════════════════════ */
+.login-page {
+  min-height: calc(100vh - 46px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, var(--navy-deep) 0%, var(--navy) 50%, var(--navy-soft) 100%);
+  position: relative;
+  overflow: hidden;
+}
+.login-page::before {
+  content: '';
+  position: absolute;
+  top: -20%;
+  right: -10%;
+  width: 60%;
+  height: 140%;
+  background: radial-gradient(ellipse at center, rgba(200,137,92,0.12) 0%, transparent 60%);
+  pointer-events: none;
+}
+.login-decor {
+  position: absolute;
+  bottom: -100px;
+  left: -80px;
+  width: 400px;
+  height: 400px;
+  border-radius: 50%;
+  border: 1px solid rgba(200,137,92,0.12);
+  pointer-events: none;
+}
+.login-decor::before {
+  content: '';
+  position: absolute;
+  inset: 50px;
+  border-radius: 50%;
+  border: 1px solid rgba(200,137,92,0.08);
+}
+
+.login-card {
+  position: relative;
+  background: rgba(12,24,41,0.9);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(200,137,92,0.12);
+  border-radius: var(--radius-lg);
+  padding: 44px 48px;
+  width: 100%;
+  max-width: 440px;
+  box-shadow: var(--shadow-lg);
+}
+.login-logo-area {
+  text-align: center;
+  margin-bottom: 32px;
+}
+.login-logo-icon {
+  width: 56px;
+  height: 56px;
+  margin: 0 auto 12px;
+  background: rgba(200,137,92,0.08);
+  border: 1px solid rgba(200,137,92,0.15);
+  border-radius: var(--radius);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+}
+.login-brand-name {
+  font-family: 'Raleway', sans-serif;
+  font-size: 22px;
+  font-weight: 300;
+  color: var(--cream);
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
+}
+.login-brand-sub {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--copper);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+.login-divider {
+  height: 1px;
+  background: var(--border);
+  margin-bottom: 28px;
+}
+.login-title {
+  font-family: 'Raleway', sans-serif;
+  font-size: 20px;
+  font-weight: 300;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+}
+.login-subtitle {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 28px;
+}
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.login-form .form-label { margin-bottom: 6px; }
+.login-submit {
+  width: 100%;
+  padding: 12px;
+  border-radius: var(--radius-pill);
+  background: linear-gradient(135deg, var(--copper-deep), var(--copper));
+  color: #fff;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  margin-top: 4px;
+  transition: all 0.2s;
+  letter-spacing: 0.02em;
+}
+.login-submit:hover {
+  filter: brightness(1.08);
+  transform: translateY(-1px);
+  box-shadow: 0 8px 24px rgba(200,137,92,0.3);
+}
+.login-forgot {
+  display: block;
+  text-align: center;
+  font-size: 12px;
+  color: var(--copper);
+  margin-top: 8px;
+  cursor: pointer;
+  transition: color 0.15s;
+}
+.login-forgot:hover { color: var(--copper-soft); }
+.login-footer-text {
+  text-align: center;
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 28px;
+  letter-spacing: 0.3px;
+}
+
+/* ═══════════════════════════════════════
+   CONFIGURAÇÕES
+═══════════════════════════════════════ */
+.config-tabs {
+  display: flex;
+  gap: 2px;
+  margin-bottom: 24px;
+  border-bottom: 1px solid var(--border);
+}
+.config-tab {
+  padding: 10px 20px;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-muted);
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.config-tab:hover { color: var(--text-secondary); }
+.config-tab.active {
+  color: var(--copper);
+  border-bottom-color: var(--copper);
+}
+
+.config-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.config-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 22px;
+  border-bottom: 1px solid var(--border);
+}
+.config-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.config-table th {
+  padding: 12px 16px;
+  text-align: left;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-muted);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  background: rgba(200,137,92,0.03);
+}
+.config-table td {
+  padding: 14px 16px;
+  font-size: 12px;
+  border-bottom: 1px solid rgba(255,255,255,0.02);
+}
+
+/* ═══════════════════════════════════════
+   NOTIFICATION PANEL
+═══════════════════════════════════════ */
+.notif-panel {
+  position: absolute;
+  top: 50px;
+  right: 0;
+  width: 400px;
+  max-height: 500px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-lg);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.notif-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border);
+}
+.notif-panel-header span {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+.notif-item {
+  padding: 14px 18px;
+  border-bottom: 1px solid rgba(255,255,255,0.02);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.notif-item:hover { background: var(--bg-hover); }
+.notif-item.unread {
+  background: rgba(200,137,92,0.04);
+  border-left: 3px solid var(--copper);
+}
+.notif-type {
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  margin-bottom: 4px;
+}
+.notif-text {
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+.notif-time {
+  font-size: 10px;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+.notif-panel-footer {
+  padding: 10px 18px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: center;
+}
+
+/* ═══════════════════════════════════════
+   RANKING
+═══════════════════════════════════════ */
+.ranking-row {
+  display: grid;
+  grid-template-columns: 28px 1fr 110px 48px;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 0;
+}
+.ranking-pos {
+  font-size: 12px;
+  font-weight: 700;
+  text-align: center;
+  color: var(--text-muted);
+}
+.ranking-name {
+  font-size: 12px;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ranking-bar {
+  height: 5px;
+  background: var(--bg-elevated);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.ranking-bar-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.5s;
+}
+.ranking-pct {
+  font-size: 12px;
+  font-weight: 600;
+  text-align: right;
+}
+
+/* ═══════════════════════════════════════
+   COMPARISON NOTES
+═══════════════════════════════════════ */
+.comparison {
+  margin-top: 40px;
+  padding: 32px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+.comparison h3 {
+  font-family: 'Raleway', sans-serif;
+  font-size: 18px;
+  font-weight: 300;
+  margin-bottom: 20px;
+  color: var(--copper);
+}
+.comparison-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+.comparison-col h4 {
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 12px;
+  color: var(--text-primary);
+  font-family: 'Montserrat', sans-serif;
+}
+.comparison-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 8px 0;
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+.comparison-item .icon {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+/* ═══════════════════════════════════════
+   UTILIDADES
+═══════════════════════════════════════ */
+.flex { display: flex; }
+.flex-center { align-items: center; }
+.flex-between { justify-content: space-between; }
+.gap-8 { gap: 8px; }
+.gap-12 { gap: 12px; }
+.gap-16 { gap: 16px; }
+.mb-4 { margin-bottom: 4px; }
+.mb-8 { margin-bottom: 8px; }
+.mb-16 { margin-bottom: 16px; }
+.mb-24 { margin-bottom: 24px; }
+.mb-28 { margin-bottom: 28px; }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════
+     MOCKUP TABS NAVIGATION
+═══════════════════════════════════════ -->
+<div class="mockup-tabs">
+  <span class="label">Redesign CI Polímata</span>
+  <button class="mockup-tab active" onclick="showTab('sidebar-dash')">Sidebar + Dashboard</button>
+  <button class="mockup-tab" onclick="showTab('area-view')">Visão por Área</button>
+  <button class="mockup-tab" onclick="showTab('modal-resultado')">Modal Resultado</button>
+  <button class="mockup-tab" onclick="showTab('modal-revisar')">Modal Revisar</button>
+  <button class="mockup-tab" onclick="showTab('login')">Login</button>
+  <button class="mockup-tab" onclick="showTab('config')">Configurações</button>
+  <button class="mockup-tab" onclick="showTab('notas')">Notas de Design</button>
+</div>
+
+<div class="mockup-content">
+
+<!-- ═══════════════════════════════════════
+     TAB 1: SIDEBAR + DASHBOARD HOME
+═══════════════════════════════════════ -->
+<div id="sidebar-dash" class="section active">
+<div class="app-layout">
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="sb-brand">
+      <div class="sb-logo">P</div>
+      <div class="sb-brand-text">
+        <h3>Polímata</h3>
+        <span>Controles Internos</span>
+      </div>
+    </div>
+
+    <div class="sb-project">
+      <div class="sb-project-label">Projeto</div>
+      <select class="sb-project-select">
+        <option>Grupo ExemploCorp S/A</option>
+      </select>
+    </div>
+
+    <div class="sb-nav">
+      <div class="sb-section-label">Principal</div>
+      <button class="sb-nav-item active">
+        <span class="sb-nav-icon">📊</span>
+        Dashboard
+      </button>
+
+      <div class="sb-section-label">Áreas</div>
+      <button class="sb-nav-item">
+        <span class="sb-nav-icon">🏢</span>
+        Governança Corporativa
+        <span class="sb-nav-badge">12</span>
+      </button>
+      <button class="sb-nav-item">
+        <span class="sb-nav-icon">⚖️</span>
+        Compliance
+        <span class="sb-nav-badge">8</span>
+      </button>
+      <button class="sb-nav-item">
+        <span class="sb-nav-icon">💰</span>
+        Financeiro
+        <span class="sb-nav-badge">15</span>
+      </button>
+      <button class="sb-nav-item">
+        <span class="sb-nav-icon">👥</span>
+        Recursos Humanos
+        <span class="sb-nav-badge">6</span>
+      </button>
+      <button class="sb-nav-item">
+        <span class="sb-nav-icon">🖥️</span>
+        Tecnologia da Informação
+        <span class="sb-nav-badge">10</span>
+      </button>
+
+      <div class="sb-section-label">Visão Geral</div>
+      <button class="sb-nav-item">
+        <span class="sb-nav-icon">📋</span>
+        MRC Completa
+        <span class="sb-nav-badge">51</span>
+      </button>
+
+      <div class="sb-section-label">Administração</div>
+      <button class="sb-nav-item">
+        <span class="sb-nav-icon">⚙️</span>
+        Configurações
+      </button>
+      <button class="sb-nav-item">
+        <span class="sb-nav-icon">📥</span>
+        Importar MRC
+      </button>
+    </div>
+
+    <div class="sb-footer">
+      <div class="sb-avatar">JO</div>
+      <div class="sb-user-info">
+        <div class="sb-user-name">Juliana Oliveira</div>
+        <div class="sb-user-role">Admin Polímata</div>
+      </div>
+      <button class="sb-logout">⏻</button>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main">
+    <div class="top-bar">
+      <div style="position:relative">
+        <button class="notif-btn">🔔<span class="notif-badge">3</span></button>
+      </div>
+    </div>
+
+    <div class="page-wrap">
+      <div class="page-header">
+        <div class="page-header-left">
+          <span class="eyebrow">Índice de Maturidade</span>
+          <h2>Grupo ExemploCorp S/A</h2>
+        </div>
+        <div class="flex gap-8">
+          <button class="btn btn-sm btn-secondary">📤 Exportar</button>
+        </div>
+      </div>
+
+      <!-- KPIs -->
+      <div class="kpi-grid">
+        <div class="kpi-card">
+          <span class="kpi-icon">📊</span>
+          <div class="kpi-body">
+            <div class="kpi-label">Índice Geral</div>
+            <div class="kpi-value" style="color: #16A34A">62%</div>
+            <div class="kpi-sub">Nível N4 — Gerenciado</div>
+          </div>
+        </div>
+        <div class="kpi-card">
+          <span class="kpi-icon">📋</span>
+          <div class="kpi-body">
+            <div class="kpi-label">Total Controles</div>
+            <div class="kpi-value">51</div>
+            <div class="kpi-sub">em 5 áreas</div>
+          </div>
+        </div>
+        <div class="kpi-card">
+          <span class="kpi-icon">✅</span>
+          <div class="kpi-body">
+            <div class="kpi-label">Efetivos</div>
+            <div class="kpi-value" style="color: var(--efetivo)">34</div>
+            <div class="kpi-sub">67% do total</div>
+          </div>
+        </div>
+        <div class="kpi-card">
+          <span class="kpi-icon">📅</span>
+          <div class="kpi-body">
+            <div class="kpi-label">Última Atualização</div>
+            <div class="kpi-value" style="font-size:20px">16/04/26</div>
+            <div class="kpi-sub">Há 2 horas</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Phase bars -->
+      <div class="section-title">Progresso por Fase</div>
+      <div class="phase-bars">
+        <div class="phase-bar">
+          <div class="phase-bar-header">
+            <div class="flex flex-center gap-12">
+              <span class="phase-badge" style="background:rgba(91,143,249,0.15); color:var(--f1)">F1</span>
+              <span class="phase-name">Diagnóstico Inicial</span>
+              <span class="phase-weight">Peso: 10%</span>
+            </div>
+            <span class="phase-pct" style="color:var(--f1)">85%</span>
+          </div>
+          <div class="phase-track"><div class="phase-fill" style="width:85%; background:var(--f1)"></div></div>
+        </div>
+        <div class="phase-bar">
+          <div class="phase-bar-header">
+            <div class="flex flex-center gap-12">
+              <span class="phase-badge" style="background:rgba(124,108,240,0.15); color:var(--f2e1)">F2-E1</span>
+              <span class="phase-name">Planos de Ação e Aderência</span>
+              <span class="phase-weight">Peso: 25%</span>
+            </div>
+            <span class="phase-pct" style="color:var(--f2e1)">72%</span>
+          </div>
+          <div class="phase-track"><div class="phase-fill" style="width:72%; background:var(--f2e1)"></div></div>
+        </div>
+        <div class="phase-bar">
+          <div class="phase-bar-header">
+            <div class="flex flex-center gap-12">
+              <span class="phase-badge" style="background:rgba(167,139,250,0.15); color:var(--f2e2)">F2-E2</span>
+              <span class="phase-name">Controles Internos</span>
+              <span class="phase-weight">Peso: 25%</span>
+            </div>
+            <span class="phase-pct" style="color:var(--f2e2)">45%</span>
+          </div>
+          <div class="phase-track"><div class="phase-fill" style="width:45%; background:var(--f2e2)"></div></div>
+        </div>
+        <div class="phase-bar">
+          <div class="phase-bar-header">
+            <div class="flex flex-center gap-12">
+              <span class="phase-badge" style="background:rgba(34,212,160,0.15); color:var(--f3)">F3</span>
+              <span class="phase-name">Auditoria Contínua</span>
+              <span class="phase-weight">Peso: 30%</span>
+            </div>
+            <span class="phase-pct" style="color:var(--f3)">30%</span>
+          </div>
+          <div class="phase-track"><div class="phase-fill" style="width:30%; background:var(--f3)"></div></div>
+        </div>
+      </div>
+
+      <!-- Grid: Areas + Heatmap -->
+      <div class="section-title">Áreas do Projeto</div>
+      <div class="area-grid">
+        <div class="area-card">
+          <div class="area-card-header">
+            <span class="area-card-name">Governança Corporativa</span>
+            <span class="area-card-controls">12 controles</span>
+          </div>
+          <div class="area-card-bar"><div class="area-card-bar-fill" style="width:78%; background:linear-gradient(90deg, #EA580C, #22C55E)"></div></div>
+          <div class="area-card-footer">
+            <span class="area-card-pct" style="color:#16A34A">78%</span>
+            <span class="area-card-nivel" style="background:rgba(22,163,74,0.12); color:#16A34A">N4</span>
+          </div>
+        </div>
+        <div class="area-card">
+          <div class="area-card-header">
+            <span class="area-card-name">Compliance</span>
+            <span class="area-card-controls">8 controles</span>
+          </div>
+          <div class="area-card-bar"><div class="area-card-bar-fill" style="width:65%; background:linear-gradient(90deg, #EA580C, #16A34A)"></div></div>
+          <div class="area-card-footer">
+            <span class="area-card-pct" style="color:#16A34A">65%</span>
+            <span class="area-card-nivel" style="background:rgba(22,163,74,0.12); color:#16A34A">N4</span>
+          </div>
+        </div>
+        <div class="area-card">
+          <div class="area-card-header">
+            <span class="area-card-name">Financeiro</span>
+            <span class="area-card-controls">15 controles</span>
+          </div>
+          <div class="area-card-bar"><div class="area-card-bar-fill" style="width:52%; background:linear-gradient(90deg, #DC2626, #EAB308)"></div></div>
+          <div class="area-card-footer">
+            <span class="area-card-pct" style="color:#EAB308">52%</span>
+            <span class="area-card-nivel" style="background:rgba(234,179,8,0.12); color:#EAB308">N3</span>
+          </div>
+        </div>
+        <div class="area-card">
+          <div class="area-card-header">
+            <span class="area-card-name">Recursos Humanos</span>
+            <span class="area-card-controls">6 controles</span>
+          </div>
+          <div class="area-card-bar"><div class="area-card-bar-fill" style="width:88%; background:linear-gradient(90deg, #EA580C, #15803D)"></div></div>
+          <div class="area-card-footer">
+            <span class="area-card-pct" style="color:#15803D">88%</span>
+            <span class="area-card-nivel" style="background:rgba(21,128,61,0.12); color:#15803D">N5</span>
+          </div>
+        </div>
+        <div class="area-card">
+          <div class="area-card-header">
+            <span class="area-card-name">Tecnologia da Informação</span>
+            <span class="area-card-controls">10 controles</span>
+          </div>
+          <div class="area-card-bar"><div class="area-card-bar-fill" style="width:41%; background:linear-gradient(90deg, #DC2626, #F97316)"></div></div>
+          <div class="area-card-footer">
+            <span class="area-card-pct" style="color:#EAB308">41%</span>
+            <span class="area-card-nivel" style="background:rgba(234,179,8,0.12); color:#EAB308">N3</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Grid 2: Heatmap + Ranking -->
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title">Mapa de Calor — Risco Inerente</div>
+          <div class="heatmap-container">
+            <div class="heatmap-ylabel">IMPACTO →</div>
+            <div style="display:flex; gap:6px;">
+              <div class="heatmap-ylabels">
+                <div class="heatmap-ylbl">Crítico</div>
+                <div class="heatmap-ylbl">Alto</div>
+                <div class="heatmap-ylbl">Moderado</div>
+                <div class="heatmap-ylbl">Baixo</div>
+              </div>
+              <div class="heatmap-main">
+                <div class="heatmap-grid">
+                  <div class="heatmap-cell" style="background:rgba(239,68,68,0.3); color:#EF4444">5</div>
+                  <div class="heatmap-cell" style="background:rgba(239,68,68,0.2); color:#EF4444">3</div>
+                  <div class="heatmap-cell" style="background:rgba(249,115,22,0.2); color:#F97316">2</div>
+                  <div class="heatmap-cell" style="background:rgba(234,179,8,0.15); color:#EAB308">1</div>
+
+                  <div class="heatmap-cell" style="background:rgba(239,68,68,0.2); color:#EF4444">4</div>
+                  <div class="heatmap-cell" style="background:rgba(249,115,22,0.2); color:#F97316">6</div>
+                  <div class="heatmap-cell" style="background:rgba(234,179,8,0.15); color:#EAB308">3</div>
+                  <div class="heatmap-cell" style="background:rgba(234,179,8,0.1); color:#EAB308">2</div>
+
+                  <div class="heatmap-cell" style="background:rgba(249,115,22,0.15); color:#F97316">2</div>
+                  <div class="heatmap-cell" style="background:rgba(234,179,8,0.15); color:#EAB308">4</div>
+                  <div class="heatmap-cell" style="background:rgba(234,179,8,0.1); color:#EAB308">5</div>
+                  <div class="heatmap-cell" style="background:rgba(34,197,94,0.15); color:#22C55E">3</div>
+
+                  <div class="heatmap-cell" style="background:rgba(234,179,8,0.1); color:#EAB308">1</div>
+                  <div class="heatmap-cell" style="background:rgba(34,197,94,0.12); color:#22C55E">2</div>
+                  <div class="heatmap-cell" style="background:rgba(34,197,94,0.15); color:#22C55E">4</div>
+                  <div class="heatmap-cell" style="background:rgba(34,197,94,0.2); color:#22C55E">4</div>
+                </div>
+                <div class="heatmap-xlabels">
+                  <span class="heatmap-xlabel">Extrema</span>
+                  <span class="heatmap-xlabel">Alta</span>
+                  <span class="heatmap-xlabel">Média</span>
+                  <span class="heatmap-xlabel">Baixa</span>
+                </div>
+                <div style="text-align:center; margin-top:4px; font-size:10px; color:var(--text-muted); font-weight:500">PROBABILIDADE →</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Ranking de Áreas</div>
+          <div style="display:flex; flex-direction:column; gap:10px;">
+            <div class="ranking-row">
+              <span class="ranking-pos" style="color:#15803D">1</span>
+              <span class="ranking-name">Recursos Humanos</span>
+              <div class="ranking-bar"><div class="ranking-bar-fill" style="width:88%; background:#15803D"></div></div>
+              <span class="ranking-pct" style="color:#15803D">88%</span>
+            </div>
+            <div class="ranking-row">
+              <span class="ranking-pos" style="color:#16A34A">2</span>
+              <span class="ranking-name">Governança Corporativa</span>
+              <div class="ranking-bar"><div class="ranking-bar-fill" style="width:78%; background:#16A34A"></div></div>
+              <span class="ranking-pct" style="color:#16A34A">78%</span>
+            </div>
+            <div class="ranking-row">
+              <span class="ranking-pos" style="color:#16A34A">3</span>
+              <span class="ranking-name">Compliance</span>
+              <div class="ranking-bar"><div class="ranking-bar-fill" style="width:65%; background:#16A34A"></div></div>
+              <span class="ranking-pct" style="color:#16A34A">65%</span>
+            </div>
+            <div class="ranking-row">
+              <span class="ranking-pos" style="color:#EAB308">4</span>
+              <span class="ranking-name">Financeiro</span>
+              <div class="ranking-bar"><div class="ranking-bar-fill" style="width:52%; background:#EAB308"></div></div>
+              <span class="ranking-pct" style="color:#EAB308">52%</span>
+            </div>
+            <div class="ranking-row">
+              <span class="ranking-pos" style="color:#EAB308">5</span>
+              <span class="ranking-name">Tecnologia da Informação</span>
+              <div class="ranking-bar"><div class="ranking-bar-fill" style="width:41%; background:#EAB308"></div></div>
+              <span class="ranking-pct" style="color:#EAB308">41%</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ═══════════════════════════════════════
+     TAB 2: VISÃO POR ÁREA (tabela MRC)
+═══════════════════════════════════════ -->
+<div id="area-view" class="section">
+<div class="app-layout">
+  <div class="sidebar" style="width:56px; min-width:56px;">
+    <div class="sb-brand" style="justify-content:center; padding:18px 0;">
+      <div class="sb-logo">P</div>
+    </div>
+    <div class="sb-nav" style="align-items:center">
+      <button class="sb-nav-item" style="padding:10px; justify-content:center"><span class="sb-nav-icon">📊</span></button>
+      <button class="sb-nav-item active" style="padding:10px; justify-content:center"><span class="sb-nav-icon">⚖️</span></button>
+      <button class="sb-nav-item" style="padding:10px; justify-content:center"><span class="sb-nav-icon">📋</span></button>
+      <button class="sb-nav-item" style="padding:10px; justify-content:center"><span class="sb-nav-icon">⚙️</span></button>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="top-bar">
+      <div style="position:relative">
+        <button class="notif-btn">🔔<span class="notif-badge">3</span></button>
+      </div>
+    </div>
+    <div class="page-wrap">
+      <div class="page-header">
+        <div class="page-header-left">
+          <span class="eyebrow">Compliance</span>
+          <h2>Controles da Área</h2>
+          <span class="subtitle">8 controles · Última atualização: 16/04/2026</span>
+        </div>
+        <div class="flex gap-8">
+          <button class="btn btn-sm btn-secondary">📤 Exportar Excel</button>
+          <button class="btn btn-sm btn-primary">+ Novo Risco</button>
+        </div>
+      </div>
+
+      <!-- KPIs compactos -->
+      <div class="kpi-grid" style="grid-template-columns: repeat(3, 1fr); margin-bottom:24px;">
+        <div class="kpi-card">
+          <span class="kpi-icon">📊</span>
+          <div class="kpi-body">
+            <div class="kpi-label">Maturidade da Área</div>
+            <div class="kpi-value" style="color:#16A34A">65%</div>
+            <div class="kpi-sub">Nível N4</div>
+          </div>
+        </div>
+        <div class="kpi-card">
+          <span class="kpi-icon">✅</span>
+          <div class="kpi-body">
+            <div class="kpi-label">Efetivos</div>
+            <div class="kpi-value" style="color:var(--efetivo)">5</div>
+            <div class="kpi-sub">de 8 controles</div>
+          </div>
+        </div>
+        <div class="kpi-card">
+          <span class="kpi-icon">⚠️</span>
+          <div class="kpi-body">
+            <div class="kpi-label">Pendências</div>
+            <div class="kpi-value" style="color:var(--gap)">2</div>
+            <div class="kpi-sub">planos de ação abertos</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Table -->
+      <div class="table-wrap">
+        <div class="table-header">
+          <div class="table-header-left">
+            <input class="table-filter" placeholder="🔍  Buscar controle..." />
+          </div>
+          <div class="flex gap-8">
+            <button class="btn btn-ghost" style="font-size:11px">Todos</button>
+            <button class="btn btn-ghost" style="font-size:11px; color:var(--efetivo)">Efetivos</button>
+            <button class="btn btn-ghost" style="font-size:11px; color:var(--inefetivo)">Inefetivos</button>
+            <button class="btn btn-ghost" style="font-size:11px; color:var(--gap)">GAP</button>
+          </div>
+        </div>
+        <div style="overflow-x:auto;">
+          <table>
+            <thead>
+              <tr>
+                <th>Código</th>
+                <th>Controle</th>
+                <th>Criticidade</th>
+                <th>Fase Atual</th>
+                <th>Resultado</th>
+                <th>Status Workflow</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td style="font-weight:600; color:var(--text-primary)">C.COM.01</td>
+                <td>Código de Ética e Conduta</td>
+                <td><span class="badge badge-crit-4">Crítico</span></td>
+                <td><span class="badge" style="background:rgba(124,108,240,0.12); color:var(--f2e1)">Planos de Ação e Aderência</span></td>
+                <td><span class="badge badge-efetivo">Efetivo</span></td>
+                <td><span class="badge badge-aprovado">✓ Aprovado</span></td>
+                <td><button class="action-btn action-btn-primary">Atualizar</button></td>
+              </tr>
+              <tr>
+                <td style="font-weight:600; color:var(--text-primary)">C.COM.02</td>
+                <td>Canal de Denúncias</td>
+                <td><span class="badge badge-crit-3">Significativo</span></td>
+                <td><span class="badge" style="background:rgba(91,143,249,0.12); color:var(--f1)">Diagnóstico Inicial</span></td>
+                <td><span class="badge badge-inefetivo">Inefetivo</span></td>
+                <td><span class="badge badge-em-revisao">Em Revisão</span></td>
+                <td><button class="action-btn action-btn-review">🔍 Revisar</button></td>
+              </tr>
+              <tr>
+                <td style="font-weight:600; color:var(--text-primary)">C.COM.03</td>
+                <td>Programa de Treinamento em Compliance</td>
+                <td><span class="badge badge-crit-2">Moderado</span></td>
+                <td><span class="badge" style="background:rgba(167,139,250,0.12); color:var(--f2e2)">Controles Internos</span></td>
+                <td><span class="badge badge-efetivo">Efetivo</span></td>
+                <td><span class="badge badge-aprovado">✓ Aprovado</span></td>
+                <td><button class="action-btn action-btn-primary">Atualizar</button></td>
+              </tr>
+              <tr>
+                <td style="font-weight:600; color:var(--text-primary)">C.COM.04</td>
+                <td>Due Diligence de Terceiros</td>
+                <td><span class="badge badge-crit-4">Crítico</span></td>
+                <td><span class="badge" style="background:rgba(91,143,249,0.12); color:var(--f1)">Diagnóstico Inicial</span></td>
+                <td><span class="badge badge-gap">GAP</span></td>
+                <td><span class="badge badge-reprovado">↩ Reprovado</span></td>
+                <td><button class="action-btn" style="background:rgba(240,86,86,0.12); color:var(--inefetivo)">↩ Editar</button></td>
+              </tr>
+              <tr>
+                <td style="font-weight:600; color:var(--text-primary)">C.COM.05</td>
+                <td>Monitoramento de Conflitos de Interesse</td>
+                <td><span class="badge badge-crit-3">Significativo</span></td>
+                <td><span class="badge" style="background:rgba(34,212,160,0.12); color:var(--f3)">Auditoria Contínua</span></td>
+                <td><span class="badge badge-efetivo">Efetivo</span></td>
+                <td><span class="badge badge-rascunho">Rascunho</span></td>
+                <td><button class="action-btn action-btn-primary">Atualizar</button></td>
+              </tr>
+              <tr>
+                <td style="font-weight:600; color:var(--text-primary)">C.COM.06</td>
+                <td>Gestão de Políticas Internas</td>
+                <td><span class="badge badge-crit-1">Baixo</span></td>
+                <td><span class="badge" style="background:rgba(91,143,249,0.12); color:var(--f1)">Diagnóstico Inicial</span></td>
+                <td><span class="badge badge-pendente">Pendente</span></td>
+                <td><span class="badge badge-rascunho">Rascunho</span></td>
+                <td><button class="action-btn action-btn-primary">Atualizar</button></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ═══════════════════════════════════════
+     TAB 3: MODAL REGISTRAR RESULTADO
+═══════════════════════════════════════ -->
+<div id="modal-resultado" class="section">
+<div style="min-height:calc(100vh - 46px); background:var(--bg-base); display:flex; align-items:center; justify-content:center;">
+  <div class="modal" style="position:relative; max-width:720px;">
+    <div class="modal-header">
+      <h3>Registrar Resultado — C.COM.02</h3>
+      <button class="modal-close">✕</button>
+    </div>
+    <div class="modal-body">
+      <!-- Rejection banner -->
+      <div class="rejection-banner">
+        <div class="rejection-banner-title">↩ Reprovado pela Revisão</div>
+        <div class="rejection-banner-text">
+          <strong style="color:var(--inefetivo)">Juliana Oliveira</strong> em 15/04/2026 · Fase: Diagnóstico Inicial<br>
+          "A evidência não está completa. Falta o documento de aprovação do canal pelo comitê de compliance. Favor anexar e resubmeter."
+        </div>
+      </div>
+
+      <!-- Phase indicator -->
+      <div class="phase-indicator">
+        <span class="phase-indicator-label">Fase Atual:</span>
+        <span class="phase-indicator-value">Diagnóstico Inicial</span>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Resultado do Teste</label>
+        <select class="form-select">
+          <option>Selecionar resultado...</option>
+          <option>Efetivo</option>
+          <option selected>Inefetivo</option>
+          <option>GAP de Processo</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Inconsistência / Observação</label>
+        <textarea class="form-textarea" placeholder="Descreva as inconsistências encontradas...">O canal de denúncias existe mas não possui aprovação formal do comitê de compliance. Não há evidência de divulgação aos colaboradores nos últimos 12 meses.</textarea>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Recomendação</label>
+        <textarea class="form-textarea" placeholder="Registre suas recomendações...">Formalizar a aprovação do canal junto ao comitê de compliance e realizar campanha de divulgação interna.</textarea>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Premissas do Teste</label>
+        <textarea class="form-textarea" style="min-height:60px" placeholder="Premissas utilizadas...">Verificação documental + entrevista com responsável pela área de compliance.</textarea>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Plano de Ação</label>
+        <textarea class="form-textarea" style="min-height:60px" placeholder="Plano de ação, se aplicável...">1. Submeter canal para aprovação no comitê; 2. Criar campanha de divulgação; 3. Atualizar política interna.</textarea>
+      </div>
+    </div>
+
+    <div class="modal-footer" style="justify-content:space-between">
+      <div class="phase-indicator" style="margin:0; padding:6px 12px;">
+        <span class="phase-indicator-label">Fase:</span>
+        <span class="phase-indicator-value">Diagnóstico Inicial</span>
+      </div>
+      <div class="flex gap-8">
+        <button class="btn btn-sm btn-secondary">Cancelar</button>
+        <button class="btn btn-sm btn-ghost" style="border:1px solid var(--border)">Salvar</button>
+        <button class="btn btn-sm btn-primary">📤 Reenviar para Revisão</button>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ═══════════════════════════════════════
+     TAB 4: MODAL REVISAR
+═══════════════════════════════════════ -->
+<div id="modal-revisar" class="section">
+<div style="min-height:calc(100vh - 46px); background:var(--bg-base); display:flex; align-items:center; justify-content:center;">
+  <div class="modal" style="position:relative; max-width:720px;">
+    <div class="modal-header">
+      <div>
+        <h3>Revisar — C.COM.02</h3>
+        <span style="font-size:11px; color:var(--text-muted)">Canal de Denúncias</span>
+      </div>
+      <button class="modal-close">✕</button>
+    </div>
+
+    <!-- Sub-tabs -->
+    <div style="display:flex; border-bottom:1px solid var(--border); padding:0 24px;">
+      <button class="config-tab active" style="padding:10px 16px">Revisão</button>
+      <button class="config-tab" style="padding:10px 16px">Aprovar</button>
+      <button class="config-tab" style="padding:10px 16px">Reprovar</button>
+      <button class="config-tab" style="padding:10px 16px">Histórico</button>
+    </div>
+
+    <div class="modal-body">
+      <!-- Info cards -->
+      <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; margin-bottom:20px;">
+        <div style="background:var(--bg-elevated); border-radius:var(--radius-sm); padding:12px 16px;">
+          <div style="font-size:10px; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px;">Resultado</div>
+          <span class="badge badge-inefetivo" style="font-size:12px">Inefetivo</span>
+        </div>
+        <div style="background:var(--bg-elevated); border-radius:var(--radius-sm); padding:12px 16px;">
+          <div style="font-size:10px; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px;">Criticidade</div>
+          <span class="badge badge-crit-3" style="font-size:12px">Significativo</span>
+        </div>
+        <div style="background:var(--bg-elevated); border-radius:var(--radius-sm); padding:12px 16px;">
+          <div style="font-size:10px; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px;">Fase</div>
+          <span class="badge" style="background:rgba(91,143,249,0.12); color:var(--f1); font-size:12px">Diagnóstico Inicial</span>
+        </div>
+      </div>
+
+      <div style="background:var(--bg-elevated); border-radius:var(--radius-sm); padding:12px 16px; margin-bottom:20px;">
+        <div style="font-size:10px; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px;">Submetido por</div>
+        <div style="font-size:13px; color:var(--text-primary)">Ana Carolina Silva · 14/04/2026 às 15:32</div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Inconsistência / Observação</label>
+        <div style="background:var(--bg-input); border:1px solid var(--border); border-radius:var(--radius-sm); padding:12px 14px; font-size:13px; color:var(--text-secondary); line-height:1.6;">
+          O canal de denúncias existe mas não possui aprovação formal do comitê de compliance. Não há evidência de divulgação aos colaboradores nos últimos 12 meses.
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Recomendação</label>
+        <div style="background:var(--bg-input); border:1px solid var(--border); border-radius:var(--radius-sm); padding:12px 14px; font-size:13px; color:var(--text-secondary); line-height:1.6;">
+          Formalizar a aprovação do canal junto ao comitê de compliance e realizar campanha de divulgação interna.
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Premissas do Teste</label>
+        <div style="background:var(--bg-input); border:1px solid var(--border); border-radius:var(--radius-sm); padding:12px 14px; font-size:13px; color:var(--text-secondary); line-height:1.6;">
+          Verificação documental + entrevista com responsável pela área de compliance.
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Plano de Ação</label>
+        <div style="background:var(--bg-input); border:1px solid var(--border); border-radius:var(--radius-sm); padding:12px 14px; font-size:13px; color:var(--text-secondary); line-height:1.6;">
+          1. Submeter canal para aprovação no comitê; 2. Criar campanha de divulgação; 3. Atualizar política interna.
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-sm btn-secondary">Cancelar</button>
+      <button class="btn btn-sm" style="background:rgba(240,86,86,0.12); color:var(--inefetivo); border-radius:var(--radius-pill); padding:7px 16px">↩ Reprovar</button>
+      <button class="btn btn-sm btn-primary">✓ Aprovar</button>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ═══════════════════════════════════════
+     TAB 5: LOGIN
+═══════════════════════════════════════ -->
+<div id="login" class="section">
+<div class="login-page">
+  <div class="login-decor"></div>
+  <div class="login-card">
+    <div class="login-logo-area">
+      <div class="login-logo-icon">P</div>
+      <div class="login-brand-name">Polímata</div>
+      <div class="login-brand-sub">Controles Internos</div>
+    </div>
+    <div class="login-divider"></div>
+    <div class="login-title">Acesse sua conta</div>
+    <div class="login-subtitle">Polímata Consultoria em Governança Corporativa</div>
+
+    <div class="login-form">
+      <div class="form-group" style="margin-bottom:0">
+        <label class="form-label">Email</label>
+        <input class="form-input" type="email" placeholder="seu@email.com" value="juliana@polimatagrc.com.br" />
+      </div>
+      <div class="form-group" style="margin-bottom:0">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+          <label class="form-label" style="margin:0">Senha</label>
+          <span style="font-size:10px; color:var(--text-muted); cursor:pointer">Mostrar</span>
+        </div>
+        <input class="form-input" type="password" placeholder="••••••••" />
+      </div>
+      <button class="login-submit">Entrar</button>
+      <span class="login-forgot">Esqueci minha senha</span>
+    </div>
+    <div class="login-footer-text">Polímata Consultoria em GRC · 2026</div>
+  </div>
+</div>
+</div>
+
+<!-- ═══════════════════════════════════════
+     TAB 6: CONFIGURAÇÕES
+═══════════════════════════════════════ -->
+<div id="config" class="section">
+<div class="app-layout">
+  <div class="sidebar" style="width:56px; min-width:56px;">
+    <div class="sb-brand" style="justify-content:center; padding:18px 0;">
+      <div class="sb-logo">P</div>
+    </div>
+    <div class="sb-nav" style="align-items:center">
+      <button class="sb-nav-item" style="padding:10px; justify-content:center"><span class="sb-nav-icon">📊</span></button>
+      <button class="sb-nav-item" style="padding:10px; justify-content:center"><span class="sb-nav-icon">📋</span></button>
+      <button class="sb-nav-item active" style="padding:10px; justify-content:center"><span class="sb-nav-icon">⚙️</span></button>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="top-bar">
+      <div style="position:relative">
+        <button class="notif-btn">🔔</button>
+      </div>
+    </div>
+    <div class="page-wrap">
+      <div class="page-header">
+        <div class="page-header-left">
+          <span class="eyebrow">Administração</span>
+          <h2>Configurações</h2>
+        </div>
+      </div>
+
+      <div class="config-tabs">
+        <button class="config-tab active">Clientes</button>
+        <button class="config-tab">Usuários</button>
+      </div>
+
+      <!-- Clientes -->
+      <div class="config-card">
+        <div class="config-card-header">
+          <div>
+            <span style="font-size:14px; font-weight:500; color:var(--text-primary)">Clientes cadastrados</span>
+            <span style="font-size:11px; color:var(--text-muted); margin-left:8px">3 clientes</span>
+          </div>
+          <button class="btn btn-sm btn-primary">+ Novo Cliente</button>
+        </div>
+        <table class="config-table">
+          <thead>
+            <tr>
+              <th>Nome</th>
+              <th>CNPJ</th>
+              <th>Plano</th>
+              <th>Criado em</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td style="font-weight:500; color:var(--text-primary)">Grupo ExemploCorp S/A</td>
+              <td style="color:var(--text-secondary)">12.345.678/0001-90</td>
+              <td><span class="badge" style="background:rgba(200,137,92,0.12); color:var(--copper)">Premium</span></td>
+              <td style="color:var(--text-muted)">01/01/2026</td>
+              <td><button class="action-btn action-btn-primary">Editar</button></td>
+            </tr>
+            <tr>
+              <td style="font-weight:500; color:var(--text-primary)">Tech Solutions Ltda</td>
+              <td style="color:var(--text-secondary)">98.765.432/0001-10</td>
+              <td><span class="badge" style="background:rgba(91,143,249,0.12); color:#5B8FF9">Padrão</span></td>
+              <td style="color:var(--text-muted)">15/02/2026</td>
+              <td><button class="action-btn action-btn-primary">Editar</button></td>
+            </tr>
+            <tr>
+              <td style="font-weight:500; color:var(--text-primary)">Indústria Beta S/A</td>
+              <td style="color:var(--text-secondary)">11.222.333/0001-44</td>
+              <td><span class="badge" style="background:rgba(200,137,92,0.12); color:var(--copper)">Premium</span></td>
+              <td style="color:var(--text-muted)">10/03/2026</td>
+              <td><button class="action-btn action-btn-primary">Editar</button></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ═══════════════════════════════════════
+     TAB 7: NOTAS DE DESIGN
+═══════════════════════════════════════ -->
+<div id="notas" class="section">
+<div style="max-width:900px; margin:40px auto; padding:0 32px;">
+  <span class="eyebrow" style="margin-bottom:16px; display:block">Guia de Redesign</span>
+  <h2 style="font-family:'Raleway',sans-serif; font-size:28px; font-weight:300; margin-bottom:32px;">Notas de Design — CI Polímata</h2>
+
+  <div class="comparison">
+    <h3>O que Muda</h3>
+    <div class="comparison-grid">
+      <div class="comparison-col">
+        <h4 style="color:var(--inefetivo)">❌ Antes (Atual)</h4>
+        <div class="comparison-item"><span class="icon">•</span> Cormorant Garamond nos títulos (fonte serifada, desconectada do site)</div>
+        <div class="comparison-item"><span class="icon">•</span> Montserrat weight 300, font-size 13px (muito pequeno, difícil leitura)</div>
+        <div class="comparison-item"><span class="icon">•</span> Border-radius 10px inconsistente</div>
+        <div class="comparison-item"><span class="icon">•</span> Botões retangulares com border-radius 8px</div>
+        <div class="comparison-item"><span class="icon">•</span> Page title em itálico (Cormorant Garamond italic)</div>
+        <div class="comparison-item"><span class="icon">•</span> Sidebar apertada (240px) com tipografia pequena</div>
+        <div class="comparison-item"><span class="icon">•</span> Sombras pesadas (0 32px 80px rgba(0,0,0,.5))</div>
+        <div class="comparison-item"><span class="icon">•</span> KPI valores em Montserrat bold (pesado visualmente)</div>
+        <div class="comparison-item"><span class="icon">•</span> Inputs com border-radius 8px, sem padrão pill</div>
+      </div>
+      <div class="comparison-col">
+        <h4 style="color:var(--efetivo)">✓ Depois (Redesign)</h4>
+        <div class="comparison-item"><span class="icon">•</span> <strong style="color:var(--cream)">Raleway 300</strong> nos títulos — mesma fonte do site, elegante e leve</div>
+        <div class="comparison-item"><span class="icon">•</span> Montserrat 400, font-size <strong style="color:var(--cream)">14px base</strong> — mais legível e profissional</div>
+        <div class="comparison-item"><span class="icon">•</span> <strong style="color:var(--cream)">12px radius</strong> padrão, consistente com site</div>
+        <div class="comparison-item"><span class="icon">•</span> <strong style="color:var(--cream)">Botões pill</strong> (border-radius: 999px) — identidade visual do site</div>
+        <div class="comparison-item"><span class="icon">•</span> Page title em <strong style="color:var(--cream)">Raleway 300</strong> sem itálico</div>
+        <div class="comparison-item"><span class="icon">•</span> Sidebar mais generosa (260px) com espaçamento respirável</div>
+        <div class="comparison-item"><span class="icon">•</span> <strong style="color:var(--cream)">Sombras suaves</strong> alinhadas ao site (0.06-0.18 opacidade)</div>
+        <div class="comparison-item"><span class="icon">•</span> KPI valores em <strong style="color:var(--cream)">Raleway 300</strong> (leve, sofisticado)</div>
+        <div class="comparison-item"><span class="icon">•</span> Inputs e filtros pill para coerência com botões</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="comparison" style="margin-top:24px;">
+    <h3>O que NÃO Muda</h3>
+    <div style="display:flex; flex-direction:column; gap:10px;">
+      <div class="comparison-item"><span class="icon" style="color:var(--efetivo)">✓</span> <strong style="color:var(--cream)">Cores da metodologia</strong> — Efetivo (#22D4A0), Inefetivo (#F05656), GAP (#F5B942)</div>
+      <div class="comparison-item"><span class="icon" style="color:var(--efetivo)">✓</span> <strong style="color:var(--cream)">Cores de criticidade</strong> — Crítico (#EF4444), Significativo (#F97316), Moderado (#D4A030), Baixo (#22D4A0)</div>
+      <div class="comparison-item"><span class="icon" style="color:var(--efetivo)">✓</span> <strong style="color:var(--cream)">Cores de impacto/probabilidade</strong> — Heatmap e badges intactos</div>
+      <div class="comparison-item"><span class="icon" style="color:var(--efetivo)">✓</span> <strong style="color:var(--cream)">Cores de fases</strong> — F1 azul, F2-E1 roxo, F2-E2 lilás, F3 verde</div>
+      <div class="comparison-item"><span class="icon" style="color:var(--efetivo)">✓</span> <strong style="color:var(--cream)">Régua de maturidade</strong> — N1 vermelho → N5 verde escuro</div>
+      <div class="comparison-item"><span class="icon" style="color:var(--efetivo)">✓</span> <strong style="color:var(--cream)">Tema dark navy</strong> — mantido com fundo refinado</div>
+      <div class="comparison-item"><span class="icon" style="color:var(--efetivo)">✓</span> <strong style="color:var(--cream)">Copper/Gold como accent</strong> — mantido em eyebrows, borders, active states</div>
+      <div class="comparison-item"><span class="icon" style="color:var(--efetivo)">✓</span> <strong style="color:var(--cream)">Estrutura funcional</strong> — sidebar, dashboard, tabelas, modais, mesmo fluxo</div>
+    </div>
+  </div>
+
+  <div class="comparison" style="margin-top:24px;">
+    <h3>Tokens de Design (Referência Rápida)</h3>
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:24px; margin-top:16px;">
+      <div>
+        <h4 style="font-size:12px; font-weight:600; font-family:'Montserrat',sans-serif; margin-bottom:12px; color:var(--copper)">Tipografia</h4>
+        <div style="font-family:'Raleway',sans-serif; font-weight:300; font-size:24px; margin-bottom:8px;">Raleway Light 300</div>
+        <div style="font-size:13px; color:var(--text-secondary); margin-bottom:4px;">Títulos, KPI valores, headings</div>
+        <div style="font-size:14px; margin-top:12px; margin-bottom:4px;">Montserrat Regular 400</div>
+        <div style="font-size:13px; color:var(--text-secondary); margin-bottom:4px;">Corpo, labels, botões</div>
+        <div style="font-size:11px; font-weight:600; letter-spacing:0.2em; text-transform:uppercase; color:var(--copper); margin-top:12px;">EYEBROW · MONTSERRAT 600</div>
+        <div style="font-size:13px; color:var(--text-secondary);">Seções, labels em caixa alta</div>
+      </div>
+      <div>
+        <h4 style="font-size:12px; font-weight:600; font-family:'Montserrat',sans-serif; margin-bottom:12px; color:var(--copper)">Componentes</h4>
+        <div style="display:flex; gap:8px; align-items:center; margin-bottom:12px;">
+          <button class="btn btn-sm btn-primary">Primário</button>
+          <button class="btn btn-sm btn-secondary">Secundário</button>
+          <button class="btn btn-ghost">Ghost</button>
+        </div>
+        <div style="display:flex; gap:6px; flex-wrap:wrap; margin-bottom:12px;">
+          <span class="badge badge-efetivo">Efetivo</span>
+          <span class="badge badge-inefetivo">Inefetivo</span>
+          <span class="badge badge-gap">GAP</span>
+          <span class="badge badge-crit-4">Crítico</span>
+          <span class="badge badge-crit-3">Significativo</span>
+          <span class="badge badge-crit-2">Moderado</span>
+          <span class="badge badge-crit-1">Baixo</span>
+        </div>
+        <div style="display:flex; gap:6px; flex-wrap:wrap;">
+          <span class="badge badge-aprovado">✓ Aprovado</span>
+          <span class="badge badge-em-revisao">Em Revisão</span>
+          <span class="badge badge-reprovado">↩ Reprovado</span>
+          <span class="badge badge-rascunho">Rascunho</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="margin-top:24px; padding:20px 24px; background:rgba(200,137,92,0.06); border:1px solid var(--border); border-radius:var(--radius);">
+    <div style="font-size:13px; font-weight:500; color:var(--copper); margin-bottom:8px;">Resumo da Filosofia</div>
+    <div style="font-size:13px; color:var(--text-secondary); line-height:1.7;">
+      O redesign alinha o sistema CI Polímata à identidade visual do site (polimatagrc.com.br), trazendo a mesma sofisticação e leveza. A troca de Cormorant Garamond por Raleway 300 unifica a marca. Os botões pill e o espaçamento generoso criam a sensação de produto premium. O aumento da fonte base de 13px para 14px melhora a legibilidade. Todas as cores semânticas da metodologia são preservadas integralmente.
+    </div>
+  </div>
+</div>
+</div>
+
+</div><!-- /mockup-content -->
+
+<script>
+function showTab(id) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.mockup-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  event.target.classList.add('active');
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,1164 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mockup v3 — Workflow de Aprovação · CI Polímata</title>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy:#00112C;--navy2:#00203E;--navy3:#1D3B5C;--gold:#CC915E;--gold-dark:#A6512F;
+    --cream:#F3EEE4;--bg0:#00112C;--bg1:#000D1F;--brd:rgba(255,255,255,0.06);
+    --txt1:#F3EEE4;--txt2:rgba(243,238,228,0.7);--txt3:rgba(243,238,228,0.4);--txt4:rgba(243,238,228,0.25);
+    --green:#22C55E;--yellow:#FACC15;--red:#EF4444;--orange:#F97316;--blue:#60A5FA;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{font-family:'Montserrat',sans-serif;background:var(--bg0);color:var(--txt1);font-size:12px;overflow-x:hidden;}
+
+  .app{display:flex;height:100vh;}
+  .sidebar{width:240px;min-width:240px;background:var(--bg1);border-right:1px solid var(--brd);display:flex;flex-direction:column;}
+  .main{flex:1;overflow-y:auto;padding:0 20px 40px;}
+
+  /* SIDEBAR */
+  .sb-logo{padding:14px;border-bottom:1px solid var(--brd);text-align:center;}
+  .sb-logo-text{font-size:11px;font-weight:600;color:var(--gold);letter-spacing:1px;}
+  .sb-nav{flex:1;overflow-y:auto;padding:8px 0;}
+  .sb-sep{font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;color:var(--txt4);padding:12px 16px 4px;}
+  .nav-item{display:flex;align-items:center;gap:8px;padding:8px 16px;font-size:11px;font-weight:500;color:var(--txt2);cursor:pointer;border:none;background:none;width:100%;text-align:left;font-family:inherit;transition:background .15s;}
+  .nav-item:hover{background:rgba(255,255,255,0.03);}
+  .nav-item.active{background:rgba(204,145,94,0.08);color:var(--gold);}
+  .sb-footer{padding:8px 12px;border-top:1px solid var(--brd);}
+  .sb-user{display:flex;align-items:center;gap:8px;padding:4px;}
+  .sb-user-avatar{width:28px;height:28px;border-radius:50%;background:var(--navy3);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--gold);flex-shrink:0;}
+  .sb-user-nome{font-size:10px;font-weight:600;color:var(--txt1);}
+  .sb-user-papel{font-size:9px;color:var(--txt3);}
+
+  /* TOPBAR */
+  .topbar{display:flex;align-items:center;justify-content:space-between;padding:10px 0;flex-shrink:0;}
+  .notif-btn{position:relative;display:flex;align-items:center;justify-content:center;width:36px;height:36px;background:rgba(255,255,255,0.04);border:1px solid var(--brd);border-radius:8px;cursor:pointer;transition:all .15s;}
+  .notif-btn:hover{background:rgba(204,145,94,0.08);border-color:rgba(204,145,94,0.2);}
+  .notif-btn .bell{font-size:16px;}
+  .notif-badge{position:absolute;top:-4px;right:-4px;background:var(--red);color:#fff;font-size:8px;font-weight:700;padding:1px 5px;border-radius:8px;min-width:16px;text-align:center;line-height:14px;}
+
+  /* NOTIF PANEL */
+  .notif-panel{display:none;position:fixed;top:8px;right:8px;width:400px;max-height:calc(100vh - 16px);background:#0A1628;border:1px solid var(--brd);border-radius:12px;z-index:1000;flex-direction:column;box-shadow:0 8px 32px rgba(0,0,0,0.5);overflow:hidden;}
+  .notif-panel.open{display:flex;}
+  .notif-header{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--brd);}
+  .notif-title{font-size:13px;font-weight:600;color:var(--txt1);}
+  .notif-close{background:none;border:none;color:var(--txt3);cursor:pointer;font-size:18px;padding:4px;}
+  .notif-body{flex:1;overflow-y:auto;max-height:500px;}
+  .notif-item{padding:14px 18px;border-bottom:1px solid rgba(255,255,255,0.03);cursor:pointer;transition:background .15s;}
+  .notif-item:hover{background:rgba(255,255,255,0.03);}
+  .notif-item.unread{background:rgba(204,145,94,0.04);border-left:3px solid var(--gold);}
+  .ni-tipo{font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:4px;}
+  .ni-tipo.submissao{color:var(--blue);}
+  .ni-tipo.aprovacao{color:var(--green);}
+  .ni-tipo.reprovacao{color:var(--red);}
+  .ni-msg{font-size:11px;color:var(--txt2);line-height:1.5;}
+  .ni-msg strong{color:var(--txt1);font-weight:600;}
+  .ni-time{font-size:9px;color:var(--txt4);margin-top:6px;}
+  .notif-footer{padding:10px 18px;border-top:1px solid var(--brd);display:flex;justify-content:space-between;align-items:center;}
+  .notif-mark-all{font-size:10px;color:var(--gold);background:none;border:none;cursor:pointer;font-family:inherit;font-weight:600;}
+
+  /* HEADER */
+  .header-cliente{font-size:10px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--gold);}
+  .header-titulo{font-size:18px;font-weight:600;color:var(--txt1);margin-top:2px;}
+  .header-sub{font-size:10px;color:var(--txt3);margin-top:2px;}
+
+  /* TABS */
+  .demo-tabs{display:flex;gap:4px;margin:12px 0;background:rgba(255,255,255,0.03);border-radius:8px;padding:4px;}
+  .demo-tab{flex:1;padding:10px 8px;border-radius:6px;border:none;background:transparent;color:var(--txt3);font-family:inherit;font-size:9px;font-weight:600;cursor:pointer;text-align:center;transition:all .2s;letter-spacing:0.5px;text-transform:uppercase;}
+  .demo-tab.active{background:rgba(204,145,94,0.12);color:var(--gold);}
+  .demo-tab:hover:not(.active){background:rgba(255,255,255,0.04);color:var(--txt2);}
+  .demo-section{display:none;}
+  .demo-section.active{display:block;}
+
+  /* FLOW */
+  .flow-wrap{background:rgba(255,255,255,0.02);border:1px solid var(--brd);border-radius:10px;padding:20px;margin-bottom:16px;}
+  .flow-title{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;color:var(--txt3);margin-bottom:16px;}
+  .flow-steps{display:flex;align-items:center;gap:0;justify-content:center;flex-wrap:wrap;}
+  .flow-step{display:flex;flex-direction:column;align-items:center;gap:5px;padding:10px 12px;border-radius:8px;border:1px solid var(--brd);background:rgba(255,255,255,0.03);min-width:100px;max-width:120px;}
+  .flow-step.done{border-color:rgba(34,197,94,0.3);background:rgba(34,197,94,0.05);}
+  .flow-step.active{border-color:var(--gold);background:rgba(204,145,94,0.08);}
+  .fs-icon{font-size:16px;}
+  .fs-label{font-size:8px;font-weight:600;color:var(--txt2);text-align:center;line-height:1.3;}
+  .fs-status{font-size:7px;font-weight:700;text-transform:uppercase;letter-spacing:0.4px;text-align:center;}
+  .flow-arrow{font-size:14px;color:var(--txt4);padding:0 4px;}
+
+  /* TABLE */
+  .table-wrap{background:rgba(255,255,255,0.02);border:1px solid var(--brd);border-radius:10px;overflow:hidden;}
+  .table-header{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--brd);}
+  .table-title{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;color:var(--txt3);}
+  table{width:100%;border-collapse:collapse;}
+  th{font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--txt1);background:var(--navy2);padding:8px 10px;text-align:left;white-space:nowrap;position:sticky;top:0;}
+  td{padding:8px 10px;border-bottom:1px solid rgba(255,255,255,0.03);font-size:11px;color:var(--txt2);white-space:nowrap;vertical-align:middle;}
+  tr:hover td{background:rgba(204,145,94,0.03);}
+
+  /* BADGES */
+  .badge{display:inline-block;padding:2px 8px;border-radius:3px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.3px;}
+  .badge-rascunho{background:rgba(255,255,255,0.06);color:var(--txt3);}
+  .badge-em-analise{background:rgba(204,145,94,0.15);color:var(--gold);}
+  .badge-ficha-gerada{background:rgba(243,238,228,0.12);color:var(--txt1);}
+  .badge-em-revisao{background:rgba(59,130,246,0.15);color:var(--blue);}
+  .badge-aprovado{background:rgba(34,197,94,0.12);color:var(--green);}
+  .badge-reprovado{background:rgba(239,68,68,0.12);color:var(--red);}
+  .badge-efetivo{background:rgba(34,197,94,0.12);color:var(--green);}
+  .badge-inefetivo{background:rgba(250,204,21,0.12);color:var(--yellow);}
+  .badge-gap{background:rgba(239,68,68,0.12);color:var(--red);}
+  .badge-nao-iniciado{background:rgba(255,255,255,0.06);color:var(--txt3);}
+  .badge-cli-analise{background:rgba(204,145,94,0.15);color:var(--gold);}
+  .badge-concluido{background:rgba(34,197,94,0.12);color:var(--green);}
+
+  /* PHASE BADGE */
+  .phase-badge{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:500;color:var(--txt1);border-left:3px solid var(--gold);padding-left:8px;line-height:1.3;}
+  .phase-badge .pb-sub{font-size:9px;color:var(--txt3);}
+
+  /* BUTTONS */
+  .btn{display:inline-flex;align-items:center;gap:5px;padding:5px 12px;border-radius:4px;border:1px solid;font-family:inherit;font-size:10px;font-weight:600;cursor:pointer;transition:all .15s;}
+  .btn-ver{background:rgba(243,238,228,0.06);border-color:rgba(243,238,228,0.1);color:rgba(243,238,228,0.6);}
+  .btn-atualizar{background:rgba(204,145,94,0.1);border-color:rgba(204,145,94,0.3);color:var(--gold);}
+  .btn-resultado{background:rgba(204,145,94,0.1);border-color:rgba(204,145,94,0.3);color:var(--gold);font-size:9px;}
+  .btn-resultado.disabled{background:rgba(255,255,255,0.02);color:var(--txt4);cursor:not-allowed;border-color:rgba(255,255,255,0.06);}
+  .btn-submeter{background:rgba(59,130,246,0.12);border-color:rgba(59,130,246,0.3);color:var(--blue);}
+  .btn-submeter:hover{background:rgba(59,130,246,0.2);}
+  .btn-revisar{background:rgba(204,145,94,0.12);border-color:rgba(204,145,94,0.3);color:var(--gold);}
+  .btn-revisar:hover{background:rgba(204,145,94,0.18);}
+  .btn-aprovar{background:rgba(34,197,94,0.12);border-color:rgba(34,197,94,0.3);color:var(--green);}
+  .btn-aprovar:hover{background:rgba(34,197,94,0.2);}
+  .btn-reprovar{background:rgba(239,68,68,0.08);border-color:rgba(239,68,68,0.2);color:var(--red);}
+  .btn-reprovar:hover{background:rgba(239,68,68,0.15);}
+  .btn-salvar{background:rgba(243,238,228,0.08);border-color:rgba(243,238,228,0.15);color:var(--txt1);}
+  .btn-salvar-submeter{background:rgba(59,130,246,0.15);border-color:rgba(59,130,246,0.35);color:var(--blue);}
+  .btn-salvar-submeter:hover{background:rgba(59,130,246,0.25);}
+  .btn-salvar-reenviar{background:rgba(59,130,246,0.15);border-color:rgba(59,130,246,0.35);color:var(--blue);}
+  .actions{display:flex;flex-direction:column;gap:3px;align-items:center;min-width:90px;}
+
+  /* MODAL */
+  .modal-overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,10,20,0.8);z-index:2000;align-items:center;justify-content:center;backdrop-filter:blur(4px);}
+  .modal-overlay.open{display:flex;}
+  .modal{background:#0F1D2F;border:1px solid var(--brd);border-radius:12px;width:580px;max-height:85vh;overflow-y:auto;box-shadow:0 16px 48px rgba(0,0,0,0.5);}
+  .modal-header{display:flex;align-items:center;justify-content:space-between;padding:18px 22px;border-bottom:1px solid var(--brd);}
+  .modal-title{font-size:14px;font-weight:600;color:var(--txt1);}
+  .modal-close{background:none;border:none;color:var(--txt3);cursor:pointer;font-size:20px;}
+  .modal-body{padding:22px;}
+  .modal-footer{padding:16px 22px;border-top:1px solid var(--brd);display:flex;justify-content:flex-end;gap:8px;}
+
+  /* REVIEW MODAL */
+  .review-summary{background:rgba(255,255,255,0.03);border:1px solid var(--brd);border-radius:8px;padding:16px;margin-bottom:16px;}
+  .review-ref{font-size:14px;font-weight:600;color:var(--gold);}
+  .review-desc{font-size:11px;color:var(--txt2);margin-top:4px;}
+  .review-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:12px;}
+  .review-grid-item{background:rgba(255,255,255,0.03);border-radius:6px;padding:8px 12px;}
+  .rgi-label{font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--txt4);}
+  .rgi-value{font-size:12px;font-weight:600;color:var(--txt1);margin-top:2px;}
+  .review-section{margin-top:16px;}
+  .review-section-title{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--txt3);margin-bottom:8px;border-bottom:1px solid var(--brd);padding-bottom:6px;}
+  .review-field{display:flex;justify-content:space-between;padding:5px 0;font-size:11px;}
+  .rf-label{color:var(--txt3);}
+  .rf-value{color:var(--txt1);font-weight:500;max-width:340px;text-align:right;}
+  .review-actions{display:flex;gap:8px;margin-top:20px;padding-top:16px;border-top:1px solid var(--brd);}
+  .review-actions .btn{flex:1;padding:12px;justify-content:center;font-size:12px;border-radius:6px;}
+
+  /* FORMS */
+  .form-label{font-size:10px;font-weight:600;color:var(--txt2);margin-bottom:6px;display:block;}
+  .required{color:var(--red);}
+  textarea{width:100%;min-height:80px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:6px;padding:10px 12px;font-family:inherit;font-size:11px;color:var(--txt1);resize:vertical;outline:none;}
+  textarea:focus{border-color:rgba(204,145,94,0.4);}
+  textarea::placeholder{color:var(--txt4);}
+  .char-count{font-size:9px;color:var(--txt4);text-align:right;margin-top:4px;}
+  select.form-select{width:100%;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:6px;padding:8px 12px;font-family:inherit;font-size:11px;color:var(--txt1);outline:none;cursor:pointer;appearance:none;}
+
+  /* RESULTADO MODAL */
+  .resultado-header{background:rgba(204,145,94,0.06);border:1px solid rgba(204,145,94,0.15);border-radius:8px;padding:14px 16px;margin-bottom:16px;}
+  .resultado-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;}
+  .resultado-field{display:flex;flex-direction:column;gap:4px;}
+  .resultado-field label{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--txt3);}
+  .resultado-radio-group{display:flex;gap:6px;}
+  .resultado-radio{padding:6px 14px;border-radius:4px;border:1px solid var(--brd);background:rgba(255,255,255,0.03);font-size:10px;font-weight:600;color:var(--txt3);cursor:pointer;transition:all .15s;}
+  .resultado-radio.selected-efetivo{border-color:rgba(34,197,94,0.4);background:rgba(34,197,94,0.1);color:var(--green);}
+  .resultado-radio.selected-inefetivo{border-color:rgba(250,204,21,0.4);background:rgba(250,204,21,0.1);color:var(--yellow);}
+  .resultado-radio.selected-gap{border-color:rgba(239,68,68,0.4);background:rgba(239,68,68,0.1);color:var(--red);}
+  .submit-gate{background:rgba(59,130,246,0.05);border:1px solid rgba(59,130,246,0.15);border-radius:8px;padding:14px 16px;margin-top:16px;}
+  .submit-gate-title{font-size:9px;font-weight:700;color:var(--blue);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:8px;}
+  .gate-check{display:flex;align-items:center;gap:8px;padding:3px 0;font-size:10px;color:var(--txt2);}
+  .gate-check .ok{color:var(--green);font-weight:700;}
+  .gate-check .pending{color:var(--txt4);font-weight:700;}
+
+  /* REPROV NOTICE */
+  .reprov-notice{background:rgba(239,68,68,0.06);border:1px solid rgba(239,68,68,0.15);border-radius:8px;padding:14px 16px;margin-bottom:16px;}
+  .rn-header{display:flex;align-items:center;gap:8px;font-size:10px;font-weight:700;color:var(--red);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;}
+  .rn-nota{font-size:11px;color:var(--txt2);line-height:1.6;padding:10px 12px;background:rgba(0,0,0,0.2);border-radius:6px;border-left:3px solid var(--red);}
+  .rn-meta{font-size:9px;color:var(--txt4);margin-top:8px;}
+
+  /* HISTORY */
+  .hist-timeline{position:relative;padding-left:20px;}
+  .hist-timeline::before{content:'';position:absolute;left:6px;top:4px;bottom:4px;width:1px;background:rgba(255,255,255,0.08);}
+  .hist-entry{position:relative;padding:12px 0 12px 12px;}
+  .hist-entry::before{content:'';position:absolute;left:-17px;top:16px;width:9px;height:9px;border-radius:50%;}
+  .hist-entry.submissao::before{background:var(--blue);}
+  .hist-entry.aprovacao::before{background:var(--green);}
+  .hist-entry.reprovacao::before{background:var(--red);}
+  .he-header{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+  .he-tipo{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;}
+  .he-autor{font-size:10px;color:var(--txt3);}
+  .he-fase{font-size:8px;color:var(--gold);background:rgba(204,145,94,0.1);padding:1px 6px;border-radius:3px;font-weight:600;}
+  .he-duration{font-size:8px;color:var(--txt4);background:rgba(255,255,255,0.04);border-radius:3px;padding:1px 6px;font-weight:500;}
+  .he-nota{font-size:11px;color:var(--txt2);margin-top:6px;padding:8px 12px;background:rgba(255,255,255,0.03);border-radius:6px;border-left:3px solid;line-height:1.5;}
+  .hist-entry.reprovacao .he-nota{border-left-color:var(--red);}
+  .hist-entry.aprovacao .he-nota{border-left-color:var(--green);}
+  .he-time{font-size:9px;color:var(--txt4);margin-top:4px;}
+
+  /* VISIBILITY */
+  .perfil-tabs{display:flex;gap:4px;margin-bottom:16px;}
+  .perfil-tab{padding:6px 14px;border-radius:4px;border:1px solid var(--brd);background:transparent;color:var(--txt3);font-family:inherit;font-size:10px;font-weight:600;cursor:pointer;}
+  .perfil-tab.active{border-color:var(--gold);color:var(--gold);background:rgba(204,145,94,0.08);}
+  .vis-note{font-size:10px;color:var(--txt3);padding:10px 14px;background:rgba(255,255,255,0.02);border-radius:6px;margin-bottom:12px;border-left:3px solid var(--gold);line-height:1.6;}
+  .row-hidden{opacity:0.12;}
+
+  .mockup-label{position:fixed;bottom:12px;left:50%;transform:translateX(-50%);font-size:9px;font-weight:600;color:var(--txt4);background:rgba(0,0,0,0.5);padding:4px 14px;border-radius:20px;letter-spacing:1px;text-transform:uppercase;z-index:3000;}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="sb-logo"><div class="sb-logo-text">Polímata · CI</div></div>
+    <nav class="sb-nav">
+      <div class="sb-sep">Dashboards</div>
+      <button class="nav-item">📊 Dashboard</button>
+      <div class="sb-sep">Por Área</div>
+      <button class="nav-item active" style="padding-left:28px;font-size:11px;">› Compras</button>
+      <button class="nav-item" style="padding-left:28px;font-size:11px;opacity:0.4;">› Contabilidade</button>
+      <div class="sb-sep">Operação</div>
+      <button class="nav-item">📋 MRC Completa</button>
+      <div class="sb-sep">Administração</div>
+      <button class="nav-item">⚙️ Configurações</button>
+    </nav>
+    <div class="sb-footer">
+      <div class="sb-user">
+        <div class="sb-user-avatar">J</div>
+        <div><div class="sb-user-nome">Juliana</div><div class="sb-user-papel">Admin Polímata</div></div>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <div>
+        <div class="header-cliente">Brascabos · Controles Internos 2025</div>
+        <div class="header-titulo">Compras</div>
+        <div class="header-sub">38 controles · Peso empresa: 8.5%</div>
+      </div>
+      <button class="notif-btn" onclick="toggleNotifPanel()" title="Notificações">
+        <span class="bell">🔔</span>
+        <span class="notif-badge" id="notifBadge">3</span>
+      </button>
+    </div>
+
+    <div class="demo-tabs">
+      <button class="demo-tab active" onclick="showSection('flow')">Fluxo do Workflow</button>
+      <button class="demo-tab" onclick="showSection('table')">Tabela MRC + Ações</button>
+      <button class="demo-tab" onclick="showSection('modals')">Modais de Ação</button>
+      <button class="demo-tab" onclick="showSection('visibility')">Visibilidade por Perfil</button>
+      <button class="demo-tab" onclick="showSection('phases')">Fases + Aprovação</button>
+    </div>
+
+    <!-- ═══ SECTION 1: FLOW ═══ -->
+    <div id="sec-flow" class="demo-section active">
+      <div class="flow-wrap">
+        <div class="flow-title">Fluxo Completo — Status intermediários + Workflow de Aprovação</div>
+        <div class="flow-steps">
+          <div class="flow-step done"><div class="fs-icon">📝</div><div class="fs-label">Rascunho</div><div class="fs-status" style="color:var(--txt3)">Consultor edita</div></div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step done"><div class="fs-icon">🔍</div><div class="fs-label">Em Análise</div><div class="fs-status" style="color:var(--gold)">Premissas</div></div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step done"><div class="fs-icon">⏳</div><div class="fs-label">Teste Pendente</div><div class="fs-status" style="color:var(--yellow)">Aguarda passos</div></div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step done"><div class="fs-icon">📄</div><div class="fs-label">Ficha Gerada</div><div class="fs-status" style="color:var(--txt1)">Ficha baixada</div></div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step active"><div class="fs-icon">✅</div><div class="fs-label">Resultado<br>Registrado</div><div class="fs-status" style="color:var(--green)">Campos OK</div></div>
+          <div class="flow-arrow" style="font-size:12px;color:var(--gold);">⟹</div>
+          <div class="flow-step" style="border-color:rgba(59,130,246,0.3);background:rgba(59,130,246,0.05);"><div class="fs-icon">📤</div><div class="fs-label">Em Revisão</div><div class="fs-status" style="color:var(--blue)">Admin revisa</div></div>
+          <div class="flow-arrow">→</div>
+          <div style="display:flex;flex-direction:column;gap:6px;">
+            <div class="flow-step" style="border-color:rgba(34,197,94,0.3);background:rgba(34,197,94,0.05);"><div class="fs-icon">✅</div><div class="fs-label">Aprovado</div><div class="fs-status" style="color:var(--green)">Avança fase</div></div>
+            <div class="flow-step" style="border-color:rgba(239,68,68,0.3);background:rgba(239,68,68,0.05);"><div class="fs-icon">↩️</div><div class="fs-label">Reprovado</div><div class="fs-status" style="color:var(--red)">Volta ao consultor</div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="flow-wrap">
+        <div class="flow-title">Condições para Submissão (Gate) — dentro do Modal Registrar Resultado</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;">
+          <div style="background:rgba(34,197,94,0.04);border:1px solid rgba(34,197,94,0.1);border-radius:8px;padding:14px;">
+            <div style="font-size:14px;margin-bottom:4px;">📄</div>
+            <div style="font-size:10px;font-weight:700;color:var(--green);margin-bottom:4px;">Ficha Baixada</div>
+            <div style="font-size:9px;color:var(--txt3);line-height:1.5;">Ficha de risco gerada e baixada.</div>
+          </div>
+          <div style="background:rgba(34,197,94,0.04);border:1px solid rgba(34,197,94,0.1);border-radius:8px;padding:14px;">
+            <div style="font-size:14px;margin-bottom:4px;">✅</div>
+            <div style="font-size:10px;font-weight:700;color:var(--green);margin-bottom:4px;">Resultado do Teste</div>
+            <div style="font-size:9px;color:var(--txt3);line-height:1.5;">Efetivo, Inefetivo ou GAP registrado.</div>
+          </div>
+          <div style="background:rgba(34,197,94,0.04);border:1px solid rgba(34,197,94,0.1);border-radius:8px;padding:14px;">
+            <div style="font-size:14px;margin-bottom:4px;">📋</div>
+            <div style="font-size:10px;font-weight:700;color:var(--green);margin-bottom:4px;">Campos Obrigatórios</div>
+            <div style="font-size:9px;color:var(--txt3);line-height:1.5;">Inconsistência (se Inefetivo/GAP), criticidade, etc.</div>
+          </div>
+        </div>
+        <div style="margin-top:10px;font-size:9px;color:var(--txt4);text-align:center;">O botão "Salvar e Submeter para Revisão" aparece <strong style="color:var(--txt2);">dentro do Modal Registrar Resultado</strong>, ao lado do "Salvar". Sem botão externo na tabela.</div>
+      </div>
+
+      <div class="flow-wrap">
+        <div class="flow-title">Regras</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <div style="background:rgba(59,130,246,0.04);border:1px solid rgba(59,130,246,0.1);border-radius:8px;padding:14px;">
+            <div style="font-size:10px;font-weight:700;color:var(--blue);margin-bottom:6px;">📤 Submissão</div>
+            <div style="font-size:10px;color:var(--txt2);line-height:1.6;">Dentro do modal, consultor clica "Salvar e Submeter". Controle bloqueado para edição. Admin notificado no sistema + email.</div>
+          </div>
+          <div style="background:rgba(34,197,94,0.04);border:1px solid rgba(34,197,94,0.1);border-radius:8px;padding:14px;">
+            <div style="font-size:10px;font-weight:700;color:var(--green);margin-bottom:6px;">✅ Aprovação</div>
+            <div style="font-size:10px;color:var(--txt2);line-height:1.6;">Controle avança para a próxima fase da Trilha de Desenvolvimento. Novo ciclo de workflow inicia.</div>
+          </div>
+          <div style="background:rgba(239,68,68,0.04);border:1px solid rgba(239,68,68,0.1);border-radius:8px;padding:14px;">
+            <div style="font-size:10px;font-weight:700;color:var(--red);margin-bottom:6px;">↩ Reprovação</div>
+            <div style="font-size:10px;color:var(--txt2);line-height:1.6;">Nota obrigatória. Consultor vê nota no topo ao reabrir. Pode editar e clicar "Salvar e Reenviar para Revisão".</div>
+          </div>
+          <div style="background:rgba(204,145,94,0.04);border:1px solid rgba(204,145,94,0.1);border-radius:8px;padding:14px;">
+            <div style="font-size:10px;font-weight:700;color:var(--gold);margin-bottom:6px;">🔄 Ciclo por Fase</div>
+            <div style="font-size:10px;color:var(--txt2);line-height:1.6;">Cada fase tem seu próprio ciclo de aprovação. Aprovado no Diagnóstico Inicial → abre Plano de Ação e Teste de Desenho.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ SECTION 2: TABLE ═══ -->
+    <div id="sec-table" class="demo-section">
+      <div style="background:rgba(255,255,255,0.02);border:1px solid var(--brd);border-radius:8px;padding:12px 16px;margin-bottom:12px;">
+        <div style="font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--txt4);margin-bottom:8px;">Legenda — Botões por status (visão admin/consultor)</div>
+        <div style="display:flex;gap:14px;flex-wrap:wrap;font-size:10px;color:var(--txt2);">
+          <div><strong style="color:var(--txt1);">Ver</strong> — sempre</div>
+          <div><strong style="color:var(--gold);">Atualizar</strong> — editável (rascunho/reprovado)</div>
+          <div><strong style="color:var(--gold);">Resultado</strong> — após ficha gerada (submissão é dentro desse modal)</div>
+          <div><strong style="color:var(--gold);">Revisar</strong> — só admin, quando em revisão</div>
+          <div><strong style="color:var(--txt2);">Histórico</strong> — quando tem revisões</div>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <div class="table-header"><div class="table-title">MRC — Compras · Visão Admin</div></div>
+        <div style="overflow-x:auto;">
+          <table>
+            <thead><tr>
+              <th>Ref.</th><th>Desc. Controle</th><th>Resultado</th><th>Fase Atual</th><th>Status</th><th style="text-align:center;">Ações</th>
+            </tr></thead>
+            <tbody>
+              <tr>
+                <td style="color:var(--gold);font-weight:600;">C.COM.01</td>
+                <td>Validação de orçamento acima de R$50k</td>
+                <td>—</td>
+                <td><div class="phase-badge">Diagnóstico Inicial</div></td>
+                <td><span class="badge badge-rascunho">Rascunho</span></td>
+                <td><div class="actions">
+                  <button class="btn btn-ver" style="width:100%;justify-content:center;">Ver</button>
+                  <button class="btn btn-atualizar" style="width:100%;justify-content:center;">Atualizar</button>
+                </div></td>
+              </tr>
+              <tr>
+                <td style="color:var(--gold);font-weight:600;">C.COM.02</td>
+                <td>Aprovação de fornecedor homologado</td>
+                <td>—</td>
+                <td><div class="phase-badge">Diagnóstico Inicial</div></td>
+                <td><span class="badge badge-ficha-gerada">Ficha Gerada</span></td>
+                <td><div class="actions">
+                  <button class="btn btn-ver" style="width:100%;justify-content:center;">Ver</button>
+                  <button class="btn btn-resultado" style="width:100%;justify-content:center;" onclick="openModal('modal-resultado')">Resultado</button>
+                </div></td>
+              </tr>
+              <tr>
+                <td style="color:var(--gold);font-weight:600;">C.COM.03</td>
+                <td>Conferência de NF vs pedido de compra</td>
+                <td><span class="badge badge-inefetivo">Inefetivo</span></td>
+                <td><div class="phase-badge">Diagnóstico Inicial</div></td>
+                <td><span class="badge badge-em-revisao">Em Revisão</span></td>
+                <td><div class="actions">
+                  <button class="btn btn-ver" style="width:100%;justify-content:center;">Ver</button>
+                  <button class="btn btn-revisar" style="width:100%;justify-content:center;" onclick="openModal('modal-revisar')">🔍 Revisar</button>
+                </div></td>
+              </tr>
+              <tr>
+                <td style="color:var(--gold);font-weight:600;">C.COM.04</td>
+                <td>Segregação comprador / aprovador</td>
+                <td><span class="badge badge-efetivo">Efetivo</span></td>
+                <td><div class="phase-badge">Plano de Ação e Teste de Desenho<div class="pb-sub">Aprovado no Diagnóstico Inicial</div></div></td>
+                <td><span class="badge badge-rascunho">Rascunho</span></td>
+                <td><div class="actions">
+                  <button class="btn btn-ver" style="width:100%;justify-content:center;">Ver</button>
+                  <button class="btn btn-atualizar" style="width:100%;justify-content:center;">Atualizar</button>
+                  <button class="btn btn-ver" style="width:100%;justify-content:center;font-size:9px;" onclick="openModal('modal-historico')">📋 Histórico</button>
+                </div></td>
+              </tr>
+              <tr>
+                <td style="color:var(--gold);font-weight:600;">C.COM.05</td>
+                <td>Cotação com mín. 3 fornecedores</td>
+                <td><span class="badge badge-gap">GAP</span></td>
+                <td><div class="phase-badge">Diagnóstico Inicial</div></td>
+                <td><span class="badge badge-reprovado">Reprovado</span></td>
+                <td><div class="actions">
+                  <button class="btn btn-ver" style="width:100%;justify-content:center;">Ver</button>
+                  <button class="btn btn-atualizar" style="width:100%;justify-content:center;" onclick="openModal('modal-reprov-notice')">Atualizar</button>
+                  <button class="btn btn-ver" style="width:100%;justify-content:center;font-size:9px;" onclick="openModal('modal-historico')">📋 Histórico</button>
+                </div></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ SECTION 3: MODALS ═══ -->
+    <div id="sec-modals" class="demo-section">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <button class="btn btn-resultado" style="padding:16px;justify-content:center;font-size:11px;" onclick="openModal('modal-resultado')">✅ Registrar Resultado (com Submeter dentro)</button>
+        <button class="btn btn-revisar" style="padding:16px;justify-content:center;font-size:11px;" onclick="openModal('modal-revisar')">🔍 Modal do Revisor (Único)</button>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-top:8px;">
+        <button class="btn btn-aprovar" style="padding:14px;justify-content:center;font-size:11px;" onclick="openModal('modal-aprovar')">✅ Aprovar</button>
+        <button class="btn btn-reprovar" style="padding:14px;justify-content:center;font-size:11px;" onclick="openModal('modal-reprovar')">↩ Reprovar</button>
+        <button class="btn btn-ver" style="padding:14px;justify-content:center;font-size:11px;" onclick="openModal('modal-historico')">📋 Histórico</button>
+      </div>
+      <div style="margin-top:8px;">
+        <button class="btn btn-reprovar" style="padding:14px;width:100%;justify-content:center;font-size:11px;border-color:rgba(239,68,68,0.15);" onclick="openModal('modal-reprov-notice')">↩ Visão consultor: controle reprovado (com Reenviar)</button>
+      </div>
+    </div>
+
+    <!-- ═══ SECTION 4: VISIBILITY ═══ -->
+    <div id="sec-visibility" class="demo-section">
+      <div class="perfil-tabs">
+        <button class="perfil-tab active" onclick="switchPerfil(this,'admin')">Admin Polímata</button>
+        <button class="perfil-tab" onclick="switchPerfil(this,'consultor')">Consultor</button>
+        <button class="perfil-tab" onclick="switchPerfil(this,'gestor')">Gestor Cliente</button>
+        <button class="perfil-tab" onclick="switchPerfil(this,'usuario')">Usuário Cliente</button>
+      </div>
+      <div class="vis-note" id="visNote"><strong>Admin Polímata:</strong> vê todos os status detalhados, pode revisar, aprovar e reprovar. Vê histórico completo.</div>
+      <div class="table-wrap"><div style="overflow-x:auto;">
+        <table>
+          <thead><tr><th>Ref.</th><th>Desc. Controle</th><th>Resultado</th><th id="visPhaseHeader">Fase Atual</th><th id="visStatusHeader">Status</th><th>Visível?</th></tr></thead>
+          <tbody id="visTable">
+            <tr id="vis-r1">
+              <td style="color:var(--gold);font-weight:600;">C.COM.01</td><td>Validação de orçamento</td><td>—</td>
+              <td id="vis-r1-phase"><div class="phase-badge">Diagnóstico Inicial</div></td>
+              <td id="vis-r1-status"><span class="badge badge-rascunho">Rascunho</span></td>
+              <td id="vis-r1-vis"><span style="color:var(--green);">✓ Visível</span></td>
+            </tr>
+            <tr id="vis-r2">
+              <td style="color:var(--gold);font-weight:600;">C.COM.02</td><td>Aprovação de fornecedor</td><td><span class="badge badge-inefetivo">Inefetivo</span></td>
+              <td id="vis-r2-phase"><div class="phase-badge">Diagnóstico Inicial</div></td>
+              <td id="vis-r2-status"><span class="badge badge-em-revisao">Em Revisão</span></td>
+              <td id="vis-r2-vis"><span style="color:var(--green);">✓ Visível</span></td>
+            </tr>
+            <tr id="vis-r3">
+              <td style="color:var(--gold);font-weight:600;">C.COM.03</td><td>Conferência NF vs pedido</td><td><span class="badge badge-efetivo">Efetivo</span></td>
+              <td id="vis-r3-phase"><div class="phase-badge">Plano de Ação e Teste de Desenho</div></td>
+              <td id="vis-r3-status"><span class="badge badge-aprovado">Aprovado</span></td>
+              <td id="vis-r3-vis"><span style="color:var(--green);">✓ Visível</span></td>
+            </tr>
+            <tr id="vis-r4">
+              <td style="color:var(--gold);font-weight:600;">C.COM.04</td><td>Segregação comprador/aprovador</td><td><span class="badge badge-gap">GAP</span></td>
+              <td id="vis-r4-phase"><div class="phase-badge">Diagnóstico Inicial</div></td>
+              <td id="vis-r4-status"><span class="badge badge-reprovado">Reprovado</span></td>
+              <td id="vis-r4-vis"><span style="color:var(--green);">✓ Visível</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div></div>
+    </div>
+
+    <!-- ═══ SECTION 5: PHASES + APPROVAL ═══ -->
+    <div id="sec-phases" class="demo-section">
+
+      <!-- BLOCO 1: Visão geral da Trilha -->
+      <div class="flow-wrap">
+        <div class="flow-title">Trilha de Desenvolvimento — Cada fase tem seu ciclo de aprovação</div>
+        <div style="display:flex;flex-direction:column;gap:12px;">
+
+          <!-- DIAGNÓSTICO INICIAL — EXPANDIDO COM CICLO COMPLETO -->
+          <div style="display:flex;align-items:stretch;gap:10px;">
+            <div style="min-width:3px;background:#00203E;border-radius:2px;flex-shrink:0;"></div>
+            <div style="flex:1;background:rgba(0,32,62,0.3);border:1px solid rgba(0,32,62,0.5);border-radius:8px;padding:14px 16px;">
+              <div style="display:flex;align-items:center;justify-content:space-between;">
+                <div><div style="font-size:12px;font-weight:700;color:var(--txt1);">Diagnóstico Inicial</div><div style="font-size:9px;color:var(--txt3);margin-top:2px;">Avaliação binária: o controle existe ou não</div></div>
+                <div style="font-size:9px;color:var(--txt3);">Peso: 10% (fixo por área)</div>
+              </div>
+
+              <!-- CICLO COMPLETO COM REPROVAÇÃO -->
+              <div style="margin-top:12px;background:rgba(0,0,0,0.2);border:1px solid rgba(255,255,255,0.05);border-radius:8px;padding:14px;">
+                <div style="font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--txt4);margin-bottom:10px;">Ciclo completo desta fase (exemplo detalhado)</div>
+
+                <!-- Caminho feliz -->
+                <div style="display:flex;gap:4px;align-items:center;font-size:9px;color:var(--txt2);flex-wrap:wrap;margin-bottom:8px;">
+                  <span class="badge badge-rascunho">Rascunho</span><span style="color:var(--txt4);">→</span>
+                  <span style="color:var(--txt3);">consultor preenche</span><span style="color:var(--txt4);">→</span>
+                  <span style="color:var(--txt3);">resultado + ficha</span><span style="color:var(--txt4);">→</span>
+                  <span class="badge" style="background:rgba(59,130,246,0.15);color:var(--blue);">Em Revisão</span><span style="color:var(--txt4);">→</span>
+                  <span class="badge badge-aprovado">Aprovado</span><span style="color:var(--txt4);">→</span>
+                  <strong style="color:var(--green);">Avança p/ próxima fase ▼</strong>
+                </div>
+
+                <!-- Separador -->
+                <div style="border-top:1px dashed rgba(239,68,68,0.25);margin:10px 0;"></div>
+
+                <!-- Caminho de reprovação -->
+                <div style="font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--red);margin-bottom:8px;">↩ Quando o admin reprova</div>
+
+                <div style="display:flex;flex-direction:column;gap:8px;">
+                  <!-- Passo 1: Admin reprova -->
+                  <div style="display:flex;gap:10px;align-items:flex-start;">
+                    <div style="min-width:20px;height:20px;border-radius:50%;background:rgba(239,68,68,0.15);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:var(--red);flex-shrink:0;">1</div>
+                    <div>
+                      <div style="font-size:10px;font-weight:600;color:var(--txt1);">Admin reprova com nota obrigatória</div>
+                      <div style="font-size:9px;color:var(--txt3);margin-top:2px;">Status muda de <span class="badge" style="background:rgba(59,130,246,0.15);color:var(--blue);font-size:8px;">Em Revisão</span> para <span class="badge badge-reprovado" style="font-size:8px;">Reprovado</span></div>
+                      <div style="font-size:9px;color:var(--txt3);margin-top:2px;">Consultor recebe notificação (sistema + email) com o motivo</div>
+                    </div>
+                  </div>
+                  <!-- Passo 2: Consultor edita -->
+                  <div style="display:flex;gap:10px;align-items:flex-start;">
+                    <div style="min-width:20px;height:20px;border-radius:50%;background:rgba(249,115,22,0.15);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:var(--orange);flex-shrink:0;">2</div>
+                    <div>
+                      <div style="font-size:10px;font-weight:600;color:var(--txt1);">Consultor abre o controle e vê a nota de reprovação</div>
+                      <div style="font-size:9px;color:var(--txt3);margin-top:2px;">Pode editar todos os campos da análise (resultado, inconsistência, recomendação, etc.)</div>
+                      <div style="font-size:9px;color:var(--txt3);margin-top:2px;">O controle <strong>permanece na mesma fase</strong> — não regride nem avança</div>
+                    </div>
+                  </div>
+                  <!-- Passo 3: Resubmete -->
+                  <div style="display:flex;gap:10px;align-items:flex-start;">
+                    <div style="min-width:20px;height:20px;border-radius:50%;background:rgba(59,130,246,0.15);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:var(--blue);flex-shrink:0;">3</div>
+                    <div>
+                      <div style="font-size:10px;font-weight:600;color:var(--txt1);">Consultor clica "Salvar e Reenviar para Revisão"</div>
+                      <div style="font-size:9px;color:var(--txt3);margin-top:2px;">Status muda de <span class="badge badge-reprovado" style="font-size:8px;">Reprovado</span> para <span class="badge" style="background:rgba(59,130,246,0.15);color:var(--blue);font-size:8px;">Em Revisão</span></div>
+                      <div style="font-size:9px;color:var(--txt3);margin-top:2px;">Admin recebe nova notificação de submissão</div>
+                    </div>
+                  </div>
+                  <!-- Passo 4: Admin decide de novo -->
+                  <div style="display:flex;gap:10px;align-items:flex-start;">
+                    <div style="min-width:20px;height:20px;border-radius:50%;background:rgba(204,145,94,0.2);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:var(--gold);flex-shrink:0;">4</div>
+                    <div>
+                      <div style="font-size:10px;font-weight:600;color:var(--txt1);">Admin revisa novamente → Aprovar ou Reprovar</div>
+                      <div style="font-size:9px;color:var(--txt3);margin-top:2px;">Se <span style="color:var(--green);font-weight:600;">aprovar</span>: controle avança para a próxima fase (status_workflow reseta para Rascunho na nova fase)</div>
+                      <div style="font-size:9px;color:var(--txt3);margin-top:2px;">Se <span style="color:var(--red);font-weight:600;">reprovar novamente</span>: volta ao passo 1. O ciclo se repete sem limite de tentativas</div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Loop visual -->
+                <div style="margin-top:12px;background:rgba(239,68,68,0.04);border:1px solid rgba(239,68,68,0.1);border-radius:6px;padding:10px 14px;">
+                  <div style="display:flex;gap:4px;align-items:center;font-size:9px;color:var(--txt2);flex-wrap:wrap;">
+                    <span class="badge" style="background:rgba(59,130,246,0.15);color:var(--blue);">Em Revisão</span>
+                    <span style="color:var(--red);">→ ↩ Reprovado →</span>
+                    <span style="color:var(--orange);">consultor edita →</span>
+                    <span style="color:var(--blue);">resubmete →</span>
+                    <span class="badge" style="background:rgba(59,130,246,0.15);color:var(--blue);">Em Revisão</span>
+                    <span style="color:var(--red);">→ ↩ Reprovado →</span>
+                    <span style="color:var(--txt4);">... (repete)</span>
+                    <span style="color:var(--txt4);">→</span>
+                    <span class="badge badge-aprovado">Aprovado</span>
+                    <span style="color:var(--green);">→ Avança ▼</span>
+                  </div>
+                  <div style="font-size:8px;color:var(--txt4);margin-top:6px;">O loop reprovação → edição → resubmissão pode ocorrer quantas vezes for necessário. Cada iteração fica registrada no histórico com fase, data e nota.</div>
+                </div>
+              </div>
+
+              <!-- Regras durante reprovação -->
+              <div style="margin-top:10px;display:flex;flex-direction:column;gap:4px;">
+                <div style="font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--txt4);">Regras durante reprovação</div>
+                <div style="font-size:9px;color:var(--txt3);line-height:1.5;">
+                  <span style="color:var(--red);">●</span> Controle reprovado <strong>NÃO entra no cálculo de maturidade</strong> (contribui 0%)<br>
+                  <span style="color:var(--red);">●</span> Cliente vê o controle como <span class="badge badge-cli-analise" style="font-size:8px;">Em Análise</span> — nunca vê "Reprovado"<br>
+                  <span style="color:var(--red);">●</span> Somente o consultor que submeteu (e o admin) veem a nota de reprovação<br>
+                  <span style="color:var(--red);">●</span> Consultor pode "Salvar Alterações" sem reenviar (mantém status Reprovado para continuar editando depois)
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- DEMAIS FASES — Resumidas (mesmo ciclo) -->
+          <div style="background:rgba(255,255,255,0.02);border:1px solid var(--brd);border-radius:8px;padding:10px 14px;margin:4px 0;">
+            <div style="font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--gold);text-align:center;">Todas as fases abaixo seguem o mesmo ciclo de aprovação (com loop de reprovação) mostrado acima</div>
+          </div>
+
+          <div style="display:flex;align-items:stretch;gap:10px;">
+            <div style="min-width:3px;background:#1D3B5C;border-radius:2px;flex-shrink:0;"></div>
+            <div style="flex:1;background:rgba(29,59,92,0.2);border:1px solid rgba(29,59,92,0.4);border-radius:8px;padding:14px 16px;">
+              <div style="display:flex;align-items:center;justify-content:space-between;">
+                <div><div style="font-size:12px;font-weight:700;color:var(--txt1);">Plano de Ação e Teste de Desenho</div><div style="font-size:9px;color:var(--txt3);margin-top:2px;">Plano de ação + teste de desenho (amostra=1)</div></div>
+                <div style="font-size:9px;color:var(--txt3);">Peso: 12.5%</div>
+              </div>
+              <div style="margin-top:8px;display:flex;gap:6px;align-items:center;font-size:9px;color:var(--txt2);flex-wrap:wrap;">
+                <span class="badge badge-rascunho">Rascunho</span>→ análise → resultado → <span class="badge" style="background:rgba(59,130,246,0.15);color:var(--blue);">Revisão</span>→ <span style="color:var(--green);">Aprovado</span> ou <span style="color:var(--red);">↩ Reprovado (loop)</span> → <strong style="color:var(--green);">Avança ▼</strong>
+              </div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:stretch;gap:10px;">
+            <div style="min-width:3px;background:#1D3B5C;border-radius:2px;flex-shrink:0;"></div>
+            <div style="flex:1;background:rgba(29,59,92,0.2);border:1px solid rgba(29,59,92,0.4);border-radius:8px;padding:14px 16px;">
+              <div style="display:flex;align-items:center;justify-content:space-between;">
+                <div><div style="font-size:12px;font-weight:700;color:var(--txt1);">Teste de Aderência</div><div style="font-size:9px;color:var(--txt3);margin-top:2px;">Teste com amostra maior, valida aderência no dia a dia</div></div>
+                <div style="font-size:9px;color:var(--txt3);">Peso: 12.5%</div>
+              </div>
+              <div style="margin-top:8px;display:flex;gap:6px;align-items:center;font-size:9px;color:var(--txt2);flex-wrap:wrap;">
+                <span class="badge badge-rascunho">Rascunho</span>→ análise → resultado → <span class="badge" style="background:rgba(59,130,246,0.15);color:var(--blue);">Revisão</span>→ <span style="color:var(--green);">Aprovado</span> ou <span style="color:var(--red);">↩ Reprovado (loop)</span> → <strong style="color:var(--green);">Avança ▼</strong>
+              </div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:stretch;gap:10px;">
+            <div style="min-width:3px;background:#660033;border-radius:2px;flex-shrink:0;"></div>
+            <div style="flex:1;background:rgba(102,0,51,0.15);border:1px solid rgba(102,0,51,0.3);border-radius:8px;padding:14px 16px;">
+              <div style="display:flex;align-items:center;justify-content:space-between;">
+                <div><div style="font-size:12px;font-weight:700;color:var(--txt1);">Controles Internos</div><div style="font-size:9px;color:var(--txt3);margin-top:2px;">Revisão de criticidade + validação dos controles</div></div>
+                <div style="font-size:9px;color:var(--txt3);">Peso: 25%</div>
+              </div>
+              <div style="margin-top:8px;display:flex;gap:6px;align-items:center;font-size:9px;color:var(--txt2);flex-wrap:wrap;">
+                <span class="badge badge-rascunho">Rascunho</span>→ análise → resultado → <span class="badge" style="background:rgba(59,130,246,0.15);color:var(--blue);">Revisão</span>→ <span style="color:var(--green);">Aprovado</span> ou <span style="color:var(--red);">↩ Reprovado (loop)</span> → <strong style="color:var(--green);">Avança ▼</strong>
+              </div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:stretch;gap:10px;">
+            <div style="min-width:3px;background:#660066;border-radius:2px;flex-shrink:0;"></div>
+            <div style="flex:1;background:rgba(102,0,102,0.12);border:1px solid rgba(102,0,102,0.3);border-radius:8px;padding:14px 16px;">
+              <div style="display:flex;align-items:center;justify-content:space-between;">
+                <div><div style="font-size:12px;font-weight:700;color:var(--txt1);">Auditoria Contínua</div><div style="font-size:9px;color:var(--txt3);margin-top:2px;">Dois ciclos de auditoria (C1 + C2)</div></div>
+                <div style="font-size:9px;color:var(--txt3);">Peso: 30% (15% + 15%)</div>
+              </div>
+              <div style="margin-top:8px;display:flex;gap:6px;align-items:center;font-size:9px;color:var(--txt2);flex-wrap:wrap;">
+                Mesmo ciclo de aprovação (com loop de reprovação) para cada ciclo (C1 e C2)
+              </div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:stretch;gap:10px;">
+            <div style="min-width:3px;background:#A6512F;border-radius:2px;flex-shrink:0;"></div>
+            <div style="flex:1;background:rgba(166,81,47,0.12);border:1px solid rgba(166,81,47,0.3);border-radius:8px;padding:14px 16px;">
+              <div style="display:flex;align-items:center;justify-content:space-between;">
+                <div><div style="font-size:12px;font-weight:700;color:var(--txt1);">Auditoria Independente</div><div style="font-size:9px;color:var(--txt3);margin-top:2px;">Validação externa</div></div>
+                <div style="font-size:9px;color:var(--txt3);">Peso: 10%</div>
+              </div>
+              <div style="margin-top:8px;display:flex;gap:6px;align-items:center;font-size:9px;color:var(--txt2);flex-wrap:wrap;">
+                <span class="badge badge-rascunho">Rascunho</span>→ análise → resultado → <span class="badge" style="background:rgba(59,130,246,0.15);color:var(--blue);">Revisão</span>→ <span style="color:var(--green);">Aprovado</span> ou <span style="color:var(--red);">↩ Reprovado (loop)</span> → <strong style="color:var(--green);">100% Maturidade</strong>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- BLOCO 2: Evolução na Trilha — Efetivo vs Inefetivo/GAP -->
+      <div class="flow-wrap" style="margin-top:16px;">
+        <div class="flow-title">Evolução na Trilha de Desenvolvimento — O que acontece com o resultado do teste</div>
+
+        <!-- ═══ CAMINHO A: F1 EFETIVO (ATALHO) ═══ -->
+        <div style="background:rgba(34,197,94,0.04);border:1px solid rgba(34,197,94,0.12);border-radius:8px;padding:14px 16px;margin-bottom:14px;">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+            <div style="font-size:11px;font-weight:700;color:var(--green);">Caminho A — F1 Efetivo (Atalho)</div>
+            <span style="font-size:8px;color:var(--txt3);font-style:italic;">O controle já existe e funciona</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:0;flex-wrap:wrap;">
+            <div style="background:rgba(0,32,62,0.5);border:1px solid #00203E;border-radius:6px;padding:6px 10px;text-align:center;">
+              <div style="font-size:8px;font-weight:700;color:var(--txt3);">F1</div>
+              <div style="font-size:9px;font-weight:600;color:var(--txt1);">Diagnóstico Inicial</div>
+              <div style="font-size:8px;color:var(--green);font-weight:600;margin-top:2px;">✓ Efetivo</div>
+            </div>
+            <div style="padding:0 6px;font-size:11px;color:var(--green);">⚡→</div>
+            <div style="background:rgba(29,59,92,0.15);border:1px dashed rgba(29,59,92,0.3);border-radius:6px;padding:6px 10px;text-align:center;opacity:0.4;">
+              <div style="font-size:8px;font-weight:700;color:var(--txt4);">F2</div>
+              <div style="font-size:9px;color:var(--txt4);text-decoration:line-through;">Plano de Ação + Aderência</div>
+              <div style="font-size:8px;color:var(--green);font-weight:600;margin-top:2px;">PULOU (25% auto)</div>
+            </div>
+            <div style="padding:0 6px;font-size:11px;color:var(--green);">→</div>
+            <div style="background:rgba(102,0,51,0.15);border:1px solid rgba(102,0,51,0.3);border-radius:6px;padding:6px 10px;text-align:center;">
+              <div style="font-size:8px;font-weight:700;color:var(--txt3);">F3</div>
+              <div style="font-size:9px;font-weight:600;color:var(--txt1);">Controles Internos</div>
+              <div style="font-size:8px;color:var(--gold);margin-top:2px;">Próximo teste aqui</div>
+            </div>
+            <div style="padding:0 6px;font-size:11px;color:var(--txt4);">→</div>
+            <div style="background:rgba(102,0,102,0.08);border:1px solid rgba(102,0,102,0.2);border-radius:6px;padding:6px 10px;text-align:center;opacity:0.5;">
+              <div style="font-size:8px;font-weight:700;color:var(--txt4);">F4</div>
+              <div style="font-size:9px;color:var(--txt4);">Auditoria Contínua</div>
+            </div>
+            <div style="padding:0 6px;font-size:11px;color:var(--txt4);">→</div>
+            <div style="background:rgba(166,81,47,0.08);border:1px solid rgba(166,81,47,0.2);border-radius:6px;padding:6px 10px;text-align:center;opacity:0.5;">
+              <div style="font-size:8px;font-weight:700;color:var(--txt4);">F5</div>
+              <div style="font-size:9px;color:var(--txt4);">Auditoria Independente</div>
+            </div>
+          </div>
+          <div style="margin-top:8px;font-size:9px;color:var(--txt3);line-height:1.5;">
+            <strong style="color:var(--green);">Atalho:</strong> Quando o Diagnóstico Inicial é Efetivo, o controle pula a F2 inteira (Plano de Ação e Teste de Aderência) e ganha os 25% automaticamente. Vai direto para Controles Internos (F3).
+          </div>
+        </div>
+
+        <!-- ═══ CAMINHO B: F1 INEFETIVO/GAP (NORMAL) ═══ -->
+        <div style="background:rgba(249,115,22,0.04);border:1px solid rgba(249,115,22,0.12);border-radius:8px;padding:14px 16px;margin-bottom:14px;">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+            <div style="font-size:11px;font-weight:700;color:var(--orange);">Caminho B — F1 Inefetivo ou GAP (Normal)</div>
+            <span style="font-size:8px;color:var(--txt3);font-style:italic;">O controle não existe ou tem falhas</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:0;flex-wrap:wrap;">
+            <div style="background:rgba(0,32,62,0.5);border:1px solid #00203E;border-radius:6px;padding:6px 10px;text-align:center;">
+              <div style="font-size:8px;font-weight:700;color:var(--txt3);">F1</div>
+              <div style="font-size:9px;font-weight:600;color:var(--txt1);">Diagnóstico Inicial</div>
+              <div style="font-size:8px;color:var(--orange);font-weight:600;margin-top:2px;">✗ Inefetivo</div>
+            </div>
+            <div style="padding:0 6px;font-size:11px;color:var(--orange);">→</div>
+            <div style="background:rgba(29,59,92,0.3);border:1px solid rgba(29,59,92,0.5);border-radius:6px;padding:6px 10px;text-align:center;">
+              <div style="font-size:8px;font-weight:700;color:var(--txt3);">F2-E1</div>
+              <div style="font-size:9px;font-weight:600;color:var(--txt1);">Plano de Ação e Teste de Desenho</div>
+              <div style="font-size:8px;color:var(--gold);margin-top:2px;">PA + teste amostra=1</div>
+            </div>
+            <div style="padding:0 6px;font-size:11px;color:var(--txt4);">→</div>
+            <div style="background:rgba(29,59,92,0.3);border:1px solid rgba(29,59,92,0.5);border-radius:6px;padding:6px 10px;text-align:center;">
+              <div style="font-size:8px;font-weight:700;color:var(--txt3);">F2-E2</div>
+              <div style="font-size:9px;font-weight:600;color:var(--txt1);">Teste de Aderência</div>
+              <div style="font-size:8px;color:var(--gold);margin-top:2px;">Amostra maior</div>
+            </div>
+            <div style="padding:0 6px;font-size:11px;color:var(--txt4);">→</div>
+            <div style="background:rgba(102,0,51,0.15);border:1px solid rgba(102,0,51,0.3);border-radius:6px;padding:6px 10px;text-align:center;opacity:0.5;">
+              <div style="font-size:8px;font-weight:700;color:var(--txt4);">F3</div>
+              <div style="font-size:9px;color:var(--txt4);">Controles Internos</div>
+            </div>
+            <div style="padding:0 6px;font-size:11px;color:var(--txt4);">→</div>
+            <div style="font-size:9px;color:var(--txt4);">F4 → F5</div>
+          </div>
+          <div style="margin-top:8px;font-size:9px;color:var(--txt3);line-height:1.5;">
+            <strong style="color:var(--orange);">Caminho completo:</strong> Quando F1 é Inefetivo ou GAP, o controle precisa passar por todas as etapas: Plano de Ação (F2-E1), Teste de Aderência (F2-E2), só depois Controles Internos (F3). Sem atalho.
+          </div>
+        </div>
+
+        <!-- ═══ REGRESSÃO ═══ -->
+        <div style="background:rgba(239,68,68,0.04);border:1px solid rgba(239,68,68,0.12);border-radius:8px;padding:14px 16px;margin-bottom:14px;">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+            <div style="font-size:11px;font-weight:700;color:var(--red);">Regressão — Inefetivo/GAP a partir da F2-E2</div>
+            <span style="font-size:8px;color:var(--txt3);font-style:italic;">Teste falha em fase avançada → volta ao início</span>
+          </div>
+
+          <!-- Exemplo 1: Regressão na F3 (após atalho) -->
+          <div style="background:rgba(0,0,0,0.2);border:1px solid rgba(255,255,255,0.05);border-radius:6px;padding:12px;margin-bottom:10px;">
+            <div style="font-size:9px;font-weight:700;color:var(--red);margin-bottom:8px;">Exemplo: Efetivo na F1, mas Inefetivo na F3</div>
+            <div style="display:flex;align-items:center;gap:0;flex-wrap:wrap;">
+              <div style="border:1px solid rgba(34,197,94,0.3);border-radius:6px;padding:4px 8px;text-align:center;">
+                <div style="font-size:8px;color:var(--txt3);">F1</div>
+                <div style="font-size:8px;color:var(--green);">✓ Efetivo</div>
+              </div>
+              <div style="padding:0 4px;font-size:9px;color:var(--green);">⚡→</div>
+              <div style="border:1px dashed rgba(255,255,255,0.1);border-radius:6px;padding:4px 8px;text-align:center;opacity:0.4;">
+                <div style="font-size:8px;color:var(--txt4);">F2</div>
+                <div style="font-size:8px;color:var(--txt4);">pulou</div>
+              </div>
+              <div style="padding:0 4px;font-size:9px;color:var(--txt4);">→</div>
+              <div style="border:1px solid rgba(239,68,68,0.4);border-radius:6px;padding:4px 8px;text-align:center;background:rgba(239,68,68,0.08);">
+                <div style="font-size:8px;color:var(--txt3);">F3</div>
+                <div style="font-size:8px;color:var(--red);font-weight:700;">✗ Inefetivo</div>
+              </div>
+              <div style="padding:0 8px;font-size:14px;color:var(--red);">⟲</div>
+              <div style="border:2px solid rgba(239,68,68,0.5);border-radius:6px;padding:4px 8px;text-align:center;background:rgba(239,68,68,0.06);">
+                <div style="font-size:8px;color:var(--red);font-weight:700;">VOLTA → F2-E1</div>
+                <div style="font-size:7px;color:var(--txt4);margin-top:1px;">Perde 25% auto + F3</div>
+              </div>
+            </div>
+            <div style="font-size:8px;color:var(--txt4);margin-top:6px;">Contribuição cai para 0%. O atalho é revogado. Controle recomeça do Plano de Ação e Teste de Desenho.</div>
+          </div>
+
+          <!-- Exemplo 2: Regressão na F4 -->
+          <div style="background:rgba(0,0,0,0.2);border:1px solid rgba(255,255,255,0.05);border-radius:6px;padding:12px;margin-bottom:10px;">
+            <div style="font-size:9px;font-weight:700;color:var(--red);margin-bottom:8px;">Exemplo: Efetivo até F3, mas Inefetivo na Auditoria Contínua (F4-C1)</div>
+            <div style="display:flex;align-items:center;gap:0;flex-wrap:wrap;">
+              <div style="border:1px solid rgba(34,197,94,0.3);border-radius:6px;padding:4px 8px;text-align:center;">
+                <div style="font-size:8px;color:var(--txt3);">F1–F3</div>
+                <div style="font-size:8px;color:var(--green);">✓ Tudo Efetivo</div>
+              </div>
+              <div style="padding:0 4px;font-size:9px;color:var(--green);">→</div>
+              <div style="border:1px solid rgba(239,68,68,0.4);border-radius:6px;padding:4px 8px;text-align:center;background:rgba(239,68,68,0.08);">
+                <div style="font-size:8px;color:var(--txt3);">F4-C1</div>
+                <div style="font-size:8px;color:var(--red);font-weight:700;">✗ Inefetivo</div>
+              </div>
+              <div style="padding:0 8px;font-size:14px;color:var(--red);">⟲</div>
+              <div style="border:2px solid rgba(239,68,68,0.5);border-radius:6px;padding:4px 8px;text-align:center;background:rgba(239,68,68,0.06);">
+                <div style="font-size:8px;color:var(--red);font-weight:700;">VOLTA → F2-E1</div>
+                <div style="font-size:7px;color:var(--txt4);margin-top:1px;">Perde TUDO: F2 + F3 + F4</div>
+              </div>
+            </div>
+            <div style="font-size:8px;color:var(--txt4);margin-top:6px;">Regressão total: não importa em qual fase falha, sempre volta para F2-E1 (Plano de Ação e Teste de Desenho). Contribuição = 0%.</div>
+          </div>
+
+          <!-- Regra geral -->
+          <div style="background:rgba(239,68,68,0.06);border:1px solid rgba(239,68,68,0.15);border-radius:6px;padding:10px 14px;">
+            <div style="font-size:9px;font-weight:700;color:var(--red);margin-bottom:4px;">Regra de regressão (calculoMaturidade.js)</div>
+            <div style="font-size:9px;color:var(--txt2);line-height:1.6;">
+              <span style="color:var(--red);">●</span> Resultado Inefetivo ou GAP em <strong>qualquer fase a partir de F2-E2</strong> → regressão total para F2-E1<br>
+              <span style="color:var(--red);">●</span> Todas as contribuições acumuladas são <strong>zeradas</strong> (contribuição do controle = 0%)<br>
+              <span style="color:var(--red);">●</span> Se veio do atalho (F1 Efetivo), o atalho é <strong>revogado</strong> — agora segue caminho normal<br>
+              <span style="color:var(--orange);">●</span> F1 é exceção: Inefetivo/GAP na F1 <strong>não causa regressão</strong> — apenas define o caminho normal (sem atalho)
+            </div>
+          </div>
+        </div>
+
+        <!-- ═══ TABELA RESUMO: RESULTADO × FASE ═══ -->
+        <div style="margin-top:4px;">
+          <div style="font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--txt4);margin-bottom:8px;">Resumo: o que acontece em cada fase por resultado</div>
+          <div style="overflow-x:auto;">
+            <table style="min-width:600px;">
+              <thead>
+                <tr>
+                  <th>Fase</th>
+                  <th style="color:var(--green);">Se Efetivo ✓</th>
+                  <th style="color:var(--red);">Se Inefetivo / GAP ✗</th>
+                  <th>Peso</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td style="font-weight:600;color:var(--txt1);">Diagnóstico Inicial</td>
+                  <td><span style="color:var(--green);font-size:10px;">⚡ Atalho: pula F2, ganha 25% auto, vai pra F3</span></td>
+                  <td><span style="color:var(--orange);font-size:10px;">Caminho normal: vai pra F2-E1</span></td>
+                  <td style="font-size:10px;color:var(--txt3);">10% (fixo por área)</td>
+                </tr>
+                <tr>
+                  <td style="font-weight:600;color:var(--txt1);">Plano de Ação e Teste de Desenho</td>
+                  <td><span style="color:var(--green);font-size:10px;">Ganha 12.5%, avança pra F2-E2</span></td>
+                  <td><span style="color:var(--txt3);font-size:10px;">Aguarda PA concluído</span></td>
+                  <td style="font-size:10px;color:var(--txt3);">12.5%</td>
+                </tr>
+                <tr>
+                  <td style="font-weight:600;color:var(--txt1);">Teste de Aderência</td>
+                  <td><span style="color:var(--green);font-size:10px;">Ganha 12.5%, avança pra F3</span></td>
+                  <td><span style="color:var(--red);font-size:10px;">⟲ REGRESSÃO → volta F2-E1, perde tudo</span></td>
+                  <td style="font-size:10px;color:var(--txt3);">12.5%</td>
+                </tr>
+                <tr>
+                  <td style="font-weight:600;color:var(--txt1);">Controles Internos</td>
+                  <td><span style="color:var(--green);font-size:10px;">Ganha 25%, avança pra F4</span></td>
+                  <td><span style="color:var(--red);font-size:10px;">⟲ REGRESSÃO → volta F2-E1, perde tudo</span></td>
+                  <td style="font-size:10px;color:var(--txt3);">25%</td>
+                </tr>
+                <tr>
+                  <td style="font-weight:600;color:var(--txt1);">Auditoria Contínua (C1)</td>
+                  <td><span style="color:var(--green);font-size:10px;">Ganha 15%, avança pra C2</span></td>
+                  <td><span style="color:var(--red);font-size:10px;">⟲ REGRESSÃO → volta F2-E1, perde tudo</span></td>
+                  <td style="font-size:10px;color:var(--txt3);">15%</td>
+                </tr>
+                <tr>
+                  <td style="font-weight:600;color:var(--txt1);">Auditoria Contínua (C2)</td>
+                  <td><span style="color:var(--green);font-size:10px;">Ganha 15%, avança pra F5</span></td>
+                  <td><span style="color:var(--red);font-size:10px;">⟲ REGRESSÃO → volta F2-E1, perde tudo</span></td>
+                  <td style="font-size:10px;color:var(--txt3);">15%</td>
+                </tr>
+                <tr>
+                  <td style="font-weight:600;color:var(--txt1);">Auditoria Independente</td>
+                  <td><span style="color:var(--green);font-size:10px;">Ganha 10% → controle a 100%</span></td>
+                  <td><span style="color:var(--red);font-size:10px;">⟲ REGRESSÃO → volta F2-E1, perde tudo</span></td>
+                  <td style="font-size:10px;color:var(--txt3);">10%</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Nota sobre interação workflow × trilha -->
+        <div style="margin-top:14px;background:rgba(204,145,94,0.06);border:1px solid rgba(204,145,94,0.15);border-radius:8px;padding:12px 16px;">
+          <div style="font-size:9px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:6px;">Como o workflow de aprovação se conecta com a Trilha</div>
+          <div style="font-size:9px;color:var(--txt2);line-height:1.6;">
+            O resultado do teste (Efetivo / Inefetivo / GAP) determina se o controle <strong>avança ou regride</strong> na Trilha. Mas essa movimentação só acontece <strong>quando o admin aprova</strong> a análise. Ou seja: o consultor registra "Inefetivo" → submete → admin revisa e aprova → aí sim o sistema aplica a regressão e recalcula a maturidade. Enquanto não for aprovado, o resultado não tem efeito no cálculo.
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<!-- NOTIF PANEL -->
+<div class="notif-panel" id="notifPanel">
+  <div class="notif-header"><div class="notif-title">🔔 Notificações</div><button class="notif-close" onclick="toggleNotifPanel()">✕</button></div>
+  <div class="notif-body">
+    <div class="notif-item unread"><div class="ni-tipo submissao">📤 Submissão · Diagnóstico Inicial</div><div class="ni-msg"><strong>Ana Silva</strong> submeteu <strong>C.COM.03</strong> (Conferência de NF vs pedido) para sua revisão.</div><div class="ni-time">Há 12 min · Compras</div></div>
+    <div class="notif-item unread"><div class="ni-tipo submissao">📤 Submissão · Diagnóstico Inicial</div><div class="ni-msg"><strong>Ana Silva</strong> submeteu <strong>C.COM.07</strong> (Registro de entrada) para sua revisão.</div><div class="ni-time">Há 45 min · Compras</div></div>
+    <div class="notif-item unread"><div class="ni-tipo submissao">📤 Submissão · Teste de Aderência</div><div class="ni-msg"><strong>Carlos Oliveira</strong> submeteu <strong>C.FIN.03</strong> (Conciliação bancária) para sua revisão.</div><div class="ni-time">Há 2h · Financeiro</div></div>
+    <div class="notif-item"><div class="ni-tipo aprovacao">✅ Aprovado · Diagnóstico Inicial</div><div class="ni-msg">Você aprovou <strong>C.LOG.12</strong>. Controle avança para <strong>Plano de Ação e Teste de Desenho</strong>.</div><div class="ni-time">Ontem, 16:42 · Logística</div></div>
+  </div>
+  <div class="notif-footer"><button class="notif-mark-all" onclick="markAllRead()">Marcar todas como lidas</button><div style="font-size:9px;color:var(--txt4);">📧 Emails habilitados</div></div>
+</div>
+
+<!-- MODAL: REGISTRAR RESULTADO (com submeter dentro) -->
+<div class="modal-overlay" id="modal-resultado">
+  <div class="modal" style="width:600px;">
+    <div class="modal-header">
+      <div class="modal-title">Registrar Resultado do Teste</div>
+      <button class="modal-close" onclick="closeModal('modal-resultado')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="resultado-header">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <div>
+            <div style="font-size:13px;font-weight:600;color:var(--gold);">C.COM.02 · R.COM.02</div>
+            <div style="font-size:11px;color:var(--txt2);margin-top:2px;">Aprovação de fornecedor em painel homologado</div>
+          </div>
+          <div style="text-align:right;">
+            <div style="font-size:8px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:0.5px;">Fase em curso</div>
+            <div style="font-size:11px;font-weight:600;color:var(--txt1);margin-top:2px;">Diagnóstico Inicial</div>
+          </div>
+        </div>
+      </div>
+
+      <div style="font-size:9px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;">Resultado do Teste</div>
+      <div class="resultado-radio-group" style="margin-bottom:16px;">
+        <div class="resultado-radio" onclick="selectResultado(this,'efetivo')">Efetivo</div>
+        <div class="resultado-radio selected-inefetivo" onclick="selectResultado(this,'inefetivo')">Inefetivo</div>
+        <div class="resultado-radio" onclick="selectResultado(this,'gap')">GAP de Processo</div>
+      </div>
+
+      <div class="resultado-grid">
+        <div class="resultado-field">
+          <label>Impacto</label>
+          <select class="form-select"><option>Moderado</option><option>Baixo</option><option>Alto</option><option>Crítico</option></select>
+        </div>
+        <div class="resultado-field">
+          <label>Probabilidade</label>
+          <select class="form-select"><option>Média</option><option>Baixa</option><option>Alta</option><option>Extrema</option></select>
+        </div>
+      </div>
+
+      <div style="margin-top:12px;">
+        <label class="form-label">Descrição da Inconsistência <span class="required">*</span></label>
+        <textarea placeholder="Detalhar a inconsistência identificada...">Não há evidência de verificação sistemática do painel de fornecedores homologados antes da aprovação.</textarea>
+      </div>
+
+      <div style="margin-top:12px;">
+        <label class="form-label">Recomendação / Melhoria</label>
+        <textarea placeholder="Recomendação para melhoria do controle...">Implementar checklist obrigatório vinculado ao painel de homologação no ERP.</textarea>
+      </div>
+
+      <!-- SUBMIT GATE -->
+      <div class="submit-gate">
+        <div class="submit-gate-title">Checklist para Submissão</div>
+        <div class="gate-check"><span class="ok">✓</span> Ficha de risco baixada</div>
+        <div class="gate-check"><span class="ok">✓</span> Resultado do teste selecionado</div>
+        <div class="gate-check"><span class="ok">✓</span> Inconsistência descrita</div>
+        <div class="gate-check"><span class="ok">✓</span> Impacto e probabilidade preenchidos</div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ver" onclick="closeModal('modal-resultado')">Cancelar</button>
+      <button class="btn btn-salvar" onclick="closeModal('modal-resultado')">Salvar</button>
+      <button class="btn btn-salvar-submeter" style="padding:8px 16px;" onclick="closeModal('modal-resultado')">📤 Salvar e Submeter para Revisão</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: REVISAR -->
+<div class="modal-overlay" id="modal-revisar">
+  <div class="modal" style="width:620px;">
+    <div class="modal-header"><div class="modal-title">🔍 Revisão de Análise</div><button class="modal-close" onclick="closeModal('modal-revisar')">✕</button></div>
+    <div class="modal-body">
+      <div class="review-summary">
+        <div class="review-ref">C.COM.03 · R.COM.03</div>
+        <div class="review-desc">Conferência de NF vs pedido de compra</div>
+        <div class="review-grid">
+          <div class="review-grid-item"><div class="rgi-label">Resultado</div><div class="rgi-value"><span class="badge badge-inefetivo">Inefetivo</span></div></div>
+          <div class="review-grid-item"><div class="rgi-label">Criticidade</div><div class="rgi-value">2. Moderado</div></div>
+          <div class="review-grid-item"><div class="rgi-label">Fase</div><div class="rgi-value" style="font-size:10px;">Diagnóstico Inicial</div></div>
+        </div>
+        <div class="review-grid" style="grid-template-columns:1fr 1fr;margin-top:6px;">
+          <div class="review-grid-item"><div class="rgi-label">Submetido por</div><div class="rgi-value">Ana Silva</div></div>
+          <div class="review-grid-item"><div class="rgi-label">Submetido em</div><div class="rgi-value">16/04/2026 · 09:15</div></div>
+        </div>
+      </div>
+      <div class="review-section">
+        <div class="review-section-title">Identificação</div>
+        <div class="review-field"><span class="rf-label">Área</span><span class="rf-value">Compras</span></div>
+        <div class="review-field"><span class="rf-label">Subprocesso</span><span class="rf-value">Gestão de Compras</span></div>
+        <div class="review-field"><span class="rf-label">Gerência</span><span class="rf-value">João Mendes</span></div>
+      </div>
+      <div class="review-section">
+        <div class="review-section-title">Resultado do Teste</div>
+        <div class="review-field"><span class="rf-label">Resultado</span><span class="rf-value"><span class="badge badge-inefetivo">Inefetivo</span></span></div>
+        <div class="review-field"><span class="rf-label">Inconsistência</span><span class="rf-value" style="text-align:right;max-width:300px;white-space:normal;">Não há evidência de conferência NF vs pedido antes do pagamento</span></div>
+        <div class="review-field"><span class="rf-label">Recomendação</span><span class="rf-value" style="text-align:right;max-width:300px;white-space:normal;">Implementar checklist de conferência no ERP</span></div>
+        <div class="review-field"><span class="rf-label">Impacto</span><span class="rf-value">Moderado</span></div>
+        <div class="review-field"><span class="rf-label">Probabilidade</span><span class="rf-value">Média</span></div>
+      </div>
+      <div class="review-section">
+        <div class="review-section-title">Premissas</div>
+        <div class="review-field"><span class="rf-label">Quem</span><span class="rf-value">Analista de contas a pagar</span></div>
+        <div class="review-field"><span class="rf-label">Quando</span><span class="rf-value">A cada recebimento de NF</span></div>
+        <div class="review-field"><span class="rf-label">Como</span><span class="rf-value">Confronto no ERP (NF × pedido)</span></div>
+      </div>
+      <div class="review-section">
+        <div class="review-section-title">Ficha de Risco</div>
+        <div style="display:flex;align-items:center;gap:8px;padding:6px 0;">
+          <span style="font-size:16px;">📄</span>
+          <div><div style="font-size:11px;color:var(--txt1);font-weight:500;">Ficha_C.COM.03_16-04-2026.xlsx</div><div style="font-size:9px;color:var(--txt4);">Gerada em 16/04/2026 · 08:55</div></div>
+        </div>
+      </div>
+      <div class="review-actions">
+        <button class="btn btn-aprovar" onclick="closeModal('modal-revisar');openModal('modal-aprovar')">✅ Aprovar</button>
+        <button class="btn btn-reprovar" onclick="closeModal('modal-revisar');openModal('modal-reprovar')">↩ Reprovar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: APROVAR -->
+<div class="modal-overlay" id="modal-aprovar">
+  <div class="modal">
+    <div class="modal-header"><div class="modal-title">✅ Confirmar Aprovação</div><button class="modal-close" onclick="closeModal('modal-aprovar')">✕</button></div>
+    <div class="modal-body">
+      <div style="background:rgba(34,197,94,0.04);border:1px solid rgba(34,197,94,0.1);border-radius:8px;padding:14px 16px;margin-bottom:16px;">
+        <div style="font-size:13px;font-weight:600;color:var(--gold);">C.COM.03 · R.COM.03</div>
+        <div style="font-size:11px;color:var(--txt2);margin-top:4px;">Conferência de NF vs pedido de compra</div>
+        <div style="margin-top:8px;display:flex;gap:12px;align-items:center;">
+          <span class="badge badge-inefetivo">Inefetivo</span>
+          <span style="font-size:10px;color:var(--txt3);">2. Moderado</span>
+          <span style="font-size:10px;color:var(--txt3);">· Diagnóstico Inicial</span>
+        </div>
+      </div>
+      <div><label class="form-label">Nota do revisor <span style="font-weight:400;color:var(--txt4);">(opcional)</span></label><textarea placeholder="Observações..."></textarea></div>
+      <div style="background:rgba(34,197,94,0.06);border:1px solid rgba(34,197,94,0.15);border-radius:8px;padding:12px 16px;margin-top:12px;font-size:10px;color:var(--green);line-height:1.6;">
+        ✅ Ao aprovar, o controle avançará para a próxima fase: <strong>Plano de Ação e Teste de Desenho</strong>. O cliente verá este controle como <span class="badge badge-concluido">Concluído</span> nesta fase.
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ver" onclick="closeModal('modal-aprovar')">Cancelar</button>
+      <button class="btn btn-aprovar" style="padding:8px 20px;font-size:11px;" onclick="closeModal('modal-aprovar')">✅ Confirmar Aprovação</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: REPROVAR -->
+<div class="modal-overlay" id="modal-reprovar">
+  <div class="modal">
+    <div class="modal-header"><div class="modal-title">↩ Reprovar Análise</div><button class="modal-close" onclick="closeModal('modal-reprovar')">✕</button></div>
+    <div class="modal-body">
+      <div style="background:rgba(239,68,68,0.04);border:1px solid rgba(239,68,68,0.1);border-radius:8px;padding:14px 16px;margin-bottom:16px;">
+        <div style="font-size:13px;font-weight:600;color:var(--gold);">C.COM.03 · R.COM.03</div>
+        <div style="font-size:11px;color:var(--txt2);margin-top:4px;">Conferência de NF vs pedido de compra · Diagnóstico Inicial</div>
+      </div>
+      <div><label class="form-label">Motivo da reprovação <span class="required">*</span></label>
+      <textarea id="reproveNote" oninput="updateCharCount()" placeholder="Descreva o que precisa ser corrigido...">A inconsistência descrita não corresponde à evidência apresentada. Revisar o teste e detalhar os passos executados.</textarea>
+      <div class="char-count" id="charCount">118 caracteres</div></div>
+      <div style="background:rgba(239,68,68,0.06);border:1px solid rgba(239,68,68,0.15);border-radius:8px;padding:12px 16px;margin-top:12px;font-size:10px;color:var(--red);line-height:1.6;">↩ O controle voltará para o consultor, que será notificado no sistema e por email. Ele poderá editar e reenviar.</div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ver" onclick="closeModal('modal-reprovar')">Cancelar</button>
+      <button class="btn btn-reprovar" style="padding:8px 20px;font-size:11px;" onclick="closeModal('modal-reprovar')">↩ Confirmar Reprovação</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: HISTÓRICO -->
+<div class="modal-overlay" id="modal-historico">
+  <div class="modal" style="width:600px;">
+    <div class="modal-header"><div class="modal-title">📋 Histórico de Revisões — C.COM.04</div><button class="modal-close" onclick="closeModal('modal-historico')">✕</button></div>
+    <div class="modal-body">
+      <div class="hist-timeline">
+        <div class="hist-entry aprovacao">
+          <div class="he-header">
+            <span class="he-tipo" style="color:var(--green);">✅ Aprovado</span>
+            <span class="he-autor">por Juliana</span>
+            <span class="he-fase">Diagnóstico Inicial</span>
+            <span class="he-duration">⏱ 22h em revisão</span>
+          </div>
+          <div class="he-nota">Análise consistente. Controle avança para Plano de Ação e Teste de Desenho.</div>
+          <div class="he-time">16/04/2026 · 14:32</div>
+        </div>
+        <div class="hist-entry submissao">
+          <div class="he-header">
+            <span class="he-tipo" style="color:var(--blue);">📤 Resubmetido</span>
+            <span class="he-autor">por Ana Silva</span>
+            <span class="he-fase">Diagnóstico Inicial</span>
+            <span class="he-duration">⏱ 1d 5h em edição</span>
+          </div>
+          <div class="he-time">15/04/2026 · 16:48</div>
+        </div>
+        <div class="hist-entry reprovacao">
+          <div class="he-header">
+            <span class="he-tipo" style="color:var(--red);">↩ Reprovado</span>
+            <span class="he-autor">por Juliana</span>
+            <span class="he-fase">Diagnóstico Inicial</span>
+            <span class="he-duration">⏱ 3h em revisão</span>
+          </div>
+          <div class="he-nota">Faltou detalhar os passos de teste. Evidência genérica — referenciar documentos específicos (NFs, datas).</div>
+          <div class="he-time">14/04/2026 · 11:20</div>
+        </div>
+        <div class="hist-entry submissao">
+          <div class="he-header">
+            <span class="he-tipo" style="color:var(--blue);">📤 Submetido</span>
+            <span class="he-autor">por Ana Silva</span>
+            <span class="he-fase">Diagnóstico Inicial</span>
+            <span class="he-duration">⏱ 4d desde rascunho</span>
+          </div>
+          <div class="he-time">13/04/2026 · 09:15</div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer"><button class="btn btn-ver" onclick="closeModal('modal-historico')">Fechar</button></div>
+  </div>
+</div>
+
+<!-- MODAL: CONSULTOR — CONTROLE REPROVADO -->
+<div class="modal-overlay" id="modal-reprov-notice">
+  <div class="modal" style="width:560px;">
+    <div class="modal-header"><div class="modal-title">Atualizar Controle — C.COM.05</div><button class="modal-close" onclick="closeModal('modal-reprov-notice')">✕</button></div>
+    <div class="modal-body">
+      <div class="reprov-notice">
+        <div class="rn-header">↩ Análise Reprovada — Ação Necessária</div>
+        <div class="rn-nota">A descrição da inconsistência está genérica. Detalhar quais evidências foram analisadas, referenciar documentos específicos (números de NF, datas, valores). O teste precisa ser mais granular.</div>
+        <div class="rn-meta">Reprovado por <strong style="color:var(--txt2);">Juliana</strong> em 15/04/2026 · 10:30 · <span style="color:var(--gold);">Diagnóstico Inicial</span></div>
+      </div>
+      <div style="font-size:9px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;">Campos da análise</div>
+      <div style="background:rgba(255,255,255,0.03);border:1px solid var(--brd);border-radius:8px;padding:16px;">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+          <div><div style="font-size:9px;color:var(--txt4);font-weight:600;">Resultado</div><div style="margin-top:4px;"><span class="badge badge-gap">GAP</span></div></div>
+          <div><div style="font-size:9px;color:var(--txt4);font-weight:600;">Criticidade</div><div style="margin-top:4px;font-size:11px;color:var(--txt1);">3. Significativo</div></div>
+        </div>
+        <div style="margin-top:12px;"><div style="font-size:9px;color:var(--txt4);font-weight:600;">Descrição da Inconsistência <span class="required">*</span></div><textarea style="margin-top:6px;min-height:60px;border-color:rgba(239,68,68,0.3);">Ausência de processo formalizado para cotação.</textarea></div>
+        <div style="margin-top:12px;"><div style="font-size:9px;color:var(--txt4);font-weight:600;">Recomendação</div><textarea style="margin-top:6px;min-height:60px;">Implementar política de cotação obrigatória com 3 fornecedores.</textarea></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ver" onclick="closeModal('modal-reprov-notice')">Cancelar</button>
+      <button class="btn btn-salvar" onclick="closeModal('modal-reprov-notice')">Salvar Alterações</button>
+      <button class="btn btn-salvar-reenviar" style="padding:8px 16px;" onclick="closeModal('modal-reprov-notice')">📤 Salvar e Reenviar para Revisão</button>
+    </div>
+  </div>
+</div>
+
+<div class="mockup-label">Mockup v3 — Workflow de Aprovação · Polímata CI</div>
+
+<script>
+  function showSection(id){document.querySelectorAll('.demo-section').forEach(s=>s.classList.remove('active'));document.querySelectorAll('.demo-tab').forEach(t=>t.classList.remove('active'));document.getElementById('sec-'+id).classList.add('active');event.target.classList.add('active');}
+  function openModal(id){document.getElementById(id).classList.add('open');document.body.style.overflow='hidden';}
+  function closeModal(id){document.getElementById(id).classList.remove('open');document.body.style.overflow='';}
+  document.querySelectorAll('.modal-overlay').forEach(o=>{o.addEventListener('click',e=>{if(e.target===o){o.classList.remove('open');document.body.style.overflow='';}});});
+  document.addEventListener('keydown',e=>{if(e.key==='Escape'){document.querySelectorAll('.modal-overlay.open').forEach(o=>o.classList.remove('open'));document.getElementById('notifPanel').classList.remove('open');document.body.style.overflow='';}});
+  function toggleNotifPanel(){document.getElementById('notifPanel').classList.toggle('open');}
+  function markAllRead(){document.querySelectorAll('.notif-item.unread').forEach(i=>i.classList.remove('unread'));document.getElementById('notifBadge').style.display='none';}
+  function updateCharCount(){document.getElementById('charCount').textContent=document.getElementById('reproveNote').value.length+' caracteres';}
+  function selectResultado(el,tipo){el.parentElement.querySelectorAll('.resultado-radio').forEach(r=>{r.className='resultado-radio';});el.classList.add('resultado-radio','selected-'+tipo);}
+
+  const visConfig={
+    admin:{note:'<strong>Admin Polímata:</strong> vê todos os status detalhados. Pode revisar, aprovar e reprovar. Vê histórico completo e notas internas.',statusHeader:'Status',phaseHeader:'Fase Atual',
+      rows:{'vis-r1':{phase:'<div class="phase-badge">Diagnóstico Inicial</div>',status:'<span class="badge badge-rascunho">Rascunho</span>',vis:true,hidden:false},'vis-r2':{phase:'<div class="phase-badge">Diagnóstico Inicial</div>',status:'<span class="badge badge-em-revisao">Em Revisão</span>',vis:true,hidden:false},'vis-r3':{phase:'<div class="phase-badge">Plano de Ação e Teste de Desenho</div>',status:'<span class="badge badge-aprovado">Aprovado</span>',vis:true,hidden:false},'vis-r4':{phase:'<div class="phase-badge">Diagnóstico Inicial</div>',status:'<span class="badge badge-reprovado">Reprovado</span>',vis:true,hidden:false}}},
+    consultor:{note:'<strong>Consultor Polímata:</strong> vê todos os status dos seus projetos. Pode submeter e ver notas de reprovação. <strong>Não pode aprovar.</strong>',statusHeader:'Status',phaseHeader:'Fase Atual',
+      rows:{'vis-r1':{phase:'<div class="phase-badge">Diagnóstico Inicial</div>',status:'<span class="badge badge-rascunho">Rascunho</span>',vis:true,hidden:false},'vis-r2':{phase:'<div class="phase-badge">Diagnóstico Inicial</div>',status:'<span class="badge badge-em-revisao">Em Revisão</span>',vis:true,hidden:false},'vis-r3':{phase:'<div class="phase-badge">Plano de Ação e Teste de Desenho</div>',status:'<span class="badge badge-aprovado">Aprovado</span>',vis:true,hidden:false},'vis-r4':{phase:'<div class="phase-badge">Diagnóstico Inicial</div>',status:'<span class="badge badge-reprovado">Reprovado</span>',vis:true,hidden:false}}},
+    gestor:{note:'<strong>Gestor Cliente:</strong> vê apenas controles com análise concluída. Status simplificado: <span class="badge badge-nao-iniciado">Não Iniciado</span> <span class="badge badge-cli-analise">Em Análise</span> <span class="badge badge-concluido">Concluído</span>. Fase com nomes completos.',statusHeader:'Status',phaseHeader:'Fase Atual',
+      rows:{'vis-r1':{phase:'<div class="phase-badge">Diagnóstico Inicial</div>',status:'<span class="badge badge-nao-iniciado">Não Iniciado</span>',vis:false,hidden:true},'vis-r2':{phase:'<div class="phase-badge">Diagnóstico Inicial</div>',status:'<span class="badge badge-cli-analise">Em Análise</span>',vis:false,hidden:true},'vis-r3':{phase:'<div class="phase-badge">Plano de Ação e Teste de Desenho</div>',status:'<span class="badge badge-concluido">Concluído</span>',vis:true,hidden:false},'vis-r4':{phase:'<div class="phase-badge">Diagnóstico Inicial</div>',status:'<span class="badge badge-cli-analise">Em Análise</span>',vis:false,hidden:true}}},
+    usuario:{note:'<strong>Usuário Cliente:</strong> mesma regra do gestor, filtrado pelas áreas atribuídas.',statusHeader:'Status',phaseHeader:'Fase Atual',
+      rows:{'vis-r1':{phase:'<div class="phase-badge">Diagnóstico Inicial</div>',status:'<span class="badge badge-nao-iniciado">Não Iniciado</span>',vis:false,hidden:true},'vis-r2':{phase:'<div class="phase-badge">Diagnóstico Inicial</div>',status:'<span class="badge badge-cli-analise">Em Análise</span>',vis:false,hidden:true},'vis-r3':{phase:'<div class="phase-badge">Plano de Ação e Teste de Desenho</div>',status:'<span class="badge badge-concluido">Concluído</span>',vis:true,hidden:false},'vis-r4':{phase:'<div class="phase-badge">Diagnóstico Inicial</div>',status:'<span class="badge badge-cli-analise">Em Análise</span>',vis:false,hidden:true}}}
+  };
+  function switchPerfil(btn,perfil){
+    document.querySelectorAll('.perfil-tab').forEach(t=>t.classList.remove('active'));btn.classList.add('active');
+    const cfg=visConfig[perfil];document.getElementById('visNote').innerHTML=cfg.note;
+    Object.entries(cfg.rows).forEach(([id,r])=>{
+      const row=document.getElementById(id);row.className=r.hidden?'row-hidden':'';
+      document.getElementById(id+'-phase').innerHTML=r.phase;
+      document.getElementById(id+'-status').innerHTML=r.status;
+      document.getElementById(id+'-vis').innerHTML=r.vis?'<span style="color:var(--green);">✓ Visível</span>':'<span style="color:var(--red);">✕ Oculto</span>';
+    });
+  }
+</script>
+</body>
+</html>

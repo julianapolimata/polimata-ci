@@ -219,7 +219,7 @@ function ColunasPanel({ visCols, setVisCols, open, onClose }) {
 export function ModalDetalhe({ row, onClose }) {
   const [tab, setTab] = useState('ident')
   if (!row) return null
-  const tabs = [{ id:'ident',label:'Identificação' },{ id:'f1',label:'F1 — Diagnóstico' },{ id:'f2e1',label:'F2-E1 — Plano de Ação' },{ id:'f2e2',label:'F2-E2 — Aderência' },{ id:'f3',label:'F3 — Revisão' }]
+  const tabs = [{ id:'ident',label:'Identificação' },{ id:'f1',label:'F1 — Diagnóstico' },{ id:'f2e1',label:'F2-E1 — Plano de Ação' },{ id:'f2e2',label:'F2-E2 — Aderência' },{ id:'f3',label:'F3 — Revisão' },{ id:'f4c1',label:'F4-C1 — Auditoria' },{ id:'f4c2',label:'F4-C2 — Auditoria' },{ id:'f5',label:'F5 — Independente' }]
   const field = (l, v, fw) => { if (!v || v === 'N/A' || v === '') return null; return <div style={fw ? { marginBottom: 12 } : {}}><div className="ml">{l}</div><div className="mv">{v}</div></div> }
   const fieldTag = (l, v) => { if (!v || v === 'N/A' || v === '') return null; return <div><div className="ml">{l}</div><div style={{ marginTop: 3 }}><span className="tag">{v}</span></div></div> }
   const fieldText = (l, v) => { if (!v || v === 'N/A' || v === '') return null; return <div style={{ marginBottom: 14 }}>{l && <div className="ml">{l}</div>}<div className="mv-t">{v}</div></div> }

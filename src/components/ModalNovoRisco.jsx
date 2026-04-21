@@ -232,7 +232,7 @@ const ModalNovoRisco = ({ onClose, onSaved, areas, projeto }) => {
           resp_pa: temPA === 'sim' ? paResp : null,
           dt_pa: temPA === 'sim' ? paPrazo : null,
           st_pa: temPA === 'sim' ? paStatus : null,
-          status_workflow: 'rascunho',
+          status_workflow: 'nao_iniciado',
           ativo: true
         }])
         .select()
@@ -253,10 +253,10 @@ const ModalNovoRisco = ({ onClose, onSaved, areas, projeto }) => {
   async function gerarFicha(comDownload = true) {
     setSaving(true)
     try {
-      // Atualizar status para ficha_gerada
+      // Atualizar status para em_analise (ficha gerada = pronto para teste)
       const { error } = await supabase
         .from('mrc')
-        .update({ status_workflow: 'ficha_gerada' })
+        .update({ status_workflow: 'em_analise' })
         .eq('id', novoRiscoData.id)
 
       if (error) throw error
