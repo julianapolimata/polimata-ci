@@ -13,7 +13,6 @@ import ModalRevisar from '../components/ModalRevisar'
 import NotificacoesPanel from '../components/NotificacoesPanel'
 import ImportarMRC from '../components/ImportarMRC'
 import {
-  calcularPercentualArea,
   calcularIndiceEmpresa,
   getNivelMaturidade,
 } from '../lib/calculoMaturidade'
@@ -148,13 +147,24 @@ export default function Dashboard() {
   async function loadDados(pid) {
     setLoading(true)
     try {
-      const { data: ad } = await supabase.from('areas').select('id, nome, prefixo, peso, gerente, ordem').eq('projeto_id', pid).order('ordem')
-      const { data: md } = await supabase.from('mrc').select('*').eq('projeto_id', pid).neq('ativo', false)
-      const controles = md || [], areas = ad || []
+      // Buscar áreas, controles e maturidade em paralelo (maturidade vem do banco via RPC)
+      const [areasRes, mrcRes, matRes] = await Promise.all([
+        supabase.from('areas').select('id, nome, prefixo, peso, gerente, ordem').eq('projeto_id', pid).order('ordem'),
+        supabase.from('mrc').select('*').eq('projeto_id', pid).neq('ativo', false),
+        supabase.from('vw_maturidade_areas').select('area_id, percentual, nivel, nome, total, efetivos, inefetivos, gaps, regredidos').eq('projeto_id', pid),
+      ])
+      const controles = mrcRes.data || [], areas = areasRes.data || []
+      const matData = matRes.data || []
       const res = areas.map(a => {
         const ca = controles.filter(c => c.area_id === a.id || c.area === a.nome)
-        const f1c = ca.length > 0 && ca.every(c => c.r1 && c.r1 !== 'Teste Não Realizado')
-        return { ...a, controles: ca, calc: calcularPercentualArea(ca, f1c, { requireAprovado: true, numFases: projetoAtivo?.num_fases || 5 }) }
+        const mat = matData.find(m => m.area_id === a.id)
+        return {
+          ...a,
+          controles: ca,
+          calc: mat
+            ? { percentual: parseFloat(mat.percentual) || 0, nivel: mat.nivel, nome: mat.nome, totais: { ativos: mat.total, efetivos: mat.efetivos, inefetivos: mat.inefetivos, gap: mat.gaps, regredidos: mat.regredidos } }
+            : { percentual: 0, nivel: 'N1', nome: 'Não confiável', totais: { ativos: 0, efetivos: 0, inefetivos: 0, gap: 0, regredidos: 0 } },
+        }
       })
       const resOrdenado = [...res].sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'))
       setAreasCalc(resOrdenado); setTodosControles(controles)
