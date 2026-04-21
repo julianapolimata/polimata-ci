@@ -586,11 +586,14 @@ function PorArea({ projeto, areasCalc, todosControles, loading, navigate, loadDa
   const ress = [...new Set(area.controles.map(c => String(c.r1||'')).filter(v => v))].sort()
 
   function faseLabel(c) {
-    if (c.r3 && c.r3 !== 'Teste Não Realizado') return { f: 'F3 — Revisão', s: c.r3 }
-    if (c.r_ader && c.r_ader !== 'Teste Não Realizado') return { f: 'F2-E2 — Teste de Aderência', s: c.r_ader }
-    if (c.st_pa && c.st_pa !== '') return { f: 'F2-E1 — Plano de Ação', s: c.st_pa }
-    if (c.r1 && c.r1 !== 'Teste Não Realizado') return { f: 'F2-E2 — Teste de Aderência', s: 'Teste Não Realizado' }
-    return { f: 'F1 — Diagnóstico', s: 'Teste Não Realizado' }
+    if (c.r_f5 && c.r_f5 !== 'Teste Não Realizado') return { f: 'Auditoria Independente', s: c.r_f5 }
+    if (c.r_f4c2 && c.r_f4c2 !== 'Teste Não Realizado') return { f: 'Auditoria Contínua — Ciclo 2', s: c.r_f4c2 }
+    if (c.r_f4c1 && c.r_f4c1 !== 'Teste Não Realizado') return { f: 'Auditoria Contínua — Ciclo 1', s: c.r_f4c1 }
+    if (c.r3 && c.r3 !== 'Teste Não Realizado') return { f: 'Revisão Controles Internos', s: c.r3 }
+    if (c.r_ader && c.r_ader !== 'Teste Não Realizado') return { f: 'Teste de Aderência', s: c.r_ader }
+    if (c.st_pa && c.st_pa !== '') return { f: 'Plano de Ação e Teste de Desenho', s: c.st_pa }
+    if (c.r1 && c.r1 !== 'Teste Não Realizado') return { f: 'Teste de Aderência', s: 'Teste Não Realizado' }
+    return { f: 'Diagnóstico Inicial', s: 'Teste Não Realizado' }
   }
 
   // Badge helpers (tema light)

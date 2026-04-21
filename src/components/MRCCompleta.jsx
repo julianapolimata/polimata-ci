@@ -57,14 +57,14 @@ const COL_GROUPS = [
   ]},
   { label: 'Teste & Resultado', cols: [
     { id: 'passos_f1', label: 'Passos de Teste', default: true },
-    { id: 'r1', label: 'F1 Resultado', default: true },
+    { id: 'r1', label: 'Diagnóstico', default: true },
     { id: 'incons', label: 'Descrição da Inconsistência', default: true },
     { id: 'rec', label: 'Recomendação / Melhoria', default: true },
-    { id: 'r_ader', label: 'F2 Aderência', default: false },
-    { id: 'r3', label: 'F3 Resultado', default: false },
-    { id: 'r_f4c1', label: 'F4-C1 Resultado', default: false },
-    { id: 'r_f4c2', label: 'F4-C2 Resultado', default: false },
-    { id: 'r_f5', label: 'F5 Resultado', default: false },
+    { id: 'r_ader', label: 'Aderência', default: false },
+    { id: 'r3', label: 'Revisão CI', default: false },
+    { id: 'r_f4c1', label: 'Auditoria C1', default: false },
+    { id: 'r_f4c2', label: 'Auditoria C2', default: false },
+    { id: 'r_f5', label: 'Auditoria Indep.', default: false },
   ]},
   { label: 'Avaliação', cols: [
     { id: 'imp', label: 'Impacto', default: true },
@@ -224,7 +224,7 @@ function ColunasPanel({ visCols, setVisCols, open, onClose }) {
 export function ModalDetalhe({ row, onClose }) {
   const [tab, setTab] = useState('ident')
   if (!row) return null
-  const tabs = [{ id:'ident',label:'Identificação' },{ id:'f1',label:'F1 — Diagnóstico' },{ id:'f2e1',label:'F2-E1 — Plano de Ação' },{ id:'f2e2',label:'F2-E2 — Aderência' },{ id:'f3',label:'F3 — Revisão' },{ id:'f4c1',label:'F4-C1 — Auditoria' },{ id:'f4c2',label:'F4-C2 — Auditoria' },{ id:'f5',label:'F5 — Independente' }]
+  const tabs = [{ id:'ident',label:'Identificação' },{ id:'f1',label:'Diagnóstico Inicial' },{ id:'f2e1',label:'Plano de Ação' },{ id:'f2e2',label:'Teste de Aderência' },{ id:'f3',label:'Revisão Controles Internos' },{ id:'f4c1',label:'Auditoria Contínua C1' },{ id:'f4c2',label:'Auditoria Contínua C2' },{ id:'f5',label:'Auditoria Independente' }]
   const field = (l, v, fw) => { if (!v || v === 'N/A' || v === '') return null; return <div style={fw ? { marginBottom: 12 } : {}}><div className="ml">{l}</div><div className="mv">{v}</div></div> }
   const fieldTag = (l, v) => { if (!v || v === 'N/A' || v === '') return null; return <div><div className="ml">{l}</div><div style={{ marginTop: 3 }}><span className="tag">{v}</span></div></div> }
   const fieldText = (l, v) => { if (!v || v === 'N/A' || v === '') return null; return <div style={{ marginBottom: 14 }}>{l && <div className="ml">{l}</div>}<div className="mv-t">{v}</div></div> }
@@ -273,7 +273,7 @@ export function ModalDetalhe({ row, onClose }) {
           </div>)}
 
           {tab === 'f1' && (<div className="tp active">
-            <div className="ms"><div className="ms-t">Resultado do Diagnóstico</div><div className="mr3">{field('Resultado F1', row.r1 ? badge(R1_MAP[row.r1]||'b-na', row.r1) : null)}{field('Impacto', row.imp ? badge(IMP_MAP[row.imp]||'', row.imp) : null)}{field('Probabilidade', row.prob ? badge(PROB_MAP[row.prob]||'', row.prob) : null)}</div><div className="mr">{field('Criticidade', critBadge(row.crit))}</div></div>
+            <div className="ms"><div className="ms-t">Resultado do Diagnóstico</div><div className="mr3">{field('Resultado Diagnóstico', row.r1 ? badge(R1_MAP[row.r1]||'b-na', row.r1) : null)}{field('Impacto', row.imp ? badge(IMP_MAP[row.imp]||'', row.imp) : null)}{field('Probabilidade', row.prob ? badge(PROB_MAP[row.prob]||'', row.prob) : null)}</div><div className="mr">{field('Criticidade', critBadge(row.crit))}</div></div>
             {row.passos_f1 && row.passos_f1 !== 'N/A' && <div className="ms"><div className="ms-t">Passos de Teste</div>{fieldText(null, row.passos_f1)}</div>}
             {row.incons && row.incons !== 'N/A' && <div className="ms"><div className="ms-t">Inconsistências Identificadas</div>{fieldText(null, row.incons)}</div>}
             {row.rec && row.rec !== 'N/A' && <div className="ms"><div className="ms-t">Recomendações</div>{fieldText(null, row.rec)}</div>}
@@ -289,19 +289,19 @@ export function ModalDetalhe({ row, onClose }) {
           </div>)}
 
           {tab === 'f3' && (<div className="tp active">
-            <div className="ms"><div className="ms-t">Revisão dos Controles</div><div className="mr">{field('Status F3', row.st_f3 ? badge(R1_MAP[row.st_f3]||'b-na', row.st_f3) : null)}{field('Resultado F3', row.r3 ? badge(R1_MAP[row.r3]||'b-na', row.r3) : null)}</div>{fieldText('Inconsistências F3', row.incons_f3)}{fieldText('Recomendações F3', row.rec_f3)}</div>
+            <div className="ms"><div className="ms-t">Revisão dos Controles</div><div className="mr">{field('Status Revisão', row.st_f3 ? badge(R1_MAP[row.st_f3]||'b-na', row.st_f3) : null)}{field('Resultado Revisão', row.r3 ? badge(R1_MAP[row.r3]||'b-na', row.r3) : null)}</div>{fieldText('Inconsistências F3', row.incons_f3)}{fieldText('Recomendações F3', row.rec_f3)}</div>
           </div>)}
 
           {tab === 'f4c1' && (<div className="tp active">
-            <div className="ms"><div className="ms-t">Auditoria Contínua — Ciclo 1</div><div className="mr">{field('Resultado F4-C1', row.r_f4c1 ? badge(R1_MAP[row.r_f4c1]||'b-na', row.r_f4c1) : null)}</div>{fieldText('Inconsistências', row.incons_f4c1)}{fieldText('Recomendações', row.rec_f4c1)}</div>
+            <div className="ms"><div className="ms-t">Auditoria Contínua — Ciclo 1</div><div className="mr">{field('Resultado', row.r_f4c1 ? badge(R1_MAP[row.r_f4c1]||'b-na', row.r_f4c1) : null)}</div>{fieldText('Inconsistências', row.incons_f4c1)}{fieldText('Recomendações', row.rec_f4c1)}</div>
           </div>)}
 
           {tab === 'f4c2' && (<div className="tp active">
-            <div className="ms"><div className="ms-t">Auditoria Contínua — Ciclo 2</div><div className="mr">{field('Resultado F4-C2', row.r_f4c2 ? badge(R1_MAP[row.r_f4c2]||'b-na', row.r_f4c2) : null)}</div>{fieldText('Inconsistências', row.incons_f4c2)}{fieldText('Recomendações', row.rec_f4c2)}</div>
+            <div className="ms"><div className="ms-t">Auditoria Contínua — Ciclo 2</div><div className="mr">{field('Resultado', row.r_f4c2 ? badge(R1_MAP[row.r_f4c2]||'b-na', row.r_f4c2) : null)}</div>{fieldText('Inconsistências', row.incons_f4c2)}{fieldText('Recomendações', row.rec_f4c2)}</div>
           </div>)}
 
           {tab === 'f5' && (<div className="tp active">
-            <div className="ms"><div className="ms-t">Auditoria Independente</div><div className="mr">{field('Resultado F5', row.r_f5 ? badge(R1_MAP[row.r_f5]||'b-na', row.r_f5) : null)}</div>{fieldText('Inconsistências', row.incons_f5)}{fieldText('Recomendações', row.rec_f5)}</div>
+            <div className="ms"><div className="ms-t">Auditoria Independente</div><div className="mr">{field('Resultado', row.r_f5 ? badge(R1_MAP[row.r_f5]||'b-na', row.r_f5) : null)}</div>{fieldText('Inconsistências', row.incons_f5)}{fieldText('Recomendações', row.rec_f5)}</div>
           </div>)}
 
         </div>
