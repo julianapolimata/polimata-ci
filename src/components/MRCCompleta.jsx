@@ -12,7 +12,7 @@ const CRIT_MAP = {
   1: { label: '1. Baixo',         cls: 'c1' },
 }
 
-const R1_MAP  = { Efetivo:'b-ef', Inefetivo:'b-in', GAP:'b-gp', 'Concluído':'b-co', 'Em desenvolvimento':'b-pa', 'Teste Não Realizado':'b-tnr', 'N/A':'b-na' }
+const R1_MAP  = { Efetivo:'b-ef', efetivo:'b-ef', Inefetivo:'b-in', GAP:'b-gp', 'Em desenvolvimento':'b-pa', pendente:'b-pa', 'Teste Não Realizado':'b-tnr', 'N/A':'b-na' }
 const IMP_MAP = { Crítico:'i-crit', Alto:'i-alto', Moderado:'i-mod', Baixo:'i-bx', 'N/A':'i-na' }
 const PROB_MAP= { Extrema:'p-ext', Alta:'p-alt', Média:'p-med', Baixa:'p-bx' }
 
@@ -181,9 +181,9 @@ function Heatmap({ data, filtroImp, filtroProb, onFilterCell }) {
         {[4,3,2,1].map(cv => {
           const k = `C${cv}`; const t = totais[k]; const color = legColors[k] === '#FFFF00' ? '#D4A030' : legColors[k]
           return (
-            <div key={cv} className="hm-leg"><div className="hm-ldot" style={{ background: legColors[k] }} /><div>
+            <div key={cv} className="hm-leg" style={{ borderLeftColor: legColors[k] }}><div>
               <div className="hm-lbl">{legLabels[k]}</div>
-              <div className="hm-lnum" style={{ color }}>● {t.n}</div>
+              <div className="hm-lnum" style={{ color }}>{t.n}</div>
               <div className="hm-lsub">E:{t.e} · I:{t.i} · G:{t.g}</div>
             </div></div>
           )
@@ -224,7 +224,7 @@ function ColunasPanel({ visCols, setVisCols, open, onClose }) {
 export function ModalDetalhe({ row, onClose }) {
   const [tab, setTab] = useState('ident')
   if (!row) return null
-  const tabs = [{ id:'ident',label:'Identificação' },{ id:'f1',label:'Diagnóstico Inicial' },{ id:'f2e1',label:'Plano de Ação' },{ id:'f2e2',label:'Teste de Aderência' },{ id:'f3',label:'Revisão Controles Internos' },{ id:'f4c1',label:'Auditoria Contínua C1' },{ id:'f4c2',label:'Auditoria Contínua C2' },{ id:'f5',label:'Auditoria Independente' }]
+  const tabs = [{ id:'ident',label:'Identificação' },{ id:'f1',label:'Diagnóstico Inicial' },{ id:'f2e1',label:'Plano de Ação (TOD)' },{ id:'f2e2',label:'Teste de Aderência' },{ id:'f3',label:'Revisão Controles Internos' },{ id:'f4c1',label:'Auditoria Contínua C1' },{ id:'f4c2',label:'Auditoria Contínua C2' },{ id:'f5',label:'Auditoria Independente' }]
   const field = (l, v, fw) => { if (!v || v === 'N/A' || v === '') return null; return <div style={fw ? { marginBottom: 12 } : {}}><div className="ml">{l}</div><div className="mv">{v}</div></div> }
   const fieldTag = (l, v) => { if (!v || v === 'N/A' || v === '') return null; return <div><div className="ml">{l}</div><div style={{ marginTop: 3 }}><span className="tag">{v}</span></div></div> }
   const fieldText = (l, v) => { if (!v || v === 'N/A' || v === '') return null; return <div style={{ marginBottom: 14 }}>{l && <div className="ml">{l}</div>}<div className="mv-t">{v}</div></div> }
@@ -280,7 +280,7 @@ export function ModalDetalhe({ row, onClose }) {
           </div>)}
 
           {tab === 'f2e1' && (<div className="tp active">
-            <div className="ms"><div className="ms-t">Plano de Ação</div><div className="mr3">{field('Demanda PA', row.dem_pa)}{field('Status PA', row.st_pa ? badge(R1_MAP[row.st_pa]||'b-na', row.st_pa) : null)}{field('Data Conclusão', row.dt_ult ? new Date(row.dt_ult).toLocaleDateString('pt-BR') : null)}</div>{field('Responsável PA', row.resp_pa, true)}{fieldText('Comentário PA', row.coment_pa)}</div>
+            <div className="ms"><div className="ms-t">Plano de Ação (TOD)</div><div className="mr3">{field('Demanda PA', row.dem_pa)}{field('Status PA', row.st_pa ? badge(R1_MAP[row.st_pa]||'b-na', row.st_pa) : null)}{field('Data Conclusão', row.dt_ult ? new Date(row.dt_ult).toLocaleDateString('pt-BR') : null)}</div>{field('Responsável PA', row.resp_pa, true)}{fieldText('Comentário PA', row.coment_pa)}</div>
             <div className="ms"><div className="ms-t">Controle Redesenhado</div>{fieldText('Novo Descritivo de Controle', row.dc_novo)}</div>
           </div>)}
 
@@ -389,6 +389,7 @@ export default function MRCCompleta({ projetoId, clienteNome, projetoNome, notif
   const [mrc, setMrc] = useState([]); const [areas, setAreas] = useState([]); const [loading, setLoading] = useState(true); const [erro, setErro] = useState(null)
   const [busca, setBusca] = useState(''); const [filtroArea, setFiltroArea] = useState(''); const [filtroCrit, setFiltroCrit] = useState('')
   const [filtroImp, setFiltroImp] = useState(''); const [filtroProb, setFiltroProb] = useState(''); const [filtroR1, setFiltroR1] = useState(''); const [filtroNivel, setFiltroNivel] = useState('')
+  const [filtroFase, setFiltroFase] = useState('')
   const [visCols, setVisCols] = useState(new Set(DEFAULT_COLS)); const [colPanelOpen, setColPanelOpen] = useState(false)
   const [expandAll, setExpandAll] = useState(false); const [modalRow, setModalRow] = useState(null)
 
@@ -410,14 +411,17 @@ export default function MRCCompleta({ projetoId, clienteNome, projetoNome, notif
     if (filtroProb && r.prob !== filtroProb) return false
     if (filtroR1 && r.r1 !== filtroR1) return false
     if (filtroNivel) { const nivel = NIVEIS.find(n => n.id === filtroNivel); if (nivel && r.r1 !== nivel.resultado) return false }
+    if (filtroFase) { const fi = getFaseInfo(r); if (fi.label !== filtroFase) return false }
     if (busca) { const q = busca.toLowerCase(); return (r.rr||'').toLowerCase().includes(q)||(r.rc||'').toLowerCase().includes(q)||(r.area||'').toLowerCase().includes(q)||(r.sub||'').toLowerCase().includes(q)||(r.dr||'').toLowerCase().includes(q)||(r.dc||'').toLowerCase().includes(q)||(r.incons||'').toLowerCase().includes(q)||(r.passos_f1||'').toLowerCase().includes(q) }
     return true
   })
 
+  const fasesDisponiveis = [...new Set(mrc.map(r => getFaseInfo(r).label))].sort()
+
   const visibleRows = filtered.slice(0, MAX_ROWS); const isLimited = filtered.length > MAX_ROWS
   const handleHeatmapCell = (imp, prob, sel) => { if (sel) { setFiltroImp(''); setFiltroProb('') } else { setFiltroImp(imp); setFiltroProb(prob) } }
-  const limparFiltros = () => { setBusca(''); setFiltroArea(''); setFiltroCrit(''); setFiltroImp(''); setFiltroProb(''); setFiltroR1(''); setFiltroNivel('') }
-  const temFiltro = busca || filtroArea || filtroCrit || filtroImp || filtroProb || filtroR1 || filtroNivel
+  const limparFiltros = () => { setBusca(''); setFiltroArea(''); setFiltroCrit(''); setFiltroImp(''); setFiltroProb(''); setFiltroR1(''); setFiltroNivel(''); setFiltroFase('') }
+  const temFiltro = busca || filtroArea || filtroCrit || filtroImp || filtroProb || filtroR1 || filtroNivel || filtroFase
 
   if (loading) return <div style={{ display:'flex',alignItems:'center',justifyContent:'center',height:300,color:'var(--txt3)' }}><div className="spinner" style={{marginRight:10}}/><span>Carregando MRC…</span></div>
   if (erro) return <div style={{ padding:32,color:'var(--in)' }}>Erro ao carregar MRC: {erro}</div>
@@ -448,9 +452,8 @@ export default function MRCCompleta({ projetoId, clienteNome, projetoNome, notif
           <input type="text" placeholder="Buscar ref., área, risco, controle, inconsistência, passos…" value={busca} onChange={e => setBusca(e.target.value)} />
           <select value={filtroArea} onChange={e => setFiltroArea(e.target.value)}><option value="">Todas as áreas</option>{areas.map(a => <option key={a} value={a}>{a}</option>)}</select>
           <select value={filtroCrit} onChange={e => setFiltroCrit(e.target.value)}><option value="">Todas criticidades</option><option value="4">Crítico</option><option value="3">Significativo</option><option value="2">Moderado</option><option value="1">Baixo</option></select>
-          <select value={filtroImp} onChange={e => setFiltroImp(e.target.value)}><option value="">Todos impactos</option><option>Crítico</option><option>Alto</option><option>Moderado</option><option>Baixo</option></select>
-          <select value={filtroProb} onChange={e => setFiltroProb(e.target.value)}><option value="">Todas probabilidades</option><option>Extrema</option><option>Alta</option><option>Média</option><option>Baixa</option></select>
-          <select value={filtroR1} onChange={e => setFiltroR1(e.target.value)}><option value="">Todos resultados F1</option><option>Efetivo</option><option>Inefetivo</option><option>GAP</option><option>Concluído</option><option>Em desenvolvimento</option><option>Teste Não Realizado</option></select>
+          <select value={filtroFase} onChange={e => setFiltroFase(e.target.value)}><option value="">Todas as fases</option>{fasesDisponiveis.map(f => <option key={f} value={f}>{f}</option>)}</select>
+          <select value={filtroR1} onChange={e => setFiltroR1(e.target.value)}><option value="">Todos resultados</option><option>Efetivo</option><option>Inefetivo</option><option>GAP</option><option>Teste Não Realizado</option></select>
           <span className="chip">{filtered.length} controles</span>
         </div>
 

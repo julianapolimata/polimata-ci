@@ -340,11 +340,13 @@ function HomeDash({ projeto, areasCalc, todosControles, loading, ultimaAtualizac
 
   return (
     <div style={D.page}>
-      <div style={{ ...D.header, position: 'relative' }}>
-        <div style={D.headerCliente}>{clienteNome} · {projeto.nome || 'Controles Internos'}</div>
-        <div style={D.headerTitulo}>Maturidade do Ambiente de Controles Internos</div>
-        <div style={D.headerSub}>Visão consolidada · {areasCalc.length} áreas · {todosControles.length} controles · Metodologia Polímata</div>
-        <div style={{ position: 'absolute', top: 14, right: 0, fontSize: 10, color: 'rgba(247,243,238,0.5)', fontWeight: 500, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 6, padding: '4px 10px' }}>Última atualização: {ultimaAtualizacao}</div>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 0 6px', flexShrink: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: 10 }}>
+          <div style={{ fontSize: 16, fontWeight: 300, fontFamily: "'Raleway', sans-serif", color: 'var(--cream)' }}>Maturidade do Ambiente de Controles Internos</div>
+          <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: 1, textTransform: 'uppercase', color: 'var(--copper)' }}>{clienteNome} · {projeto.nome || 'Controles Internos'}</div>
+          <div style={{ fontSize: 9, color: 'rgba(247,243,238,0.35)' }}>{areasCalc.length} áreas · {todosControles.length} controles</div>
+        </div>
+        <div style={{ fontSize: 9, color: 'rgba(247,243,238,0.45)', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 6, padding: '4px 10px', whiteSpace: 'nowrap' }}>Última atualização: {ultimaAtualizacao}</div>
       </div>
 
       <div style={D.kpiRow}>
@@ -490,10 +492,7 @@ function HomeDash({ projeto, areasCalc, todosControles, loading, ultimaAtualizac
 
 const dashStyles = {
   page: { background: 'var(--bg0)', minHeight: '100vh', padding: '0 20px 12px', fontFamily: "'Montserrat', sans-serif", color: 'var(--cream)', fontSize: 12, display: 'flex', flexDirection: 'column', overflow: 'hidden' },
-  header: { padding: '14px 0 4px', flexShrink: 0 },
-  headerCliente: { fontSize: 10, fontWeight: 600, letterSpacing: 1.5, textTransform: 'uppercase', color: 'var(--copper)' },
-  headerTitulo: { fontSize: 20, fontWeight: 300, fontFamily: "'Raleway', sans-serif", color: 'var(--cream)', marginTop: 2 },
-  headerSub: { fontSize: 10, fontWeight: 400, color: 'rgba(247,243,238,0.4)', marginTop: 2 },
+  /* header agora é inline, estilos diretos no JSX */
   kpiRow: { display: 'flex', gap: 8, flexShrink: 0, margin: '8px 0' },
   kpiCard: { flex: 1, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 12, padding: '12px 14px', borderTop: '3px solid' },
   kpiLabel: { fontSize: 8, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1, color: 'rgba(247,243,238,0.45)', marginBottom: 5 },
@@ -542,14 +541,18 @@ function PorArea({ projeto, areasCalc, todosControles, loading, navigate, loadDa
   const [filtCrit, setFiltCrit] = useState('')
   const [filtImp, setFiltImp] = useState('')
   const [filtRes, setFiltRes] = useState('')
+  const [filtFase, setFiltFase] = useState('')
+  const [simularPerfil, setSimularPerfil] = useState(null)
   const [modalRow, setModalRow] = useState(null)
   const [atualizarRow, setAtualizarRow] = useState(null)
   const [modalNovoRisco, setModalNovoRisco] = useState(false)
   const [rowRegistrarResultado, setRowRegistrarResultado] = useState(null)
   const [rowRevisar, setRowRevisar] = useState(null)
-  const canEdit = perfil?.papel === 'admin_polimata' || perfil?.papel === 'consultor_polimata'
-  const isAdmin = perfil?.papel === 'admin_polimata'
-  const isCliente = perfil?.papel === 'gestor_cliente' || perfil?.papel === 'usuario_cliente'
+  const papelAtivo = simularPerfil || perfil?.papel
+  const canEdit = papelAtivo === 'admin_polimata' || papelAtivo === 'consultor_polimata'
+  const isAdmin = papelAtivo === 'admin_polimata'
+  const isCliente = papelAtivo === 'gestor_cliente' || papelAtivo === 'usuario_cliente'
+  const isRealAdmin = perfil?.papel === 'admin_polimata'
 
   // HOOKS devem ficar ANTES de qualquer early return (React rules of hooks)
   const controles = area?.controles || []
@@ -563,9 +566,9 @@ function PorArea({ projeto, areasCalc, todosControles, loading, navigate, loadDa
     return grid
   }, [controles])
 
-  // Retorna config de status (label, color, bg) baseado no perfil do usuário
+  // Retorna config de status (label, color, bg) baseado no perfil ativo (real ou simulado)
   function getStatusBadge(sw) {
-    return getStatusConfig(sw, perfil?.papel)
+    return getStatusConfig(sw, papelAtivo)
   }
 
   if (loading) return <Spinner light />
@@ -583,17 +586,35 @@ function PorArea({ projeto, areasCalc, todosControles, loading, navigate, loadDa
     if (precisaPlanoAcao(c) && !planoAcaoConcluido(c)) planosAcao++
   })
 
+  // Resultado geral: retorna o resultado da fase mais avançada do controle
+  function getResultadoGeral(c) {
+    if (c.r_f5 && c.r_f5 !== 'Teste Não Realizado') return c.r_f5
+    if (c.r_f4c2 && c.r_f4c2 !== 'Teste Não Realizado') return c.r_f4c2
+    if (c.r_f4c1 && c.r_f4c1 !== 'Teste Não Realizado') return c.r_f4c1
+    if (c.r3 && c.r3 !== 'Teste Não Realizado') return c.r3
+    if (c.r_ader && c.r_ader !== 'Teste Não Realizado') return c.r_ader
+    if (c.st_pa && c.st_pa !== '') return c.st_pa
+    if (c.r1 && c.r1 !== 'Teste Não Realizado') return c.r1
+    return null
+  }
+
+  function getFaseCodigo(c) {
+    return faseLabel(c).f
+  }
+
   const cf = area.controles.filter(c => {
     if (busca) { const b = busca.toLowerCase(); if (![c.rr,c.rc,c.dr,c.dc,c.incons,c.rec].some(f => (f||'').toLowerCase().includes(b))) return false }
     if (filtCrit && String(c.crit_label||c.crit||'') !== filtCrit) return false
     if (filtImp && String(c.imp||'') !== filtImp) return false
-    if (filtRes && String(c.r1||'') !== filtRes) return false
+    if (filtRes) { const rg = getResultadoGeral(c); if (!rg || rg !== filtRes) return false }
+    if (filtFase) { const fc = getFaseCodigo(c); if (fc !== filtFase) return false }
     return true
   })
 
   const crits = [...new Set(area.controles.map(c => String(c.crit_label||'')).filter(v => v))].sort()
   const imps = [...new Set(area.controles.map(c => String(c.imp||'')).filter(v => v))].sort()
-  const ress = [...new Set(area.controles.map(c => String(c.r1||'')).filter(v => v))].sort()
+  const ress = [...new Set(area.controles.map(c => { const r = getResultadoGeral(c); return r ? String(r) : '' }).filter(v => v))].sort()
+  const fasesDisponiveis = [...new Set(area.controles.map(c => getFaseCodigo(c)).filter(v => v))].sort()
 
   function faseLabel(c) {
     if (c.r_f5 && c.r_f5 !== 'Teste Não Realizado') return { f: 'Auditoria Independente', s: c.r_f5 }
@@ -601,7 +622,7 @@ function PorArea({ projeto, areasCalc, todosControles, loading, navigate, loadDa
     if (c.r_f4c1 && c.r_f4c1 !== 'Teste Não Realizado') return { f: 'Auditoria Contínua — Ciclo 1', s: c.r_f4c1 }
     if (c.r3 && c.r3 !== 'Teste Não Realizado') return { f: 'Revisão Controles Internos', s: c.r3 }
     if (c.r_ader && c.r_ader !== 'Teste Não Realizado') return { f: 'Teste de Aderência', s: c.r_ader }
-    if (c.st_pa && c.st_pa !== '') return { f: 'Plano de Ação e Teste de Desenho', s: c.st_pa }
+    if (c.st_pa && c.st_pa !== '') return { f: 'Plano de Ação (TOD)', s: c.st_pa }
     if (c.r1 && c.r1 !== 'Teste Não Realizado') return { f: 'Teste de Aderência', s: 'Teste Não Realizado' }
     return { f: 'Diagnóstico Inicial', s: 'Teste Não Realizado' }
   }
@@ -628,14 +649,14 @@ function PorArea({ projeto, areasCalc, todosControles, loading, navigate, loadDa
 
   return (
     <div style={PA.page}>
-      {/* HEADER */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 0 6px', flexShrink: 0, position: 'relative' }}>
-        <button onClick={() => navigate('/')} style={PA.btnVoltar}>← VOLTAR</button>
-        <div>
-          <div style={{ fontSize: 18, fontWeight: 600, color: 'var(--lt-text)', fontFamily: "'Raleway', sans-serif" }}>{nome}</div>
-          <div style={{ fontSize: 10, color: 'var(--lt-text3)', marginTop: 1 }}>{area.controles.length} controles · Peso empresa: {pesoEmpresa}%</div>
+      {/* HEADER — barra compacta */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 0 6px', flexShrink: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <button onClick={() => navigate('/')} style={PA.btnVoltar}>← VOLTAR</button>
+          <div style={{ fontSize: 16, fontWeight: 600, color: 'var(--lt-text)', fontFamily: "'Raleway', sans-serif" }}>{nome}</div>
+          <div style={{ fontSize: 9, color: 'var(--lt-text3)' }}>{area.controles.length} controles · Peso empresa: {pesoEmpresa}%</div>
         </div>
-        <div style={{ position: 'absolute', top: 12, right: 0, fontSize: 10, color: 'var(--lt-text3)', fontWeight: 500, background: 'var(--lt-card)', border: '1px solid var(--lt-border)', borderRadius: 6, padding: '4px 10px' }}>Última atualização: {ultAtualArea}</div>
+        <div style={{ fontSize: 9, color: 'var(--lt-text3)', background: 'var(--lt-card)', border: '1px solid var(--lt-border)', borderRadius: 6, padding: '4px 10px', whiteSpace: 'nowrap' }}>Última atualização: {ultAtualArea}</div>
       </div>
 
       {/* ZONA SUPERIOR — HEATMAP + KPI GRID */}
@@ -680,9 +701,9 @@ function PorArea({ projeto, areasCalc, todosControles, loading, navigate, loadDa
             <div style={{ ...PA.kpiValor, color: 'var(--copper)' }}>{(p*100).toFixed(1)}%</div>
             <NivelBadge pct={p} nivel={nv} />
           </div>
-          <div style={{ ...PA.kpiCard, borderTopColor: 'var(--cream)' }}>
+          <div style={{ ...PA.kpiCard, borderTopColor: 'var(--navy)' }}>
             <div style={PA.kpiLabel}>Total de Controles</div>
-            <div style={{ ...PA.kpiValor, color: 'var(--cream)' }}>{area.controles.length}</div>
+            <div style={{ ...PA.kpiValor, color: 'var(--navy)' }}>{area.controles.length}</div>
             <div style={PA.kpiSub}>Peso empresa: {pesoEmpresa}%</div>
           </div>
           <div style={{ ...PA.kpiCard, borderTopColor: '#22C55E' }}>
@@ -713,15 +734,25 @@ function PorArea({ projeto, areasCalc, todosControles, loading, navigate, loadDa
       <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexShrink: 0, flexWrap: 'wrap', marginBottom: 6 }}>
         <input value={busca} onChange={e => setBusca(e.target.value)} placeholder="Buscar risco, controle, inconsistência..." style={PA.filtroInput} />
         <select value={filtCrit} onChange={e => setFiltCrit(e.target.value)} style={PA.filtroSel}><option value="">Todas criticidades</option>{crits.map(c => <option key={c} value={c}>{c}</option>)}</select>
-        <select value={filtImp} onChange={e => setFiltImp(e.target.value)} style={PA.filtroSel}><option value="">Todos impactos</option>{imps.map(c => <option key={c} value={c}>{c}</option>)}</select>
-        <select value={filtRes} onChange={e => setFiltRes(e.target.value)} style={PA.filtroSel}><option value="">Todos resultados F1</option>{ress.map(c => <option key={c} value={c}>{c}</option>)}</select>
+        <select value={filtFase} onChange={e => setFiltFase(e.target.value)} style={PA.filtroSel}><option value="">Todas as fases</option>{fasesDisponiveis.map(f => <option key={f} value={f}>{f}</option>)}</select>
+        <select value={filtRes} onChange={e => setFiltRes(e.target.value)} style={PA.filtroSel}><option value="">Todos resultados</option>{ress.map(c => <option key={c} value={c}>{c}</option>)}</select>
         <div style={{ fontSize: 10, color: 'var(--lt-text3)', background: 'var(--lt-card)', border: '1px solid var(--lt-border)', borderRadius: 8, padding: '5px 10px' }}>{cf.length} controles</div>
         {canEdit && <button onClick={() => setModalNovoRisco(true)} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, background: 'rgba(204,145,94,0.1)', border: '1px solid rgba(204,145,94,0.25)', borderRadius: 999, padding: '5px 10px', fontSize: 10, fontWeight: 600, color: 'var(--copper)', cursor: 'pointer', fontFamily: 'inherit' }} title="Criar novo risco"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Novo Risco</button>}
         <button onClick={() => exportarMRCExcel(cf, `MRC_${nome.replace(/\s+/g, '_')}_${new Date().toISOString().slice(0,10)}`, nome, projeto?.clientes?.nome || '', projeto?.nome || '')} style={PA.btnExport} title="Exportar Excel da área">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/></svg>
           Excel
         </button>
+        {isRealAdmin && (
+          <button onClick={() => setSimularPerfil(prev => prev ? null : 'gestor_cliente')} style={{ background: simularPerfil ? 'rgba(59,130,246,0.15)' : 'rgba(59,130,246,0.06)', border: '1px solid rgba(59,130,246,0.25)', borderRadius: 999, padding: '4px 10px', fontSize: 9, fontWeight: 600, color: '#2563EB', cursor: 'pointer', fontFamily: 'inherit' }} title="Simular visão do cliente">
+            {simularPerfil ? '← Voltar visão Admin' : 'Visão Cliente'}
+          </button>
+        )}
       </div>
+      {simularPerfil && (
+        <div style={{ fontSize: 9, color: '#2563EB', background: 'rgba(59,130,246,0.06)', border: '1px solid rgba(59,130,246,0.15)', borderRadius: 6, padding: '3px 10px', marginBottom: 4, flexShrink: 0, textAlign: 'center', fontWeight: 500 }}>
+          Simulando visão: Cliente
+        </div>
+      )}
 
       {/* TABELA MRC */}
       <div style={PA.tabelaWrap}>
@@ -742,7 +773,7 @@ function PorArea({ projeto, areasCalc, todosControles, loading, navigate, loadDa
               <th style={{ fontSize: 8, fontWeight: 700, color: 'var(--navy)', background: 'var(--sand)', padding: '6px 8px', position: 'sticky', top: 0, zIndex: 2, width: 70, minWidth: 70, borderBottom: '2px solid var(--lt-border)' }}></th>
             </tr></thead>
             <tbody>{cf.map((c, i) => { const fl = faseLabel(c); return (
-              <tr key={c.id||i} onMouseEnter={e => e.currentTarget.style.background='rgba(204,145,94,0.04)'} onMouseLeave={e => e.currentTarget.style.background=''}>
+              <tr key={c.id||i} onClick={() => setModalRow(c)} style={{ cursor: 'pointer' }} onMouseEnter={e => e.currentTarget.style.background='rgba(204,145,94,0.04)'} onMouseLeave={e => e.currentTarget.style.background=''}>
                 <Td w={100}>{c.dt_ult || '—'}</Td>
                 <Td w={120}>{c.ger}</Td><Td w={120}>{c.resp_sub}</Td><Td w={140}>{c.area}</Td><Td w={120}>{c.sub}</Td>
                 <td style={{ ...tdS, color: 'var(--copper)', fontWeight: 600, width: 80, minWidth: 80 }}>{c.rr}</td><Td w={200}>{c.dr}</Td>
@@ -755,7 +786,7 @@ function PorArea({ projeto, areasCalc, todosControles, loading, navigate, loadDa
                   {isCliente ? (
                     /* ── Visão do cliente: status simplificado ── */
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 3, alignItems: 'center' }}>
-                      <button onClick={() => setModalRow(c)} style={{ background: 'var(--lt-card)', border: '1px solid var(--lt-border)', borderRadius: 4, padding: '2px 10px', fontSize: 10, fontWeight: 600, color: 'var(--lt-text2)', cursor: 'pointer', fontFamily: 'inherit', width: '100%' }}>Ver</button>
+                      <button onClick={e => { e.stopPropagation(); setModalRow(c) }} style={{ background: 'var(--lt-card)', border: '1px solid var(--lt-border)', borderRadius: 4, padding: '2px 10px', fontSize: 10, fontWeight: 600, color: 'var(--lt-text2)', cursor: 'pointer', fontFamily: 'inherit', width: '100%' }}>Ver</button>
                       {(() => {
                         const cfg = getStatusBadge(c.status_workflow)
                         return <span style={{ fontSize: 8, fontWeight: 700, color: cfg.color, background: cfg.bg, padding: '2px 8px', borderRadius: 999, textTransform: 'uppercase', letterSpacing: 0.5 }}>{cfg.label}</span>
@@ -764,11 +795,11 @@ function PorArea({ projeto, areasCalc, todosControles, loading, navigate, loadDa
                   ) : (
                     /* ── Visão admin/consultor: ações + status detalhado ── */
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 3, alignItems: 'center' }}>
-                      <button onClick={() => setModalRow(c)} style={{ background: 'var(--lt-card)', border: '1px solid var(--lt-border)', borderRadius: 4, padding: '2px 10px', fontSize: 10, fontWeight: 600, color: 'var(--lt-text2)', cursor: 'pointer', fontFamily: 'inherit', width: '100%' }}>Ver</button>
-                      {canEdit && canEditControl(c.status_workflow) && <button onClick={() => setAtualizarRow(c)} style={{ background: 'rgba(204,145,94,0.08)', border: '1px solid rgba(204,145,94,0.2)', borderRadius: 4, padding: '2px 10px', fontSize: 10, fontWeight: 600, color: 'var(--copper)', cursor: 'pointer', fontFamily: 'inherit', width: '100%' }}>Atualizar</button>}
-                      {canEdit && canRegisterResult(c.status_workflow) && <button onClick={() => setRowRegistrarResultado(c)} style={{ background: 'rgba(204,145,94,0.08)', border: '1px solid rgba(204,145,94,0.2)', borderRadius: 4, padding: '2px 10px', fontSize: 9, fontWeight: 600, color: 'var(--copper)', cursor: 'pointer', fontFamily: 'inherit', width: '100%' }}>Resultado</button>}
-                      {canEdit && isDevolvido(c.status_workflow) && <button onClick={() => setRowRegistrarResultado(c)} style={{ background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 4, padding: '2px 10px', fontSize: 9, fontWeight: 600, color: '#DC2626', cursor: 'pointer', fontFamily: 'inherit', width: '100%' }}>↩ Editar</button>}
-                      {isAdmin && isAguardandoRevisao(c.status_workflow) && <button onClick={() => setRowRevisar(c)} style={{ background: 'rgba(59,130,246,0.08)', border: '1px solid rgba(59,130,246,0.2)', borderRadius: 4, padding: '2px 10px', fontSize: 9, fontWeight: 700, color: '#2563EB', cursor: 'pointer', fontFamily: 'inherit', width: '100%' }}>🔍 Revisar</button>}
+                      <button onClick={e => { e.stopPropagation(); setModalRow(c) }} style={{ background: 'var(--lt-card)', border: '1px solid var(--lt-border)', borderRadius: 4, padding: '2px 10px', fontSize: 10, fontWeight: 600, color: 'var(--lt-text2)', cursor: 'pointer', fontFamily: 'inherit', width: '100%' }}>Ver</button>
+                      {canEdit && canEditControl(c.status_workflow) && <button onClick={e => { e.stopPropagation(); setAtualizarRow(c) }} style={{ background: 'rgba(204,145,94,0.08)', border: '1px solid rgba(204,145,94,0.2)', borderRadius: 4, padding: '2px 10px', fontSize: 10, fontWeight: 600, color: 'var(--copper)', cursor: 'pointer', fontFamily: 'inherit', width: '100%' }}>Atualizar</button>}
+                      {canEdit && canRegisterResult(c.status_workflow) && <button onClick={e => { e.stopPropagation(); setRowRegistrarResultado(c) }} style={{ background: 'rgba(204,145,94,0.08)', border: '1px solid rgba(204,145,94,0.2)', borderRadius: 4, padding: '2px 10px', fontSize: 9, fontWeight: 600, color: 'var(--copper)', cursor: 'pointer', fontFamily: 'inherit', width: '100%' }}>Resultado</button>}
+                      {canEdit && isDevolvido(c.status_workflow) && <button onClick={e => { e.stopPropagation(); setRowRegistrarResultado(c) }} style={{ background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 4, padding: '2px 10px', fontSize: 9, fontWeight: 600, color: '#DC2626', cursor: 'pointer', fontFamily: 'inherit', width: '100%' }}>↩ Editar</button>}
+                      {isAdmin && isAguardandoRevisao(c.status_workflow) && <button onClick={e => { e.stopPropagation(); setRowRevisar(c) }} style={{ background: 'rgba(59,130,246,0.08)', border: '1px solid rgba(59,130,246,0.2)', borderRadius: 4, padding: '2px 10px', fontSize: 9, fontWeight: 700, color: '#2563EB', cursor: 'pointer', fontFamily: 'inherit', width: '100%' }}>🔍 Revisar</button>}
                       {/* Badge de status */}
                       {(() => {
                         const cfg = getStatusBadge(c.status_workflow)
@@ -783,7 +814,7 @@ function PorArea({ projeto, areasCalc, todosControles, loading, navigate, loadDa
       </div>
       {modalRow && <ModalDetalhe row={modalRow} onClose={() => setModalRow(null)} />}
       {atualizarRow && <ModalAtualizar row={atualizarRow} onClose={() => setAtualizarRow(null)} onSaved={() => { setAtualizarRow(null); if (projeto?.id) loadDados(projeto.id) }} areas={areasCalc} projeto={projeto} />}
-      {modalNovoRisco && <ModalNovoRisco onClose={() => setModalNovoRisco(false)} onSaved={() => { setModalNovoRisco(false); if (projeto?.id) loadDados(projeto.id) }} areas={areasCalc} projeto={projeto} />}
+      {modalNovoRisco && <ModalNovoRisco onClose={() => setModalNovoRisco(false)} onSaved={() => { setModalNovoRisco(false); if (projeto?.id) loadDados(projeto.id) }} areas={areasCalc} projeto={projeto} areaFixa={area} />}
       {rowRegistrarResultado && <ModalRegistrarResultado row={rowRegistrarResultado} onClose={() => setRowRegistrarResultado(null)} onSaved={() => { setRowRegistrarResultado(null); if (projeto?.id) loadDados(projeto.id) }} responsaveis={[]} />}
       {rowRevisar && <ModalRevisar row={rowRevisar} onClose={() => setRowRevisar(null)} onAction={() => { setRowRevisar(null); if (projeto?.id) loadDados(projeto.id) }} />}
     </div>

@@ -573,12 +573,12 @@ tr:hover td { background: rgba(204,145,94,0.03); }
 .hm-eig        { display: flex; gap: 5px; font-size: 9px; font-weight: 700; }
 .hm-ylabel     { font-size: 10px; color: var(--lt-text3); text-align: right; padding-right: 6px; display: flex; align-items: center; justify-content: flex-end; }
 .hm-xlabel     { font-size: 10px; color: var(--lt-text3); text-align: center; padding-top: 4px; }
-.hm-legend     { display: flex; flex-direction: column; gap: 8px; min-width: 155px; }
-.hm-leg        { display: flex; align-items: center; gap: 8px; padding: 10px 12px; border-radius: var(--radius-sm); border: 1px solid var(--lt-border); background: var(--lt-card); }
-.hm-ldot       { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
-.hm-lbl        { font-size: 11px; color: var(--lt-text2); font-weight: 500; }
-.hm-lnum       { font-size: 16px; font-weight: 700; line-height: 1; margin-top: 1px; }
-.hm-lsub       { font-size: 10px; color: var(--lt-text3); margin-top: 2px; }
+.hm-legend     { display: flex; flex-direction: column; gap: 6px; min-width: 170px; }
+.hm-leg        { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-radius: 8px; border: 1px solid var(--lt-border); background: var(--lt-card); border-left: 4px solid; box-shadow: 0 1px 3px rgba(10,37,64,0.04); }
+.hm-ldot       { width: 0; height: 0; display: none; }
+.hm-lbl        { font-size: 10px; color: var(--lt-text3); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+.hm-lnum       { font-size: 20px; font-weight: 300; line-height: 1; margin-top: 2px; }
+.hm-lsub       { font-size: 9px; color: var(--lt-text3); margin-top: 3px; font-weight: 500; }
 
 /* ══════════════════════════════════════════════
    MODAL (LIGHT content, DARK overlay)
