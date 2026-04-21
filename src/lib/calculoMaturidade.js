@@ -28,7 +28,7 @@ export const PESO_FASE = DEFAULTS_PESO_FASE
 // ─── NORMALIZAÇÃO DE PESOS POR NÚMERO DE FASES ─────────────────────────────
 
 /** Mapa: num_fases → chaves de peso ativas */
-const FASES_POR_NUM = {
+export const FASES_POR_NUM = {
   1: ['F1'],
   2: ['F1', 'F2E1', 'F2E2'],
   3: ['F1', 'F2E1', 'F2E2', 'F3'],
@@ -150,8 +150,8 @@ export function calcularPesosControles(controlesArea) {
  * @returns {Object} { contribuicao, faseAtual, detalheFases, regrediu }
  */
 export function calcularContribuicaoControle(controle, pesoControle, options = {}) {
-  const { requireAprovado = false } = options
-  const PESO_FASE = getPesoFase()
+  const { requireAprovado = false, numFases = 5 } = options
+  const PESO_FASE = getPesoFaseNormalizado(numFases)
 
   // Se workflow ativo e controle não aprovado → contribui 0
   if (requireAprovado && controle.status_workflow && controle.status_workflow !== 'aprovado') {
@@ -386,8 +386,8 @@ export function calcularPercentualArea(controlesArea, f1Concluida = true, option
     }
   }
 
-  // F1 é fixa: 10% quando diagnóstico concluído (seção 2)
-  const PF = getPesoFase()
+  // F1 é fixa quando diagnóstico concluído (normalizada conforme num_fases)
+  const PF = getPesoFaseNormalizado(options.numFases || 5)
   const baseF1 = f1Concluida ? PF.F1 : 0
 
   // Calcular contribuição de cada controle

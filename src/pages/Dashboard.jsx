@@ -154,7 +154,7 @@ export default function Dashboard() {
       const res = areas.map(a => {
         const ca = controles.filter(c => c.area_id === a.id || c.area === a.nome)
         const f1c = ca.length > 0 && ca.every(c => c.r1 && c.r1 !== 'Teste Não Realizado')
-        return { ...a, controles: ca, calc: calcularPercentualArea(ca, f1c, { requireAprovado: true }) }
+        return { ...a, controles: ca, calc: calcularPercentualArea(ca, f1c, { requireAprovado: true, numFases: projetoAtivo?.num_fases || 5 }) }
       })
       const resOrdenado = [...res].sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'))
       setAreasCalc(resOrdenado); setTodosControles(controles)
