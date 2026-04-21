@@ -25,6 +25,40 @@ function getRegua() { return getConstantesSync().regua || DEFAULTS_REGUA }
 // Alias para manter compatibilidade com exports existentes
 export const PESO_FASE = DEFAULTS_PESO_FASE
 
+// ─── NORMALIZAÇÃO DE PESOS POR NÚMERO DE FASES ─────────────────────────────
+
+/** Mapa: num_fases → chaves de peso ativas */
+const FASES_POR_NUM = {
+  1: ['F1'],
+  2: ['F1', 'F2E1', 'F2E2'],
+  3: ['F1', 'F2E1', 'F2E2', 'F3'],
+  4: ['F1', 'F2E1', 'F2E2', 'F3', 'F4C1', 'F4C2'],
+  5: ['F1', 'F2E1', 'F2E2', 'F3', 'F4C1', 'F4C2', 'F5'],
+}
+
+/**
+ * Retorna pesos normalizados para somar 100% dado o número de fases do projeto.
+ * Fases inativas recebem peso 0. Fases ativas são proporcionalmente reescaladas.
+ *
+ * @param {number} numFases - 1 a 5 (default 5 = sem mudança)
+ * @returns {Object} pesos normalizados { F1, F2E1, F2E2, F3, F4C1, F4C2, F5 }
+ */
+export function getPesoFaseNormalizado(numFases = 5) {
+  const base = getPesoFase()
+  const chaves = FASES_POR_NUM[numFases] || FASES_POR_NUM[5]
+
+  // Soma dos pesos das fases ativas
+  const somaAtivas = chaves.reduce((s, k) => s + (base[k] || 0), 0)
+  if (somaAtivas === 0) return base // fallback safety
+
+  // Normalizar: cada fase ativa = (peso original / soma) para que o total dê 1.0
+  const resultado = {}
+  for (const k of Object.keys(base)) {
+    resultado[k] = chaves.includes(k) ? (base[k] / somaAtivas) : 0
+  }
+  return resultado
+}
+
 // ─── HELPERS ────────────────────────────────────────────────────────────────
 
 /**

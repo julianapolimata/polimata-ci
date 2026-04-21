@@ -279,6 +279,11 @@ function DetalheCliente({ cliente, onBack }) {
       matriz_tamanho: proj.matriz_tamanho ?? 4,
     }
     if (proj.id) {
+      // Se projeto já tem controles, não permitir alterar matriz
+      const { count } = await supabase
+        .from('mrc').select('id', { count: 'exact', head: true })
+        .eq('projeto_id', proj.id)
+      if ((count || 0) > 0) delete payload.matriz_tamanho
       await supabase.from('projetos').update(payload).eq('id', proj.id)
     } else {
       await supabase.from('projetos').insert({ cliente_id: cliente.id, ...payload })
@@ -452,7 +457,37 @@ function ProjetoForm({ projeto, onSave, onCancel, saving, inline }) {
     num_fases: projeto.num_fases ?? 5,
     matriz_tamanho: projeto.matriz_tamanho ?? 4,
   })
+  const [temControles, setTemControles] = useState(false)
+  const [faseMinima, setFaseMinima] = useState(1)
   const u = (f,v) => setForm(p=>({...p,[f]:v}))
+
+  // Ao editar projeto existente, verificar travas
+  useEffect(() => {
+    if (!projeto.id) return
+    ;(async () => {
+      // Verificar se tem controles → trava matriz
+      const { count } = await supabase
+        .from('mrc').select('id', { count: 'exact', head: true })
+        .eq('projeto_id', projeto.id)
+      const tem = (count || 0) > 0
+      setTemControles(tem)
+      if (!tem) return
+
+      // Descobrir fase mais alta com dados para limitar redução
+      const { data: rows } = await supabase
+        .from('mrc').select('r1, r_ader, r3, r_f4c1, r_f4c2, r_f5')
+        .eq('projeto_id', projeto.id)
+      let max = 1
+      for (const r of (rows || [])) {
+        if (r.r_f5)               { max = 5; break }
+        if (r.r_f4c1 || r.r_f4c2) { max = Math.max(max, 4) }
+        if (r.r3)                  { max = Math.max(max, 3) }
+        if (r.r_ader)              { max = Math.max(max, 2) }
+      }
+      setFaseMinima(max)
+    })()
+  }, [projeto.id])
+
   return (
     <div className={inline ? 'area-form-inline' : 'cfg-area-block'} style={{marginBottom:12}}>
       <div className="cfg-row2">
@@ -473,16 +508,34 @@ function ProjetoForm({ projeto, onSave, onCancel, saving, inline }) {
           <label>Fases da Trilha</label>
           <select className="input-light" value={form.num_fases} onChange={e=>u('num_fases', parseInt(e.target.value))}>
             {[1,2,3,4,5].map(n => (
-              <option key={n} value={n}>{n} {n===1?'fase':'fases'} — até F{n}</option>
+              <option key={n} value={n} disabled={n < faseMinima}>
+                {n} {n===1?'fase':'fases'} — até F{n}{n < faseMinima ? ' (há dados)' : ''}
+              </option>
             ))}
           </select>
+          {faseMinima > 1 && (
+            <span style={{fontSize:11,color:'var(--copper)',marginTop:4,display:'block'}}>
+              Fase mínima: F{faseMinima} (já possui resultados registrados)
+            </span>
+          )}
         </div>
         <div className="cfg-field">
           <label>Matriz de Calor</label>
-          <select className="input-light" value={form.matriz_tamanho} onChange={e=>u('matriz_tamanho', parseInt(e.target.value))}>
-            <option value={4}>4 × 4 (Padrão)</option>
-            <option value={5}>5 × 5</option>
-          </select>
+          {temControles ? (
+            <>
+              <select className="input-light" value={form.matriz_tamanho} disabled style={{opacity:0.6,cursor:'not-allowed'}}>
+                <option value={form.matriz_tamanho}>{form.matriz_tamanho} × {form.matriz_tamanho}</option>
+              </select>
+              <span style={{fontSize:11,color:'var(--copper)',marginTop:4,display:'block'}}>
+                Não pode ser alterada — projeto já possui controles cadastrados
+              </span>
+            </>
+          ) : (
+            <select className="input-light" value={form.matriz_tamanho} onChange={e=>u('matriz_tamanho', parseInt(e.target.value))}>
+              <option value={4}>4 × 4 (Padrão)</option>
+              <option value={5}>5 × 5</option>
+            </select>
+          )}
         </div>
       </div>
       <div style={{display:'flex',gap:8,marginTop:10}}>
