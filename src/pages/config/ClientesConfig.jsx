@@ -5,7 +5,7 @@ import { gerarTemplateMRC } from '../../lib/templateMRC'
 
 const FASES_DESC = {
   1: 'F1 – Diagnóstico',
-  2: 'F2 – Teste de Desenho',
+  2: 'F2 – TOD e TOE',
   3: 'F3 – Revisão Integral',
   4: 'F4 – Sustentação',
   5: 'F5 – Melhoria Contínua',

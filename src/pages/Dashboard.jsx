@@ -800,7 +800,7 @@ function PorArea({ projeto, areasCalc, todosControles, loading, navigate, loadDa
                 { h1: 'Fase 3', h2: 'Revisão Integral', w: 110, k: 'r3', color: 'var(--f3-phase)' },
                 { h1: 'Fase 4', h2: 'AI - Ciclo 1', w: 110, k: 'r_f4c1', color: 'var(--f4-phase)' },
                 { h1: 'Fase 4', h2: 'AI - Ciclo 2', w: 110, k: 'r_f4c2', color: 'var(--f4-phase)' },
-                { h1: 'Fase 5', h2: 'Auditoria Interna', w: 110, k: 'r_f5', color: 'var(--copper-deep)' },
+                { h1: 'Fase 5', h2: 'Auditoria Externa', w: 110, k: 'r_f5', color: 'var(--copper-deep)' },
               ].map((col, i) => {
                 const cw = paResize.getWidth(col.k, col.w)
                 return <th key={`f${i}`} className={`th-sort${paSort.sortKey===col.k?' sorted':''}`} onClick={() => paSort.toggleSort(col.k)} style={{ color: 'white', background: col.color, padding: '8px 8px', textAlign: 'center', verticalAlign: 'middle', position: 'sticky', top: 0, zIndex: 2, width: cw, minWidth: cw, borderBottom: '1px solid var(--lt-border)', borderLeft: '1px solid rgba(255,255,255,0.15)', borderRadius: '8px 8px 0 0', cursor: 'pointer', userSelect: 'none' }}>
