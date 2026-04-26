@@ -527,24 +527,24 @@ const ModalAtualizar = ({ row, onClose, onSaved, areas, projeto }) => {
       <div style={{ background: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: 8, padding: 12, marginBottom: 24 }}>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 10 }}>
           <div style={{ borderRight: '1px solid #e5e7eb', paddingRight: 12 }}>
-            <div style={{ fontSize: 9, fontWeight: 700, color: '#999', textTransform: 'uppercase', marginBottom: 4 }}>Ref. Risco</div>
+            <div style={{ fontSize: 9, fontWeight: 700, color: '#7A8B9C', textTransform: 'uppercase', marginBottom: 4 }}>Ref. Risco</div>
             <div style={{ fontSize: 12, color: '#00203E', fontWeight: 500 }}>{row.rr}</div>
           </div>
           <div style={{ borderRight: '1px solid #e5e7eb', paddingRight: 12 }}>
-            <div style={{ fontSize: 9, fontWeight: 700, color: '#999', textTransform: 'uppercase', marginBottom: 4 }}>Ref. Controle</div>
+            <div style={{ fontSize: 9, fontWeight: 700, color: '#7A8B9C', textTransform: 'uppercase', marginBottom: 4 }}>Ref. Controle</div>
             <div style={{ fontSize: 12, color: '#00203E', fontWeight: 500 }}>{row.rc}</div>
           </div>
           <div style={{ borderRight: '1px solid #e5e7eb', paddingRight: 12 }}>
-            <div style={{ fontSize: 9, fontWeight: 700, color: '#999', textTransform: 'uppercase', marginBottom: 4 }}>Fase Atual</div>
+            <div style={{ fontSize: 9, fontWeight: 700, color: '#7A8B9C', textTransform: 'uppercase', marginBottom: 4 }}>Fase Atual</div>
             <div style={{ fontSize: 12, color: '#00203E', fontWeight: 500 }}>F1 · Diagnóstico</div>
           </div>
           <div>
-            <div style={{ fontSize: 9, fontWeight: 700, color: '#999', textTransform: 'uppercase', marginBottom: 4 }}>Resultado</div>
+            <div style={{ fontSize: 9, fontWeight: 700, color: '#7A8B9C', textTransform: 'uppercase', marginBottom: 4 }}>Resultado</div>
             <div style={{ fontSize: 12, color: '#00203E', fontWeight: 500 }}>Efetivo</div>
           </div>
         </div>
         <div>
-          <div style={{ fontSize: 9, fontWeight: 700, color: '#999', textTransform: 'uppercase', marginBottom: 4 }}>Descrição do Risco</div>
+          <div style={{ fontSize: 9, fontWeight: 700, color: '#7A8B9C', textTransform: 'uppercase', marginBottom: 4 }}>Descrição do Risco</div>
           <div style={{ fontSize: 11, color: '#00203E', marginTop: 6, lineHeight: 1.6 }}>{row.dr}</div>
         </div>
       </div>
@@ -798,16 +798,16 @@ const ModalAtualizar = ({ row, onClose, onSaved, areas, projeto }) => {
       <div style={{ background: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: 8, padding: 12, marginBottom: 24 }}>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 10 }}>
           <div style={{ borderRight: '1px solid #e5e7eb', paddingRight: 12 }}>
-            <div style={{ fontSize: 9, fontWeight: 700, color: '#999', textTransform: 'uppercase', marginBottom: 4 }}>Ref. Controle</div>
+            <div style={{ fontSize: 9, fontWeight: 700, color: '#7A8B9C', textTransform: 'uppercase', marginBottom: 4 }}>Ref. Controle</div>
             <div style={{ fontSize: 12, color: '#00203E', fontWeight: 500 }}>{row.rc}</div>
           </div>
           <div>
-            <div style={{ fontSize: 9, fontWeight: 700, color: '#999', textTransform: 'uppercase', marginBottom: 4 }}>Área</div>
+            <div style={{ fontSize: 9, fontWeight: 700, color: '#7A8B9C', textTransform: 'uppercase', marginBottom: 4 }}>Área</div>
             <div style={{ fontSize: 12, color: '#00203E', fontWeight: 500 }}>{row.area}</div>
           </div>
         </div>
         <div>
-          <div style={{ fontSize: 9, fontWeight: 700, color: '#999', textTransform: 'uppercase', marginBottom: 4 }}>Descrição do Controle</div>
+          <div style={{ fontSize: 9, fontWeight: 700, color: '#7A8B9C', textTransform: 'uppercase', marginBottom: 4 }}>Descrição do Controle</div>
           <div style={{ fontSize: 11, color: '#00203E', marginTop: 6, lineHeight: 1.6 }}>{row.dc}</div>
         </div>
       </div>
@@ -1046,27 +1046,27 @@ const ModalAtualizar = ({ row, onClose, onSaved, areas, projeto }) => {
       <div style={{ background: '#f9fafb', padding: 16, borderRadius: 8, marginBottom: 20 }}>
         <div style={{ display: 'grid', gridTemplateColumns: '200px 1fr', gap: 12, fontSize: 12, paddingBottom: 8, borderBottom: '1px solid #e5e7eb' }}>
           <div style={{ fontWeight: 600, color: '#00203E' }}>Descrição do Risco</div>
-          <div style={{ color: '#666' }}>{novaDescRisco || row.dr}</div>
+          <div style={{ color: '#7A8B9C' }}>{novaDescRisco || row.dr}</div>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: '200px 1fr', gap: 12, fontSize: 12, paddingTop: 8, paddingBottom: 8, borderBottom: '1px solid #e5e7eb' }}>
           <div style={{ fontWeight: 600, color: '#00203E' }}>Descrição do Controle</div>
-          <div style={{ color: '#666' }}>{novaDescControle || row.dc}</div>
+          <div style={{ color: '#7A8B9C' }}>{novaDescControle || row.dc}</div>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: '200px 1fr', gap: 12, fontSize: 12, paddingTop: 8, paddingBottom: 8, borderBottom: '1px solid #e5e7eb' }}>
           <div style={{ fontWeight: 600, color: '#00203E' }}>Categoria</div>
-          <div style={{ color: '#666' }}>{editCat || '—'}</div>
+          <div style={{ color: '#7A8B9C' }}>{editCat || '—'}</div>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: '200px 1fr', gap: 12, fontSize: 12, paddingTop: 8, paddingBottom: 8, borderBottom: '1px solid #e5e7eb' }}>
           <div style={{ fontWeight: 600, color: '#00203E' }}>Frequência</div>
-          <div style={{ color: '#666' }}>{editFreq || '—'}</div>
+          <div style={{ color: '#7A8B9C' }}>{editFreq || '—'}</div>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: '200px 1fr', gap: 12, fontSize: 12, paddingTop: 8, paddingBottom: 8, borderBottom: '1px solid #e5e7eb' }}>
           <div style={{ fontWeight: 600, color: '#00203E' }}>Natureza</div>
-          <div style={{ color: '#666' }}>{editNat || '—'}</div>
+          <div style={{ color: '#7A8B9C' }}>{editNat || '—'}</div>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: '200px 1fr', gap: 12, fontSize: 12, paddingTop: 8, paddingBottom: 8, borderBottom: '1px solid #e5e7eb' }}>
           <div style={{ fontWeight: 600, color: '#00203E' }}>Característica</div>
-          <div style={{ color: '#666' }}>{editCar || '—'}</div>
+          <div style={{ color: '#7A8B9C' }}>{editCar || '—'}</div>
         </div>
       </div>
 

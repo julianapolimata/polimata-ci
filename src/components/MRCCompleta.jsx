@@ -161,7 +161,7 @@ function Heatmap({ data, filtroImp, filtroProb, onFilterCell }) {
               {HM_IMPS.map((imp, ri) => HM_PROBS.map((prob, ci) => {
                 const key = `${imp}|${prob}`; const c = cells[key]; const bg = HM_COLORS[ri][ci]
                 const sel = filtroImp === imp && filtroProb === prob
-                const txtColor = bg === '#FFFF00' ? '#333' : '#fff'
+                const txtColor = bg === '#FFFF00' ? '#00203E' : '#fff'
                 const subColor = bg === '#FFFF00' ? '#555' : 'rgba(255,255,255,0.8)'
                 return (
                   <div key={key} className={`hm-cell ${sel ? 'sel' : ''}`} style={{ background: bg, opacity: c.n === 0 ? 0.25 : 1 }} onClick={() => onFilterCell(imp, prob, sel)}>

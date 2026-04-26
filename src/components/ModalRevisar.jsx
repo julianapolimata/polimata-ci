@@ -203,7 +203,7 @@ const ModalRevisar = ({ row, onClose, onAction }) => {
           <div>
             <label style={S.label}>Motivo da reprovação <span style={{ color: '#E24B4A' }}>*</span></label>
             <textarea value={nota} onChange={e => setNota(e.target.value)} placeholder="Descreva o que precisa ser corrigido..." style={{ width: '100%', padding: '0.7rem', border: `1px solid ${nota.trim() ? '#D0D0D0' : '#E24B4A'}`, borderRadius: 4, fontFamily: "'Montserrat', sans-serif", fontSize: 13, minHeight: 80, resize: 'vertical', marginTop: 4 }} />
-            <div style={{ fontSize: 10, color: '#999', marginTop: 4, textAlign: 'right' }}>{nota.length} caracteres</div>
+            <div style={{ fontSize: 10, color: '#7A8B9C', marginTop: 4, textAlign: 'right' }}>{nota.length} caracteres</div>
           </div>
         </div>
         <div style={S.footer}>
@@ -224,8 +224,8 @@ const ModalRevisar = ({ row, onClose, onAction }) => {
           <h2 style={{ margin: 0, fontSize: 18, fontWeight: 600 }}>📋 Histórico de Revisões — {row?.rc}</h2>
         </div>
         <div style={S.body}>
-          {loadingHist ? <div style={{ textAlign: 'center', padding: 20, color: '#999' }}>Carregando...</div> :
-            historico.length === 0 ? <div style={{ textAlign: 'center', padding: 20, color: '#999' }}>Nenhuma revisão registrada.</div> :
+          {loadingHist ? <div style={{ textAlign: 'center', padding: 20, color: '#7A8B9C' }}>Carregando...</div> :
+            historico.length === 0 ? <div style={{ textAlign: 'center', padding: 20, color: '#7A8B9C' }}>Nenhuma revisão registrada.</div> :
             <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
               {historico.map((h, i) => {
                 const tipo = h.tipo
@@ -240,7 +240,7 @@ const ModalRevisar = ({ row, onClose, onAction }) => {
                       {h.fase && <span style={{ fontSize: 9, fontWeight: 400, color: '#CC915E', background: 'rgba(204,145,94,0.1)', padding: '1px 6px', borderRadius: 3 }}>{h.fase}</span>}
                     </div>
                     {h.nota && <div style={{ fontSize: 12, color: '#00203E', lineHeight: 1.5, paddingLeft: 4, fontStyle: 'italic' }}>"{h.nota}"</div>}
-                    <div style={{ fontSize: 10, color: '#999', marginTop: 4 }}>
+                    <div style={{ fontSize: 10, color: '#7A8B9C', marginTop: 4 }}>
                       {new Date(h.criado_em).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                     </div>
                   </div>
