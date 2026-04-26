@@ -804,6 +804,7 @@ function PorArea({ projeto, areasCalc, todosControles, loading, navigate, loadDa
             <tbody>{paSort.sortData(cf).map((c, i) => {
               const faseBdg = (val) => {
                 if (!val || val === 'Teste Não Realizado') return <span style={{ fontSize: 9, color: 'var(--lt-text3)', fontStyle: 'italic' }}>Não iniciado</span>
+                if (val === 'N/A') return <span style={{ fontSize: 9, color: 'var(--lt-text3)' }}>N/A</span>
                 const label = val.charAt(0).toUpperCase() + val.slice(1)
                 return badgeR(label)
               }
@@ -815,12 +816,17 @@ function PorArea({ projeto, areasCalc, todosControles, loading, navigate, loadDa
                 <td style={{ ...tdS, color: 'var(--copper)', fontWeight: 600, width: paResize.getWidth('rc',90), minWidth: paResize.getWidth('rc',90) }}>{c.rc}</td><Td w={paResize.getWidth('dc',200)}>{c.dc}</Td>
                 <td style={{ ...tdS, width: paResize.getWidth('r1',80), minWidth: paResize.getWidth('r1',80) }}>{badgeR(c.r1)}</td>
                 <td style={{ ...tdS, width: paResize.getWidth('crit',100), minWidth: paResize.getWidth('crit',100) }}>{badgeCrit(c.crit)}</td>
-                {/* Colunas de fase */}
-                {[c.r1, c.st_pa, c.r_ader, c.r3, c.r_f4c1, c.r_f4c2, c.r_f5].map((val, fi) => (
-                  <td key={fi} style={{ ...tdS, textAlign: 'center', width: paResize.getWidth(['r1','st_pa','r_ader','r3','r_f4c1','r_f4c2','r_f5'][fi], 100), minWidth: 100 }}>
-                    {faseBdg(val)}
-                  </td>
-                ))}
+                {/* Colunas de fase — atalho: F1 efetivo → F2 = N/A */}
+                {(() => {
+                  const f1Efetivo = c.r1 && c.r1.toLowerCase() === 'efetivo'
+                  const vals = [c.r1, f1Efetivo ? 'N/A' : c.st_pa, f1Efetivo ? 'N/A' : c.r_ader, c.r3, c.r_f4c1, c.r_f4c2, c.r_f5]
+                  const keys = ['r1','st_pa','r_ader','r3','r_f4c1','r_f4c2','r_f5']
+                  return vals.map((val, fi) => (
+                    <td key={fi} style={{ ...tdS, textAlign: 'center', width: paResize.getWidth(keys[fi], 100), minWidth: 100 }}>
+                      {faseBdg(val)}
+                    </td>
+                  ))
+                })()}
                 <td style={{ ...tdS, textAlign: 'center', width: 90, minWidth: 90 }}>
                   {isCliente ? (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 3, alignItems: 'center' }}>

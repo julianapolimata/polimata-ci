@@ -372,6 +372,9 @@ function faseBadge(val) {
   if (!val || val === 'Teste Não Realizado') {
     return <span style={{ fontSize: 9, color: 'var(--lt-text3)', fontStyle: 'italic' }}>Não iniciado</span>
   }
+  if (val === 'N/A') {
+    return <span style={{ fontSize: 9, color: 'var(--lt-text3)' }}>N/A</span>
+  }
   // Capitalizar primeira letra
   const label = val.charAt(0).toUpperCase() + val.slice(1)
   const cls = R1_MAP[val] || R1_MAP[label] || 'b-na'
@@ -385,7 +388,10 @@ function TabelaMRC({ rows, visCols, onOpenModal, expandAll }) {
   const sorted = sortData(rows)
 
   // Mapa de dados para colunas de fase
+  // Atalho: se F1=Efetivo, F2 é pulada → mostra N/A
   const getFaseVal = (row, colId) => {
+    const f1Efetivo = row.r1 && row.r1.toLowerCase() === 'efetivo'
+    if (f1Efetivo && (colId === 'hist_f2d' || colId === 'hist_f2a')) return 'N/A'
     const map = { hist_f1: row.r1, hist_f2d: row.st_pa, hist_f2a: row.r_ader, hist_f3: row.r3, hist_f4c1: row.r_f4c1, hist_f4c2: row.r_f4c2, hist_f5: row.r_f5 }
     return map[colId]
   }
