@@ -1,8 +1,7 @@
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
-import { useEffect, useState, useMemo, useCallback } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { getFaseNumero } from '../lib/fases'
-import { useSort, useColumnResize } from '../lib/useTableFeatures'
 import { Routes, Route, useNavigate, useLocation, useParams } from 'react-router-dom'
 import Configuracoes from './Configuracoes'
 import Perfil from './Perfil'
@@ -25,8 +24,7 @@ import { carregarConstantes } from '../lib/constantesLoader'
 // CONSTANTES
 // ══════════════════════════════════════════════════════════════════════════════
 
-const FASES_CORES = ['var(--navy)', 'var(--navy-soft)', 'var(--f3-phase)', 'var(--f4-phase)', 'var(--copper-deep)']
-const FASES_CORES_HEX = ['#00203E', '#1D3B5C', '#660033', '#660066', '#A6512F'] // For JS color logic
+const FASES_CORES = ['#00203E', '#1D3B5C', '#660033', '#660066', '#A6512F']
 const FASES_PESOS = [10, 25, 25, 30, 10]
 const FASES_NOMES = ['Diagnóstico Inicial', 'Planos de Ação e Aderência', 'Controles Internos', 'Auditoria Contínua', 'Auditoria Independente']
 
@@ -219,9 +217,9 @@ export default function Dashboard() {
             badge={todosControles.length > 0 ? todosControles.length : null} />
           {isAdmin && (<>{sidebarOpen && <div className="sb-sep">Administração</div>}
             <SideNavItem icon="⚙️" label="Configurações" active={location.pathname.startsWith('/configuracoes')} onClick={() => navigate('/configuracoes')} open={sidebarOpen} />
-            <SideNavItem icon="🛠" label="Manutenção MRC" active={location.pathname === '/manutencao-mrc'} onClick={() => navigate('/manutencao-mrc')} open={sidebarOpen} /></>)}
+            <SideNavItem icon="📥" label="Importar MRC" active={location.pathname === '/importar-mrc'} onClick={() => navigate('/importar-mrc')} open={sidebarOpen} /></>)}
         </nav>
-        <button onClick={() => setSidebarOpen(o => !o)} style={{ background: 'transparent', border: 'none', borderTop: '1px solid var(--brd)', color: 'var(--txt3)', padding: '10px', cursor: 'pointer', fontSize: 14, textAlign: 'center', width: '100%' }}>
+        <button onClick={() => setSidebarOpen(o => !o)} style={{ background: 'transparent', border: 'none', borderTop: '1px solid var(--brd)', color: 'var(--txt3)', padding: '10px', cursor: 'pointer', fontSize: 14, textAlign: 'center' }}>
           {sidebarOpen ? '◂' : '▸'}
         </button>
         <div className="sb-footer">
@@ -237,17 +235,17 @@ export default function Dashboard() {
 
       <main className={mainLightClass} style={{ flex: 1, overflowY: 'auto', background: isHomeDash ? 'var(--bg0)' : 'var(--lt-bg)', position: 'relative' }}>
         {/* Notificações — canto superior direito (sticky top-bar). Oculto na MRC pois o header lá inclui o sino */}
-        {location.pathname !== '/mrc' && !location.pathname.startsWith('/area/') && (
+        {location.pathname !== '/mrc' && (
           <div className="top-bar" style={{ display: 'flex', justifyContent: 'flex-end', padding: '8px 16px 0', background: isHomeDash ? 'var(--bg0)' : 'var(--lt-bg)' }}>
             <NotificacoesPanel />
           </div>
         )}
         <Routes>
           <Route path="/" element={<HomeDash projeto={projetoAtivo} areasCalc={areasCalc} todosControles={todosControles} loading={loading} ultimaAtualizacao={ultimaAtualizacao} />} />
-          <Route path="/area/:areaId" element={<PorArea projeto={projetoAtivo} areasCalc={areasCalc} todosControles={todosControles} loading={loading} navigate={navigate} loadDados={loadDados} notificacoes={<NotificacoesPanel />} />} />
+          <Route path="/area/:areaId" element={<PorArea projeto={projetoAtivo} areasCalc={areasCalc} todosControles={todosControles} loading={loading} navigate={navigate} loadDados={loadDados} />} />
           <Route path="/mrc" element={<MRCCompleta projetoId={projetoAtivo?.id} clienteNome={projetoAtivo?.clientes?.nome || ''} projetoNome={projetoAtivo?.nome || ''} notificacoes={<NotificacoesPanel />} />} />
           <Route path="/configuracoes/*" element={<Configuracoes />} />
-          <Route path="/manutencao-mrc" element={<ImportarMRC projetoId={projetoAtivo?.id} areas={areasCalc} onImported={() => { if (projetoAtivo?.id) loadDados(projetoAtivo.id) }} />} />
+          <Route path="/importar-mrc" element={<ImportarMRC projetoId={projetoAtivo?.id} areas={areasCalc} onImported={() => { if (projetoAtivo?.id) loadDados(projetoAtivo.id) }} />} />
           <Route path="/perfil" element={<Perfil />} />
         </Routes>
       </main>
@@ -378,7 +376,7 @@ function HomeDash({ projeto, areasCalc, todosControles, loading, ultimaAtualizac
           <div style={D.kpiSub}>Riscos sem controle identificado</div>
         </div>
         <div style={{ ...D.kpiCard, borderTop: 'none', position: 'relative', overflow: 'hidden' }}>
-          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3, background: 'linear-gradient(90deg, var(--copper), var(--copper-deep))' }} />
+          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3, background: 'linear-gradient(90deg, #CC915E, #A6512F)' }} />
           <div style={D.kpiLabel}>Planos de Ação</div>
           <div style={{ ...D.kpiValor, color: 'var(--copper)' }}>{kpis.pa}</div>
           <div style={D.kpiSub}>Em desenvolvimento</div>
@@ -499,31 +497,31 @@ const dashStyles = {
   kpiCard: { flex: 1, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 12, padding: '12px 14px', borderTop: '3px solid' },
   kpiLabel: { fontSize: 8, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1, color: 'rgba(247,243,238,0.45)', marginBottom: 5 },
   kpiValor: { fontSize: 26, fontWeight: 300, lineHeight: 1 },
-  kpiSub: { fontSize: 9, color: 'rgba(247,243,238,0.3)', marginTop: 4 },
-  kpiBadge: { display: 'inline-block', fontSize: 8, fontWeight: 700, padding: '2px 7px', borderRadius: 999, color: '#fff' },
+  kpiSub: { fontSize: 10, color: 'rgba(247,243,238,0.3)', marginTop: 4 },
+  kpiBadge: { display: 'inline-block', fontSize: 9, fontWeight: 700, padding: '2px 7px', borderRadius: 999, color: '#fff' },
   cardDark: { background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 12, padding: '14px 16px', marginBottom: 8, flexShrink: 0 },
-  cardTitle: { fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1.2, color: 'rgba(247,243,238,0.4)', marginBottom: 10 },
-  limparFiltro: { background: 'rgba(204,145,94,0.15)', border: '1px solid rgba(204,145,94,0.3)', borderRadius: 999, padding: '3px 10px', fontSize: 9, fontWeight: 600, color: 'var(--copper)', cursor: 'pointer', fontFamily: 'inherit' },
+  cardTitle: { fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 1.2, color: 'rgba(247,243,238,0.4)', marginBottom: 10 },
+  limparFiltro: { background: 'rgba(204,145,94,0.15)', border: '1px solid rgba(204,145,94,0.3)', borderRadius: 999, padding: '3px 10px', fontSize: 10, fontWeight: 600, color: 'var(--copper)', cursor: 'pointer', fontFamily: 'inherit' },
   areaList: { maxHeight: 340, overflowY: 'auto', paddingRight: 4 },
   areaRow: { display: 'flex', alignItems: 'center', padding: '6px 4px', gap: 10, borderRadius: 4, transition: 'background .15s' },
   areaRank: { fontSize: 10, fontWeight: 500, color: 'rgba(247,243,238,0.25)', width: 18, textAlign: 'right', flexShrink: 0 },
-  areaNome: { fontSize: 11, fontWeight: 500, color: 'var(--cream)', width: 180, flexShrink: 0 },
+  areaNome: { fontSize: 12, fontWeight: 500, color: 'var(--cream)', width: 180, flexShrink: 0 },
   areaBarWrap: { flex: 1, height: 7, background: 'rgba(255,255,255,0.06)', borderRadius: 4, overflow: 'hidden' },
   areaBar: { height: '100%', borderRadius: 4, transition: 'width 0.6s cubic-bezier(.4,0,.2,1)' },
   areaPct: { fontSize: 12, fontWeight: 600, color: 'var(--cream)', width: 50, textAlign: 'right', flexShrink: 0 },
-  nivelBadge: { fontSize: 9, fontWeight: 700, color: '#fff', padding: '2px 7px', borderRadius: 999, flexShrink: 0, minWidth: 28, textAlign: 'center' },
+  nivelBadge: { fontSize: 10, fontWeight: 700, color: '#fff', padding: '2px 7px', borderRadius: 999, flexShrink: 0, minWidth: 28, textAlign: 'center' },
   zonaInferior: { display: 'flex', gap: 8, flex: 1, minHeight: 0, overflow: 'hidden' },
   heatYLabels: { display: 'flex', flexDirection: 'column', justifyContent: 'space-around', paddingRight: 8, width: 70, flexShrink: 0 },
-  heatYLabel: { fontSize: 9, fontWeight: 600, color: 'rgba(247,243,238,0.5)', textAlign: 'right', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', flex: 1 },
+  heatYLabel: { fontSize: 10, fontWeight: 600, color: 'rgba(247,243,238,0.5)', textAlign: 'right', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', flex: 1 },
   heatBody: { flex: 1, display: 'flex', flexDirection: 'column', gap: 3 },
   heatRow: { display: 'flex', gap: 3, flex: 1 },
   heatCell: { flex: 1, borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, fontWeight: 700, color: '#fff', minHeight: 50, transition: 'transform .15s', cursor: 'default' },
   heatXLabels: { display: 'flex', paddingLeft: 78, paddingTop: 6, gap: 3 },
-  heatXLabel: { flex: 1, textAlign: 'center', fontSize: 9, fontWeight: 600, color: 'rgba(247,243,238,0.5)' },
+  heatXLabel: { flex: 1, textAlign: 'center', fontSize: 10, fontWeight: 600, color: 'rgba(247,243,238,0.5)' },
   heatLegend: { display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 14, marginTop: 10, paddingTop: 8, borderTop: '1px solid rgba(255,255,255,0.04)' },
-  legendItem: { display: 'flex', alignItems: 'center', gap: 5, fontSize: 9, color: 'rgba(247,243,238,0.45)' },
+  legendItem: { display: 'flex', alignItems: 'center', gap: 5, fontSize: 10, color: 'rgba(247,243,238,0.45)' },
   legendDot: { width: 10, height: 10, borderRadius: 2 },
-  critTh: { padding: '6px 8px', fontSize: 8, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.8, textAlign: 'center', position: 'sticky', top: 0, zIndex: 2, background: 'rgba(7,26,46,0.95)', borderBottom: '1px solid rgba(255,255,255,0.08)' },
+  critTh: { padding: '6px 8px', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.8, textAlign: 'center', position: 'sticky', top: 0, zIndex: 2, background: 'rgba(7,26,46,0.95)', borderBottom: '1px solid rgba(255,255,255,0.08)' },
   critTdArea: { padding: '5px 8px', fontSize: 10, fontWeight: 500, color: 'var(--cream)', borderBottom: '1px solid rgba(255,255,255,0.04)', textAlign: 'left' },
   critTdNum: { padding: '5px 8px', fontSize: 12, fontWeight: 700, textAlign: 'center', borderBottom: '1px solid rgba(255,255,255,0.04)' },
   critTdTotal: { padding: '5px 8px', fontSize: 11, fontWeight: 600, color: 'rgba(247,243,238,0.5)', textAlign: 'center', borderBottom: '1px solid rgba(255,255,255,0.04)' },
@@ -534,7 +532,7 @@ const dashStyles = {
 // TELA 2 — POR ÁREA (REDESIGN v2 — TEMA ESCURO + HEATMAP + KPI GRID)
 // ══════════════════════════════════════════════════════════════════════════════
 
-function PorArea({ projeto, areasCalc, todosControles, loading, navigate, loadDados, notificacoes }) {
+function PorArea({ projeto, areasCalc, todosControles, loading, navigate, loadDados }) {
   const { areaId } = useParams()
   const { perfil } = useAuth()
   const area = areasCalc.find(a => a.id === areaId)
@@ -544,7 +542,6 @@ function PorArea({ projeto, areasCalc, todosControles, loading, navigate, loadDa
   const [filtImp, setFiltImp] = useState('')
   const [filtRes, setFiltRes] = useState('')
   const [filtFase, setFiltFase] = useState('')
-  const [filtStatus, setFiltStatus] = useState('')
   const [simularPerfil, setSimularPerfil] = useState(null)
   const [modalRow, setModalRow] = useState(null)
   const [atualizarRow, setAtualizarRow] = useState(null)
@@ -558,8 +555,6 @@ function PorArea({ projeto, areasCalc, todosControles, loading, navigate, loadDa
   const isRealAdmin = perfil?.papel === 'admin_polimata'
 
   // HOOKS devem ficar ANTES de qualquer early return (React rules of hooks)
-  const paSort = useSort()
-  const paResize = useColumnResize({})
   const controles = area?.controles || []
   const ultAtualArea = useMemo(() => getUltimaAtualizacao(controles), [controles])
   const areaHeatmap = useMemo(() => {
@@ -615,7 +610,6 @@ function PorArea({ projeto, areasCalc, todosControles, loading, navigate, loadDa
     if (filtImp && String(c.imp||'') !== filtImp) return false
     if (filtRes) { const rg = getResultadoGeral(c); if (!rg || rg !== filtRes) return false }
     if (filtFase) { const fc = getFaseCodigo(c); if (fc !== filtFase) return false }
-    if (filtStatus) { const cfg = getStatusBadge(c.status_workflow); if (cfg.label !== filtStatus) return false }
     return true
   })
 
@@ -623,7 +617,6 @@ function PorArea({ projeto, areasCalc, todosControles, loading, navigate, loadDa
   const imps = [...new Set(area.controles.map(c => String(c.imp||'')).filter(v => v))].sort()
   const ress = [...new Set(area.controles.map(c => { const r = getResultadoGeral(c); return r ? String(r) : '' }).filter(v => v))].sort()
   const fasesDisponiveis = [...new Set(area.controles.map(c => getFaseCodigo(c)).filter(v => v))].sort()
-  const statusDisponiveis = [...new Set(area.controles.map(c => getStatusBadge(c.status_workflow).label).filter(v => v && v !== '—'))].sort()
 
   function faseLabel(c) {
     if (c.r_f5 && c.r_f5 !== 'Teste Não Realizado') return { f: 'Auditoria Independente', s: c.r_f5 }
@@ -632,22 +625,17 @@ function PorArea({ projeto, areasCalc, todosControles, loading, navigate, loadDa
     if (c.r3 && c.r3 !== 'Teste Não Realizado') return { f: 'Revisão Controles Internos', s: c.r3 }
     if (c.r_ader && c.r_ader !== 'Teste Não Realizado') return { f: 'Teste de Aderência', s: c.r_ader }
     if (c.st_pa && c.st_pa !== '') return { f: 'Teste de Desenho', s: c.st_pa }
-    if (c.r1 && c.r1 !== 'Teste Não Realizado') {
-      // Atalho: F1 efetivo → próxima é F3
-      if (c.r1.toLowerCase() === 'efetivo') return { f: 'Revisão Controles Internos', s: 'Não iniciado' }
-      // F1 inefetivo/GAP → próxima é F2
-      return { f: 'Teste de Desenho', s: 'Não iniciado' }
-    }
-    return { f: 'Diagnóstico Inicial', s: 'Não iniciado' }
+    if (c.r1 && c.r1 !== 'Teste Não Realizado') return { f: 'Teste de Aderência', s: 'Teste Não Realizado' }
+    return { f: 'Diagnóstico Inicial', s: 'Teste Não Realizado' }
   }
 
   // Badge helpers (tema light)
   const bdgS = { display: 'inline-block', padding: '2px 8px', borderRadius: 999, fontSize: 10, fontWeight: 600 }
   function badgeR(r) {
     if (!r || r === 'Teste Não Realizado') return <span style={{ ...bdgS, background: 'rgba(10,37,64,0.05)', color: 'var(--lt-text3)' }}>{r||'—'}</span>
-    if (isEfetivo(r)) return <span style={{ ...bdgS, background: 'rgba(34,197,94,0.1)', color: 'var(--n4-vis)' }}>Efetivo</span>
+    if (isEfetivo(r)) return <span style={{ ...bdgS, background: 'rgba(34,197,94,0.1)', color: '#16A34A' }}>Efetivo</span>
     if (isInefetivo(r)) return <span style={{ ...bdgS, background: 'rgba(234,179,8,0.1)', color: '#CA8A04' }}>Inefetivo</span>
-    if (isGap(r)) return <span style={{ ...bdgS, background: 'rgba(239,68,68,0.1)', color: 'var(--n1)' }}>GAP</span>
+    if (isGap(r)) return <span style={{ ...bdgS, background: 'rgba(239,68,68,0.1)', color: '#DC2626' }}>GAP</span>
     return <span style={{ ...bdgS, background: 'rgba(10,37,64,0.05)', color: 'var(--lt-text3)' }}>{r}</span>
   }
   const IMP_C = { Crítico: { bg: 'rgba(239,68,68,0.1)', c: '#DC2626' }, Alto: { bg: 'rgba(249,115,22,0.1)', c: '#EA580C' }, Moderado: { bg: 'rgba(234,179,8,0.1)', c: '#CA8A04' }, Baixo: { bg: 'rgba(34,197,94,0.1)', c: '#16A34A' } }
@@ -663,16 +651,14 @@ function PorArea({ projeto, areasCalc, todosControles, loading, navigate, loadDa
 
   return (
     <div style={PA.page}>
-      {/* HEADER — barra fixa igual MRC Completa */}
-      <div className="mrc-header-bar">
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+      {/* HEADER — barra compacta */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 0 6px', flexShrink: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <button onClick={() => navigate('/')} style={PA.btnVoltar}>← VOLTAR</button>
-          <div className="dash-ttl" style={{ marginBottom: 0 }}>{nome}</div>
+          <div style={{ fontSize: 16, fontWeight: 600, color: 'var(--lt-text)', fontFamily: "'Raleway', sans-serif" }}>{nome}</div>
+          <div style={{ fontSize: 9, color: 'var(--lt-text3)' }}>{area.controles.length} controles · Peso empresa: {pesoEmpresa}%</div>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
-          <div style={{ fontSize: 10, color: 'var(--lt-text3)', background: 'var(--lt-card)', border: '1px solid var(--lt-border)', borderRadius: 6, padding: '4px 10px', whiteSpace: 'nowrap' }}>Última atualização: {ultAtualArea}</div>
-          {notificacoes}
-        </div>
+        <div style={{ fontSize: 9, color: 'var(--lt-text3)', background: 'var(--lt-card)', border: '1px solid var(--lt-border)', borderRadius: 6, padding: '4px 10px', whiteSpace: 'nowrap' }}>Última atualização: {ultAtualArea}</div>
       </div>
 
       {/* ZONA SUPERIOR — HEATMAP + KPI GRID */}
@@ -722,23 +708,23 @@ function PorArea({ projeto, areasCalc, todosControles, loading, navigate, loadDa
             <div style={{ ...PA.kpiValor, color: 'var(--navy)' }}>{area.controles.length}</div>
             <div style={PA.kpiSub}>Peso empresa: {pesoEmpresa}%</div>
           </div>
-          <div style={{ ...PA.kpiCard, borderTopColor: 'var(--res-ef)' }}>
+          <div style={{ ...PA.kpiCard, borderTopColor: '#22C55E' }}>
             <div style={PA.kpiLabel}>Efetivos</div>
-            <div style={{ ...PA.kpiValor, color: 'var(--res-ef)' }}>{efetivos}</div>
+            <div style={{ ...PA.kpiValor, color: '#22C55E' }}>{efetivos}</div>
             <div style={PA.kpiSub}>{area.controles.length > 0 ? Math.round(efetivos / area.controles.length * 100) : 0}% do total</div>
           </div>
-          <div style={{ ...PA.kpiCard, borderTopColor: 'var(--res-in)' }}>
+          <div style={{ ...PA.kpiCard, borderTopColor: '#FACC15' }}>
             <div style={PA.kpiLabel}>Inefetivos</div>
-            <div style={{ ...PA.kpiValor, color: 'var(--res-in)' }}>{inefetivos}</div>
+            <div style={{ ...PA.kpiValor, color: '#FACC15' }}>{inefetivos}</div>
             <div style={PA.kpiSub}>Aguardam ação corretiva</div>
           </div>
-          <div style={{ ...PA.kpiCard, borderTopColor: 'var(--res-gp)' }}>
+          <div style={{ ...PA.kpiCard, borderTopColor: '#EF4444' }}>
             <div style={PA.kpiLabel}>GAP</div>
-            <div style={{ ...PA.kpiValor, color: 'var(--res-gp)' }}>{gaps}</div>
+            <div style={{ ...PA.kpiValor, color: '#EF4444' }}>{gaps}</div>
             <div style={PA.kpiSub}>Riscos sem controle</div>
           </div>
           <div style={{ ...PA.kpiCard, borderTop: 'none', position: 'relative', overflow: 'hidden' }}>
-            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3, background: 'linear-gradient(90deg, var(--copper), var(--copper-deep))' }} />
+            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3, background: 'linear-gradient(90deg, #CC915E, #A6512F)' }} />
             <div style={PA.kpiLabel}>Planos de Ação</div>
             <div style={{ ...PA.kpiValor, color: 'var(--copper)' }}>{planosAcao}</div>
             <div style={PA.kpiSub}>Em desenvolvimento</div>
@@ -752,9 +738,8 @@ function PorArea({ projeto, areasCalc, todosControles, loading, navigate, loadDa
         <select value={filtCrit} onChange={e => setFiltCrit(e.target.value)} style={PA.filtroSel}><option value="">Todas criticidades</option>{crits.map(c => <option key={c} value={c}>{c}</option>)}</select>
         <select value={filtFase} onChange={e => setFiltFase(e.target.value)} style={PA.filtroSel}><option value="">Todas as fases</option>{fasesDisponiveis.map(f => <option key={f} value={f}>{f}</option>)}</select>
         <select value={filtRes} onChange={e => setFiltRes(e.target.value)} style={PA.filtroSel}><option value="">Todos resultados</option>{ress.map(c => <option key={c} value={c}>{c}</option>)}</select>
-        <select value={filtStatus} onChange={e => setFiltStatus(e.target.value)} style={PA.filtroSel}><option value="">Todos status</option>{statusDisponiveis.map(s => <option key={s} value={s}>{s}</option>)}</select>
         <div style={{ fontSize: 10, color: 'var(--lt-text3)', background: 'var(--lt-card)', border: '1px solid var(--lt-border)', borderRadius: 8, padding: '5px 10px' }}>{cf.length} controles</div>
-        {canEdit && <button onClick={() => setModalNovoRisco(true)} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, background: 'rgba(0,32,62,0.08)', border: '1px solid rgba(0,32,62,0.2)', borderRadius: 999, padding: '5px 10px', fontSize: 10, fontWeight: 600, color: '#00203E', cursor: 'pointer', fontFamily: 'inherit' }} title="Criar novo risco"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Novo Risco</button>}
+        {canEdit && <button onClick={() => setModalNovoRisco(true)} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, background: 'rgba(204,145,94,0.1)', border: '1px solid rgba(204,145,94,0.25)', borderRadius: 999, padding: '5px 10px', fontSize: 10, fontWeight: 600, color: 'var(--copper)', cursor: 'pointer', fontFamily: 'inherit' }} title="Criar novo risco"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Novo Risco</button>}
         <button onClick={() => exportarMRCExcel(cf, `MRC_${nome.replace(/\s+/g, '_')}_${new Date().toISOString().slice(0,10)}`, nome, projeto?.clientes?.nome || '', projeto?.nome || '')} style={PA.btnExport} title="Exportar Excel da área">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/></svg>
           Excel
@@ -777,87 +762,53 @@ function PorArea({ projeto, areasCalc, todosControles, loading, navigate, loadDa
           <table style={{ width: 'max-content', minWidth: '100%', borderCollapse: 'collapse' }}>
             <thead><tr>
               {[
-                { h: 'Data Últ. Atual.', w: 100, k: 'dt_ult' },
-                { h: 'Subprocesso', w: 120, k: 'sub' },
-                { h: 'Ref. Risco', w: 80, k: 'rr' },
-                { h: 'Desc. Risco', w: 200, k: 'dr' },
-                { h: 'Ref. Controle', w: 90, k: 'rc' },
-                { h: 'Desc. Controle', w: 200, k: 'dc' },
-                { h: 'Resultado', w: 80, k: 'r1' },
-                { h: 'Criticidade', w: 100, k: 'crit' },
-              ].map((col, i) => {
-                const cw = paResize.getWidth(col.k, col.w)
-                return <th key={i} className={`th-sort${paSort.sortKey===col.k?' sorted':''}`} onClick={() => paSort.toggleSort(col.k)} style={{ fontSize: 10, fontWeight: 500, textTransform: 'uppercase', letterSpacing: 0.5, color: 'var(--lt-text3)', background: 'var(--lt-card)', padding: '12px 16px', textAlign: 'left', whiteSpace: 'nowrap', position: 'sticky', top: 0, zIndex: 2, width: cw, minWidth: cw, borderBottom: '1px solid var(--lt-border)', cursor: 'pointer', userSelect: 'none' }}>
-                  {col.h}<span className="sort-arrow">{paSort.sortIndicator(col.k)}</span>
-                  <span className="resize-handle" onClick={e => e.stopPropagation()} onMouseDown={e => paResize.onResizeStart(e, col.k)} />
-                </th>
-              })}
-              {/* Colunas de fase com headers coloridos */}
-              {[
-                { h1: 'Fase 1', h2: 'Diagnóstico', w: 110, k: 'r1', color: 'var(--navy)' },
-                { h1: 'Fase 2', h2: 'Desenho', w: 110, k: 'st_pa', color: 'var(--navy-soft)' },
-                { h1: 'Fase 2', h2: 'Aderência', w: 110, k: 'r_ader', color: 'var(--navy-soft)' },
-                { h1: 'Fase 3', h2: 'Revisão Integral', w: 110, k: 'r3', color: 'var(--f3-phase)' },
-                { h1: 'Fase 4', h2: 'AI - Ciclo 1', w: 110, k: 'r_f4c1', color: 'var(--f4-phase)' },
-                { h1: 'Fase 4', h2: 'AI - Ciclo 2', w: 110, k: 'r_f4c2', color: 'var(--f4-phase)' },
-                { h1: 'Fase 5', h2: 'Auditoria Externa', w: 110, k: 'r_f5', color: 'var(--copper-deep)' },
-              ].map((col, i) => {
-                const cw = paResize.getWidth(col.k, col.w)
-                return <th key={`f${i}`} className={`th-sort${paSort.sortKey===col.k?' sorted':''}`} onClick={() => paSort.toggleSort(col.k)} style={{ color: 'white', background: col.color, padding: '8px 8px', textAlign: 'center', verticalAlign: 'middle', position: 'sticky', top: 0, zIndex: 2, width: cw, minWidth: cw, borderBottom: '1px solid var(--lt-border)', borderLeft: '1px solid rgba(255,255,255,0.15)', borderRadius: '8px 8px 0 0', cursor: 'pointer', userSelect: 'none' }}>
-                  <div style={{ fontSize: 8, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5, opacity: 0.85 }}>{col.h1}</div>
-                  <div style={{ fontSize: 9, fontWeight: 600, marginTop: 2 }}>{col.h2}</div>
-                  <span className="resize-handle" onClick={e => e.stopPropagation()} onMouseDown={e => paResize.onResizeStart(e, col.k)} />
-                </th>
-              })}
-              <th style={{ fontSize: 10, fontWeight: 500, textTransform: 'uppercase', letterSpacing: 0.5, color: 'var(--lt-text3)', background: 'var(--lt-card)', padding: '12px 16px', position: 'sticky', top: 0, zIndex: 2, width: 140, minWidth: 140, borderBottom: '1px solid var(--lt-border)', textAlign: 'center' }}>Status Atual</th>
+                { h: 'Data Últ. Atual.', w: 100 }, { h: 'Gerência', w: 120 }, { h: 'Resp. Proc.', w: 120 },
+                { h: 'Processo', w: 140 }, { h: 'Subprocesso', w: 120 }, { h: 'Ref. Risco', w: 80 },
+                { h: 'Desc. Risco', w: 200 }, { h: 'Ref. Controle', w: 90 }, { h: 'Desc. Controle', w: 200 },
+                { h: 'Categoria', w: 110 }, { h: 'Frequência', w: 90 }, { h: 'Natureza', w: 80 },
+                { h: 'Caract.', w: 80 }, { h: 'Sistema', w: 80 }, { h: 'Ctrl Chave?', w: 80 },
+                { h: 'Passos Teste', w: 180 }, { h: 'Resultado', w: 80 }, { h: 'Desc. Inconsist.', w: 180 },
+                { h: 'Recomendação', w: 180 }, { h: 'Impacto', w: 80 }, { h: 'Probab.', w: 80 },
+                { h: 'Criticidade', w: 100 }, { h: 'Fase Atual', w: 160 },
+              ].map((col, i) =>
+                <th key={i} style={{ fontSize: 10, fontWeight: 500, textTransform: 'uppercase', letterSpacing: 0.5, color: 'var(--lt-text3)', background: 'var(--lt-card)', padding: '12px 16px', textAlign: 'left', whiteSpace: 'nowrap', position: 'sticky', top: 0, zIndex: 2, width: col.w, minWidth: col.w, borderBottom: '1px solid var(--lt-border)' }}>{col.h}</th>)}
+              <th style={{ fontSize: 10, fontWeight: 500, color: 'var(--lt-text3)', background: 'var(--lt-card)', padding: '12px 16px', position: 'sticky', top: 0, zIndex: 2, width: 70, minWidth: 70, borderBottom: '1px solid var(--lt-border)' }}></th>
             </tr></thead>
-            <tbody>{paSort.sortData(cf).map((c, i) => {
-              const faseBdg = (val) => {
-                if (!val || val === 'Teste Não Realizado') return <span style={{ fontSize: 9, color: 'var(--lt-text3)', fontStyle: 'italic' }}>Não iniciado</span>
-                if (val === 'N/A') return <span style={{ fontSize: 9, color: 'var(--lt-text3)' }}>N/A</span>
-                const label = val.charAt(0).toUpperCase() + val.slice(1)
-                return badgeR(label)
-              }
-              return (
+            <tbody>{cf.map((c, i) => { const fl = faseLabel(c); return (
               <tr key={c.id||i} onClick={() => setModalRow(c)} style={{ cursor: 'pointer' }} onMouseEnter={e => e.currentTarget.style.background='rgba(204,145,94,0.04)'} onMouseLeave={e => e.currentTarget.style.background=''}>
-                <Td w={paResize.getWidth('dt_ult',100)}>{c.dt_ult ? new Date(c.dt_ult).toLocaleDateString('pt-BR') : '—'}</Td>
-                <Td w={paResize.getWidth('sub',120)}>{c.sub}</Td>
-                <td style={{ ...tdS, color: 'var(--copper)', fontWeight: 600, width: paResize.getWidth('rr',80), minWidth: paResize.getWidth('rr',80) }}>{c.rr}</td><Td w={paResize.getWidth('dr',200)}>{c.dr}</Td>
-                <td style={{ ...tdS, color: 'var(--copper)', fontWeight: 600, width: paResize.getWidth('rc',90), minWidth: paResize.getWidth('rc',90) }}>{c.rc}</td><Td w={paResize.getWidth('dc',200)}>{c.dc}</Td>
-                <td style={{ ...tdS, width: paResize.getWidth('r1',80), minWidth: paResize.getWidth('r1',80) }}>{badgeR(c.r1)}</td>
-                <td style={{ ...tdS, width: paResize.getWidth('crit',100), minWidth: paResize.getWidth('crit',100) }}>{badgeCrit(c.crit)}</td>
-                {/* Colunas de fase — atalho: F1 efetivo → F2 = N/A */}
-                {(() => {
-                  const f1Efetivo = c.r1 && c.r1.toLowerCase() === 'efetivo'
-                  const vals = [c.r1, f1Efetivo ? 'N/A' : c.st_pa, f1Efetivo ? 'N/A' : c.r_ader, c.r3, c.r_f4c1, c.r_f4c2, c.r_f5]
-                  const keys = ['r1','st_pa','r_ader','r3','r_f4c1','r_f4c2','r_f5']
-                  return vals.map((val, fi) => (
-                    <td key={fi} style={{ ...tdS, textAlign: 'center', width: paResize.getWidth(keys[fi], 100), minWidth: 100 }}>
-                      {faseBdg(val)}
-                    </td>
-                  ))
-                })()}
-                <td style={{ ...tdS, textAlign: 'center', width: 140, minWidth: 140 }}>
-                  {(() => {
-                    const fl = faseLabel(c)
-                    const cfg = getStatusBadge(c.status_workflow)
-                    return (
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: 3, alignItems: 'center' }}>
-                        <span style={{ fontSize: 8, fontWeight: 600, color: 'var(--lt-text3)', textTransform: 'uppercase', letterSpacing: 0.3 }}>{fl.f}</span>
-                        <span style={{ fontSize: 8, fontWeight: 700, color: cfg.color, background: cfg.bg, padding: '2px 8px', borderRadius: 999, textTransform: 'uppercase', letterSpacing: 0.5 }}>{cfg.label}</span>
-                        {!isCliente && (
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: 2, width: '100%', marginTop: 2 }}>
-                            {canEdit && canEditControl(c.status_workflow) && <button onClick={e => { e.stopPropagation(); setAtualizarRow(c) }} style={{ background: 'rgba(204,145,94,0.08)', border: '1px solid rgba(204,145,94,0.2)', borderRadius: 4, padding: '2px 10px', fontSize: 10, fontWeight: 600, color: 'var(--copper)', cursor: 'pointer', fontFamily: 'inherit', width: '100%' }}>Atualizar</button>}
-                            {canEdit && canRegisterResult(c.status_workflow) && <button onClick={e => { e.stopPropagation(); setRowRegistrarResultado(c) }} style={{ background: 'rgba(204,145,94,0.08)', border: '1px solid rgba(204,145,94,0.2)', borderRadius: 4, padding: '2px 10px', fontSize: 9, fontWeight: 600, color: 'var(--copper)', cursor: 'pointer', fontFamily: 'inherit', width: '100%' }}>Resultado</button>}
-                            {canEdit && isDevolvido(c.status_workflow) && <button onClick={e => { e.stopPropagation(); setRowRegistrarResultado(c) }} style={{ background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 4, padding: '2px 10px', fontSize: 9, fontWeight: 600, color: 'var(--n1)', cursor: 'pointer', fontFamily: 'inherit', width: '100%' }}>↩ Editar</button>}
-                            {isAdmin && isAguardandoRevisao(c.status_workflow) && <button onClick={e => { e.stopPropagation(); setRowRevisar(c) }} style={{ background: 'rgba(59,130,246,0.08)', border: '1px solid rgba(59,130,246,0.2)', borderRadius: 4, padding: '2px 10px', fontSize: 9, fontWeight: 700, color: '#2563EB', cursor: 'pointer', fontFamily: 'inherit', width: '100%' }}>🔍 Revisar</button>}
-                          </div>
-                        )}
-                      </div>
-                    )
-                  })()}
+                <Td w={100}>{c.dt_ult || '—'}</Td>
+                <Td w={120}>{c.ger}</Td><Td w={120}>{c.resp_sub}</Td><Td w={140}>{c.area}</Td><Td w={120}>{c.sub}</Td>
+                <td style={{ ...tdS, color: 'var(--copper)', fontWeight: 600, width: 80, minWidth: 80 }}>{c.rr}</td><Td w={200}>{c.dr}</Td>
+                <td style={{ ...tdS, color: 'var(--copper)', fontWeight: 600, width: 90, minWidth: 90 }}>{c.rc}</td><Td w={200}>{c.dc}</Td>
+                <Td w={110}>{c.cat}</Td><Td w={90}>{c.freq}</Td><Td w={80}>{c.nat}</Td><Td w={80}>{c.car}</Td><Td w={80}>{c.sis}</Td><Td w={80}>{c.chave}</Td>
+                <Td w={180}>{c.passos_f1}</Td><td style={{ ...tdS, width: 80, minWidth: 80 }}>{badgeR(c.r1)}</td><Td w={180}>{c.incons}</Td><Td w={180}>{c.rec}</Td>
+                <td style={{ ...tdS, width: 80, minWidth: 80 }}>{badgeImp(c.imp)}</td><td style={{ ...tdS, width: 80, minWidth: 80 }}>{badgeProb(c.prob)}</td><td style={{ ...tdS, width: 100, minWidth: 100 }}>{badgeCrit(c.crit)}</td>
+                <td style={{ ...tdS, width: 160, minWidth: 160 }}><div style={{ fontSize: 10, fontWeight: 500, color: 'var(--lt-text)', borderLeft: '3px solid var(--copper)', paddingLeft: 6, lineHeight: 1.3 }}>{fl.f}</div><div style={{ fontSize: 9, color: 'var(--lt-text3)', paddingLeft: 9 }}>{fl.s}</div></td>
+                <td style={{ ...tdS, textAlign: 'center', width: 90, minWidth: 90 }}>
+                  {isCliente ? (
+                    /* ── Visão do cliente: status simplificado ── */
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 3, alignItems: 'center' }}>
+                      {(() => {
+                        const cfg = getStatusBadge(c.status_workflow)
+                        return <span style={{ fontSize: 8, fontWeight: 700, color: cfg.color, background: cfg.bg, padding: '2px 8px', borderRadius: 999, textTransform: 'uppercase', letterSpacing: 0.5 }}>{cfg.label}</span>
+                      })()}
+                    </div>
+                  ) : (
+                    /* ── Visão admin/consultor: ações + status detalhado ── */
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 3, alignItems: 'center' }}>
+                      {canEdit && canEditControl(c.status_workflow) && <button onClick={e => { e.stopPropagation(); setAtualizarRow(c) }} style={{ background: 'rgba(204,145,94,0.08)', border: '1px solid rgba(204,145,94,0.2)', borderRadius: 4, padding: '2px 10px', fontSize: 10, fontWeight: 600, color: 'var(--copper)', cursor: 'pointer', fontFamily: 'inherit', width: '100%' }}>Atualizar</button>}
+                      {canEdit && canRegisterResult(c.status_workflow) && <button onClick={e => { e.stopPropagation(); setRowRegistrarResultado(c) }} style={{ background: 'rgba(204,145,94,0.08)', border: '1px solid rgba(204,145,94,0.2)', borderRadius: 4, padding: '2px 10px', fontSize: 9, fontWeight: 600, color: 'var(--copper)', cursor: 'pointer', fontFamily: 'inherit', width: '100%' }}>Resultado</button>}
+                      {canEdit && isDevolvido(c.status_workflow) && <button onClick={e => { e.stopPropagation(); setRowRegistrarResultado(c) }} style={{ background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 4, padding: '2px 10px', fontSize: 9, fontWeight: 600, color: '#DC2626', cursor: 'pointer', fontFamily: 'inherit', width: '100%' }}>↩ Editar</button>}
+                      {isAdmin && isAguardandoRevisao(c.status_workflow) && <button onClick={e => { e.stopPropagation(); setRowRevisar(c) }} style={{ background: 'rgba(59,130,246,0.08)', border: '1px solid rgba(59,130,246,0.2)', borderRadius: 4, padding: '2px 10px', fontSize: 9, fontWeight: 700, color: '#2563EB', cursor: 'pointer', fontFamily: 'inherit', width: '100%' }}>🔍 Revisar</button>}
+                      {/* Badge de status */}
+                      {(() => {
+                        const cfg = getStatusBadge(c.status_workflow)
+                        return <span style={{ fontSize: 8, fontWeight: 700, color: cfg.color, background: cfg.bg, padding: '1px 6px', borderRadius: 999, textTransform: 'uppercase', letterSpacing: 0.5 }}>{cfg.label}</span>
+                      })()}
+                    </div>
+                  )}
                 </td>
-              </tr>)})}{cf.length === 0 && <tr><td colSpan={16} style={{ padding: 32, textAlign: 'center', color: 'var(--lt-text3)' }}>Nenhum controle encontrado.</td></tr>}</tbody>
+              </tr>)})}{cf.length === 0 && <tr><td colSpan={24} style={{ padding: 32, textAlign: 'center', color: 'var(--lt-text3)' }}>Nenhum controle encontrado.</td></tr>}</tbody>
           </table>
         </div>
       </div>
@@ -878,24 +829,24 @@ const paStyles = {
   page: { background: 'var(--lt-bg)', height: '100vh', padding: '0 20px 12px', fontFamily: "'Montserrat', sans-serif", color: 'var(--lt-text)', fontSize: 12, display: 'flex', flexDirection: 'column', overflow: 'hidden' },
   btnVoltar: { display: 'inline-flex', alignItems: 'center', gap: 4, background: 'var(--lt-card)', border: '1px solid var(--lt-border)', borderRadius: 999, padding: '4px 12px', fontSize: 10, fontWeight: 600, color: 'var(--lt-text2)', cursor: 'pointer', fontFamily: 'inherit' },
   zonaSuperior: { display: 'flex', gap: 10, flexShrink: 0, margin: '6px 0 8px' },
-  cardTitle: { fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.15em', color: 'var(--copper)', marginBottom: 8 },
+  cardTitle: { fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 1.2, color: 'var(--lt-text3)', marginBottom: 8 },
   heatCard: { background: 'var(--lt-card)', border: '1px solid var(--lt-border)', borderRadius: 12, padding: '12px 14px', width: 320, flexShrink: 0, display: 'flex', flexDirection: 'column', boxShadow: '0 1px 3px rgba(10,37,64,0.06)' },
   heatYLabels: { display: 'flex', flexDirection: 'column', justifyContent: 'space-around', paddingRight: 6, width: 55, flexShrink: 0 },
-  heatYLabel: { fontSize: 8, fontWeight: 600, color: 'var(--lt-text3)', textAlign: 'right', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', flex: 1 },
+  heatYLabel: { fontSize: 9, fontWeight: 600, color: 'var(--lt-text3)', textAlign: 'right', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', flex: 1 },
   heatGrid: { flex: 1, display: 'flex', flexDirection: 'column', gap: 2 },
   heatRow: { display: 'flex', gap: 2, flex: 1 },
   heatCell: { flex: 1, borderRadius: 4, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 700, color: '#fff', minHeight: 36 },
   heatXLabels: { display: 'flex', paddingLeft: 61, paddingTop: 4, gap: 2 },
-  heatXLabel: { flex: 1, textAlign: 'center', fontSize: 8, fontWeight: 600, color: 'var(--lt-text3)' },
+  heatXLabel: { flex: 1, textAlign: 'center', fontSize: 9, fontWeight: 600, color: 'var(--lt-text3)' },
   heatLegend: { display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, marginTop: 6, paddingTop: 6, borderTop: '1px solid var(--lt-border)' },
-  legendItem: { display: 'flex', alignItems: 'center', gap: 4, fontSize: 8, color: 'var(--lt-text3)' },
+  legendItem: { display: 'flex', alignItems: 'center', gap: 4, fontSize: 9, color: 'var(--lt-text3)' },
   kpiGrid: { flex: 1, display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gridTemplateRows: '1fr 1fr', gap: 8 },
   kpiCard: { background: 'var(--lt-card)', border: '1px solid var(--lt-border)', borderRadius: 12, padding: '12px 14px', borderTop: '3px solid', display: 'flex', flexDirection: 'column', justifyContent: 'center', boxShadow: '0 1px 3px rgba(10,37,64,0.06)' },
-  kpiLabel: { fontSize: 10, fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.15em', color: 'var(--lt-text3)', marginBottom: 4 },
+  kpiLabel: { fontSize: 10, fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.12em', color: 'var(--lt-text3)', marginBottom: 4 },
   kpiValor: { fontSize: 28, fontWeight: 300, lineHeight: 1 },
   kpiSub: { fontSize: 10, color: 'var(--lt-text3)', marginTop: 4 },
   filtroInput: { flex: 1, minWidth: 200, background: 'var(--lt-card)', border: '1px solid var(--lt-border)', borderRadius: 8, padding: '6px 10px', fontFamily: 'inherit', fontSize: 11, outline: 'none', color: 'var(--lt-text)' },
-  filtroSel: { background: 'var(--lt-card)', border: '1px solid var(--lt-border)', borderRadius: 8, padding: '5px 8px', fontFamily: 'inherit', fontSize: 10, color: 'var(--lt-text2)', cursor: 'pointer', outline: 'none' },
+  filtroSel: { background: 'var(--lt-card)', border: '1px solid var(--lt-border)', borderRadius: 8, padding: '5px 8px', fontFamily: 'inherit', fontSize: 11, color: 'var(--lt-text2)', cursor: 'pointer', outline: 'none' },
   btnExport: { display: 'inline-flex', alignItems: 'center', gap: 5, background: 'rgba(204,145,94,0.1)', border: '1px solid rgba(204,145,94,0.25)', borderRadius: 999, padding: '5px 10px', fontSize: 10, fontWeight: 600, color: 'var(--copper)', cursor: 'pointer', fontFamily: 'inherit', marginLeft: 'auto' },
   tabelaWrap: { flex: 1, minHeight: 0, background: 'var(--lt-card)', borderRadius: 12, border: '1px solid var(--lt-border)', display: 'flex', flexDirection: 'column', overflow: 'hidden', boxShadow: '0 1px 3px rgba(10,37,64,0.06)' },
 }
@@ -908,6 +859,6 @@ const S = {
   page: { background: 'var(--lt-bg)', height: '100vh', padding: '8px 12px', fontFamily: "'Montserrat', sans-serif", color: 'var(--lt-text)', fontSize: 12, display: 'flex', flexDirection: 'column', gap: 6, overflow: 'hidden' },
   header: { background: 'var(--navy)', borderRadius: 12, padding: '8px 18px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 },
   headerText: { fontSize: 13, fontWeight: 400, color: 'var(--cream)', fontFamily: "'Raleway', sans-serif" },
-  th: { fontSize: 10, fontWeight: 500, textTransform: 'uppercase', color: 'var(--lt-text3)', background: 'var(--lt-card)', padding: '5px 4px', textAlign: 'center', position: 'sticky', top: 0, zIndex: 2, borderBottom: '1px solid var(--lt-border)' },
+  th: { fontSize: 9, fontWeight: 700, textTransform: 'uppercase', color: 'var(--navy)', background: 'var(--sand)', padding: '5px 4px', textAlign: 'center', position: 'sticky', top: 0, zIndex: 2, borderBottom: '2px solid var(--lt-border)' },
   tdCenter: { padding: '4px 4px', textAlign: 'center', fontSize: 11, fontWeight: 700, color: 'var(--navy)' },
 }

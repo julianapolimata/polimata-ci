@@ -150,11 +150,11 @@ const ModalRevisar = ({ row, onClose, onAction }) => {
     header: { background: '#00203E', color: 'white', padding: '20px 24px', borderBottom: '1px solid #e5e7eb' },
     body: { padding: 24, overflowY: 'auto', flex: 1, fontFamily: "'Montserrat', sans-serif" },
     footer: { background: '#fafbfc', borderTop: '1px solid #e5e7eb', padding: 24, display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' },
-    label: { fontSize: 10, fontWeight: 700, color: '#7A8B9C', textTransform: 'uppercase', letterSpacing: 0.5 },
+    label: { fontSize: 11, fontWeight: 700, color: '#7A8B9C', textTransform: 'uppercase', letterSpacing: 0.5 },
     value: { fontSize: 13, color: '#00203E', fontWeight: 500, marginTop: 2 },
     btn: { padding: '0.7rem 1.2rem', fontSize: 12, fontWeight: 700, borderRadius: 6, cursor: 'pointer', fontFamily: "'Montserrat', sans-serif", textTransform: 'uppercase', letterSpacing: 0.3 },
     section: { background: '#F9F7F3', border: '1px solid #E8E2D8', borderRadius: 6, padding: '1rem', marginBottom: '1rem' },
-    sectionTitle: { fontSize: 10, fontWeight: 700, color: '#00203E', textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 8, paddingBottom: 6, borderBottom: '1px solid #E0D5C7' },
+    sectionTitle: { fontSize: 11, fontWeight: 700, color: '#00203E', textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 8, paddingBottom: 6, borderBottom: '1px solid #E0D5C7' },
   }
 
   // ═══ VIEW: CONFIRMAR APROVAÇÃO ═══
@@ -208,7 +208,7 @@ const ModalRevisar = ({ row, onClose, onAction }) => {
         </div>
         <div style={S.footer}>
           <button onClick={() => setView('review')} style={{ ...S.btn, border: '1px solid #D0D0D0', background: 'white', color: '#7A8B9C' }}>Voltar</button>
-          <button onClick={handleReprovar} disabled={processing || !nota.trim()} style={{ ...S.btn, border: '1px solid var(--res-gp)', background: 'var(--res-gp)', color: 'white', opacity: processing || !nota.trim() ? 0.5 : 1 }}>
+          <button onClick={handleReprovar} disabled={processing || !nota.trim()} style={{ ...S.btn, border: '1px solid #EF4444', background: '#EF4444', color: 'white', opacity: processing || !nota.trim() ? 0.5 : 1 }}>
             {processing ? 'Reprovando...' : '↩ Confirmar Reprovação'}
           </button>
         </div>
@@ -237,7 +237,7 @@ const ModalRevisar = ({ row, onClose, onAction }) => {
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
                       <span style={{ fontSize: 12, fontWeight: 700, color: cor }}>{icon} {label}</span>
                       <span style={{ fontSize: 11, color: '#7A8B9C' }}>por {h.autor?.nome || 'Desconhecido'}</span>
-                      {h.fase && <span style={{ fontSize: 9, fontWeight: 400, color: '#CC915E', background: 'rgba(204,145,94,0.1)', padding: '1px 6px', borderRadius: 3 }}>{h.fase}</span>}
+                      {h.fase && <span style={{ fontSize: 10, fontWeight: 400, color: '#CC915E', background: 'rgba(204,145,94,0.1)', padding: '1px 6px', borderRadius: 3 }}>{h.fase}</span>}
                     </div>
                     {h.nota && <div style={{ fontSize: 12, color: '#00203E', lineHeight: 1.5, paddingLeft: 4, fontStyle: 'italic' }}>"{h.nota}"</div>}
                     <div style={{ fontSize: 10, color: '#7A8B9C', marginTop: 4 }}>
@@ -359,7 +359,7 @@ const ModalRevisar = ({ row, onClose, onAction }) => {
         {/* Footer com ações */}
         <div style={S.footer}>
           <button onClick={onClose} style={{ ...S.btn, border: '1px solid #D0D0D0', background: 'white', color: '#7A8B9C' }}>Fechar</button>
-          <button onClick={() => setView('reject')} style={{ ...S.btn, border: '1px solid var(--res-gp)', background: 'white', color: '#EF4444' }}>↩ Reprovar</button>
+          <button onClick={() => setView('reject')} style={{ ...S.btn, border: '1px solid #EF4444', background: 'white', color: '#EF4444' }}>↩ Reprovar</button>
           <button onClick={() => setView('approve')} style={{ ...S.btn, border: '1px solid #22C55E', background: '#22C55E', color: 'white' }}>✅ Aprovar</button>
         </div>
       </div>

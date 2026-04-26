@@ -1,9 +1,7 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import { exportarMRCExcel } from '../lib/exportMRC'
 import { getFaseInfo as getFaseInfoUtil } from '../lib/fases'
-import { useSort, useColumnResize } from '../lib/useTableFeatures'
-import { getStatusConfig } from '../lib/statusWorkflow'
 
 // ─── CONSTANTES ──────────────────────────────────────────────────────────────
 
@@ -35,6 +33,50 @@ const NIVEIS = [
 
 const MAX_ROWS = 200
 
+const COL_GROUPS = [
+  { label: 'Identificação', cols: [
+    { id: 'dt_ult', label: 'Data Últ. Atualização', default: true },
+    { id: 'ger', label: 'Gerência', default: true },
+    { id: 'resp_sub', label: 'Resp. Processo', default: true },
+    { id: 'area', label: 'Processo', default: true },
+    { id: 'sub', label: 'Subprocesso', default: true },
+  ]},
+  { label: 'Risco & Controle', cols: [
+    { id: 'rr', label: 'Ref. Risco', default: true },
+    { id: 'dr', label: 'Descrição do Risco', default: true },
+    { id: 'rc', label: 'Ref. Controle', default: true },
+    { id: 'dc', label: 'Descrição do Controle', default: true },
+  ]},
+  { label: 'Atributos', cols: [
+    { id: 'cat', label: 'Categoria', default: true },
+    { id: 'freq', label: 'Frequência', default: true },
+    { id: 'nat', label: 'Natureza', default: true },
+    { id: 'car', label: 'Característica', default: true },
+    { id: 'sis', label: 'Sistema', default: true },
+    { id: 'chave', label: 'Ctrl Chave?', default: true },
+  ]},
+  { label: 'Teste & Resultado', cols: [
+    { id: 'passos_f1', label: 'Passos de Teste', default: true },
+    { id: 'r1', label: 'Diagnóstico', default: true },
+    { id: 'incons', label: 'Descrição da Inconsistência', default: true },
+    { id: 'rec', label: 'Recomendação / Melhoria', default: true },
+    { id: 'r_ader', label: 'Aderência', default: false },
+    { id: 'r3', label: 'Revisão CI', default: false },
+    { id: 'r_f4c1', label: 'Auditoria C1', default: false },
+    { id: 'r_f4c2', label: 'Auditoria C2', default: false },
+    { id: 'r_f5', label: 'Auditoria Indep.', default: false },
+  ]},
+  { label: 'Avaliação', cols: [
+    { id: 'imp', label: 'Impacto', default: true },
+    { id: 'prob', label: 'Probabilidade', default: true },
+    { id: 'crit', label: 'Criticidade', default: true },
+  ]},
+  { label: 'Fase', cols: [
+    { id: 'fase', label: 'Fase Atual', default: true },
+  ]},
+]
+
+const DEFAULT_COLS = new Set(COL_GROUPS.flatMap(g => g.cols.filter(c => c.default).map(c => c.id)))
 
 // ─── HELPERS ─────────────────────────────────────────────────────────────────
 
@@ -48,6 +90,19 @@ function critBadge(crit) {
   const m = CRIT_MAP[crit]
   if (!m) return null
   return <span className={`cb ${m.cls}`}><span className="cdot" />{m.label}</span>
+}
+
+function ExpCell({ text, maxLen = 80, expanded = false }) {
+  const [open, setOpen] = useState(false)
+  const isOpen = expanded || open
+  if (!text || text === 'N/A' || text.trim() === '') return <span style={{ color: 'var(--txt3)', fontSize: 11 }}>—</span>
+  if (text.length <= maxLen) return <span style={{ fontSize: 11.5, lineHeight: 1.5 }}>{text}</span>
+  return (
+    <div className="exp-row">
+      <span className="exp-btn" onClick={e => { e.stopPropagation(); setOpen(o => !o) }}>{isOpen ? '−' : '+'}</span>
+      {isOpen ? <span className="exp-open">{text}</span> : <span className="exp-col">{text.slice(0, maxLen)}…</span>}
+    </div>
+  )
 }
 
 // ─── FASE ATUAL (centralizado em lib/fases.js) ─────────────────────────────
@@ -125,14 +180,12 @@ function Heatmap({ data, filtroImp, filtroProb, onFilterCell }) {
       <div className="hm-legend">
         {[4,3,2,1].map(cv => {
           const k = `C${cv}`; const t = totais[k]; const color = legColors[k] === '#FFFF00' ? '#D4A030' : legColors[k]
-          const bgMap = { C4: 'rgba(239,68,68,.18)', C3: 'rgba(249,115,22,.18)', C2: 'rgba(234,179,8,.18)', C1: 'rgba(34,197,94,.18)' }
-          const borderMap = { C4: 'rgba(239,68,68,.35)', C3: 'rgba(249,115,22,.35)', C2: 'rgba(234,179,8,.35)', C1: 'rgba(34,197,94,.35)' }
           return (
-            <div key={cv} className="hm-leg" style={{ background: bgMap[k], borderColor: borderMap[k] }}>
+            <div key={cv} className="hm-leg" style={{ borderLeftColor: legColors[k] }}><div>
+              <div className="hm-lbl">{legLabels[k]}</div>
               <div className="hm-lnum" style={{ color }}>{t.n}</div>
-              <div className="hm-lbl" style={{ color }}>{legLabels[k]}</div>
               <div className="hm-lsub">E:{t.e} · I:{t.i} · G:{t.g}</div>
-            </div>
+            </div></div>
           )
         })}
       </div>
@@ -145,28 +198,33 @@ function Heatmap({ data, filtroImp, filtroProb, onFilterCell }) {
 function Regua({ data, filtroNivel, onToggleNivel }) {
   const c = {}; NIVEIS.forEach(n => { c[n.id] = 0 })
   data.forEach(r => { const res = r.r1; if (res === 'Inefetivo') c.N1++; else if (res === 'GAP') c.N2++; else if (res === 'Efetivo') c.N5++ })
-  const bgMap = { rn1: { bg: 'rgba(245,185,66,.15)', bc: 'rgba(245,185,66,.4)', c: '#B8860B' }, rn2: { bg: 'rgba(240,86,86,.15)', bc: 'rgba(240,86,86,.4)', c: '#DC2626' }, rn5: { bg: 'rgba(34,197,94,.15)', bc: 'rgba(34,197,94,.4)', c: '#059669' } }
   return (
     <div className="regua">
-      {NIVEIS.map(n => {
-        const s = bgMap[n.cls] || {}
-        return (<div key={n.id} className={`rn ${filtroNivel === n.id ? 'ativo' : ''}`} style={{ background: s.bg, borderLeftColor: s.bc, cursor: 'pointer' }} onClick={() => onToggleNivel(filtroNivel === n.id ? '' : n.id)}>
-          <div className="rn-n">{n.nome}</div>
-          <div className="rn-c" style={{ color: s.c }}>{c[n.id]}</div>
-        </div>)
-      })}
+      {NIVEIS.map(n => (<div key={n.id} className={`rn ${n.cls} ${filtroNivel === n.id ? 'ativo' : ''}`} onClick={() => onToggleNivel(filtroNivel === n.id ? '' : n.id)}><div className="rn-c">{c[n.id]}</div><div className="rn-n">{n.nome}</div></div>))}
     </div>
   )
 }
 
 // ─── PAINEL COLUNAS ──────────────────────────────────────────────────────────
 
+function ColunasPanel({ visCols, setVisCols, open, onClose }) {
+  const ref = useRef(null)
+  useEffect(() => { function h(e) { if (ref.current && !ref.current.contains(e.target)) onClose() }; if (open) document.addEventListener('mousedown', h); return () => document.removeEventListener('mousedown', h) }, [open, onClose])
+  const toggle = id => { setVisCols(prev => { const n = new Set(prev); if (n.has(id)) n.delete(id); else n.add(id); return n }) }
+  return (
+    <div ref={ref} className={`col-panel ${open ? 'open' : ''}`}>
+      <div className="cp-ttl">Colunas Visíveis</div>
+      {COL_GROUPS.map(g => (<div key={g.label}><div className="cp-grp">{g.label}</div>{g.cols.map(c => (<label key={c.id} className="cp-row"><input type="checkbox" checked={visCols.has(c.id)} onChange={() => toggle(c.id)} />{c.label}</label>))}</div>))}
+    </div>
+  )
+}
+
 // ─── MODAL ───────────────────────────────────────────────────────────────────
 
 export function ModalDetalhe({ row, onClose }) {
   const [tab, setTab] = useState('ident')
   if (!row) return null
-  const tabs = [{ id:'ident',label:'Identificação' },{ id:'f1',label:'F1 — Diagnóstico Inicial' },{ id:'f2e1',label:'F2-E1 — Teste de Desenho' },{ id:'f2e2',label:'F2-E2 — Teste de Aderência' },{ id:'f3',label:'F3 — Revisão Controles Internos' },{ id:'f4c1',label:'F4-C1 — Auditoria Contínua' },{ id:'f4c2',label:'F4-C2 — Auditoria Contínua' },{ id:'f5',label:'F5 — Auditoria Independente' }]
+  const tabs = [{ id:'ident',label:'Identificação' },{ id:'f1',label:'Diagnóstico Inicial' },{ id:'f2e1',label:'Teste de Desenho' },{ id:'f2e2',label:'Teste de Aderência' },{ id:'f3',label:'Revisão Controles Internos' },{ id:'f4c1',label:'Auditoria Contínua C1' },{ id:'f4c2',label:'Auditoria Contínua C2' },{ id:'f5',label:'Auditoria Independente' }]
   const field = (l, v, fw) => { if (!v || v === 'N/A' || v === '') return null; return <div style={fw ? { marginBottom: 12 } : {}}><div className="ml">{l}</div><div className="mv">{v}</div></div> }
   const fieldTag = (l, v) => { if (!v || v === 'N/A' || v === '') return null; return <div><div className="ml">{l}</div><div style={{ marginTop: 3 }}><span className="tag">{v}</span></div></div> }
   const fieldText = (l, v) => { if (!v || v === 'N/A' || v === '') return null; return <div style={{ marginBottom: 14 }}>{l && <div className="ml">{l}</div>}<div className="mv-t">{v}</div></div> }
@@ -193,8 +251,8 @@ export function ModalDetalhe({ row, onClose }) {
             <div className="ms"><div className="ms-t">Posição no Mapa de Calor</div>
               <div style={{ display:'flex',gap:20,alignItems:'flex-start' }}>
                 <div style={{ display:'grid',gridTemplateColumns:'60px repeat(4,1fr)',gap:3,maxWidth:260,flexShrink:0 }}>
-                  {HM_IMPS.map((imp,ri) => (<div key={`row-${ri}`} style={{ display:'contents' }}><div style={{ fontSize:9,color:'var(--txt3)',display:'flex',alignItems:'center',justifyContent:'flex-end',paddingRight:6 }}>{imp}</div>{HM_PROBS.map((prob,ci) => { const bg=HM_COLORS[ri][ci]; const isThis=ri===impIdx&&ci===probIdx; return (<div key={`${ri}-${ci}`} style={{ background:bg,borderRadius:4,aspectRatio:'1',display:'flex',alignItems:'center',justifyContent:'center',opacity:isThis?1:0.35,outline:isThis?'3px solid var(--gold)':'none',outlineOffset:-2 }}>{isThis&&<div style={{ width:10,height:10,borderRadius:'50%',background:'#fff',boxShadow:'0 0 6px rgba(0,0,0,.4)' }}/>}</div>) })}</div>))}
-                  <div/>{HM_PROBS.map(p => <div key={p} style={{ fontSize:8,color:'var(--txt3)',textAlign:'center',paddingTop:2 }}>{p}</div>)}
+                  {HM_IMPS.map((imp,ri) => (<div key={`row-${ri}`} style={{ display:'contents' }}><div style={{ fontSize:10,color:'var(--txt3)',display:'flex',alignItems:'center',justifyContent:'flex-end',paddingRight:6 }}>{imp}</div>{HM_PROBS.map((prob,ci) => { const bg=HM_COLORS[ri][ci]; const isThis=ri===impIdx&&ci===probIdx; return (<div key={`${ri}-${ci}`} style={{ background:bg,borderRadius:4,aspectRatio:'1',display:'flex',alignItems:'center',justifyContent:'center',opacity:isThis?1:0.35,outline:isThis?'3px solid var(--gold)':'none',outlineOffset:-2 }}>{isThis&&<div style={{ width:10,height:10,borderRadius:'50%',background:'#fff',boxShadow:'0 0 6px rgba(0,0,0,.4)' }}/>}</div>) })}</div>))}
+                  <div/>{HM_PROBS.map(p => <div key={p} style={{ fontSize:9,color:'var(--txt3)',textAlign:'center',paddingTop:2 }}>{p}</div>)}
                 </div>
                 <div style={{ flex:1,display:'flex',flexDirection:'column',justifyContent:'center',gap:6 }}>
                   <div style={{ display:'flex',alignItems:'center',gap:8,padding:'6px 10px',borderRadius:6,border:'1px solid var(--lt-border)',background:'var(--lt-bg)' }}>
@@ -255,115 +313,73 @@ export function ModalDetalhe({ row, onClose }) {
 
 // ─── TABELA MRC ──────────────────────────────────────────────────────────────
 
-function TabelaMRC({ rows, onOpenModal }) {
-  const { sortKey, toggleSort, sortData, sortIndicator } = useSort()
-  const { onResizeStart, getWidth } = useColumnResize({})
-  const sorted = sortData(rows)
-
-  const thS = { fontSize: 10, fontWeight: 500, textTransform: 'uppercase', letterSpacing: 0.5, color: 'var(--lt-text3)', background: 'var(--lt-card)', padding: '12px 16px', textAlign: 'left', whiteSpace: 'nowrap', position: 'sticky', top: 0, zIndex: 2, borderBottom: '1px solid var(--lt-border)', cursor: 'pointer', userSelect: 'none' }
-  const tdS = { padding: '7px 8px', borderBottom: '1px solid var(--lt-border)', fontSize: 11, color: 'var(--lt-text2)', whiteSpace: 'nowrap', verticalAlign: 'top' }
-  const bdgS = { display: 'inline-block', padding: '2px 8px', borderRadius: 999, fontSize: 10, fontWeight: 600 }
-
-  function badgeR(r) {
-    if (!r || r === 'Teste Não Realizado') return <span style={{ ...bdgS, background: 'rgba(10,37,64,0.05)', color: 'var(--lt-text3)' }}>{r||'—'}</span>
-    const v = (r||'').toLowerCase()
-    if (v === 'efetivo') return <span style={{ ...bdgS, background: 'rgba(34,197,94,0.1)', color: 'var(--n4-vis)' }}>Efetivo</span>
-    if (v === 'inefetivo') return <span style={{ ...bdgS, background: 'rgba(234,179,8,0.1)', color: '#CA8A04' }}>Inefetivo</span>
-    if (v === 'gap' || v === 'gap de processo') return <span style={{ ...bdgS, background: 'rgba(239,68,68,0.1)', color: 'var(--n1)' }}>GAP</span>
-    return <span style={{ ...bdgS, background: 'rgba(10,37,64,0.05)', color: 'var(--lt-text3)' }}>{r}</span>
-  }
-  const CRT_C = { 4: { bg: 'rgba(239,68,68,0.1)', c: '#DC2626', l: '4. Crítico' }, 3: { bg: 'rgba(249,115,22,0.1)', c: '#EA580C', l: '3. Significativo' }, 2: { bg: 'rgba(234,179,8,0.1)', c: '#CA8A04', l: '2. Moderado' }, 1: { bg: 'rgba(34,197,94,0.1)', c: '#16A34A', l: '1. Baixo' } }
-  function badgeCrit(v) { const m = CRT_C[v]; return m ? <span style={{ ...bdgS, background: m.bg, color: m.c }}><span style={{ width: 5, height: 5, borderRadius: '50%', background: 'currentColor', display: 'inline-block', marginRight: 4 }} />{m.l}</span> : <span style={{ ...bdgS, background: 'rgba(10,37,64,0.05)', color: 'var(--lt-text3)' }}>{v||'—'}</span> }
-  function faseBdg(val) {
-    if (!val || val === 'Teste Não Realizado') return <span style={{ fontSize: 9, color: 'var(--lt-text3)', fontStyle: 'italic' }}>Não iniciado</span>
-    if (val === 'N/A') return <span style={{ fontSize: 9, color: 'var(--lt-text3)' }}>N/A</span>
-    const label = val.charAt(0).toUpperCase() + val.slice(1)
-    return badgeR(label)
-  }
-  function Td({ children, w = 150 }) { return <td style={{ ...tdS, width: w, minWidth: w, maxWidth: w, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{children || '—'}</td> }
-
-  const COLS = [
-    { h: 'Data Últ. Atual.', w: 100, k: 'dt_ult' },
-    { h: 'Processo', w: 120, k: 'area' },
-    { h: 'Subprocesso', w: 120, k: 'sub' },
-    { h: 'Ref. Risco', w: 80, k: 'rr' },
-    { h: 'Desc. Risco', w: 200, k: 'dr' },
-    { h: 'Ref. Controle', w: 90, k: 'rc' },
-    { h: 'Desc. Controle', w: 200, k: 'dc' },
-    { h: 'Resultado', w: 80, k: 'r1' },
-    { h: 'Criticidade', w: 100, k: 'crit' },
-  ]
-  const FASE_COLS = [
-    { h1: 'Fase 1', h2: 'Diagnóstico', w: 110, k: 'r1', color: 'var(--navy)' },
-    { h1: 'Fase 2', h2: 'Desenho', w: 110, k: 'st_pa', color: 'var(--navy-soft)' },
-    { h1: 'Fase 2', h2: 'Aderência', w: 110, k: 'r_ader', color: 'var(--navy-soft)' },
-    { h1: 'Fase 3', h2: 'Revisão Integral', w: 110, k: 'r3', color: 'var(--f3-phase)' },
-    { h1: 'Fase 4', h2: 'AI - Ciclo 1', w: 110, k: 'r_f4c1', color: 'var(--f4-phase)' },
-    { h1: 'Fase 4', h2: 'AI - Ciclo 2', w: 110, k: 'r_f4c2', color: 'var(--f4-phase)' },
-    { h1: 'Fase 5', h2: 'Auditoria Externa', w: 110, k: 'r_f5', color: 'var(--copper-deep)' },
-  ]
-
+function TabelaMRC({ rows, visCols, onOpenModal, expandAll }) {
+  const v = id => visCols.has(id); const ml = expandAll ? 9999 : 70
   return (
-    <div style={{ flex: 1, overflowX: 'scroll', overflowY: 'auto', minHeight: 0 }}>
-      <table style={{ width: 'max-content', minWidth: '100%', borderCollapse: 'collapse' }}>
-        <thead><tr>
-          {COLS.map((col, i) => {
-            const cw = getWidth(col.k, col.w)
-            return <th key={i} className={`th-sort${sortKey===col.k?' sorted':''}`} onClick={() => toggleSort(col.k)} style={{ ...thS, width: cw, minWidth: cw }}>
-              {col.h}<span className="sort-arrow">{sortIndicator(col.k)}</span>
-              <span className="resize-handle" onClick={e => e.stopPropagation()} onMouseDown={e => onResizeStart(e, col.k)} />
-            </th>
-          })}
-          {FASE_COLS.map((col, i) => {
-            const cw = getWidth(col.k, col.w)
-            return <th key={`f${i}`} className={`th-sort${sortKey===col.k?' sorted':''}`} onClick={() => toggleSort(col.k)} style={{ color: 'white', background: col.color, padding: '8px 8px', textAlign: 'center', verticalAlign: 'middle', position: 'sticky', top: 0, zIndex: 2, width: cw, minWidth: cw, borderBottom: '1px solid var(--lt-border)', borderLeft: '1px solid rgba(255,255,255,0.15)', borderRadius: '8px 8px 0 0', cursor: 'pointer', userSelect: 'none' }}>
-              <div style={{ fontSize: 8, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5, opacity: 0.85 }}>{col.h1}</div>
-              <div style={{ fontSize: 9, fontWeight: 600, marginTop: 2 }}>{col.h2}</div>
-              <span className="resize-handle" onClick={e => e.stopPropagation()} onMouseDown={e => onResizeStart(e, col.k)} />
-            </th>
-          })}
-          <th style={{ ...thS, width: 140, minWidth: 140, textAlign: 'center' }}>Status Atual</th>
-        </tr></thead>
-        <tbody>
-          {sorted.length === 0 && <tr><td colSpan={17} style={{ padding: 32, textAlign: 'center', color: 'var(--lt-text3)' }}>Nenhum controle encontrado.</td></tr>}
-          {sorted.map((c, i) => (
-            <tr key={c.id||i} onClick={() => onOpenModal(c)} style={{ cursor: 'pointer' }} onMouseEnter={e => e.currentTarget.style.background='rgba(204,145,94,0.04)'} onMouseLeave={e => e.currentTarget.style.background=''}>
-              <Td w={getWidth('dt_ult',100)}>{c.dt_ult ? new Date(c.dt_ult).toLocaleDateString('pt-BR') : '—'}</Td>
-              <Td w={getWidth('area',120)}>{c.area}</Td>
-              <Td w={getWidth('sub',120)}>{c.sub}</Td>
-              <td style={{ ...tdS, color: 'var(--copper)', fontWeight: 600, width: getWidth('rr',80), minWidth: getWidth('rr',80) }}>{c.rr}</td>
-              <Td w={getWidth('dr',200)}>{c.dr}</Td>
-              <td style={{ ...tdS, color: 'var(--copper)', fontWeight: 600, width: getWidth('rc',90), minWidth: getWidth('rc',90) }}>{c.rc}</td>
-              <Td w={getWidth('dc',200)}>{c.dc}</Td>
-              <td style={{ ...tdS, width: getWidth('r1',80), minWidth: getWidth('r1',80) }}>{badgeR(c.r1)}</td>
-              <td style={{ ...tdS, width: getWidth('crit',100), minWidth: getWidth('crit',100) }}>{badgeCrit(c.crit)}</td>
-              {(() => {
-                const f1Ef = c.r1 && c.r1.toLowerCase() === 'efetivo'
-                const vals = [c.r1, f1Ef ? 'N/A' : c.st_pa, f1Ef ? 'N/A' : c.r_ader, c.r3, c.r_f4c1, c.r_f4c2, c.r_f5]
-                const keys = ['r1','st_pa','r_ader','r3','r_f4c1','r_f4c2','r_f5']
-                return vals.map((val, fi) => (
-                  <td key={fi} style={{ ...tdS, textAlign: 'center', width: getWidth(keys[fi], 100), minWidth: 100 }}>
-                    {faseBdg(val)}
-                  </td>
-                ))
-              })()}
-              <td style={{ ...tdS, textAlign: 'center', width: 140, minWidth: 140 }}>
-                {(() => {
-                  const fi = getFaseInfo(c)
-                  const cfg = getStatusConfig(c.status_workflow, 'admin_polimata')
-                  return (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 3, alignItems: 'center' }}>
-                      <span style={{ fontSize: 8, fontWeight: 600, color: 'var(--lt-text3)', textTransform: 'uppercase', letterSpacing: 0.3 }}>{fi.nome}</span>
-                      <span style={{ fontSize: 8, fontWeight: 700, color: cfg.color, background: cfg.bg, padding: '2px 8px', borderRadius: 999, textTransform: 'uppercase', letterSpacing: 0.5 }}>{cfg.label}</span>
-                    </div>
-                  )
-                })()}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+    <div className="tbl-sc"><table><thead><tr>
+      {v('dt_ult')&&<th>Data Últ. Atualização</th>}
+      {v('ger')&&<th>Gerência</th>}
+      {v('resp_sub')&&<th>Resp. Processo</th>}
+      {v('area')&&<th>Processo</th>}
+      {v('sub')&&<th>Subprocesso</th>}
+      {v('rr')&&<th>Ref. Risco</th>}
+      {v('dr')&&<th>Descrição do Risco</th>}
+      {v('rc')&&<th>Ref. Controle</th>}
+      {v('dc')&&<th>Descrição do Controle</th>}
+      {v('cat')&&<th>Categoria de Controle</th>}
+      {v('freq')&&<th>Frequência</th>}
+      {v('nat')&&<th>Natureza</th>}
+      {v('car')&&<th>Característica</th>}
+      {v('sis')&&<th>Sistema</th>}
+      {v('chave')&&<th>Ctrl Chave?</th>}
+      {v('passos_f1')&&<th>Passos de Teste</th>}
+      {v('r1')&&<th>F1 Resultado</th>}
+      {v('incons')&&<th>Descrição da Inconsistência</th>}
+      {v('rec')&&<th>Recomendação / Melhoria</th>}
+      {v('r_ader')&&<th>F2 Aderência</th>}
+      {v('r3')&&<th>F3 Resultado</th>}
+      {v('r_f4c1')&&<th>F4-C1 Resultado</th>}
+      {v('r_f4c2')&&<th>F4-C2 Resultado</th>}
+      {v('r_f5')&&<th>F5 Resultado</th>}
+      {v('imp')&&<th>Impacto</th>}
+      {v('prob')&&<th>Probabilidade</th>}
+      {v('crit')&&<th>Criticidade</th>}
+      {v('fase')&&<th>Fase Atual</th>}
+    </tr></thead><tbody>
+      {rows.length === 0 && <tr><td colSpan={23} className="empty">Nenhum controle encontrado com os filtros aplicados.</td></tr>}
+      {rows.map(row => (
+        <tr key={row.id} style={{ cursor:'pointer' }} onClick={() => onOpenModal(row)}>
+          {v('dt_ult')&&<td><span style={{fontSize:11,whiteSpace:'nowrap'}}>{row.dt_ult||'—'}</span></td>}
+          {v('ger')&&<td><span style={{fontSize:11}}>{row.ger||'—'}</span></td>}
+          {v('resp_sub')&&<td><span style={{fontSize:11}}>{row.resp_sub||'—'}</span></td>}
+          {v('area')&&<td><span style={{fontSize:11}}>{row.area}</span></td>}
+          {v('sub')&&<td><span style={{fontSize:11}}>{row.sub}</span></td>}
+          {v('rr')&&<td><span style={{fontSize:11,color:'var(--gold)',fontWeight:600}}>{row.rr}</span></td>}
+          {v('dr')&&<td><ExpCell text={row.dr} maxLen={ml} expanded={expandAll}/></td>}
+          {v('rc')&&<td><span style={{fontSize:11,color:'var(--gold)',fontWeight:600}}>{row.rc}</span></td>}
+          {v('dc')&&<td><ExpCell text={row.dc} maxLen={ml} expanded={expandAll}/></td>}
+          {v('cat')&&<td><span style={{fontSize:11}}>{row.cat||'—'}</span></td>}
+          {v('freq')&&<td><span style={{fontSize:11}}>{row.freq||'—'}</span></td>}
+          {v('nat')&&<td><span style={{fontSize:11}}>{row.nat||'—'}</span></td>}
+          {v('car')&&<td><span style={{fontSize:11}}>{row.car||'—'}</span></td>}
+          {v('sis')&&<td><span style={{fontSize:11}}>{row.sis||'—'}</span></td>}
+          {v('chave')&&<td><span style={{fontSize:11}}>{row.chave||'—'}</span></td>}
+          {v('passos_f1')&&<td><ExpCell text={row.passos_f1} maxLen={ml} expanded={expandAll}/></td>}
+          {v('r1')&&<td>{badge(R1_MAP[row.r1]||'b-na', row.r1)}</td>}
+          {v('incons')&&<td><ExpCell text={row.incons} maxLen={ml} expanded={expandAll}/></td>}
+          {v('rec')&&<td><ExpCell text={row.rec} maxLen={ml} expanded={expandAll}/></td>}
+          {v('r_ader')&&<td>{badge(R1_MAP[row.r_ader]||'b-na', row.r_ader)}</td>}
+          {v('r3')&&<td>{badge(R1_MAP[row.r3]||'b-na', row.r3)}</td>}
+          {v('r_f4c1')&&<td>{badge(R1_MAP[row.r_f4c1]||'b-na', row.r_f4c1)}</td>}
+          {v('r_f4c2')&&<td>{badge(R1_MAP[row.r_f4c2]||'b-na', row.r_f4c2)}</td>}
+          {v('r_f5')&&<td>{badge(R1_MAP[row.r_f5]||'b-na', row.r_f5)}</td>}
+          {v('imp')&&<td>{badge(IMP_MAP[row.imp]||'b-na', row.imp)}</td>}
+          {v('prob')&&<td>{badge(PROB_MAP[row.prob]||'b-na', row.prob)}</td>}
+          {v('crit')&&<td>{critBadge(row.crit)}</td>}
+          {v('fase')&&<td><FaseAtual row={row}/></td>}
+        </tr>
+      ))}
+    </tbody></table></div>
   )
 }
 
@@ -374,8 +390,8 @@ export default function MRCCompleta({ projetoId, clienteNome, projetoNome, notif
   const [busca, setBusca] = useState(''); const [filtroArea, setFiltroArea] = useState(''); const [filtroCrit, setFiltroCrit] = useState('')
   const [filtroImp, setFiltroImp] = useState(''); const [filtroProb, setFiltroProb] = useState(''); const [filtroR1, setFiltroR1] = useState(''); const [filtroNivel, setFiltroNivel] = useState('')
   const [filtroFase, setFiltroFase] = useState('')
-  const [filtroStatus, setFiltroStatus] = useState('')
-  const [modalRow, setModalRow] = useState(null)
+  const [visCols, setVisCols] = useState(new Set(DEFAULT_COLS)); const [colPanelOpen, setColPanelOpen] = useState(false)
+  const [expandAll, setExpandAll] = useState(false); const [modalRow, setModalRow] = useState(null)
 
   useEffect(() => {
     if (!projetoId) return
@@ -396,20 +412,16 @@ export default function MRCCompleta({ projetoId, clienteNome, projetoNome, notif
     if (filtroR1 && r.r1 !== filtroR1) return false
     if (filtroNivel) { const nivel = NIVEIS.find(n => n.id === filtroNivel); if (nivel && r.r1 !== nivel.resultado) return false }
     if (filtroFase) { const fi = getFaseInfo(r); if (fi.label !== filtroFase) return false }
-    if (filtroStatus) { const cfg = getStatusConfig(r.status_workflow, 'admin_polimata'); if (cfg.label !== filtroStatus) return false }
     if (busca) { const q = busca.toLowerCase(); return (r.rr||'').toLowerCase().includes(q)||(r.rc||'').toLowerCase().includes(q)||(r.area||'').toLowerCase().includes(q)||(r.sub||'').toLowerCase().includes(q)||(r.dr||'').toLowerCase().includes(q)||(r.dc||'').toLowerCase().includes(q)||(r.incons||'').toLowerCase().includes(q)||(r.passos_f1||'').toLowerCase().includes(q) }
     return true
   })
 
   const fasesDisponiveis = [...new Set(mrc.map(r => getFaseInfo(r).label))].sort()
-  const statusDisponiveis = [...new Set(mrc.map(r => getStatusConfig(r.status_workflow, 'admin_polimata').label).filter(v => v && v !== '—'))].sort()
 
   const visibleRows = filtered.slice(0, MAX_ROWS); const isLimited = filtered.length > MAX_ROWS
   const handleHeatmapCell = (imp, prob, sel) => { if (sel) { setFiltroImp(''); setFiltroProb('') } else { setFiltroImp(imp); setFiltroProb(prob) } }
-  const limparFiltros = () => { setBusca(''); setFiltroArea(''); setFiltroCrit(''); setFiltroImp(''); setFiltroProb(''); setFiltroR1(''); setFiltroNivel(''); setFiltroFase(''); setFiltroStatus('') }
-  const temFiltro = busca || filtroArea || filtroCrit || filtroImp || filtroProb || filtroR1 || filtroNivel || filtroFase || filtroStatus
-
-  const FS = { background: 'var(--lt-card)', border: '1px solid var(--lt-border)', borderRadius: 8, padding: '5px 8px', fontFamily: 'inherit', fontSize: 10, color: 'var(--lt-text2)', cursor: 'pointer', outline: 'none' }
+  const limparFiltros = () => { setBusca(''); setFiltroArea(''); setFiltroCrit(''); setFiltroImp(''); setFiltroProb(''); setFiltroR1(''); setFiltroNivel(''); setFiltroFase('') }
+  const temFiltro = busca || filtroArea || filtroCrit || filtroImp || filtroProb || filtroR1 || filtroNivel || filtroFase
 
   if (loading) return <div style={{ display:'flex',alignItems:'center',justifyContent:'center',height:300,color:'var(--txt3)' }}><div className="spinner" style={{marginRight:10}}/><span>Carregando MRC…</span></div>
   if (erro) return <div style={{ padding:32,color:'var(--in)' }}>Erro ao carregar MRC: {erro}</div>
@@ -430,140 +442,32 @@ export default function MRCCompleta({ projetoId, clienteNome, projetoNome, notif
         </div>
       </div>
 
-      {(() => {
-        const ef = mrc.filter(r => (r.r1||'').toLowerCase() === 'efetivo').length
-        const inf = mrc.filter(r => (r.r1||'').toLowerCase() === 'inefetivo').length
-        const gp = mrc.filter(r => { const v = (r.r1||'').toLowerCase(); return v === 'gap' || v === 'gap de processo' }).length
-        const cr4 = mrc.filter(r => r.crit === 4).length
-        const cr3 = mrc.filter(r => r.crit === 3).length
-        const cr2 = mrc.filter(r => r.crit === 2).length
-        const cr1 = mrc.filter(r => r.crit === 1).length
-        // Heatmap 4×4 inline (mesmo estilo PorArea)
-        const IMP_L = ['Crítico', 'Alto', 'Moderado', 'Baixo']
-        const PRB_L = ['Baixa', 'Média', 'Alta', 'Extrema']
-        const CRIT_L = ['Crítico', 'Significativo', 'Moderado', 'Baixo']
-        const CRIT_C = ['#EF4444', '#F97316', '#EAB308', '#22C55E']
-        const HC = [
-          ['#FFC000','#FF0000','#FF0000','#FF0000'],
-          ['#00B050','#FFC000','#FF0000','#FF0000'],
-          ['#00B050','#00B050','#FFC000','#FF0000'],
-          ['#00B050','#00B050','#00B050','#FFC000'],
-        ]
-        const impIdx = v => ({ 'Crítico':0,'Alto':1,'Moderado':2,'Baixo':3 }[v] ?? -1)
-        const prbIdx = v => ({ 'Baixa':0,'Média':1,'Alta':2,'Extrema':3 }[v] ?? -1)
-        const hmGrid = Array.from({ length: 4 }, () => Array(4).fill(0))
-        mrc.forEach(r => { const ri = impIdx(r.imp), ci = prbIdx(r.prob); if (ri >= 0 && ci >= 0) hmGrid[ri][ci]++ })
+      <div className="mrc-hm-compact">
+        <Heatmap data={filtered} filtroImp={filtroImp} filtroProb={filtroProb} onFilterCell={handleHeatmapCell} />
+      </div>
+      <Regua data={mrc} filtroNivel={filtroNivel} onToggleNivel={setFiltroNivel} />
 
-        const ZS = {
-          zona: { display: 'flex', gap: 10, flexShrink: 0, margin: '6px 0 8px' },
-          heatCard: { background: 'var(--lt-card)', border: '1px solid var(--lt-border)', borderRadius: 12, padding: '12px 14px', width: 320, flexShrink: 0, display: 'flex', flexDirection: 'column', boxShadow: '0 1px 3px rgba(10,37,64,0.06)' },
-          title: { fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.15em', color: 'var(--copper)', marginBottom: 8 },
-          yLabels: { display: 'flex', flexDirection: 'column', justifyContent: 'space-around', paddingRight: 6, width: 55, flexShrink: 0 },
-          yLabel: { fontSize: 8, fontWeight: 600, color: 'var(--lt-text3)', textAlign: 'right', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', flex: 1 },
-          gridWrap: { flex: 1, display: 'flex', flexDirection: 'column', gap: 2 },
-          row: { display: 'flex', gap: 2, flex: 1 },
-          cell: { flex: 1, borderRadius: 4, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 700, color: '#fff', minHeight: 36, cursor: 'pointer' },
-          xLabels: { display: 'flex', paddingLeft: 61, paddingTop: 4, gap: 2 },
-          xLabel: { flex: 1, textAlign: 'center', fontSize: 8, fontWeight: 600, color: 'var(--lt-text3)' },
-          legend: { display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, marginTop: 6, paddingTop: 6, borderTop: '1px solid var(--lt-border)' },
-          legItem: { display: 'flex', alignItems: 'center', gap: 4, fontSize: 8, color: 'var(--lt-text3)' },
-          kpiGrid: { flex: 1, display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gridTemplateRows: '1fr 1fr', gap: 8 },
-          kpiCard: { background: 'var(--lt-card)', border: '1px solid var(--lt-border)', borderRadius: 12, padding: '12px 14px', borderTop: '3px solid', display: 'flex', flexDirection: 'column', justifyContent: 'center', boxShadow: '0 1px 3px rgba(10,37,64,0.06)', cursor: 'pointer' },
-          kpiLbl: { fontSize: 10, fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.15em', color: 'var(--lt-text3)', marginBottom: 4 },
-          kpiVal: { fontSize: 28, fontWeight: 300, lineHeight: 1 },
-          kpiSub: { fontSize: 10, color: 'var(--lt-text3)', marginTop: 4 },
-        }
+      <div className="card">
+        <div className="filters">
+          <input type="text" placeholder="Buscar ref., área, risco, controle, inconsistência, passos…" value={busca} onChange={e => setBusca(e.target.value)} />
+          <select value={filtroCrit} onChange={e => setFiltroCrit(e.target.value)}><option value="">Todas criticidades</option><option value="4">Crítico</option><option value="3">Significativo</option><option value="2">Moderado</option><option value="1">Baixo</option></select>
+          <select value={filtroFase} onChange={e => setFiltroFase(e.target.value)}><option value="">Todas as fases</option>{fasesDisponiveis.map(f => <option key={f} value={f}>{f}</option>)}</select>
+          <select value={filtroR1} onChange={e => setFiltroR1(e.target.value)}><option value="">Todos resultados</option><option>Efetivo</option><option>Inefetivo</option><option>GAP</option><option>Teste Não Realizado</option></select>
+          <span className="chip">{filtered.length} controles</span>
+        </div>
 
-        return (
-          <div style={ZS.zona}>
-            {/* HEATMAP compacto */}
-            <div style={ZS.heatCard}>
-              <div style={ZS.title}>Mapa de Calor — Impacto × Probabilidade</div>
-              <div style={{ display: 'flex', flex: 1 }}>
-                <div style={ZS.yLabels}>
-                  {IMP_L.map(l => <div key={l} style={ZS.yLabel}>{l}</div>)}
-                </div>
-                <div style={ZS.gridWrap}>
-                  {hmGrid.map((row, ri) => (
-                    <div key={ri} style={ZS.row}>
-                      {row.map((val, ci) => {
-                        const imp = IMP_L[ri], prob = PRB_L[ci]
-                        const sel = filtroImp === imp && filtroProb === prob
-                        return (
-                          <div key={ci}
-                            style={{ ...ZS.cell, background: val === 0 ? 'rgba(10,37,64,0.04)' : HC[ri][ci], opacity: val === 0 ? 0.35 : 1, outline: sel ? '2px solid var(--copper)' : 'none', outlineOffset: -2 }}
-                            onClick={() => handleHeatmapCell(imp, prob, sel)}>
-                            {val}
-                          </div>
-                        )
-                      })}
-                    </div>
-                  ))}
-                </div>
-              </div>
-              <div style={ZS.xLabels}>
-                {PRB_L.map(l => <div key={l} style={ZS.xLabel}>{l}</div>)}
-              </div>
-              <div style={{ textAlign: 'center', marginTop: 1, fontSize: 7, fontWeight: 600, letterSpacing: 1, textTransform: 'uppercase', color: 'var(--lt-text3)' }}>Probabilidade →</div>
-              <div style={ZS.legend}>
-                {CRIT_L.map((l, i) => (
-                  <div key={l} style={ZS.legItem}>
-                    <div style={{ width: 8, height: 8, borderRadius: 2, background: CRIT_C[i] }} />
-                    {l}
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* KPI GRID 3×2 */}
-            <div style={ZS.kpiGrid}>
-              <div style={{ ...ZS.kpiCard, borderTopColor: '#22C55E' }} onClick={() => setFiltroNivel(filtroNivel === 'N5' ? '' : 'N5')}>
-                <div style={ZS.kpiLbl}>Efetivos</div>
-                <div style={{ ...ZS.kpiVal, color: 'var(--res-ef)' }}>{ef}</div>
-                <div style={ZS.kpiSub}>{mrc.length > 0 ? Math.round(ef / mrc.length * 100) : 0}% do total</div>
-              </div>
-              <div style={{ ...ZS.kpiCard, borderTopColor: '#FACC15' }} onClick={() => setFiltroNivel(filtroNivel === 'N1' ? '' : 'N1')}>
-                <div style={ZS.kpiLbl}>Inefetivos</div>
-                <div style={{ ...ZS.kpiVal, color: '#B8860B' }}>{inf}</div>
-                <div style={ZS.kpiSub}>Aguardam ação corretiva</div>
-              </div>
-              <div style={{ ...ZS.kpiCard, borderTopColor: '#EF4444' }} onClick={() => setFiltroNivel(filtroNivel === 'N2' ? '' : 'N2')}>
-                <div style={ZS.kpiLbl}>GAP</div>
-                <div style={{ ...ZS.kpiVal, color: 'var(--n1)' }}>{gp}</div>
-                <div style={ZS.kpiSub}>Riscos sem controle</div>
-              </div>
-              <div style={{ ...ZS.kpiCard, borderTopColor: '#EF4444', cursor: 'default' }}>
-                <div style={ZS.kpiLbl}>Risco Crítico</div>
-                <div style={{ ...ZS.kpiVal, color: 'var(--n1)' }}>{cr4}</div>
-              </div>
-              <div style={{ ...ZS.kpiCard, borderTopColor: '#F97316', cursor: 'default' }}>
-                <div style={ZS.kpiLbl}>Risco Significativo</div>
-                <div style={{ ...ZS.kpiVal, color: '#EA580C' }}>{cr3}</div>
-              </div>
-              <div style={{ ...ZS.kpiCard, borderTopColor: '#EAB308', cursor: 'default' }}>
-                <div style={ZS.kpiLbl}>Moderado + Baixo</div>
-                <div style={{ ...ZS.kpiVal, color: '#B8860B' }}>{cr2 + cr1}</div>
-                <div style={ZS.kpiSub}>{cr2} moderado · {cr1} baixo</div>
-              </div>
-            </div>
+        <div className="mrc-actions" style={{ padding:'8px 14px',borderBottom:'1px solid var(--brd)' }}>
+          <button className="btn btn-xs" onClick={() => setExpandAll(o => !o)}>⊞ {expandAll ? 'Recolher Tudo' : 'Expandir Tudo'}</button>
+          {temFiltro && <button className="btn btn-ghost btn-sm" onClick={limparFiltros}>✕ Limpar filtros</button>}
+          <div className="mrc-actions-right">
+            <button className="btn-export btn-export-xl" title="Exportar para Excel" onClick={() => exportarMRCExcel(filtered, 'MRC_Completa_' + new Date().toISOString().slice(0,10), 'MRC Completa', clienteNome, projetoNome)}><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/></svg>Excel</button>
+            <button className="btn-export btn-export-pdf" title="Exportar para PDF"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>PDF</button>
+            <div className="col-panel-wrap"><button className="btn btn-xs" onClick={() => setColPanelOpen(o => !o)}>⊞ Colunas</button><ColunasPanel visCols={visCols} setVisCols={setVisCols} open={colPanelOpen} onClose={() => setColPanelOpen(false)} /></div>
           </div>
-        )
-      })()}
-
-      <div style={{ flex: 1, minHeight: 0, background: 'var(--lt-card)', borderRadius: 12, border: '1px solid var(--lt-border)', display: 'flex', flexDirection: 'column', overflow: 'hidden', boxShadow: '0 1px 3px rgba(10,37,64,0.06)' }}>
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', padding: '8px 14px', borderBottom: '1px solid var(--lt-border)' }}>
-          <input value={busca} onChange={e => setBusca(e.target.value)} placeholder="Buscar ref., área, risco, controle, inconsistência, passos…" style={{ flex: 1, minWidth: 200, background: 'var(--lt-card)', border: '1px solid var(--lt-border)', borderRadius: 8, padding: '6px 10px', fontFamily: 'inherit', fontSize: 11, outline: 'none', color: 'var(--lt-text)' }} />
-          <select value={filtroCrit} onChange={e => setFiltroCrit(e.target.value)} style={FS}><option value="">Todas criticidades</option><option value="4">Crítico</option><option value="3">Significativo</option><option value="2">Moderado</option><option value="1">Baixo</option></select>
-          <select value={filtroFase} onChange={e => setFiltroFase(e.target.value)} style={FS}><option value="">Todas as fases</option>{fasesDisponiveis.map(f => <option key={f} value={f}>{f}</option>)}</select>
-          <select value={filtroR1} onChange={e => setFiltroR1(e.target.value)} style={FS}><option value="">Todos resultados</option><option>Efetivo</option><option>Inefetivo</option><option>GAP</option><option>Teste Não Realizado</option></select>
-          <select value={filtroStatus} onChange={e => setFiltroStatus(e.target.value)} style={FS}><option value="">Todos status</option>{statusDisponiveis.map(s => <option key={s} value={s}>{s}</option>)}</select>
-          <div style={{ fontSize: 10, color: 'var(--lt-text3)', background: 'var(--lt-card)', border: '1px solid var(--lt-border)', borderRadius: 8, padding: '5px 10px' }}>{filtered.length} controles</div>
-          {temFiltro && <button onClick={limparFiltros} style={{ background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 999, padding: '4px 10px', fontSize: 10, fontWeight: 600, color: 'var(--n1)', cursor: 'pointer', fontFamily: 'inherit' }}>✕ Limpar filtros</button>}
-          <button onClick={() => exportarMRCExcel(filtered, 'MRC_Completa_' + new Date().toISOString().slice(0,10), 'MRC Completa', clienteNome, projetoNome)} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, background: 'rgba(204,145,94,0.1)', border: '1px solid rgba(204,145,94,0.25)', borderRadius: 999, padding: '5px 10px', fontSize: 10, fontWeight: 600, color: 'var(--copper)', cursor: 'pointer', fontFamily: 'inherit', marginLeft: 'auto' }} title="Exportar Excel"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/></svg>Excel</button>
         </div>
 
         {isLimited && <div className="warn-strip">Exibindo {MAX_ROWS} de {filtered.length} — refine os filtros</div>}
-        <TabelaMRC rows={visibleRows} onOpenModal={setModalRow} />
+        <TabelaMRC rows={visibleRows} visCols={visCols} onOpenModal={setModalRow} expandAll={expandAll} />
       </div>
 
       {modalRow && <ModalDetalhe row={modalRow} onClose={() => setModalRow(null)} />}
