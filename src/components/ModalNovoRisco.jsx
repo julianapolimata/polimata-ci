@@ -16,8 +16,7 @@ const ModalNovoRisco = ({ onClose, onSaved, areas, projeto, areaFixa }) => {
   const [area, setArea] = useState(areaFixa?.id || '')
   const [subprocesso, setSubprocesso] = useState('')
   const [descRisco, setDescRisco] = useState('')
-  const [gerencia, setGerencia] = useState('')
-  const [respSub, setRespSub] = useState('')
+  // gerencia e respSub vêm do cadastro da área (não editáveis)
 
   // PASSO 2: Características & Premissas
   const [descControle, setDescControle] = useState('')
@@ -132,7 +131,7 @@ const ModalNovoRisco = ({ onClose, onSaved, areas, projeto, areaFixa }) => {
   }
 
   // ═══ VALIDAÇÕES ═══
-  const canAdvanceStep1 = area && subprocesso && descRisco.trim() && gerencia && respSub
+  const canAdvanceStep1 = area && subprocesso && descRisco.trim()
   
   const canAdvanceStep2 = descControle.trim() && cat && freq && nat && car && sis && chave &&
     (isAutomatic || quem.trim()) && quando.trim() && porque.trim() && como.trim() && 
@@ -182,8 +181,8 @@ const ModalNovoRisco = ({ onClose, onSaved, areas, projeto, areaFixa }) => {
         rr: refRisco,
         rc: refControle,
         sub: subprocesso,
-        ger: gerencia,
-        resp_sub: respSub,
+        ger: areaObj?.gerente || '',
+        resp_sub: areaObj?.resp_processo || '',
         dr: descRisco,
         area_id: area,
         projeto_id: projeto.id
@@ -458,67 +457,17 @@ const ModalNovoRisco = ({ onClose, onSaved, areas, projeto, areaFixa }) => {
                 />
               </div>
 
-              <div style={{ marginBottom: '2rem' }}>
-                <label style={{
-                  display: 'block',
-                  fontSize: '13px',
-                  fontWeight: 500,
-                  color: '#00203E',
-                  marginBottom: '0.5rem',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.3px'
-                }}>
-                  Gerência <span style={{ color: '#E24B4A' }}>*</span>
-                </label>
-                <select
-                  value={gerencia}
-                  onChange={e => setGerencia(e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: '0.8rem',
-                    border: '1px solid #D0D0D0',
-                    borderRadius: '4px',
-                    fontFamily: 'Montserrat, sans-serif',
-                    fontSize: '14px'
-                  }}
-                >
-                  <option value="">Selecionar...</option>
-                  {responsaveis.map(r => (
-                    <option key={r.id} value={r.id}>{r.nome}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div style={{ marginBottom: '2rem' }}>
-                <label style={{
-                  display: 'block',
-                  fontSize: '13px',
-                  fontWeight: 500,
-                  color: '#00203E',
-                  marginBottom: '0.5rem',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.3px'
-                }}>
-                  Resp. Processo <span style={{ color: '#E24B4A' }}>*</span>
-                </label>
-                <select
-                  value={respSub}
-                  onChange={e => setRespSub(e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: '0.8rem',
-                    border: '1px solid #D0D0D0',
-                    borderRadius: '4px',
-                    fontFamily: 'Montserrat, sans-serif',
-                    fontSize: '14px'
-                  }}
-                >
-                  <option value="">Selecionar...</option>
-                  {responsaveis.map(r => (
-                    <option key={r.id} value={r.id}>{r.nome}</option>
-                  ))}
-                </select>
-              </div>
+              {/* Gerência e Resp. Processo são preenchidos automaticamente pelo cadastro da área */}
+              {(() => {
+                const areaObj = areas.find(a => a.id === area)
+                if (!areaObj?.gerente && !areaObj?.resp_processo) return null
+                return (
+                  <div style={{ marginBottom: '1.5rem', padding: '10px 14px', background: 'rgba(0,32,62,0.03)', borderRadius: 8, border: '1px solid rgba(0,32,62,0.08)' }}>
+                    {areaObj.gerente && <div style={{ fontSize: 12, color: 'var(--lt-text2)', marginBottom: 4 }}><span style={{ fontWeight: 600, textTransform: 'uppercase', fontSize: 10, letterSpacing: '0.3px', color: '#00203E' }}>Gerência:</span> {areaObj.gerente}</div>}
+                    {areaObj.resp_processo && <div style={{ fontSize: 12, color: 'var(--lt-text2)' }}><span style={{ fontWeight: 600, textTransform: 'uppercase', fontSize: 10, letterSpacing: '0.3px', color: '#00203E' }}>Resp. Processo:</span> {areaObj.resp_processo}</div>}
+                  </div>
+                )
+              })()}
             </div>
           )}
 
