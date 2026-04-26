@@ -799,7 +799,7 @@ function PorArea({ projeto, areasCalc, todosControles, loading, navigate, loadDa
                   <span className="resize-handle" onClick={e => e.stopPropagation()} onMouseDown={e => paResize.onResizeStart(e, col.k)} />
                 </th>
               })}
-              <th style={{ fontSize: 10, fontWeight: 500, color: 'var(--lt-text3)', background: 'var(--lt-card)', padding: '12px 16px', position: 'sticky', top: 0, zIndex: 2, width: 70, minWidth: 70, borderBottom: '1px solid var(--lt-border)' }}></th>
+              <th style={{ fontSize: 10, fontWeight: 500, textTransform: 'uppercase', letterSpacing: 0.5, color: 'var(--lt-text3)', background: 'var(--lt-card)', padding: '12px 16px', position: 'sticky', top: 0, zIndex: 2, width: 90, minWidth: 90, borderBottom: '1px solid var(--lt-border)', textAlign: 'center' }}>Ações</th>
             </tr></thead>
             <tbody>{paSort.sortData(cf).map((c, i) => {
               const faseBdg = (val) => {
