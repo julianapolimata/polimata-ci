@@ -398,7 +398,7 @@ function TabelaMRC({ rows, visCols, onOpenModal, expandAll }) {
           const [linha1, linha2] = c.label.split('\n')
           return (
             <th key={c.id} className={`th-sort${sortKey===c.k?' sorted':''}`}
-              style={{ minWidth: getWidth(c.id, 110), width: 110, background: faseColor, color: 'white', textAlign: 'center', padding: '8px 8px', verticalAlign: 'middle', borderLeft: '1px solid rgba(255,255,255,0.15)' }}
+              style={{ minWidth: getWidth(c.id, 110), width: 110, background: faseColor, color: 'white', textAlign: 'center', padding: '8px 8px', verticalAlign: 'middle', borderLeft: '1px solid rgba(255,255,255,0.15)', borderRadius: '8px 8px 0 0' }}
               onClick={() => toggleSort(c.k)}>
               <div style={{ fontSize: 8, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5, opacity: 0.85 }}>{linha1}</div>
               <div style={{ fontSize: 9, fontWeight: 600, marginTop: 2 }}>{linha2}</div>
