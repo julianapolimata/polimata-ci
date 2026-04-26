@@ -200,9 +200,16 @@ function Heatmap({ data, filtroImp, filtroProb, onFilterCell }) {
 function Regua({ data, filtroNivel, onToggleNivel }) {
   const c = {}; NIVEIS.forEach(n => { c[n.id] = 0 })
   data.forEach(r => { const res = r.r1; if (res === 'Inefetivo') c.N1++; else if (res === 'GAP') c.N2++; else if (res === 'Efetivo') c.N5++ })
+  const bgMap = { rn1: { bg: 'rgba(245,185,66,.15)', bc: 'rgba(245,185,66,.4)', c: '#B8860B' }, rn2: { bg: 'rgba(240,86,86,.15)', bc: 'rgba(240,86,86,.4)', c: '#DC2626' }, rn5: { bg: 'rgba(34,197,94,.15)', bc: 'rgba(34,197,94,.4)', c: '#059669' } }
   return (
     <div className="regua">
-      {NIVEIS.map(n => (<div key={n.id} className={`rn ${n.cls} ${filtroNivel === n.id ? 'ativo' : ''}`} onClick={() => onToggleNivel(filtroNivel === n.id ? '' : n.id)}><div><div className="rn-n">{n.nome}</div><div className="rn-c">{c[n.id]}</div></div></div>))}
+      {NIVEIS.map(n => {
+        const s = bgMap[n.cls] || {}
+        return (<div key={n.id} className={`rn ${filtroNivel === n.id ? 'ativo' : ''}`} style={{ background: s.bg, borderLeftColor: s.bc, cursor: 'pointer' }} onClick={() => onToggleNivel(filtroNivel === n.id ? '' : n.id)}>
+          <div className="rn-n">{n.nome}</div>
+          <div className="rn-c" style={{ color: s.c }}>{c[n.id]}</div>
+        </div>)
+      })}
     </div>
   )
 }
@@ -226,7 +233,7 @@ function ColunasPanel({ visCols, setVisCols, open, onClose }) {
 export function ModalDetalhe({ row, onClose }) {
   const [tab, setTab] = useState('ident')
   if (!row) return null
-  const tabs = [{ id:'ident',label:'Identificação' },{ id:'f1',label:'Diagnóstico Inicial' },{ id:'f2e1',label:'Teste de Desenho' },{ id:'f2e2',label:'Teste de Aderência' },{ id:'f3',label:'Revisão Controles Internos' },{ id:'f4c1',label:'Auditoria Contínua C1' },{ id:'f4c2',label:'Auditoria Contínua C2' },{ id:'f5',label:'Auditoria Independente' }]
+  const tabs = [{ id:'ident',label:'Identificação' },{ id:'f1',label:'F1 — Diagnóstico Inicial' },{ id:'f2e1',label:'F2-E1 — Teste de Desenho' },{ id:'f2e2',label:'F2-E2 — Teste de Aderência' },{ id:'f3',label:'F3 — Revisão Controles Internos' },{ id:'f4c1',label:'F4-C1 — Auditoria Contínua' },{ id:'f4c2',label:'F4-C2 — Auditoria Contínua' },{ id:'f5',label:'F5 — Auditoria Independente' }]
   const field = (l, v, fw) => { if (!v || v === 'N/A' || v === '') return null; return <div style={fw ? { marginBottom: 12 } : {}}><div className="ml">{l}</div><div className="mv">{v}</div></div> }
   const fieldTag = (l, v) => { if (!v || v === 'N/A' || v === '') return null; return <div><div className="ml">{l}</div><div style={{ marginTop: 3 }}><span className="tag">{v}</span></div></div> }
   const fieldText = (l, v) => { if (!v || v === 'N/A' || v === '') return null; return <div style={{ marginBottom: 14 }}>{l && <div className="ml">{l}</div>}<div className="mv-t">{v}</div></div> }
@@ -444,7 +451,7 @@ export default function MRCCompleta({ projetoId, clienteNome, projetoNome, notif
         </div>
       </div>
 
-      <div className="mrc-hm-compact" style={{ display: 'flex', gap: 16, alignItems: 'flex-start' }}>
+      <div className="mrc-hm-compact" style={{ display: 'flex', gap: 16, alignItems: 'stretch', marginBottom: 14 }}>
         <div style={{ flex: 1 }}>
           <Heatmap data={filtered} filtroImp={filtroImp} filtroProb={filtroProb} onFilterCell={handleHeatmapCell} />
         </div>
@@ -465,7 +472,7 @@ export default function MRCCompleta({ projetoId, clienteNome, projetoNome, notif
           {temFiltro && <button className="btn btn-ghost btn-sm" onClick={limparFiltros}>✕ Limpar filtros</button>}
           <div className="mrc-actions-right">
             <button className="btn-export btn-export-xl" title="Exportar para Excel" onClick={() => exportarMRCExcel(filtered, 'MRC_Completa_' + new Date().toISOString().slice(0,10), 'MRC Completa', clienteNome, projetoNome)}><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/></svg>Excel</button>
-            <button className="btn-export btn-export-pdf" title="Exportar para PDF"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>PDF</button>
+
             <div className="col-panel-wrap"><button className="btn btn-xs" onClick={() => setColPanelOpen(o => !o)}>⊞ Colunas</button><ColunasPanel visCols={visCols} setVisCols={setVisCols} open={colPanelOpen} onClose={() => setColPanelOpen(false)} /></div>
           </div>
         </div>

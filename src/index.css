@@ -521,11 +521,11 @@ tr:hover td { background: rgba(204,145,94,0.03); }
 .mrc-hm-compact .hm-n { font-size: 15px; }
 .mrc-hm-compact .hm-eig { font-size: 8px; gap: 3px; }
 .mrc-hm-compact .hm-ylabel { min-height: 44px; font-size: 9px; }
-.mrc-hm-compact .hm-legend { gap: 6px; }
-.mrc-hm-compact .hm-leg { padding: 10px 8px; }
-.mrc-hm-compact .hm-lnum { font-size: 18px; }
-.mrc-hm-compact .hm-lbl { font-size: 9px; }
-.mrc-hm-compact .hm-lsub { font-size: 8px; }
+.mrc-hm-compact .hm-legend { gap: 6px; margin-top: 12px; }
+.mrc-hm-compact .hm-leg { padding: 12px 10px; }
+.mrc-hm-compact .hm-lnum { font-size: 20px; }
+.mrc-hm-compact .hm-lbl { font-size: 10px; }
+.mrc-hm-compact .hm-lsub { font-size: 9px; }
 
 /* Barra de ações */
 .mrc-actions { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
@@ -535,26 +535,14 @@ tr:hover td { background: rgba(204,145,94,0.03); }
 .btn-export { display: inline-flex; align-items: center; gap: 6px; padding: 6px 16px; border-radius: var(--radius-pill); font-size: 11px; font-weight: 600; font-family: inherit; cursor: pointer; letter-spacing: 0.3px; transition: all .18s ease; border: none; }
 .btn-export-xl { background: rgba(34,197,94,0.08); color: #22C55E; border: 1px solid rgba(34,197,94,0.20); }
 .btn-export-xl:hover { background: rgba(34,197,94,0.15); border-color: rgba(34,197,94,0.4); transform: translateY(-1px); }
-.btn-export-pdf { background: rgba(239,68,68,0.06); color: #F87171; border: 1px solid rgba(239,68,68,0.18); }
-.btn-export-pdf:hover { background: rgba(239,68,68,0.12); border-color: rgba(239,68,68,0.35); transform: translateY(-1px); }
 
-/* Régua de níveis — layout vertical com barra lateral */
-.regua { display: flex; flex-direction: column; gap: 6px; min-width: 170px; }
-.rn { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-radius: 8px; border: 1px solid var(--lt-border); background: var(--lt-card); border-left: 4px solid; box-shadow: 0 1px 3px rgba(10,37,64,0.04); cursor: pointer; transition: all .15s; text-align: left; }
-.rn-c { font-size: 20px; font-weight: 300; line-height: 1; margin-top: 2px; }
-.rn-n { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--lt-text3); }
-.rn1 { border-left-color: #FACC15; }
-.rn1 .rn-c { color: #D4960A; }
-.rn2 { border-left-color: #EF4444; }
-.rn2 .rn-c { color: #DC2626; }
-.rn3 { border-left-color: #D4A030; }
-.rn3 .rn-c { color: #D4A030; }
-.rn4 { border-left-color: #5B8FF9; }
-.rn4 .rn-c { color: #5B8FF9; }
-.rn5 { border-left-color: #22C55E; }
-.rn5 .rn-c { color: #059669; }
+/* Régua de níveis — vertical ao lado do heatmap */
+.regua { display: flex; flex-direction: column; gap: 6px; min-width: 160px; justify-content: center; }
+.rn { padding: 12px 16px; border-radius: 10px; border-left: 4px solid; cursor: pointer; transition: all .15s; }
+.rn-c { font-family: 'Raleway', sans-serif; font-size: 28px; font-weight: 300; line-height: 1; }
+.rn-n { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
 .rn.ativo { outline: 2px solid currentColor; outline-offset: -2px; }
-.rn:hover { filter: brightness(1.05); }
+.rn:hover { filter: brightness(0.97); }
 
 /* Painel de colunas visíveis */
 .col-panel-wrap { position: relative; }
@@ -568,7 +556,7 @@ tr:hover td { background: rgba(204,145,94,0.03); }
 .cp-row input[type="checkbox"] { accent-color: var(--copper); cursor: pointer; }
 
 /* Heatmap MRC (dark stays dark on light page for visual impact) */
-.hm-wrap       { display: flex; flex-direction: column; gap: 14px; margin-bottom: 18px; }
+.hm-wrap       { margin-bottom: 18px; }
 .hm-grid-area  { flex: 1; }
 .hm-title      { font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--copper); font-weight: 600; margin-bottom: 10px; }
 .hm-cell       { border-radius: var(--radius-sm); padding: 8px 6px; cursor: pointer; transition: filter .15s; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; min-height: 66px; border: 2px solid transparent; }
