@@ -440,17 +440,6 @@ const ModalNovoRisco = ({ onClose, onSaved, areas, projeto, areaFixa }) => {
                 />
               </div>
 
-              {/* Gerência e Resp. Processo são preenchidos automaticamente pelo cadastro da área */}
-              {(() => {
-                const areaObj = areas.find(a => a.id === area)
-                if (!areaObj?.gerente && !areaObj?.resp_processo) return null
-                return (
-                  <div style={{ marginBottom: '1.5rem', padding: '10px 14px', background: 'rgba(0,32,62,0.03)', borderRadius: 8, border: '1px solid rgba(0,32,62,0.08)' }}>
-                    {areaObj.gerente && <div style={{ fontSize: 12, color: 'var(--lt-text2)', marginBottom: 4 }}><span style={{ fontWeight: 600, textTransform: 'uppercase', fontSize: 10, letterSpacing: '0.3px', color: '#00203E' }}>Gerência:</span> {areaObj.gerente}</div>}
-                    {areaObj.resp_processo && <div style={{ fontSize: 12, color: 'var(--lt-text2)' }}><span style={{ fontWeight: 600, textTransform: 'uppercase', fontSize: 10, letterSpacing: '0.3px', color: '#00203E' }}>Resp. Processo:</span> {areaObj.resp_processo}</div>}
-                  </div>
-                )
-              })()}
             </div>
           )}
 
