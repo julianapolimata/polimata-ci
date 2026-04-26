@@ -771,8 +771,8 @@ function PorArea({ projeto, areasCalc, todosControles, loading, navigate, loadDa
                 { h: 'Recomendação', w: 180 }, { h: 'Impacto', w: 80 }, { h: 'Probab.', w: 80 },
                 { h: 'Criticidade', w: 100 }, { h: 'Fase Atual', w: 160 },
               ].map((col, i) =>
-                <th key={i} style={{ fontSize: 8, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5, color: 'var(--navy)', background: 'var(--sand)', padding: '6px 8px', textAlign: 'left', whiteSpace: 'nowrap', position: 'sticky', top: 0, zIndex: 2, width: col.w, minWidth: col.w, borderBottom: '2px solid var(--lt-border)' }}>{col.h}</th>)}
-              <th style={{ fontSize: 8, fontWeight: 700, color: 'var(--navy)', background: 'var(--sand)', padding: '6px 8px', position: 'sticky', top: 0, zIndex: 2, width: 70, minWidth: 70, borderBottom: '2px solid var(--lt-border)' }}></th>
+                <th key={i} style={{ fontSize: 10, fontWeight: 500, textTransform: 'uppercase', letterSpacing: 0.5, color: 'var(--lt-text3)', background: 'var(--lt-card)', padding: '12px 16px', textAlign: 'left', whiteSpace: 'nowrap', position: 'sticky', top: 0, zIndex: 2, width: col.w, minWidth: col.w, borderBottom: '1px solid var(--lt-border)' }}>{col.h}</th>)}
+              <th style={{ fontSize: 10, fontWeight: 500, color: 'var(--lt-text3)', background: 'var(--lt-card)', padding: '12px 16px', position: 'sticky', top: 0, zIndex: 2, width: 70, minWidth: 70, borderBottom: '1px solid var(--lt-border)' }}></th>
             </tr></thead>
             <tbody>{cf.map((c, i) => { const fl = faseLabel(c); return (
               <tr key={c.id||i} onClick={() => setModalRow(c)} style={{ cursor: 'pointer' }} onMouseEnter={e => e.currentTarget.style.background='rgba(204,145,94,0.04)'} onMouseLeave={e => e.currentTarget.style.background=''}>

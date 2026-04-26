@@ -208,7 +208,7 @@ const ModalRegistrarResultado = ({ row, onClose, onSaved, responsaveis }) => {
       left: 0,
       right: 0,
       bottom: 0,
-      background: 'rgba(0,0,0,0.5)',
+      background: 'rgba(0,0,0,0.4)',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
@@ -216,32 +216,28 @@ const ModalRegistrarResultado = ({ row, onClose, onSaved, responsaveis }) => {
     }}>
       <div style={{
         background: 'white',
-        borderRadius: '8px',
-        width: '100%',
-        maxWidth: '800px',
-        boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
+        borderRadius: 12,
+        width: '90vw',
+        maxWidth: 700,
+        boxShadow: '0 20px 60px rgba(0,0,0,0.15)',
         display: 'flex',
         flexDirection: 'column',
         maxHeight: '90vh'
       }}>
         {/* HEADER */}
-        <div style={{
-          background: 'linear-gradient(135deg, #00203E 0%, #1D3B5C 100%)',
-          color: '#F3EEE4',
-          padding: '1.5rem 2rem',
-          borderBottom: '3px solid #CC915E'
-        }}>
-          <h2 style={{ margin: 0, fontSize: '20px', fontWeight: 500 }}>Registrar Resultado do Teste</h2>
-          <p style={{ margin: '0.5rem 0 0 0', fontSize: '12px', opacity: 0.85 }}>
-            {row?.area} — {row?.sub} — {row?.rr}
-          </p>
+        <div style={{ padding: '20px 24px', borderBottom: '1px solid #e5e7eb', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', background: '#00203E', color: 'white' }}>
+          <div>
+            <div style={{ fontSize: 18, fontWeight: 600, marginBottom: 4 }}>Registrar Resultado do Teste</div>
+            <div style={{ fontSize: 11, fontWeight: 500, opacity: 0.8 }}>{row?.area} — {row?.sub} — {row?.rr}</div>
+          </div>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: 28, color: 'white', cursor: 'pointer' }}>×</button>
         </div>
 
         {/* BODY */}
         <div style={{
-          padding: '2rem',
-          overflowY: 'auto',
           flex: 1,
+          padding: 24,
+          overflowY: 'auto',
           fontFamily: 'Montserrat, sans-serif'
         }}>
           {/* Banner de reprovação (se aplicável) */}
@@ -256,11 +252,11 @@ const ModalRegistrarResultado = ({ row, onClose, onSaved, responsaveis }) => {
               <div style={{ fontSize: 11, fontWeight: 700, color: '#C62828', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 6 }}>
                 ↩ Análise Reprovada — Ação Necessária
               </div>
-              <div style={{ fontSize: 13, color: '#444', lineHeight: 1.5, fontStyle: 'italic' }}>
+              <div style={{ fontSize: 13, color: '#00203E', lineHeight: 1.5, fontStyle: 'italic' }}>
                 "{notaReprovacao.nota}"
               </div>
               <div style={{ fontSize: 10, color: '#999', marginTop: 6 }}>
-                Reprovado por <strong style={{ color: '#666' }}>{notaReprovacao.autor?.nome || '—'}</strong> em{' '}
+                Reprovado por <strong style={{ color: '#7A8B9C' }}>{notaReprovacao.autor?.nome || '—'}</strong> em{' '}
                 {new Date(notaReprovacao.criado_em).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                 {' · '}<span style={{ color: '#CC915E' }}>{faseAtual}</span>
               </div>
@@ -272,7 +268,7 @@ const ModalRegistrarResultado = ({ row, onClose, onSaved, responsaveis }) => {
             <div style={{
               fontSize: '12px',
               fontWeight: 600,
-              color: '#1D3B5C',
+              color: '#00203E',
               textTransform: 'uppercase',
               letterSpacing: '0.5px',
               marginBottom: '1rem',
@@ -285,7 +281,7 @@ const ModalRegistrarResultado = ({ row, onClose, onSaved, responsaveis }) => {
               display: 'block',
               fontSize: '13px',
               fontWeight: 500,
-              color: '#1D3B5C',
+              color: '#00203E',
               marginBottom: '0.8rem',
               textTransform: 'uppercase',
               letterSpacing: '0.3px'
@@ -365,7 +361,7 @@ const ModalRegistrarResultado = ({ row, onClose, onSaved, responsaveis }) => {
               <div style={{
                 fontSize: '12px',
                 fontWeight: 600,
-                color: '#1D3B5C',
+                color: '#00203E',
                 textTransform: 'uppercase',
                 marginBottom: '1rem',
                 letterSpacing: '0.5px'
@@ -376,7 +372,7 @@ const ModalRegistrarResultado = ({ row, onClose, onSaved, responsaveis }) => {
                 display: 'block',
                 fontSize: '13px',
                 fontWeight: 500,
-                color: '#1D3B5C',
+                color: '#00203E',
                 marginBottom: '0.5rem',
                 textTransform: 'uppercase',
                 letterSpacing: '0.3px'
@@ -407,7 +403,7 @@ const ModalRegistrarResultado = ({ row, onClose, onSaved, responsaveis }) => {
               display: 'block',
               fontSize: '13px',
               fontWeight: 500,
-              color: '#1D3B5C',
+              color: '#00203E',
               marginBottom: '0.8rem',
               textTransform: 'uppercase',
               letterSpacing: '0.3px'
@@ -440,7 +436,7 @@ const ModalRegistrarResultado = ({ row, onClose, onSaved, responsaveis }) => {
                 display: 'block',
                 fontSize: '13px',
                 fontWeight: 500,
-                color: '#1D3B5C',
+                color: '#00203E',
                 marginBottom: '0.5rem',
                 textTransform: 'uppercase',
                 letterSpacing: '0.3px'
@@ -470,7 +466,7 @@ const ModalRegistrarResultado = ({ row, onClose, onSaved, responsaveis }) => {
             <div style={{
               fontSize: '12px',
               fontWeight: 600,
-              color: '#1D3B5C',
+              color: '#00203E',
               textTransform: 'uppercase',
               letterSpacing: '0.5px',
               marginBottom: '1rem',
@@ -485,7 +481,7 @@ const ModalRegistrarResultado = ({ row, onClose, onSaved, responsaveis }) => {
                   display: 'block',
                   fontSize: '13px',
                   fontWeight: 500,
-                  color: '#1D3B5C',
+                  color: '#00203E',
                   marginBottom: '0.5rem',
                   textTransform: 'uppercase',
                   letterSpacing: '0.3px'
@@ -517,7 +513,7 @@ const ModalRegistrarResultado = ({ row, onClose, onSaved, responsaveis }) => {
                   display: 'block',
                   fontSize: '13px',
                   fontWeight: 500,
-                  color: '#1D3B5C',
+                  color: '#00203E',
                   marginBottom: '0.5rem',
                   textTransform: 'uppercase',
                   letterSpacing: '0.3px'
@@ -566,7 +562,7 @@ const ModalRegistrarResultado = ({ row, onClose, onSaved, responsaveis }) => {
                 }}>
                   {getCriticidadeLabel(criticidade).label}
                 </span>
-                <span style={{ fontSize: '13px', color: '#666', fontWeight: 500 }}>
+                <span style={{ fontSize: '13px', color: '#7A8B9C', fontWeight: 500 }}>
                   Criticidade: {criticidade} (Impacto {impacto} × Prob {probabilidade}) / {getCriticidadeLabel(criticidade).label}
                 </span>
               </div>
@@ -584,7 +580,7 @@ const ModalRegistrarResultado = ({ row, onClose, onSaved, responsaveis }) => {
               <div style={{
                 fontSize: '12px',
                 fontWeight: 600,
-                color: '#1D3B5C',
+                color: '#00203E',
                 textTransform: 'uppercase',
                 marginBottom: '1rem',
                 letterSpacing: '0.5px'
@@ -595,7 +591,7 @@ const ModalRegistrarResultado = ({ row, onClose, onSaved, responsaveis }) => {
                 display: 'block',
                 fontSize: '13px',
                 fontWeight: 500,
-                color: '#1D3B5C',
+                color: '#00203E',
                 marginBottom: '0.8rem',
                 textTransform: 'uppercase',
                 letterSpacing: '0.3px'
@@ -628,7 +624,7 @@ const ModalRegistrarResultado = ({ row, onClose, onSaved, responsaveis }) => {
                       display: 'block',
                       fontSize: '13px',
                       fontWeight: 500,
-                      color: '#1D3B5C',
+                      color: '#00203E',
                       marginBottom: '0.5rem',
                       textTransform: 'uppercase',
                       letterSpacing: '0.3px'
@@ -657,7 +653,7 @@ const ModalRegistrarResultado = ({ row, onClose, onSaved, responsaveis }) => {
                         display: 'block',
                         fontSize: '13px',
                         fontWeight: 500,
-                        color: '#1D3B5C',
+                        color: '#00203E',
                         marginBottom: '0.5rem',
                         textTransform: 'uppercase',
                         letterSpacing: '0.3px'
@@ -687,7 +683,7 @@ const ModalRegistrarResultado = ({ row, onClose, onSaved, responsaveis }) => {
                         display: 'block',
                         fontSize: '13px',
                         fontWeight: 500,
-                        color: '#1D3B5C',
+                        color: '#00203E',
                         marginBottom: '0.5rem',
                         textTransform: 'uppercase',
                         letterSpacing: '0.3px'
@@ -714,7 +710,7 @@ const ModalRegistrarResultado = ({ row, onClose, onSaved, responsaveis }) => {
                       display: 'block',
                       fontSize: '13px',
                       fontWeight: 500,
-                      color: '#1D3B5C',
+                      color: '#00203E',
                       marginBottom: '0.5rem',
                       textTransform: 'uppercase',
                       letterSpacing: '0.3px'
@@ -747,7 +743,7 @@ const ModalRegistrarResultado = ({ row, onClose, onSaved, responsaveis }) => {
                     display: 'block',
                     fontSize: '13px',
                     fontWeight: 500,
-                    color: '#1D3B5C',
+                    color: '#00203E',
                     marginBottom: '0.5rem',
                     textTransform: 'uppercase',
                     letterSpacing: '0.3px'
@@ -784,7 +780,7 @@ const ModalRegistrarResultado = ({ row, onClose, onSaved, responsaveis }) => {
           alignItems: 'center',
           justifyContent: 'space-between',
           fontSize: '11px',
-          color: '#1D3B5C'
+          color: '#00203E'
         }}>
           <span>Fase em curso: <strong>{faseAtual}</strong></span>
           {row?.status_workflow === 'reprovado' && (
@@ -795,72 +791,15 @@ const ModalRegistrarResultado = ({ row, onClose, onSaved, responsaveis }) => {
         </div>
 
         {/* FOOTER */}
-        <div style={{
-          background: '#FAFAFA',
-          borderTop: '1px solid #E0E0E0',
-          padding: '1.5rem 2rem',
-          display: 'flex',
-          gap: '1rem',
-          justifyContent: 'flex-end'
-        }}>
-          <button
-            onClick={onClose}
-            disabled={saving || submitting}
-            style={{
-              padding: '0.8rem 1.5rem',
-              fontSize: '13px',
-              fontWeight: 500,
-              border: '1px solid #D0D0D0',
-              borderRadius: '4px',
-              background: 'white',
-              cursor: saving || submitting ? 'not-allowed' : 'pointer',
-              opacity: saving || submitting ? 0.5 : 1,
-              textTransform: 'uppercase',
-              letterSpacing: '0.3px',
-              fontFamily: 'Montserrat, sans-serif'
-            }}
-          >
+        <div style={{ display: 'flex', gap: 8, padding: 24, borderTop: '1px solid #e5e7eb', background: '#fafbfc' }}>
+          <button onClick={onClose} style={{ flex: 1, padding: '12px 16px', border: '1px solid #e5e7eb', borderRadius: 6, fontFamily: 'Montserrat, sans-serif', fontSize: 13, fontWeight: 700, cursor: 'pointer', background: 'white', color: '#00203E' }}>
             Cancelar
           </button>
-          <button
-            onClick={saveOnly}
-            disabled={!canSave || saving || submitting}
-            style={{
-              padding: '0.8rem 1.5rem',
-              fontSize: '13px',
-              fontWeight: 500,
-              border: '1px solid #D0D0D0',
-              borderRadius: '4px',
-              background: 'white',
-              color: '#1D3B5C',
-              cursor: !canSave || saving || submitting ? 'not-allowed' : 'pointer',
-              opacity: !canSave || saving || submitting ? 0.5 : 1,
-              textTransform: 'uppercase',
-              letterSpacing: '0.3px',
-              fontFamily: 'Montserrat, sans-serif'
-            }}
-          >
+          <button onClick={saveOnly} disabled={!canSave || saving || submitting} style={{ flex: 1, padding: '12px 16px', border: '1px solid #e5e7eb', borderRadius: 6, fontFamily: 'Montserrat, sans-serif', fontSize: 13, fontWeight: 700, cursor: 'pointer', background: 'white', color: '#00203E', opacity: !canSave || saving || submitting ? 0.5 : 1 }}>
             {saving ? 'Salvando...' : 'Salvar'}
           </button>
-          <button
-            onClick={saveAndSubmit}
-            disabled={!canSave || saving || submitting}
-            style={{
-              padding: '0.8rem 1.5rem',
-              fontSize: '13px',
-              fontWeight: 600,
-              border: '1px solid #CC915E',
-              borderRadius: '4px',
-              background: 'linear-gradient(135deg, #CC915E 0%, #A6512F 100%)',
-              color: 'white',
-              cursor: !canSave || saving || submitting ? 'not-allowed' : 'pointer',
-              opacity: !canSave || saving || submitting ? 0.5 : 1,
-              textTransform: 'uppercase',
-              letterSpacing: '0.3px',
-              fontFamily: 'Montserrat, sans-serif'
-            }}
-          >
-            {submitting ? 'Submetendo...' : (row?.status_workflow === 'reprovado' ? '📤 Salvar e Reenviar para Revisão' : '📤 Salvar e Submeter para Revisão')}
+          <button onClick={saveAndSubmit} disabled={!canSave || saving || submitting} style={{ flex: 1, padding: '12px 16px', border: 'none', borderRadius: 6, fontFamily: 'Montserrat, sans-serif', fontSize: 13, fontWeight: 700, cursor: 'pointer', background: '#CC915E', color: 'white', opacity: !canSave || saving || submitting ? 0.5 : 1 }}>
+            {submitting ? 'Submetendo...' : (row?.status_workflow === 'reprovado' ? 'Salvar e reenviar' : 'Salvar e submeter')}
           </button>
         </div>
       </div>

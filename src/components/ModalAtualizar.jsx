@@ -545,7 +545,7 @@ const ModalAtualizar = ({ row, onClose, onSaved, areas, projeto }) => {
         </div>
         <div>
           <div style={{ fontSize: 9, fontWeight: 700, color: '#999', textTransform: 'uppercase', marginBottom: 4 }}>Descrição do Risco</div>
-          <div style={{ fontSize: 11, color: '#333', marginTop: 6, lineHeight: 1.6 }}>{row.dr}</div>
+          <div style={{ fontSize: 11, color: '#00203E', marginTop: 6, lineHeight: 1.6 }}>{row.dr}</div>
         </div>
       </div>
 
@@ -560,7 +560,7 @@ const ModalAtualizar = ({ row, onClose, onSaved, areas, projeto }) => {
               border: statusChoice === 'nao' ? '2px solid #00203E' : '1px solid #d1d5db',
               borderRadius: 6,
               background: statusChoice === 'nao' ? '#00203E' : '#fafbfc',
-              color: statusChoice === 'nao' ? 'white' : '#333',
+              color: statusChoice === 'nao' ? 'white' : '#00203E',
               cursor: 'pointer',
               textAlign: 'center',
               transition: 'all 0.2s',
@@ -578,7 +578,7 @@ const ModalAtualizar = ({ row, onClose, onSaved, areas, projeto }) => {
               border: statusChoice === 'sim' ? '2px solid #00203E' : '1px solid #d1d5db',
               borderRadius: 6,
               background: statusChoice === 'sim' ? '#00203E' : '#fafbfc',
-              color: statusChoice === 'sim' ? 'white' : '#333',
+              color: statusChoice === 'sim' ? 'white' : '#00203E',
               cursor: 'pointer',
               textAlign: 'center',
               transition: 'all 0.2s',
@@ -606,7 +606,7 @@ const ModalAtualizar = ({ row, onClose, onSaved, areas, projeto }) => {
                   border: newStatus === 'evitado' ? '2px solid #EF4444' : '1px solid #d1d5db',
                   borderRadius: 6,
                   background: newStatus === 'evitado' ? '#EF4444' : '#fafbfc',
-                  color: newStatus === 'evitado' ? 'white' : '#333',
+                  color: newStatus === 'evitado' ? 'white' : '#00203E',
                   cursor: 'pointer',
                   textAlign: 'center',
                   transition: 'all 0.2s',
@@ -624,7 +624,7 @@ const ModalAtualizar = ({ row, onClose, onSaved, areas, projeto }) => {
                   border: newStatus === 'transferido' ? '2px solid #F59E0B' : '1px solid #d1d5db',
                   borderRadius: 6,
                   background: newStatus === 'transferido' ? '#F59E0B' : '#fafbfc',
-                  color: newStatus === 'transferido' ? 'white' : '#333',
+                  color: newStatus === 'transferido' ? 'white' : '#00203E',
                   cursor: 'pointer',
                   textAlign: 'center',
                   transition: 'all 0.2s',
@@ -729,7 +729,7 @@ const ModalAtualizar = ({ row, onClose, onSaved, areas, projeto }) => {
                   border: descChoice === 'nao' ? '2px solid #00203E' : '1px solid #d1d5db',
                   borderRadius: 6,
                   background: descChoice === 'nao' ? '#00203E' : '#fafbfc',
-                  color: descChoice === 'nao' ? 'white' : '#333',
+                  color: descChoice === 'nao' ? 'white' : '#00203E',
                   cursor: 'pointer',
                   textAlign: 'center',
                   transition: 'all 0.2s',
@@ -747,7 +747,7 @@ const ModalAtualizar = ({ row, onClose, onSaved, areas, projeto }) => {
                   border: descChoice === 'sim' ? '2px solid #00203E' : '1px solid #d1d5db',
                   borderRadius: 6,
                   background: descChoice === 'sim' ? '#00203E' : '#fafbfc',
-                  color: descChoice === 'sim' ? 'white' : '#333',
+                  color: descChoice === 'sim' ? 'white' : '#00203E',
                   cursor: 'pointer',
                   textAlign: 'center',
                   transition: 'all 0.2s',
@@ -808,7 +808,7 @@ const ModalAtualizar = ({ row, onClose, onSaved, areas, projeto }) => {
         </div>
         <div>
           <div style={{ fontSize: 9, fontWeight: 700, color: '#999', textTransform: 'uppercase', marginBottom: 4 }}>Descrição do Controle</div>
-          <div style={{ fontSize: 11, color: '#333', marginTop: 6, lineHeight: 1.6 }}>{row.dc}</div>
+          <div style={{ fontSize: 11, color: '#00203E', marginTop: 6, lineHeight: 1.6 }}>{row.dc}</div>
         </div>
       </div>
 
@@ -822,7 +822,7 @@ const ModalAtualizar = ({ row, onClose, onSaved, areas, projeto }) => {
               border: ctrlDescChoice === 'nao' ? '2px solid #00203E' : '1px solid #d1d5db',
               borderRadius: 6,
               background: ctrlDescChoice === 'nao' ? '#00203E' : '#fafbfc',
-              color: ctrlDescChoice === 'nao' ? 'white' : '#333',
+              color: ctrlDescChoice === 'nao' ? 'white' : '#00203E',
               cursor: 'pointer',
               textAlign: 'center',
               transition: 'all 0.2s',
@@ -840,7 +840,7 @@ const ModalAtualizar = ({ row, onClose, onSaved, areas, projeto }) => {
               border: ctrlDescChoice === 'sim' ? '2px solid #00203E' : '1px solid #d1d5db',
               borderRadius: 6,
               background: ctrlDescChoice === 'sim' ? '#00203E' : '#fafbfc',
-              color: ctrlDescChoice === 'sim' ? 'white' : '#333',
+              color: ctrlDescChoice === 'sim' ? 'white' : '#00203E',
               cursor: 'pointer',
               textAlign: 'center',
               transition: 'all 0.2s',
@@ -1087,7 +1087,7 @@ const ModalAtualizar = ({ row, onClose, onSaved, areas, projeto }) => {
       >
         <div style={{ background: '#6b7280', color: '#fff', padding: '6px 10px', borderRadius: 6, fontSize: 11, fontWeight: 700, letterSpacing: 0.5, flexShrink: 0 }}>💾</div>
         <div style={{ flex: 1 }}>
-          <div style={{ fontSize: 13, fontWeight: 600, color: '#1f2937', marginBottom: 2 }}>Salvar sem gerar ficha</div>
+          <div style={{ fontSize: 13, fontWeight: 600, color: '#00203E', marginBottom: 2 }}>Salvar sem gerar ficha</div>
           <div style={{ fontSize: 11, color: '#6b7280' }}>Salva as alterações, mas o teste ficará marcado como pendente.</div>
         </div>
       </div>

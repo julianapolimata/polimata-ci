@@ -301,7 +301,7 @@ const ModalNovoRisco = ({ onClose, onSaved, areas, projeto, areaFixa }) => {
       left: 0,
       right: 0,
       bottom: 0,
-      background: 'rgba(0,0,0,0.5)',
+      background: 'rgba(0,0,0,0.4)',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
@@ -309,61 +309,42 @@ const ModalNovoRisco = ({ onClose, onSaved, areas, projeto, areaFixa }) => {
     }}>
       <div style={{
         background: 'white',
-        borderRadius: '8px',
-        width: '100%',
-        maxWidth: '800px',
-        boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
+        borderRadius: 12,
+        width: '90vw',
+        maxWidth: 700,
+        boxShadow: '0 20px 60px rgba(0,0,0,0.15)',
         display: 'flex',
         flexDirection: 'column',
         maxHeight: '90vh'
       }}>
         {/* HEADER */}
-        <div style={{
-          background: 'linear-gradient(135deg, #00203E 0%, #1D3B5C 100%)',
-          color: '#F3EEE4',
-          padding: '1.5rem 2rem',
-          borderBottom: '3px solid #CC915E'
-        }}>
-          <h2 style={{ margin: 0, fontSize: '20px', fontWeight: 500 }}>Novo Risco</h2>
-          <p style={{ margin: '0.5rem 0 0 0', fontSize: '12px', opacity: 0.85 }}>
-            Fase 1: Avaliação Inicial — Passo {step} de 3
-          </p>
+        <div style={{ padding: '20px 24px', borderBottom: '1px solid #e5e7eb', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', background: '#00203E', color: 'white' }}>
+          <div>
+            <div style={{ fontSize: 18, fontWeight: 600, marginBottom: 4 }}>Novo Risco</div>
+            <div style={{ fontSize: 11, fontWeight: 500, opacity: 0.8 }}>Fase 1: Avaliação Inicial — Passo {step} de 3</div>
+          </div>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: 28, color: 'white', cursor: 'pointer' }}>×</button>
         </div>
 
-        {/* STEP TABS */}
-        <div style={{
-          display: 'flex',
-          background: '#F5F5F5',
-          borderBottom: '1px solid #E0E0E0'
-        }}>
-          {[1, 2, 3].map(s => (
-            <div
-              key={s}
-              style={{
-                flex: 1,
-                padding: '1rem',
-                textAlign: 'center',
-                fontSize: '12px',
-                fontWeight: 500,
-                color: step === s ? '#CC915E' : '#999',
-                borderBottom: step === s ? '2px solid #CC915E' : 'none',
-                background: step === s ? 'white' : 'transparent',
-                textTransform: 'uppercase',
-                letterSpacing: '0.5px'
-              }}
-            >
-              Passo {s}
-            </div>
+        {/* STEPPER */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px 24px', gap: 0 }}>
+          {[1, 2, 3].map((s) => (
+            <React.Fragment key={s}>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, flex: 1 }}>
+                <div style={{ width: 40, height: 40, borderRadius: '50%', background: s < step ? '#1B5E20' : s === step ? '#00203E' : '#e5e7eb', color: s < step || s === step ? 'white' : '#999', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 600, fontSize: 14 }}>
+                  {s < step ? '✓' : s}
+                </div>
+                <div style={{ fontSize: 11, fontWeight: 600, color: s < step || s === step ? '#00203E' : '#999', textAlign: 'center' }}>
+                  {s === 1 ? 'Identificação' : s === 2 ? 'Detalhamento' : 'Avaliação'}
+                </div>
+              </div>
+              {s < 3 && <div style={{ flex: 1, height: 1, background: '#e5e7eb', marginTop: -20 }}></div>}
+            </React.Fragment>
           ))}
         </div>
 
         {/* BODY */}
-        <div style={{
-          padding: '2rem',
-          overflowY: 'auto',
-          flex: 1,
-          fontFamily: 'Montserrat, sans-serif'
-        }}>
+        <div style={{ flex: 1, padding: 24, overflowY: 'auto' }}>
           {/* ─────────── PASSO 1 ─────────── */}
           {step === 1 && (
             <div>
@@ -372,7 +353,7 @@ const ModalNovoRisco = ({ onClose, onSaved, areas, projeto, areaFixa }) => {
                   display: 'block',
                   fontSize: '13px',
                   fontWeight: 500,
-                  color: '#1D3B5C',
+                  color: '#00203E',
                   marginBottom: '0.5rem',
                   textTransform: 'uppercase',
                   letterSpacing: '0.3px'
@@ -387,7 +368,7 @@ const ModalNovoRisco = ({ onClose, onSaved, areas, projeto, areaFixa }) => {
                     fontFamily: 'Montserrat, sans-serif',
                     fontSize: '14px',
                     background: '#F5F5F5',
-                    color: '#1D3B5C',
+                    color: '#00203E',
                     fontWeight: 600
                   }}>
                     {areaFixa.nome}
@@ -419,7 +400,7 @@ const ModalNovoRisco = ({ onClose, onSaved, areas, projeto, areaFixa }) => {
                   display: 'block',
                   fontSize: '13px',
                   fontWeight: 500,
-                  color: '#1D3B5C',
+                  color: '#00203E',
                   marginBottom: '0.5rem',
                   textTransform: 'uppercase',
                   letterSpacing: '0.3px'
@@ -453,7 +434,7 @@ const ModalNovoRisco = ({ onClose, onSaved, areas, projeto, areaFixa }) => {
                   display: 'block',
                   fontSize: '13px',
                   fontWeight: 500,
-                  color: '#1D3B5C',
+                  color: '#00203E',
                   marginBottom: '0.5rem',
                   textTransform: 'uppercase',
                   letterSpacing: '0.3px'
@@ -482,7 +463,7 @@ const ModalNovoRisco = ({ onClose, onSaved, areas, projeto, areaFixa }) => {
                   display: 'block',
                   fontSize: '13px',
                   fontWeight: 500,
-                  color: '#1D3B5C',
+                  color: '#00203E',
                   marginBottom: '0.5rem',
                   textTransform: 'uppercase',
                   letterSpacing: '0.3px'
@@ -513,7 +494,7 @@ const ModalNovoRisco = ({ onClose, onSaved, areas, projeto, areaFixa }) => {
                   display: 'block',
                   fontSize: '13px',
                   fontWeight: 500,
-                  color: '#1D3B5C',
+                  color: '#00203E',
                   marginBottom: '0.5rem',
                   textTransform: 'uppercase',
                   letterSpacing: '0.3px'
@@ -549,7 +530,7 @@ const ModalNovoRisco = ({ onClose, onSaved, areas, projeto, areaFixa }) => {
                 <div style={{
                   fontSize: '12px',
                   fontWeight: 600,
-                  color: '#1D3B5C',
+                  color: '#00203E',
                   textTransform: 'uppercase',
                   letterSpacing: '0.5px',
                   marginBottom: '1rem',
@@ -562,7 +543,7 @@ const ModalNovoRisco = ({ onClose, onSaved, areas, projeto, areaFixa }) => {
                   display: 'block',
                   fontSize: '13px',
                   fontWeight: 500,
-                  color: '#1D3B5C',
+                  color: '#00203E',
                   marginBottom: '0.5rem',
                   textTransform: 'uppercase',
                   letterSpacing: '0.3px'
@@ -591,7 +572,7 @@ const ModalNovoRisco = ({ onClose, onSaved, areas, projeto, areaFixa }) => {
                 <div style={{
                   fontSize: '12px',
                   fontWeight: 600,
-                  color: '#1D3B5C',
+                  color: '#00203E',
                   textTransform: 'uppercase',
                   letterSpacing: '0.5px',
                   marginBottom: '1rem',
@@ -614,7 +595,7 @@ const ModalNovoRisco = ({ onClose, onSaved, areas, projeto, areaFixa }) => {
                         display: 'block',
                         fontSize: '12px',
                         fontWeight: 500,
-                        color: '#1D3B5C',
+                        color: '#00203E',
                         marginBottom: '0.5rem',
                         textTransform: 'uppercase',
                         letterSpacing: '0.3px'
@@ -648,7 +629,7 @@ const ModalNovoRisco = ({ onClose, onSaved, areas, projeto, areaFixa }) => {
                 <div style={{
                   fontSize: '12px',
                   fontWeight: 600,
-                  color: '#1D3B5C',
+                  color: '#00203E',
                   textTransform: 'uppercase',
                   letterSpacing: '0.5px',
                   marginBottom: '1rem',
@@ -671,7 +652,7 @@ const ModalNovoRisco = ({ onClose, onSaved, areas, projeto, areaFixa }) => {
                         display: 'block',
                         fontSize: '12px',
                         fontWeight: 500,
-                        color: '#1D3B5C',
+                        color: '#00203E',
                         marginBottom: '0.5rem',
                         textTransform: 'uppercase',
                         letterSpacing: '0.3px'
@@ -722,7 +703,7 @@ const ModalNovoRisco = ({ onClose, onSaved, areas, projeto, areaFixa }) => {
                 <div style={{
                   fontSize: '12px',
                   fontWeight: 600,
-                  color: '#1D3B5C',
+                  color: '#00203E',
                   textTransform: 'uppercase',
                   letterSpacing: '0.5px',
                   marginBottom: '1rem',
@@ -735,7 +716,7 @@ const ModalNovoRisco = ({ onClose, onSaved, areas, projeto, areaFixa }) => {
                   display: 'block',
                   fontSize: '13px',
                   fontWeight: 500,
-                  color: '#1D3B5C',
+                  color: '#00203E',
                   marginBottom: '0.8rem',
                   textTransform: 'uppercase',
                   letterSpacing: '0.3px'
@@ -815,7 +796,7 @@ const ModalNovoRisco = ({ onClose, onSaved, areas, projeto, areaFixa }) => {
                   <div style={{
                     fontSize: '12px',
                     fontWeight: 600,
-                    color: '#1D3B5C',
+                    color: '#00203E',
                     textTransform: 'uppercase',
                     marginBottom: '1rem',
                     letterSpacing: '0.5px'
@@ -826,7 +807,7 @@ const ModalNovoRisco = ({ onClose, onSaved, areas, projeto, areaFixa }) => {
                     display: 'block',
                     fontSize: '13px',
                     fontWeight: 500,
-                    color: '#1D3B5C',
+                    color: '#00203E',
                     marginBottom: '0.5rem',
                     textTransform: 'uppercase',
                     letterSpacing: '0.3px'
@@ -857,7 +838,7 @@ const ModalNovoRisco = ({ onClose, onSaved, areas, projeto, areaFixa }) => {
                   display: 'block',
                   fontSize: '13px',
                   fontWeight: 500,
-                  color: '#1D3B5C',
+                  color: '#00203E',
                   marginBottom: '0.8rem',
                   textTransform: 'uppercase',
                   letterSpacing: '0.3px'
@@ -890,7 +871,7 @@ const ModalNovoRisco = ({ onClose, onSaved, areas, projeto, areaFixa }) => {
                     display: 'block',
                     fontSize: '13px',
                     fontWeight: 500,
-                    color: '#1D3B5C',
+                    color: '#00203E',
                     marginBottom: '0.5rem',
                     textTransform: 'uppercase',
                     letterSpacing: '0.3px'
@@ -920,7 +901,7 @@ const ModalNovoRisco = ({ onClose, onSaved, areas, projeto, areaFixa }) => {
                 <div style={{
                   fontSize: '12px',
                   fontWeight: 600,
-                  color: '#1D3B5C',
+                  color: '#00203E',
                   textTransform: 'uppercase',
                   letterSpacing: '0.5px',
                   marginBottom: '1rem',
@@ -935,7 +916,7 @@ const ModalNovoRisco = ({ onClose, onSaved, areas, projeto, areaFixa }) => {
                       display: 'block',
                       fontSize: '13px',
                       fontWeight: 500,
-                      color: '#1D3B5C',
+                      color: '#00203E',
                       marginBottom: '0.5rem',
                       textTransform: 'uppercase',
                       letterSpacing: '0.3px'
@@ -967,7 +948,7 @@ const ModalNovoRisco = ({ onClose, onSaved, areas, projeto, areaFixa }) => {
                       display: 'block',
                       fontSize: '13px',
                       fontWeight: 500,
-                      color: '#1D3B5C',
+                      color: '#00203E',
                       marginBottom: '0.5rem',
                       textTransform: 'uppercase',
                       letterSpacing: '0.3px'
@@ -1016,7 +997,7 @@ const ModalNovoRisco = ({ onClose, onSaved, areas, projeto, areaFixa }) => {
                     }}>
                       {getCriticidadeLabel(criticidade).label}
                     </span>
-                    <span style={{ fontSize: '13px', color: '#666', fontWeight: 500 }}>
+                    <span style={{ fontSize: '13px', color: '#7A8B9C', fontWeight: 500 }}>
                       Criticidade: {criticidade} (Impacto {impacto} × Prob {probabilidade}) / {getCriticidadeLabel(criticidade).label}
                     </span>
                   </div>
@@ -1034,7 +1015,7 @@ const ModalNovoRisco = ({ onClose, onSaved, areas, projeto, areaFixa }) => {
                   <div style={{
                     fontSize: '12px',
                     fontWeight: 600,
-                    color: '#1D3B5C',
+                    color: '#00203E',
                     textTransform: 'uppercase',
                     marginBottom: '1rem',
                     letterSpacing: '0.5px'
@@ -1045,7 +1026,7 @@ const ModalNovoRisco = ({ onClose, onSaved, areas, projeto, areaFixa }) => {
                     display: 'block',
                     fontSize: '13px',
                     fontWeight: 500,
-                    color: '#1D3B5C',
+                    color: '#00203E',
                     marginBottom: '0.8rem',
                     textTransform: 'uppercase',
                     letterSpacing: '0.3px'
@@ -1078,7 +1059,7 @@ const ModalNovoRisco = ({ onClose, onSaved, areas, projeto, areaFixa }) => {
                           display: 'block',
                           fontSize: '13px',
                           fontWeight: 500,
-                          color: '#1D3B5C',
+                          color: '#00203E',
                           marginBottom: '0.5rem',
                           textTransform: 'uppercase',
                           letterSpacing: '0.3px'
@@ -1107,7 +1088,7 @@ const ModalNovoRisco = ({ onClose, onSaved, areas, projeto, areaFixa }) => {
                             display: 'block',
                             fontSize: '13px',
                             fontWeight: 500,
-                            color: '#1D3B5C',
+                            color: '#00203E',
                             marginBottom: '0.5rem',
                             textTransform: 'uppercase',
                             letterSpacing: '0.3px'
@@ -1137,7 +1118,7 @@ const ModalNovoRisco = ({ onClose, onSaved, areas, projeto, areaFixa }) => {
                             display: 'block',
                             fontSize: '13px',
                             fontWeight: 500,
-                            color: '#1D3B5C',
+                            color: '#00203E',
                             marginBottom: '0.5rem',
                             textTransform: 'uppercase',
                             letterSpacing: '0.3px'
@@ -1164,7 +1145,7 @@ const ModalNovoRisco = ({ onClose, onSaved, areas, projeto, areaFixa }) => {
                           display: 'block',
                           fontSize: '13px',
                           fontWeight: 500,
-                          color: '#1D3B5C',
+                          color: '#00203E',
                           marginBottom: '0.5rem',
                           textTransform: 'uppercase',
                           letterSpacing: '0.3px'
@@ -1197,7 +1178,7 @@ const ModalNovoRisco = ({ onClose, onSaved, areas, projeto, areaFixa }) => {
                         display: 'block',
                         fontSize: '13px',
                         fontWeight: 500,
-                        color: '#1D3B5C',
+                        color: '#00203E',
                         marginBottom: '0.5rem',
                         textTransform: 'uppercase',
                         letterSpacing: '0.3px'
@@ -1253,19 +1234,19 @@ const ModalNovoRisco = ({ onClose, onSaved, areas, projeto, areaFixa }) => {
                 gap: '1rem'
               }}>
                 <div>
-                  <div style={{ fontSize: '12px', fontWeight: 600, color: '#666', textTransform: 'uppercase' }}>Ref. Risco</div>
-                  <div style={{ fontSize: '16px', fontWeight: 600, color: '#1D3B5C' }}>{novoRiscoData?.rr}</div>
+                  <div style={{ fontSize: '12px', fontWeight: 600, color: '#7A8B9C', textTransform: 'uppercase' }}>Ref. Risco</div>
+                  <div style={{ fontSize: '16px', fontWeight: 600, color: '#00203E' }}>{novoRiscoData?.rr}</div>
                 </div>
                 <div>
-                  <div style={{ fontSize: '12px', fontWeight: 600, color: '#666', textTransform: 'uppercase' }}>Ref. Controle</div>
-                  <div style={{ fontSize: '16px', fontWeight: 600, color: '#1D3B5C' }}>{novoRiscoData?.rc}</div>
+                  <div style={{ fontSize: '12px', fontWeight: 600, color: '#7A8B9C', textTransform: 'uppercase' }}>Ref. Controle</div>
+                  <div style={{ fontSize: '16px', fontWeight: 600, color: '#00203E' }}>{novoRiscoData?.rc}</div>
                 </div>
                 <div>
-                  <div style={{ fontSize: '12px', fontWeight: 600, color: '#666', textTransform: 'uppercase' }}>Resultado</div>
-                  <div style={{ fontSize: '16px', fontWeight: 600, color: '#1D3B5C', textTransform: 'capitalize' }}>{resultado}</div>
+                  <div style={{ fontSize: '12px', fontWeight: 600, color: '#7A8B9C', textTransform: 'uppercase' }}>Resultado</div>
+                  <div style={{ fontSize: '16px', fontWeight: 600, color: '#00203E', textTransform: 'capitalize' }}>{resultado}</div>
                 </div>
                 <div>
-                  <div style={{ fontSize: '12px', fontWeight: 600, color: '#666', textTransform: 'uppercase' }}>Criticidade</div>
+                  <div style={{ fontSize: '12px', fontWeight: 600, color: '#7A8B9C', textTransform: 'uppercase' }}>Criticidade</div>
                   <div style={{
                     fontSize: '16px',
                     fontWeight: 600,
@@ -1285,7 +1266,7 @@ const ModalNovoRisco = ({ onClose, onSaved, areas, projeto, areaFixa }) => {
               <div style={{
                 fontSize: '12px',
                 fontWeight: 600,
-                color: '#1D3B5C',
+                color: '#00203E',
                 textTransform: 'uppercase',
                 letterSpacing: '0.5px',
                 marginBottom: '1rem',
@@ -1294,7 +1275,7 @@ const ModalNovoRisco = ({ onClose, onSaved, areas, projeto, areaFixa }) => {
               }}>
                 Próximos Passos
               </div>
-              <ol style={{ fontSize: '14px', lineHeight: '1.8', color: '#333', paddingLeft: '1.5rem' }}>
+              <ol style={{ fontSize: '14px', lineHeight: '1.8', color: '#00203E', paddingLeft: '1.5rem' }}>
                 <li><strong>Baixe a Ficha de Risco</strong> — Contém todas as informações do risco e premissas do controle</li>
                 <li><strong>Execute o teste</strong> — Preencha todos os passos de teste, realize o teste e armazene as evidências na ficha</li>
                 <li><strong>Volte ao sistema</strong> — Registre o resultado do teste e faça a avaliação da criticidade</li>
@@ -1305,112 +1286,27 @@ const ModalNovoRisco = ({ onClose, onSaved, areas, projeto, areaFixa }) => {
         </div>
 
         {/* FOOTER */}
-        <div style={{
-          background: '#FAFAFA',
-          borderTop: '1px solid #E0E0E0',
-          padding: '1.5rem 2rem',
-          display: 'flex',
-          gap: '1rem',
-          justifyContent: 'flex-end'
-        }}>
+        <div style={{ display: 'flex', gap: 8, padding: 24, borderTop: '1px solid #e5e7eb', background: '#fafbfc' }}>
+          <button onClick={onClose} style={{ flex: 1, padding: '12px 16px', border: '1px solid #e5e7eb', borderRadius: 6, fontFamily: 'Montserrat, sans-serif', fontSize: 13, fontWeight: 700, cursor: 'pointer', background: 'white', color: '#00203E' }}>
+            Cancelar
+          </button>
           {step > 1 && (
-            <button
-              onClick={() => setStep(step - 1)}
-              disabled={saving}
-              style={{
-                padding: '0.8rem 1.5rem',
-                fontSize: '13px',
-                fontWeight: 500,
-                border: '1px solid #D0D0D0',
-                borderRadius: '4px',
-                background: 'white',
-                cursor: saving ? 'not-allowed' : 'pointer',
-                opacity: saving ? 0.5 : 1,
-                textTransform: 'uppercase',
-                letterSpacing: '0.3px'
-              }}
-            >
+            <button onClick={() => setStep(step - 1)} disabled={saving} style={{ flex: 1, padding: '12px 16px', border: '1px solid #e5e7eb', borderRadius: 6, fontFamily: 'Montserrat, sans-serif', fontSize: 13, fontWeight: 700, cursor: 'pointer', background: 'white', color: '#00203E', opacity: saving ? 0.5 : 1 }}>
               ← Voltar
             </button>
           )}
-          <button
-            onClick={onClose}
-            disabled={saving}
-            style={{
-              padding: '0.8rem 1.5rem',
-              fontSize: '13px',
-              fontWeight: 500,
-              border: '1px solid #D0D0D0',
-              borderRadius: '4px',
-              background: 'white',
-              cursor: saving ? 'not-allowed' : 'pointer',
-              opacity: saving ? 0.5 : 1,
-              textTransform: 'uppercase',
-              letterSpacing: '0.3px'
-            }}
-          >
-            Cancelar
-          </button>
           {step < 3 && (
-            <button
-              onClick={step === 1 ? saveStep1 : saveStep2}
-              disabled={!canAdvanceStep1 || (step === 2 && !canAdvanceStep2) || saving}
-              style={{
-                padding: '0.8rem 1.5rem',
-                fontSize: '13px',
-                fontWeight: 500,
-                border: '1px solid #CC915E',
-                borderRadius: '4px',
-                background: '#CC915E',
-                color: 'white',
-                cursor: saving || (step === 1 && !canAdvanceStep1) || (step === 2 && !canAdvanceStep2) ? 'not-allowed' : 'pointer',
-                opacity: saving || (step === 1 && !canAdvanceStep1) || (step === 2 && !canAdvanceStep2) ? 0.5 : 1,
-                textTransform: 'uppercase',
-                letterSpacing: '0.3px'
-              }}
-            >
+            <button onClick={step === 1 ? saveStep1 : saveStep2} disabled={!canAdvanceStep1 || (step === 2 && !canAdvanceStep2) || saving} style={{ flex: 1, padding: '12px 16px', border: 'none', borderRadius: 6, fontFamily: 'Montserrat, sans-serif', fontSize: 13, fontWeight: 700, cursor: 'pointer', background: '#CC915E', color: 'white', opacity: saving || (step === 1 && !canAdvanceStep1) || (step === 2 && !canAdvanceStep2) ? 0.5 : 1 }}>
               {saving ? 'Salvando...' : 'Próximo →'}
             </button>
           )}
           {step === 3 && (
             <>
-              <button
-                onClick={() => gerarFicha(false)}
-                disabled={saving}
-                style={{
-                  padding: '0.8rem 1.5rem',
-                  fontSize: '13px',
-                  fontWeight: 500,
-                  border: '1px solid #E0D5C7',
-                  borderRadius: '4px',
-                  background: '#F3EEE4',
-                  color: '#1D3B5C',
-                  cursor: saving ? 'not-allowed' : 'pointer',
-                  opacity: saving ? 0.5 : 1,
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.3px'
-                }}
-              >
-                Salvar sem gerar a ficha
+              <button onClick={() => gerarFicha(false)} disabled={saving} style={{ flex: 1, padding: '12px 16px', border: '1px solid #e5e7eb', borderRadius: 6, fontFamily: 'Montserrat, sans-serif', fontSize: 13, fontWeight: 700, cursor: 'pointer', background: 'white', color: '#00203E', opacity: saving ? 0.5 : 1 }}>
+                Salvar sem ficha
               </button>
-              <button
-                onClick={() => gerarFicha(true)}
-                disabled={saving}
-                style={{
-                  padding: '0.8rem 1.5rem',
-                  fontSize: '13px',
-                  fontWeight: 500,
-                  border: '1px solid #CC915E',
-                  borderRadius: '4px',
-                  background: '#CC915E',
-                  color: 'white',
-                  cursor: saving ? 'not-allowed' : 'pointer',
-                  opacity: saving ? 0.5 : 1,
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.3px'
-                }}
-              >
-                {saving ? 'Gerando...' : '⬇ Salvar e Gerar a Ficha'}
+              <button onClick={() => gerarFicha(true)} disabled={saving} style={{ flex: 1, padding: '12px 16px', border: 'none', borderRadius: 6, fontFamily: 'Montserrat, sans-serif', fontSize: 13, fontWeight: 700, cursor: 'pointer', background: '#CC915E', color: 'white', opacity: saving ? 0.5 : 1 }}>
+                {saving ? 'Gerando...' : 'Salvar e gerar ficha'}
               </button>
             </>
           )}
