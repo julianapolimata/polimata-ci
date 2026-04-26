@@ -628,8 +628,13 @@ function PorArea({ projeto, areasCalc, todosControles, loading, navigate, loadDa
     if (c.r3 && c.r3 !== 'Teste Não Realizado') return { f: 'Revisão Controles Internos', s: c.r3 }
     if (c.r_ader && c.r_ader !== 'Teste Não Realizado') return { f: 'Teste de Aderência', s: c.r_ader }
     if (c.st_pa && c.st_pa !== '') return { f: 'Teste de Desenho', s: c.st_pa }
-    if (c.r1 && c.r1 !== 'Teste Não Realizado') return { f: 'Teste de Aderência', s: 'Teste Não Realizado' }
-    return { f: 'Diagnóstico Inicial', s: 'Teste Não Realizado' }
+    if (c.r1 && c.r1 !== 'Teste Não Realizado') {
+      // Atalho: F1 efetivo → próxima é F3
+      if (c.r1.toLowerCase() === 'efetivo') return { f: 'Revisão Controles Internos', s: 'Não iniciado' }
+      // F1 inefetivo/GAP → próxima é F2
+      return { f: 'Teste de Desenho', s: 'Não iniciado' }
+    }
+    return { f: 'Diagnóstico Inicial', s: 'Não iniciado' }
   }
 
   // Badge helpers (tema light)
