@@ -31,7 +31,7 @@ const CREME_BORDER = {
 const MRC_COLUMNS = [
   { key: 'dt_ult', header: 'Data Última Atualização', width: 18 },
   { key: 'ger', header: 'Gerência', width: 18 },
-  { key: 'resp_sub', header: 'Responsável Subprocesso', width: 20 },
+  { key: 'resp_sub', header: 'Responsável Processo', width: 20 },
   { key: 'area', header: 'Processo', width: 22 },
   { key: 'sub', header: 'Subprocesso', width: 20 },
   { key: 'rr', header: 'Ref. Risco', width: 12 },

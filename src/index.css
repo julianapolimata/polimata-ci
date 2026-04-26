@@ -57,14 +57,14 @@
 
   /* ── Methodology colors (INTOCÁVEIS) ── */
   --ef: #22D4A0;
-  --in: #F05656;
-  --gp: #F5B942;
+  --in: #F5B942;
+  --gp: #F05656;
   --co: #5B8FF9;
   --pa: #A78BFA;
 
   --ef-bg: rgba(34,212,160,0.10);
-  --in-bg: rgba(240,86,86,0.10);
-  --gp-bg: rgba(245,185,66,0.10);
+  --in-bg: rgba(245,185,66,0.10);
+  --gp-bg: rgba(240,86,86,0.10);
   --co-bg: rgba(91,143,249,0.10);
   --pa-bg: rgba(167,139,250,0.10);
   --na-bg: rgba(243,238,228,0.05);
@@ -543,8 +543,8 @@ tr:hover td { background: rgba(204,145,94,0.03); }
 .rn { flex: 1; padding: 12px 7px; text-align: center; cursor: pointer; transition: all .15s; }
 .rn-c { font-family: 'Raleway', sans-serif; font-size: 14px; font-weight: 300; }
 .rn-n { font-size: 10px; margin-top: 2px; opacity: .8; letter-spacing: .4px; }
-.rn1 { background: rgba(240,86,86,.12); color: #F05656; }
-.rn2 { background: rgba(245,185,66,.12); color: #F5B942; }
+.rn1 { background: rgba(245,185,66,.12); color: #F5B942; }
+.rn2 { background: rgba(240,86,86,.12); color: #F05656; }
 .rn3 { background: rgba(212,160,48,.12); color: #D4A030; }
 .rn4 { background: rgba(91,143,249,.12); color: #5B8FF9; }
 .rn5 { background: rgba(34,212,160,.12); color: #22D4A0; }

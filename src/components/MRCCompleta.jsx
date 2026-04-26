@@ -37,7 +37,7 @@ const COL_GROUPS = [
   { label: 'Identificação', cols: [
     { id: 'dt_ult', label: 'Data Últ. Atualização', default: true },
     { id: 'ger', label: 'Gerência', default: true },
-    { id: 'resp_sub', label: 'Resp. Subprocesso', default: true },
+    { id: 'resp_sub', label: 'Resp. Processo', default: true },
     { id: 'area', label: 'Processo', default: true },
     { id: 'sub', label: 'Subprocesso', default: true },
   ]},
@@ -224,7 +224,7 @@ function ColunasPanel({ visCols, setVisCols, open, onClose }) {
 export function ModalDetalhe({ row, onClose }) {
   const [tab, setTab] = useState('ident')
   if (!row) return null
-  const tabs = [{ id:'ident',label:'Identificação' },{ id:'f1',label:'Diagnóstico Inicial' },{ id:'f2e1',label:'Plano de Ação (TOD)' },{ id:'f2e2',label:'Teste de Aderência' },{ id:'f3',label:'Revisão Controles Internos' },{ id:'f4c1',label:'Auditoria Contínua C1' },{ id:'f4c2',label:'Auditoria Contínua C2' },{ id:'f5',label:'Auditoria Independente' }]
+  const tabs = [{ id:'ident',label:'Identificação' },{ id:'f1',label:'Diagnóstico Inicial' },{ id:'f2e1',label:'Teste de Desenho' },{ id:'f2e2',label:'Teste de Aderência' },{ id:'f3',label:'Revisão Controles Internos' },{ id:'f4c1',label:'Auditoria Contínua C1' },{ id:'f4c2',label:'Auditoria Contínua C2' },{ id:'f5',label:'Auditoria Independente' }]
   const field = (l, v, fw) => { if (!v || v === 'N/A' || v === '') return null; return <div style={fw ? { marginBottom: 12 } : {}}><div className="ml">{l}</div><div className="mv">{v}</div></div> }
   const fieldTag = (l, v) => { if (!v || v === 'N/A' || v === '') return null; return <div><div className="ml">{l}</div><div style={{ marginTop: 3 }}><span className="tag">{v}</span></div></div> }
   const fieldText = (l, v) => { if (!v || v === 'N/A' || v === '') return null; return <div style={{ marginBottom: 14 }}>{l && <div className="ml">{l}</div>}<div className="mv-t">{v}</div></div> }
@@ -239,7 +239,7 @@ export function ModalDetalhe({ row, onClose }) {
         <div className="modal-body">
 
           {tab === 'ident' && (<div className="tp active">
-            <div className="ms"><div className="ms-t">Identificação do Controle</div><div className="mr">{field('Ref. Risco', row.rr)}{field('Ref. Controle', row.rc)}</div><div className="mr">{field('Área', row.area)}{field('Subprocesso', row.sub)}</div><div className="mr">{field('Gerência', row.ger)}{field('Responsável Subprocesso', row.resp_sub)}</div></div>
+            <div className="ms"><div className="ms-t">Identificação do Controle</div><div className="mr">{field('Ref. Risco', row.rr)}{field('Ref. Controle', row.rc)}</div><div className="mr">{field('Área', row.area)}{field('Subprocesso', row.sub)}</div><div className="mr">{field('Gerência', row.ger)}{field('Responsável Processo', row.resp_sub)}</div></div>
             <div className="ms"><div className="ms-t">Descrição do Risco</div>{fieldText(null, row.dr)}</div>
             <div className="ms"><div className="ms-t">Descrição do Controle</div>{fieldText(null, row.dc)}</div>
             <div className="ms"><div className="ms-t">Atributos do Controle</div><div className="mr3">{fieldTag('Categoria', row.cat)}{fieldTag('Frequência', row.freq)}{fieldTag('Natureza', row.nat)}</div><div className="mr3">{fieldTag('Característica', row.car)}{fieldTag('Sistema', row.sis)}{fieldTag('Controle Chave', row.chave)}</div>
@@ -280,7 +280,7 @@ export function ModalDetalhe({ row, onClose }) {
           </div>)}
 
           {tab === 'f2e1' && (<div className="tp active">
-            <div className="ms"><div className="ms-t">Plano de Ação (TOD)</div><div className="mr3">{field('Demanda PA', row.dem_pa)}{field('Status PA', row.st_pa ? badge(R1_MAP[row.st_pa]||'b-na', row.st_pa) : null)}{field('Data Conclusão', row.dt_ult ? new Date(row.dt_ult).toLocaleDateString('pt-BR') : null)}</div>{field('Responsável PA', row.resp_pa, true)}{fieldText('Comentário PA', row.coment_pa)}</div>
+            <div className="ms"><div className="ms-t">Teste de Desenho</div><div className="mr3">{field('Demanda PA', row.dem_pa)}{field('Status PA', row.st_pa ? badge(R1_MAP[row.st_pa]||'b-na', row.st_pa) : null)}{field('Data Conclusão', row.dt_ult ? new Date(row.dt_ult).toLocaleDateString('pt-BR') : null)}</div>{field('Responsável PA', row.resp_pa, true)}{fieldText('Comentário PA', row.coment_pa)}</div>
             <div className="ms"><div className="ms-t">Controle Redesenhado</div>{fieldText('Novo Descritivo de Controle', row.dc_novo)}</div>
           </div>)}
 
@@ -319,7 +319,7 @@ function TabelaMRC({ rows, visCols, onOpenModal, expandAll }) {
     <div className="tbl-sc"><table><thead><tr>
       {v('dt_ult')&&<th>Data Últ. Atualização</th>}
       {v('ger')&&<th>Gerência</th>}
-      {v('resp_sub')&&<th>Resp. Subprocesso</th>}
+      {v('resp_sub')&&<th>Resp. Processo</th>}
       {v('area')&&<th>Processo</th>}
       {v('sub')&&<th>Subprocesso</th>}
       {v('rr')&&<th>Ref. Risco</th>}
@@ -450,7 +450,6 @@ export default function MRCCompleta({ projetoId, clienteNome, projetoNome, notif
       <div className="card">
         <div className="filters">
           <input type="text" placeholder="Buscar ref., área, risco, controle, inconsistência, passos…" value={busca} onChange={e => setBusca(e.target.value)} />
-          <select value={filtroArea} onChange={e => setFiltroArea(e.target.value)}><option value="">Todas as áreas</option>{areas.map(a => <option key={a} value={a}>{a}</option>)}</select>
           <select value={filtroCrit} onChange={e => setFiltroCrit(e.target.value)}><option value="">Todas criticidades</option><option value="4">Crítico</option><option value="3">Significativo</option><option value="2">Moderado</option><option value="1">Baixo</option></select>
           <select value={filtroFase} onChange={e => setFiltroFase(e.target.value)}><option value="">Todas as fases</option>{fasesDisponiveis.map(f => <option key={f} value={f}>{f}</option>)}</select>
           <select value={filtroR1} onChange={e => setFiltroR1(e.target.value)}><option value="">Todos resultados</option><option>Efetivo</option><option>Inefetivo</option><option>GAP</option><option>Teste Não Realizado</option></select>

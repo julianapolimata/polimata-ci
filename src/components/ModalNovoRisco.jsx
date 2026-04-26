@@ -203,43 +203,59 @@ const ModalNovoRisco = ({ onClose, onSaved, areas, projeto, areaFixa }) => {
   async function saveStep2() {
     setSaving(true)
     try {
-      const { data: inserted, error } = await supabase
-        .from('mrc')
-        .insert([{
-          ...novoRiscoData,
-          dc: descControle,
-          cat,
-          freq,
-          nat,
-          car,
-          sis,
-          chave,
-          premissa_quem: isAutomatic ? 'N/A' : quem,
-          premissa_quando: quando,
-          premissa_porque: porque,
-          premissa_como: como,
-          premissa_onde: onde,
-          premissa_resultado: resultadoPremissa,
-          r1: resultado,
-          incons: resultado !== 'efetivo' ? inconsistencia : null,
-          melhoria: melhoria === 'sim' ? true : false,
-          incons_ader: melhoria === 'sim' ? descMelhoria : null,
-          imp: parseInt(impacto),
-          prob: parseInt(probabilidade),
-          crit: criticidade,
-          crit_label: getCriticidadeLabel(criticidade).label,
-          dem_pa: temPA === 'sim' ? paDesc : null,
-          resp_pa: temPA === 'sim' ? paResp : null,
-          dt_pa: temPA === 'sim' ? paPrazo : null,
-          st_pa: temPA === 'sim' ? paStatus : null,
-          status_workflow: 'nao_iniciado',
-          ativo: true
-        }])
-        .select()
+      const payload = {
+        ...novoRiscoData,
+        dc: descControle,
+        cat,
+        freq,
+        nat,
+        car,
+        sis,
+        chave,
+        premissa_quem: isAutomatic ? 'N/A' : quem,
+        premissa_quando: quando,
+        premissa_porque: porque,
+        premissa_como: como,
+        premissa_onde: onde,
+        premissa_resultado: resultadoPremissa,
+        r1: resultado,
+        incons: resultado !== 'efetivo' ? inconsistencia : null,
+        melhoria: melhoria === 'sim' ? true : false,
+        incons_ader: melhoria === 'sim' ? descMelhoria : null,
+        imp: parseInt(impacto),
+        prob: parseInt(probabilidade),
+        crit: criticidade,
+        crit_label: getCriticidadeLabel(criticidade).label,
+        dem_pa: temPA === 'sim' ? paDesc : null,
+        resp_pa: temPA === 'sim' ? paResp : null,
+        dt_pa: temPA === 'sim' ? paPrazo : null,
+        st_pa: temPA === 'sim' ? paStatus : null,
+        status_workflow: 'nao_iniciado',
+        ativo: true
+      }
 
-      if (error) throw error
+      let result
+      if (novoRiscoData?.id) {
+        // Já inserido anteriormente (voltou do passo 3) → UPDATE
+        const { id, ...updatePayload } = payload
+        const { data: updated, error } = await supabase
+          .from('mrc')
+          .update(updatePayload)
+          .eq('id', novoRiscoData.id)
+          .select()
+        if (error) throw error
+        result = updated?.[0] || novoRiscoData
+      } else {
+        // Primeira vez → INSERT
+        const { data: inserted, error } = await supabase
+          .from('mrc')
+          .insert([payload])
+          .select()
+        if (error) throw error
+        result = inserted?.[0] || null
+      }
 
-      setNovoRiscoData(inserted?.[0] || null)
+      setNovoRiscoData(result)
       setStep(3)
     } catch (err) {
       console.error('Erro ao salvar Passo 2:', err)
@@ -502,7 +518,7 @@ const ModalNovoRisco = ({ onClose, onSaved, areas, projeto, areaFixa }) => {
                   textTransform: 'uppercase',
                   letterSpacing: '0.3px'
                 }}>
-                  Resp. Subprocesso <span style={{ color: '#E24B4A' }}>*</span>
+                  Resp. Processo <span style={{ color: '#E24B4A' }}>*</span>
                 </label>
                 <select
                   value={respSub}
@@ -1007,7 +1023,7 @@ const ModalNovoRisco = ({ onClose, onSaved, areas, projeto, areaFixa }) => {
                 )}
               </div>
 
-              {/* Plano de Ação — TOD (se Inefetivo/GAP) */}
+              {/* Teste de Desenho (se Inefetivo/GAP) */}
               {showPA && (
                 <div style={{
                   background: '#F9F7F3',
@@ -1023,7 +1039,7 @@ const ModalNovoRisco = ({ onClose, onSaved, areas, projeto, areaFixa }) => {
                     marginBottom: '1rem',
                     letterSpacing: '0.5px'
                   }}>
-                    6. Plano de Ação (TOD)
+                    6. Teste de Desenho
                   </div>
                   <label style={{
                     display: 'block',

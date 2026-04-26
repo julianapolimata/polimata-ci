@@ -67,12 +67,12 @@ export function getFaseInfo(c) {
     }
   }
 
-  // F2-E1 → Plano de Ação (TOD)
+  // F2-E1 → Teste de Desenho
   if (c.st_pa && c.st_pa !== '') {
     return {
       codigo: 'F2E1', numero: 2,
-      nome: 'Plano de A\u00E7\u00E3o (TOD)',
-      label: 'F2-E1 \u2014 Plano de A\u00E7\u00E3o (TOD)',
+      nome: 'Teste de Desenho',
+      label: 'F2-E1 \u2014 Teste de Desenho',
       resultado: c.st_pa || '\u2014',
       cor: 'var(--f2e1c, #34D399)',
     }
@@ -85,7 +85,7 @@ export function getFaseInfo(c) {
       return {
         codigo: 'F1_ATALHO', numero: 3,
         nome: 'Controles Internos',
-        label: 'F1 \u2192 F3 (atalho)',
+        label: 'F3 \u2014 Revis\u00E3o (atalho)',
         resultado: c.r1,
         cor: 'var(--f1c, #6366F1)',
       }

@@ -588,14 +588,16 @@ function PorArea({ projeto, areasCalc, todosControles, loading, navigate, loadDa
 
   // Resultado geral: retorna o resultado da fase mais avançada do controle
   function getResultadoGeral(c) {
-    if (c.r_f5 && c.r_f5 !== 'Teste Não Realizado') return c.r_f5
-    if (c.r_f4c2 && c.r_f4c2 !== 'Teste Não Realizado') return c.r_f4c2
-    if (c.r_f4c1 && c.r_f4c1 !== 'Teste Não Realizado') return c.r_f4c1
-    if (c.r3 && c.r3 !== 'Teste Não Realizado') return c.r3
-    if (c.r_ader && c.r_ader !== 'Teste Não Realizado') return c.r_ader
-    if (c.st_pa && c.st_pa !== '') return c.st_pa
-    if (c.r1 && c.r1 !== 'Teste Não Realizado') return c.r1
-    return null
+    let v = null
+    if (c.r_f5 && c.r_f5 !== 'Teste Não Realizado') v = c.r_f5
+    else if (c.r_f4c2 && c.r_f4c2 !== 'Teste Não Realizado') v = c.r_f4c2
+    else if (c.r_f4c1 && c.r_f4c1 !== 'Teste Não Realizado') v = c.r_f4c1
+    else if (c.r3 && c.r3 !== 'Teste Não Realizado') v = c.r3
+    else if (c.r_ader && c.r_ader !== 'Teste Não Realizado') v = c.r_ader
+    else if (c.st_pa && c.st_pa !== '') v = c.st_pa
+    else if (c.r1 && c.r1 !== 'Teste Não Realizado') v = c.r1
+    // Normalizar capitalização (ex: "efetivo" → "Efetivo")
+    return v ? v.charAt(0).toUpperCase() + v.slice(1).toLowerCase() : null
   }
 
   function getFaseCodigo(c) {
@@ -622,7 +624,7 @@ function PorArea({ projeto, areasCalc, todosControles, loading, navigate, loadDa
     if (c.r_f4c1 && c.r_f4c1 !== 'Teste Não Realizado') return { f: 'Auditoria Contínua — Ciclo 1', s: c.r_f4c1 }
     if (c.r3 && c.r3 !== 'Teste Não Realizado') return { f: 'Revisão Controles Internos', s: c.r3 }
     if (c.r_ader && c.r_ader !== 'Teste Não Realizado') return { f: 'Teste de Aderência', s: c.r_ader }
-    if (c.st_pa && c.st_pa !== '') return { f: 'Plano de Ação (TOD)', s: c.st_pa }
+    if (c.st_pa && c.st_pa !== '') return { f: 'Teste de Desenho', s: c.st_pa }
     if (c.r1 && c.r1 !== 'Teste Não Realizado') return { f: 'Teste de Aderência', s: 'Teste Não Realizado' }
     return { f: 'Diagnóstico Inicial', s: 'Teste Não Realizado' }
   }
@@ -760,7 +762,7 @@ function PorArea({ projeto, areasCalc, todosControles, loading, navigate, loadDa
           <table style={{ width: 'max-content', minWidth: '100%', borderCollapse: 'collapse' }}>
             <thead><tr>
               {[
-                { h: 'Data Últ. Atual.', w: 100 }, { h: 'Gerência', w: 120 }, { h: 'Resp. Subproc.', w: 120 },
+                { h: 'Data Últ. Atual.', w: 100 }, { h: 'Gerência', w: 120 }, { h: 'Resp. Proc.', w: 120 },
                 { h: 'Processo', w: 140 }, { h: 'Subprocesso', w: 120 }, { h: 'Ref. Risco', w: 80 },
                 { h: 'Desc. Risco', w: 200 }, { h: 'Ref. Controle', w: 90 }, { h: 'Desc. Controle', w: 200 },
                 { h: 'Categoria', w: 110 }, { h: 'Frequência', w: 90 }, { h: 'Natureza', w: 80 },
@@ -786,7 +788,6 @@ function PorArea({ projeto, areasCalc, todosControles, loading, navigate, loadDa
                   {isCliente ? (
                     /* ── Visão do cliente: status simplificado ── */
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 3, alignItems: 'center' }}>
-                      <button onClick={e => { e.stopPropagation(); setModalRow(c) }} style={{ background: 'var(--lt-card)', border: '1px solid var(--lt-border)', borderRadius: 4, padding: '2px 10px', fontSize: 10, fontWeight: 600, color: 'var(--lt-text2)', cursor: 'pointer', fontFamily: 'inherit', width: '100%' }}>Ver</button>
                       {(() => {
                         const cfg = getStatusBadge(c.status_workflow)
                         return <span style={{ fontSize: 8, fontWeight: 700, color: cfg.color, background: cfg.bg, padding: '2px 8px', borderRadius: 999, textTransform: 'uppercase', letterSpacing: 0.5 }}>{cfg.label}</span>
@@ -795,7 +796,6 @@ function PorArea({ projeto, areasCalc, todosControles, loading, navigate, loadDa
                   ) : (
                     /* ── Visão admin/consultor: ações + status detalhado ── */
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 3, alignItems: 'center' }}>
-                      <button onClick={e => { e.stopPropagation(); setModalRow(c) }} style={{ background: 'var(--lt-card)', border: '1px solid var(--lt-border)', borderRadius: 4, padding: '2px 10px', fontSize: 10, fontWeight: 600, color: 'var(--lt-text2)', cursor: 'pointer', fontFamily: 'inherit', width: '100%' }}>Ver</button>
                       {canEdit && canEditControl(c.status_workflow) && <button onClick={e => { e.stopPropagation(); setAtualizarRow(c) }} style={{ background: 'rgba(204,145,94,0.08)', border: '1px solid rgba(204,145,94,0.2)', borderRadius: 4, padding: '2px 10px', fontSize: 10, fontWeight: 600, color: 'var(--copper)', cursor: 'pointer', fontFamily: 'inherit', width: '100%' }}>Atualizar</button>}
                       {canEdit && canRegisterResult(c.status_workflow) && <button onClick={e => { e.stopPropagation(); setRowRegistrarResultado(c) }} style={{ background: 'rgba(204,145,94,0.08)', border: '1px solid rgba(204,145,94,0.2)', borderRadius: 4, padding: '2px 10px', fontSize: 9, fontWeight: 600, color: 'var(--copper)', cursor: 'pointer', fontFamily: 'inherit', width: '100%' }}>Resultado</button>}
                       {canEdit && isDevolvido(c.status_workflow) && <button onClick={e => { e.stopPropagation(); setRowRegistrarResultado(c) }} style={{ background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 4, padding: '2px 10px', fontSize: 9, fontWeight: 600, color: '#DC2626', cursor: 'pointer', fontFamily: 'inherit', width: '100%' }}>↩ Editar</button>}

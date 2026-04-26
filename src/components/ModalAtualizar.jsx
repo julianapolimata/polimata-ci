@@ -298,7 +298,7 @@ const ModalAtualizar = ({ row, onClose, onSaved, areas, projeto }) => {
     applySection(ws, 4, '1. DADOS DO PROJETO')
     applyRow(ws, 5,  'CLIENTE',             projeto?.clientes?.nome || '—', false)
     applyRow(ws, 6,  'NATUREZA DO PROJETO', projeto?.nome || '—',           false)
-    applyRow(ws, 7,  'FASE EM CURSO',       'F2-E1 — Plano de Ação (TOD)',   false, { valueBold: true, valueColor: COPPER })
+    applyRow(ws, 7,  'FASE EM CURSO',       'F2-E1 — Teste de Desenho',   false, { valueBold: true, valueColor: COPPER })
     applyRow(ws, 8,  'EXECUTOR',            perfil?.nome || '—',            false)
     applyRow(ws, 9,  'DATA E HORÁRIO',      dtStr,                          false)
     applyRow(ws, 10, 'DOWNLOAD POR',        perfil?.email || '—',           false)
@@ -313,7 +313,7 @@ const ModalAtualizar = ({ row, onClose, onSaved, areas, projeto }) => {
     applyRow(ws, 17, 'REF. RISCO',           row.rr   || '—',                          false, { valueBold: true, valueColor: COPPER })
     applyRow(ws, 18, 'REF. CONTROLE',        row.rc   || '—',                          false, { valueBold: true, valueColor: COPPER })
     applyRow(ws, 19, 'GERÊNCIA',             row.ger  || '—',                          false)
-    applyRow(ws, 20, 'RESP. SUBPROCESSO',    row.resp_sub || '—',                      false)
+    applyRow(ws, 20, 'RESP. PROCESSO',    row.resp_sub || '—',                      false)
     applyRow(ws, 21, 'DESCRIÇÃO DO RISCO',   novaDescRisco || row.dr || '—',           false)
     applyRow(ws, 22, 'DESCRIÇÃO DO CONTROLE',novaDescControle || row.dc || '—',        false)
     ws.getRow(23).height = 5

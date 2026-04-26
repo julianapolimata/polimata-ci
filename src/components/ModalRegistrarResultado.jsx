@@ -573,7 +573,7 @@ const ModalRegistrarResultado = ({ row, onClose, onSaved, responsaveis }) => {
             )}
           </div>
 
-          {/* Plano de Ação — TOD (se Inefetivo/GAP) */}
+          {/* Teste de Desenho (se Inefetivo/GAP) */}
           {showPA && (
             <div style={{
               background: '#F9F7F3',
@@ -589,7 +589,7 @@ const ModalRegistrarResultado = ({ row, onClose, onSaved, responsaveis }) => {
                 marginBottom: '1rem',
                 letterSpacing: '0.5px'
               }}>
-                3. Plano de Ação (TOD)
+                3. Teste de Desenho
               </div>
               <label style={{
                 display: 'block',
