@@ -219,8 +219,9 @@ export default function Dashboard() {
             <SideNavItem icon="⚙️" label="Configurações" active={location.pathname.startsWith('/configuracoes')} onClick={() => navigate('/configuracoes')} open={sidebarOpen} />
             <SideNavItem icon="📥" label="Importar MRC" active={location.pathname === '/importar-mrc'} onClick={() => navigate('/importar-mrc')} open={sidebarOpen} /></>)}
         </nav>
-        <button onClick={() => setSidebarOpen(o => !o)} style={{ background: 'transparent', border: 'none', borderTop: '1px solid var(--brd)', color: 'var(--txt3)', padding: '10px', cursor: 'pointer', fontSize: 14, textAlign: 'center' }}>
-          {sidebarOpen ? '◂' : '▸'}
+        <button onClick={() => setSidebarOpen(o => !o)} style={{ background: 'rgba(255,255,255,0.06)', border: 'none', borderTop: '1px solid var(--brd)', color: 'var(--cream)', padding: '8px', cursor: 'pointer', fontSize: 16, textAlign: 'center', width: '100%', transition: 'background .15s' }}
+          onMouseEnter={e => e.currentTarget.style.background='rgba(255,255,255,0.12)'} onMouseLeave={e => e.currentTarget.style.background='rgba(255,255,255,0.06)'}>
+          {sidebarOpen ? '◂ Recolher' : '▸'}
         </button>
         <div className="sb-footer">
           <div className="sb-user" style={{ cursor: 'pointer' }} onClick={() => navigate('/perfil')}>
