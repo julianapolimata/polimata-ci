@@ -37,9 +37,9 @@ const MAX_ROWS = 200
 const COL_GROUPS = [
   { label: 'Identificação', cols: [
     { id: 'dt_ult', label: 'Data Últ. Atualização', default: true },
-    { id: 'ger', label: 'Gerência', default: true },
-    { id: 'resp_sub', label: 'Resp. Processo', default: true },
-    { id: 'area', label: 'Processo', default: true },
+    { id: 'ger', label: 'Gerência', default: false },
+    { id: 'resp_sub', label: 'Resp. Processo', default: false },
+    { id: 'area', label: 'Processo', default: false },
     { id: 'sub', label: 'Subprocesso', default: true },
   ]},
   { label: 'Risco & Controle', cols: [
@@ -49,33 +49,45 @@ const COL_GROUPS = [
     { id: 'dc', label: 'Descrição do Controle', default: true },
   ]},
   { label: 'Atributos', cols: [
-    { id: 'cat', label: 'Categoria', default: true },
-    { id: 'freq', label: 'Frequência', default: true },
-    { id: 'nat', label: 'Natureza', default: true },
-    { id: 'car', label: 'Característica', default: true },
-    { id: 'sis', label: 'Sistema', default: true },
-    { id: 'chave', label: 'Ctrl Chave?', default: true },
+    { id: 'cat', label: 'Categoria', default: false },
+    { id: 'freq', label: 'Frequência', default: false },
+    { id: 'nat', label: 'Natureza', default: false },
+    { id: 'car', label: 'Característica', default: false },
+    { id: 'sis', label: 'Sistema', default: false },
+    { id: 'chave', label: 'Ctrl Chave?', default: false },
   ]},
   { label: 'Teste & Resultado', cols: [
-    { id: 'passos_f1', label: 'Passos de Teste', default: true },
-    { id: 'r1', label: 'Diagnóstico', default: true },
-    { id: 'incons', label: 'Descrição da Inconsistência', default: true },
-    { id: 'rec', label: 'Recomendação / Melhoria', default: true },
-    { id: 'r_ader', label: 'Aderência', default: false },
-    { id: 'r3', label: 'Revisão CI', default: false },
-    { id: 'r_f4c1', label: 'Auditoria C1', default: false },
-    { id: 'r_f4c2', label: 'Auditoria C2', default: false },
-    { id: 'r_f5', label: 'Auditoria Indep.', default: false },
+    { id: 'passos_f1', label: 'Passos de Teste', default: false },
+    { id: 'r1_result', label: 'Resultado', default: true },
+    { id: 'incons', label: 'Descrição da Inconsistência', default: false },
+    { id: 'rec', label: 'Recomendação / Melhoria', default: false },
   ]},
   { label: 'Avaliação', cols: [
-    { id: 'imp', label: 'Impacto', default: true },
-    { id: 'prob', label: 'Probabilidade', default: true },
+    { id: 'imp', label: 'Impacto', default: false },
+    { id: 'prob', label: 'Probabilidade', default: false },
     { id: 'crit', label: 'Criticidade', default: true },
   ]},
-  { label: 'Fase', cols: [
-    { id: 'fase', label: 'Fase Atual', default: true },
+  { label: 'Histórico por Fase', cols: [
+    { id: 'hist_f1', label: 'Fase 1 Diagnóstico', default: true },
+    { id: 'hist_f2d', label: 'Fase 2 Desenho', default: true },
+    { id: 'hist_f2a', label: 'Fase 2 Aderência', default: true },
+    { id: 'hist_f3', label: 'Fase 3 Revisão Integral', default: true },
+    { id: 'hist_f4c1', label: 'Fase 4 AI - Ciclo 1', default: true },
+    { id: 'hist_f4c2', label: 'Fase 4 AI - Ciclo 2', default: true },
+    { id: 'hist_f5', label: 'Fase 5 Auditoria Interna', default: true },
   ]},
 ]
+
+// Cores dos headers das colunas de fase
+const FASE_HEADER_COLORS = {
+  hist_f1:   '#2E7D32', // verde escuro
+  hist_f2d:  '#6366F1', // indigo
+  hist_f2a:  '#10B981', // verde esmeralda
+  hist_f3:   '#F59E0B', // âmbar
+  hist_f4c1: '#0EA5E9', // azul
+  hist_f4c2: '#0EA5E9', // azul
+  hist_f5:   '#7C3AED', // roxo
+}
 
 const DEFAULT_COLS = new Set(COL_GROUPS.flatMap(g => g.cols.filter(c => c.default).map(c => c.id)))
 
@@ -340,33 +352,56 @@ const MRC_COLS = [
   { id:'sis', label:'Sistema', k:'sis' },
   { id:'chave', label:'Ctrl Chave?', k:'chave' },
   { id:'passos_f1', label:'Passos de Teste', k:'passos_f1' },
-  { id:'r1', label:'F1 Resultado', k:'r1' },
+  { id:'r1_result', label:'Resultado', k:'r1' },
   { id:'incons', label:'Descrição da Inconsistência', k:'incons' },
   { id:'rec', label:'Recomendação / Melhoria', k:'rec' },
-  { id:'r_ader', label:'F2 Aderência', k:'r_ader' },
-  { id:'r3', label:'F3 Resultado', k:'r3' },
-  { id:'r_f4c1', label:'F4-C1 Resultado', k:'r_f4c1' },
-  { id:'r_f4c2', label:'F4-C2 Resultado', k:'r_f4c2' },
-  { id:'r_f5', label:'F5 Resultado', k:'r_f5' },
   { id:'imp', label:'Impacto', k:'imp' },
   { id:'prob', label:'Probabilidade', k:'prob' },
   { id:'crit', label:'Criticidade', k:'crit' },
-  { id:'fase', label:'Fase Atual', k:'fase' },
+  // Histórico por fase (headers coloridos)
+  { id:'hist_f1', label:'Fase 1\nDiagnóstico', k:'r1', fase: true },
+  { id:'hist_f2d', label:'Fase 2\nDesenho', k:'st_pa', fase: true },
+  { id:'hist_f2a', label:'Fase 2\nAderência', k:'r_ader', fase: true },
+  { id:'hist_f3', label:'Fase 3\nRevisão Integral', k:'r3', fase: true },
+  { id:'hist_f4c1', label:'Fase 4\nAI - Ciclo 1', k:'r_f4c1', fase: true },
+  { id:'hist_f4c2', label:'Fase 4\nAI - Ciclo 2', k:'r_f4c2', fase: true },
+  { id:'hist_f5', label:'Fase 5\nAuditoria Interna', k:'r_f5', fase: true },
 ]
+
+function faseResultLabel(val) {
+  if (!val || val === 'Teste Não Realizado') return 'Não iniciado'
+  if (val === 'Concluído' || val === 'concluido') return 'Concluído'
+  return val
+}
 
 function TabelaMRC({ rows, visCols, onOpenModal, expandAll }) {
   const v = id => visCols.has(id); const ml = expandAll ? 9999 : 70
   const { sortKey, sortDir, toggleSort, sortData, sortIndicator } = useSort()
   const { onResizeStart, getWidth } = useColumnResize({})
   const sorted = sortData(rows)
+
+  // Mapa de dados para colunas de fase
+  const getFaseVal = (row, colId) => {
+    const map = { hist_f1: row.r1, hist_f2d: row.st_pa, hist_f2a: row.r_ader, hist_f3: row.r3, hist_f4c1: row.r_f4c1, hist_f4c2: row.r_f4c2, hist_f5: row.r_f5 }
+    return map[colId]
+  }
+
   return (
     <div className="tbl-sc"><table><thead><tr>
-      {MRC_COLS.filter(c => v(c.id)).map(c => (
-        <th key={c.id} className={`th-sort${sortKey===c.k?' sorted':''}`} style={{ minWidth: getWidth(c.id, undefined) }} onClick={() => toggleSort(c.k)}>
-          {c.label}<span className="sort-arrow">{sortIndicator(c.k)}</span>
-          <span className="resize-handle" onClick={e => e.stopPropagation()} onMouseDown={e => onResizeStart(e, c.id)} />
-        </th>
-      ))}
+      {MRC_COLS.filter(c => v(c.id)).map(c => {
+        const faseColor = c.fase ? FASE_HEADER_COLORS[c.id] : null
+        return (
+          <th key={c.id} className={`th-sort${sortKey===c.k?' sorted':''}`}
+            style={{
+              minWidth: getWidth(c.id, c.fase ? 100 : undefined),
+              ...(faseColor ? { background: faseColor, color: 'white', fontSize: 9, lineHeight: 1.3, textAlign: 'center', padding: '8px 6px', whiteSpace: 'pre-line' } : {})
+            }}
+            onClick={() => toggleSort(c.k)}>
+            {c.label}<span className="sort-arrow" style={faseColor ? { color: 'rgba(255,255,255,0.7)' } : {}}>{sortIndicator(c.k)}</span>
+            <span className="resize-handle" onClick={e => e.stopPropagation()} onMouseDown={e => onResizeStart(e, c.id)} />
+          </th>
+        )
+      })}
     </tr></thead><tbody>
       {sorted.length === 0 && <tr><td colSpan={23} className="empty">Nenhum controle encontrado com os filtros aplicados.</td></tr>}
       {sorted.map(row => (
@@ -387,18 +422,18 @@ function TabelaMRC({ rows, visCols, onOpenModal, expandAll }) {
           {v('sis')&&<td style={{minWidth:getWidth('sis',undefined)}}><span style={{fontSize:11}}>{row.sis||'—'}</span></td>}
           {v('chave')&&<td style={{minWidth:getWidth('chave',undefined)}}><span style={{fontSize:11}}>{row.chave||'—'}</span></td>}
           {v('passos_f1')&&<td style={{minWidth:getWidth('passos_f1',undefined)}}><ExpCell text={row.passos_f1} maxLen={ml} expanded={expandAll}/></td>}
-          {v('r1')&&<td style={{minWidth:getWidth('r1',undefined)}}>{badge(R1_MAP[row.r1]||'b-na', row.r1)}</td>}
+          {v('r1_result')&&<td style={{minWidth:getWidth('r1_result',undefined)}}>{badge(R1_MAP[row.r1]||'b-na', row.r1)}</td>}
           {v('incons')&&<td style={{minWidth:getWidth('incons',undefined)}}><ExpCell text={row.incons} maxLen={ml} expanded={expandAll}/></td>}
           {v('rec')&&<td style={{minWidth:getWidth('rec',undefined)}}><ExpCell text={row.rec} maxLen={ml} expanded={expandAll}/></td>}
-          {v('r_ader')&&<td style={{minWidth:getWidth('r_ader',undefined)}}>{badge(R1_MAP[row.r_ader]||'b-na', row.r_ader)}</td>}
-          {v('r3')&&<td style={{minWidth:getWidth('r3',undefined)}}>{badge(R1_MAP[row.r3]||'b-na', row.r3)}</td>}
-          {v('r_f4c1')&&<td style={{minWidth:getWidth('r_f4c1',undefined)}}>{badge(R1_MAP[row.r_f4c1]||'b-na', row.r_f4c1)}</td>}
-          {v('r_f4c2')&&<td style={{minWidth:getWidth('r_f4c2',undefined)}}>{badge(R1_MAP[row.r_f4c2]||'b-na', row.r_f4c2)}</td>}
-          {v('r_f5')&&<td style={{minWidth:getWidth('r_f5',undefined)}}>{badge(R1_MAP[row.r_f5]||'b-na', row.r_f5)}</td>}
           {v('imp')&&<td style={{minWidth:getWidth('imp',undefined)}}>{badge(IMP_MAP[row.imp]||'b-na', row.imp)}</td>}
           {v('prob')&&<td style={{minWidth:getWidth('prob',undefined)}}>{badge(PROB_MAP[row.prob]||'b-na', row.prob)}</td>}
           {v('crit')&&<td style={{minWidth:getWidth('crit',undefined)}}>{critBadge(row.crit)}</td>}
-          {v('fase')&&<td style={{minWidth:getWidth('fase',undefined)}}><FaseAtual row={row}/></td>}
+          {/* Colunas de histórico por fase */}
+          {['hist_f1','hist_f2d','hist_f2a','hist_f3','hist_f4c1','hist_f4c2','hist_f5'].map(fid => v(fid) && (
+            <td key={fid} style={{ minWidth: getWidth(fid, 100), textAlign: 'center', fontSize: 10 }}>
+              <span style={{ fontSize: 10, fontWeight: 500, color: 'var(--lt-text)' }}>{faseResultLabel(getFaseVal(row, fid))}</span>
+            </td>
+          ))}
         </tr>
       ))}
     </tbody></table></div>

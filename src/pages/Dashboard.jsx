@@ -767,14 +767,14 @@ function PorArea({ projeto, areasCalc, todosControles, loading, navigate, loadDa
           <table style={{ width: 'max-content', minWidth: '100%', borderCollapse: 'collapse' }}>
             <thead><tr>
               {[
-                { h: 'Data Últ. Atual.', w: 100, k: 'dt_ult' }, { h: 'Gerência', w: 120, k: 'ger' }, { h: 'Resp. Proc.', w: 120, k: 'resp_sub' },
-                { h: 'Processo', w: 140, k: 'area' }, { h: 'Subprocesso', w: 120, k: 'sub' }, { h: 'Ref. Risco', w: 80, k: 'rr' },
-                { h: 'Desc. Risco', w: 200, k: 'dr' }, { h: 'Ref. Controle', w: 90, k: 'rc' }, { h: 'Desc. Controle', w: 200, k: 'dc' },
-                { h: 'Categoria', w: 110, k: 'cat' }, { h: 'Frequência', w: 90, k: 'freq' }, { h: 'Natureza', w: 80, k: 'nat' },
-                { h: 'Caract.', w: 80, k: 'car' }, { h: 'Sistema', w: 80, k: 'sis' }, { h: 'Ctrl Chave?', w: 80, k: 'chave' },
-                { h: 'Passos Teste', w: 180, k: 'passos_f1' }, { h: 'Resultado', w: 80, k: 'r1' }, { h: 'Desc. Inconsist.', w: 180, k: 'incons' },
-                { h: 'Recomendação', w: 180, k: 'rec' }, { h: 'Impacto', w: 80, k: 'imp' }, { h: 'Probab.', w: 80, k: 'prob' },
-                { h: 'Criticidade', w: 100, k: 'crit' }, { h: 'Fase Atual', w: 160, k: 'fase' },
+                { h: 'Data Últ. Atual.', w: 100, k: 'dt_ult' },
+                { h: 'Subprocesso', w: 120, k: 'sub' },
+                { h: 'Ref. Risco', w: 80, k: 'rr' },
+                { h: 'Desc. Risco', w: 200, k: 'dr' },
+                { h: 'Ref. Controle', w: 90, k: 'rc' },
+                { h: 'Desc. Controle', w: 200, k: 'dc' },
+                { h: 'Resultado', w: 80, k: 'r1' },
+                { h: 'Criticidade', w: 100, k: 'crit' },
               ].map((col, i) => {
                 const cw = paResize.getWidth(col.k, col.w)
                 return <th key={i} className={`th-sort${paSort.sortKey===col.k?' sorted':''}`} onClick={() => paSort.toggleSort(col.k)} style={{ fontSize: 10, fontWeight: 500, textTransform: 'uppercase', letterSpacing: 0.5, color: 'var(--lt-text3)', background: 'var(--lt-card)', padding: '12px 16px', textAlign: 'left', whiteSpace: 'nowrap', position: 'sticky', top: 0, zIndex: 2, width: cw, minWidth: cw, borderBottom: '1px solid var(--lt-border)', cursor: 'pointer', userSelect: 'none' }}>
@@ -782,21 +782,42 @@ function PorArea({ projeto, areasCalc, todosControles, loading, navigate, loadDa
                   <span className="resize-handle" onClick={e => e.stopPropagation()} onMouseDown={e => paResize.onResizeStart(e, col.k)} />
                 </th>
               })}
+              {/* Colunas de fase com headers coloridos */}
+              {[
+                { h: 'Fase 1\nDiagnóstico', w: 100, k: 'r1', color: '#2E7D32' },
+                { h: 'Fase 2\nDesenho', w: 100, k: 'st_pa', color: '#6366F1' },
+                { h: 'Fase 2\nAderência', w: 100, k: 'r_ader', color: '#10B981' },
+                { h: 'Fase 3\nRevisão Integral', w: 110, k: 'r3', color: '#F59E0B' },
+                { h: 'Fase 4\nAI - Ciclo 1', w: 100, k: 'r_f4c1', color: '#0EA5E9' },
+                { h: 'Fase 4\nAI - Ciclo 2', w: 100, k: 'r_f4c2', color: '#0EA5E9' },
+                { h: 'Fase 5\nAuditoria Interna', w: 110, k: 'r_f5', color: '#7C3AED' },
+              ].map((col, i) => {
+                const cw = paResize.getWidth(col.k, col.w)
+                return <th key={`f${i}`} className={`th-sort${paSort.sortKey===col.k?' sorted':''}`} onClick={() => paSort.toggleSort(col.k)} style={{ fontSize: 9, fontWeight: 600, letterSpacing: 0.3, color: 'white', background: col.color, padding: '8px 6px', textAlign: 'center', whiteSpace: 'pre-line', lineHeight: 1.3, position: 'sticky', top: 0, zIndex: 2, width: cw, minWidth: cw, borderBottom: '1px solid var(--lt-border)', cursor: 'pointer', userSelect: 'none' }}>
+                  {col.h}<span className="sort-arrow" style={{ color: 'rgba(255,255,255,0.7)' }}>{paSort.sortIndicator(col.k)}</span>
+                  <span className="resize-handle" onClick={e => e.stopPropagation()} onMouseDown={e => paResize.onResizeStart(e, col.k)} />
+                </th>
+              })}
               <th style={{ fontSize: 10, fontWeight: 500, color: 'var(--lt-text3)', background: 'var(--lt-card)', padding: '12px 16px', position: 'sticky', top: 0, zIndex: 2, width: 70, minWidth: 70, borderBottom: '1px solid var(--lt-border)' }}></th>
             </tr></thead>
-            <tbody>{paSort.sortData(cf).map((c, i) => { const fl = faseLabel(c); return (
+            <tbody>{paSort.sortData(cf).map((c, i) => {
+              const frl = (val) => (!val || val === 'Teste Não Realizado') ? 'Não iniciado' : (val === 'Concluído' || val === 'concluido') ? 'Concluído' : val
+              return (
               <tr key={c.id||i} onClick={() => setModalRow(c)} style={{ cursor: 'pointer' }} onMouseEnter={e => e.currentTarget.style.background='rgba(204,145,94,0.04)'} onMouseLeave={e => e.currentTarget.style.background=''}>
                 <Td w={paResize.getWidth('dt_ult',100)}>{c.dt_ult ? new Date(c.dt_ult).toLocaleDateString('pt-BR') : '—'}</Td>
-                <Td w={paResize.getWidth('ger',120)}>{c.ger}</Td><Td w={paResize.getWidth('resp_sub',120)}>{c.resp_sub}</Td><Td w={paResize.getWidth('area',140)}>{c.area}</Td><Td w={paResize.getWidth('sub',120)}>{c.sub}</Td>
+                <Td w={paResize.getWidth('sub',120)}>{c.sub}</Td>
                 <td style={{ ...tdS, color: 'var(--copper)', fontWeight: 600, width: paResize.getWidth('rr',80), minWidth: paResize.getWidth('rr',80) }}>{c.rr}</td><Td w={paResize.getWidth('dr',200)}>{c.dr}</Td>
                 <td style={{ ...tdS, color: 'var(--copper)', fontWeight: 600, width: paResize.getWidth('rc',90), minWidth: paResize.getWidth('rc',90) }}>{c.rc}</td><Td w={paResize.getWidth('dc',200)}>{c.dc}</Td>
-                <Td w={paResize.getWidth('cat',110)}>{c.cat}</Td><Td w={paResize.getWidth('freq',90)}>{c.freq}</Td><Td w={paResize.getWidth('nat',80)}>{c.nat}</Td><Td w={paResize.getWidth('car',80)}>{c.car}</Td><Td w={paResize.getWidth('sis',80)}>{c.sis}</Td><Td w={paResize.getWidth('chave',80)}>{c.chave}</Td>
-                <Td w={paResize.getWidth('passos_f1',180)}>{c.passos_f1}</Td><td style={{ ...tdS, width: paResize.getWidth('r1',80), minWidth: paResize.getWidth('r1',80) }}>{badgeR(c.r1)}</td><Td w={paResize.getWidth('incons',180)}>{c.incons}</Td><Td w={paResize.getWidth('rec',180)}>{c.rec}</Td>
-                <td style={{ ...tdS, width: paResize.getWidth('imp',80), minWidth: paResize.getWidth('imp',80) }}>{badgeImp(c.imp)}</td><td style={{ ...tdS, width: paResize.getWidth('prob',80), minWidth: paResize.getWidth('prob',80) }}>{badgeProb(c.prob)}</td><td style={{ ...tdS, width: paResize.getWidth('crit',100), minWidth: paResize.getWidth('crit',100) }}>{badgeCrit(c.crit)}</td>
-                <td style={{ ...tdS, width: 160, minWidth: 160 }}><div style={{ fontSize: 10, fontWeight: 500, color: 'var(--lt-text)', borderLeft: '3px solid var(--copper)', paddingLeft: 6, lineHeight: 1.3 }}>{fl.f}</div><div style={{ fontSize: 9, color: 'var(--lt-text3)', paddingLeft: 9 }}>{fl.s}</div></td>
+                <td style={{ ...tdS, width: paResize.getWidth('r1',80), minWidth: paResize.getWidth('r1',80) }}>{badgeR(c.r1)}</td>
+                <td style={{ ...tdS, width: paResize.getWidth('crit',100), minWidth: paResize.getWidth('crit',100) }}>{badgeCrit(c.crit)}</td>
+                {/* Colunas de fase */}
+                {[c.r1, c.st_pa, c.r_ader, c.r3, c.r_f4c1, c.r_f4c2, c.r_f5].map((val, fi) => (
+                  <td key={fi} style={{ ...tdS, textAlign: 'center', width: paResize.getWidth(['r1','st_pa','r_ader','r3','r_f4c1','r_f4c2','r_f5'][fi], 100), minWidth: 100 }}>
+                    <span style={{ fontSize: 10, fontWeight: 500 }}>{frl(val)}</span>
+                  </td>
+                ))}
                 <td style={{ ...tdS, textAlign: 'center', width: 90, minWidth: 90 }}>
                   {isCliente ? (
-                    /* ── Visão do cliente: status simplificado ── */
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 3, alignItems: 'center' }}>
                       {(() => {
                         const cfg = getStatusBadge(c.status_workflow)
@@ -804,13 +825,11 @@ function PorArea({ projeto, areasCalc, todosControles, loading, navigate, loadDa
                       })()}
                     </div>
                   ) : (
-                    /* ── Visão admin/consultor: ações + status detalhado ── */
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 3, alignItems: 'center' }}>
                       {canEdit && canEditControl(c.status_workflow) && <button onClick={e => { e.stopPropagation(); setAtualizarRow(c) }} style={{ background: 'rgba(204,145,94,0.08)', border: '1px solid rgba(204,145,94,0.2)', borderRadius: 4, padding: '2px 10px', fontSize: 10, fontWeight: 600, color: 'var(--copper)', cursor: 'pointer', fontFamily: 'inherit', width: '100%' }}>Atualizar</button>}
                       {canEdit && canRegisterResult(c.status_workflow) && <button onClick={e => { e.stopPropagation(); setRowRegistrarResultado(c) }} style={{ background: 'rgba(204,145,94,0.08)', border: '1px solid rgba(204,145,94,0.2)', borderRadius: 4, padding: '2px 10px', fontSize: 9, fontWeight: 600, color: 'var(--copper)', cursor: 'pointer', fontFamily: 'inherit', width: '100%' }}>Resultado</button>}
                       {canEdit && isDevolvido(c.status_workflow) && <button onClick={e => { e.stopPropagation(); setRowRegistrarResultado(c) }} style={{ background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 4, padding: '2px 10px', fontSize: 9, fontWeight: 600, color: '#DC2626', cursor: 'pointer', fontFamily: 'inherit', width: '100%' }}>↩ Editar</button>}
                       {isAdmin && isAguardandoRevisao(c.status_workflow) && <button onClick={e => { e.stopPropagation(); setRowRevisar(c) }} style={{ background: 'rgba(59,130,246,0.08)', border: '1px solid rgba(59,130,246,0.2)', borderRadius: 4, padding: '2px 10px', fontSize: 9, fontWeight: 700, color: '#2563EB', cursor: 'pointer', fontFamily: 'inherit', width: '100%' }}>🔍 Revisar</button>}
-                      {/* Badge de status */}
                       {(() => {
                         const cfg = getStatusBadge(c.status_workflow)
                         return <span style={{ fontSize: 8, fontWeight: 700, color: cfg.color, background: cfg.bg, padding: '1px 6px', borderRadius: 999, textTransform: 'uppercase', letterSpacing: 0.5 }}>{cfg.label}</span>
@@ -818,7 +837,7 @@ function PorArea({ projeto, areasCalc, todosControles, loading, navigate, loadDa
                     </div>
                   )}
                 </td>
-              </tr>)})}{cf.length === 0 && <tr><td colSpan={24} style={{ padding: 32, textAlign: 'center', color: 'var(--lt-text3)' }}>Nenhum controle encontrado.</td></tr>}</tbody>
+              </tr>)})}{cf.length === 0 && <tr><td colSpan={16} style={{ padding: 32, textAlign: 'center', color: 'var(--lt-text3)' }}>Nenhum controle encontrado.</td></tr>}</tbody>
           </table>
         </div>
       </div>
