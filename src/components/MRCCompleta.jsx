@@ -451,12 +451,53 @@ export default function MRCCompleta({ projetoId, clienteNome, projetoNome, notif
         </div>
       </div>
 
-      <div className="mrc-hm-compact" style={{ display: 'flex', gap: 16, alignItems: 'stretch', marginBottom: 14 }}>
-        <div style={{ flex: 1 }}>
-          <Heatmap data={filtered} filtroImp={filtroImp} filtroProb={filtroProb} onFilterCell={handleHeatmapCell} />
-        </div>
-        <Regua data={mrc} filtroNivel={filtroNivel} onToggleNivel={setFiltroNivel} />
-      </div>
+      {(() => {
+        const ef = mrc.filter(r => r.r1 === 'Efetivo').length
+        const inf = mrc.filter(r => r.r1 === 'Inefetivo').length
+        const gp = mrc.filter(r => r.r1 === 'GAP').length
+        const cr4 = mrc.filter(r => r.crit === 4).length
+        const cr3 = mrc.filter(r => r.crit === 3).length
+        const cr2 = mrc.filter(r => r.crit === 2).length
+        const cr1 = mrc.filter(r => r.crit === 1).length
+        const KS = { grid: { flex: 1, display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gridTemplateRows: '1fr 1fr', gap: 8 }, card: { background: 'var(--lt-card)', border: '1px solid var(--lt-border)', borderRadius: 12, padding: '12px 14px', borderTop: '3px solid', display: 'flex', flexDirection: 'column', justifyContent: 'center', boxShadow: '0 1px 3px rgba(10,37,64,0.06)' }, lbl: { fontSize: 10, fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.15em', color: 'var(--lt-text3)', marginBottom: 4 }, val: { fontSize: 28, fontWeight: 300, lineHeight: 1 }, sub: { fontSize: 10, color: 'var(--lt-text3)', marginTop: 4 } }
+        return (
+          <div className="mrc-hm-compact" style={{ display: 'flex', gap: 12, alignItems: 'stretch', marginBottom: 14 }}>
+            <div style={{ flex: 'none', width: '45%' }}>
+              <Heatmap data={filtered} filtroImp={filtroImp} filtroProb={filtroProb} onFilterCell={handleHeatmapCell} />
+            </div>
+            <div style={KS.grid}>
+              <div style={{ ...KS.card, borderTopColor: '#22C55E', cursor: 'pointer' }} onClick={() => setFiltroNivel(filtroNivel === 'N5' ? '' : 'N5')}>
+                <div style={KS.lbl}>Efetivos</div>
+                <div style={{ ...KS.val, color: '#22C55E' }}>{ef}</div>
+                <div style={KS.sub}>{mrc.length > 0 ? Math.round(ef / mrc.length * 100) : 0}% do total</div>
+              </div>
+              <div style={{ ...KS.card, borderTopColor: '#FACC15', cursor: 'pointer' }} onClick={() => setFiltroNivel(filtroNivel === 'N1' ? '' : 'N1')}>
+                <div style={KS.lbl}>Inefetivos</div>
+                <div style={{ ...KS.val, color: '#B8860B' }}>{inf}</div>
+                <div style={KS.sub}>Aguardam ação corretiva</div>
+              </div>
+              <div style={{ ...KS.card, borderTopColor: '#EF4444', cursor: 'pointer' }} onClick={() => setFiltroNivel(filtroNivel === 'N2' ? '' : 'N2')}>
+                <div style={KS.lbl}>GAP</div>
+                <div style={{ ...KS.val, color: '#DC2626' }}>{gp}</div>
+                <div style={KS.sub}>Riscos sem controle</div>
+              </div>
+              <div style={{ ...KS.card, borderTopColor: '#EF4444' }}>
+                <div style={KS.lbl}>Risco Crítico</div>
+                <div style={{ ...KS.val, color: '#DC2626' }}>{cr4}</div>
+              </div>
+              <div style={{ ...KS.card, borderTopColor: '#F97316' }}>
+                <div style={KS.lbl}>Risco Significativo</div>
+                <div style={{ ...KS.val, color: '#EA580C' }}>{cr3}</div>
+              </div>
+              <div style={{ ...KS.card, borderTopColor: '#EAB308' }}>
+                <div style={KS.lbl}>Moderado + Baixo</div>
+                <div style={{ ...KS.val, color: '#B8860B' }}>{cr2 + cr1}</div>
+                <div style={KS.sub}>{cr2} moderado · {cr1} baixo</div>
+              </div>
+            </div>
+          </div>
+        )
+      })()}
 
       <div className="card">
         <div className="filters">
