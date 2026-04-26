@@ -484,7 +484,7 @@ export default function MRCCompleta({ projetoId, clienteNome, projetoNome, notif
   const [filtroImp, setFiltroImp] = useState(''); const [filtroProb, setFiltroProb] = useState(''); const [filtroR1, setFiltroR1] = useState(''); const [filtroNivel, setFiltroNivel] = useState('')
   const [filtroFase, setFiltroFase] = useState('')
   const [filtroStatus, setFiltroStatus] = useState('')
-  const [visCols, setVisCols] = useState(new Set(DEFAULT_COLS)); const [colPanelOpen, setColPanelOpen] = useState(false)
+  const visCols = DEFAULT_COLS
   const [expandAll, setExpandAll] = useState(false); const [modalRow, setModalRow] = useState(null)
 
   useEffect(() => {
@@ -671,7 +671,6 @@ export default function MRCCompleta({ projetoId, clienteNome, projetoNome, notif
           {temFiltro && <button onClick={limparFiltros} style={{ background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 999, padding: '4px 10px', fontSize: 10, fontWeight: 600, color: '#DC2626', cursor: 'pointer', fontFamily: 'inherit' }}>✕ Limpar filtros</button>}
           <button onClick={() => setExpandAll(o => !o)} style={{ background: 'rgba(0,32,62,0.06)', border: '1px solid rgba(0,32,62,0.15)', borderRadius: 999, padding: '4px 10px', fontSize: 10, fontWeight: 600, color: 'var(--lt-text2)', cursor: 'pointer', fontFamily: 'inherit' }}>⊞ {expandAll ? 'Recolher' : 'Expandir'}</button>
           <button onClick={() => exportarMRCExcel(filtered, 'MRC_Completa_' + new Date().toISOString().slice(0,10), 'MRC Completa', clienteNome, projetoNome)} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, background: 'rgba(204,145,94,0.1)', border: '1px solid rgba(204,145,94,0.25)', borderRadius: 999, padding: '5px 10px', fontSize: 10, fontWeight: 600, color: 'var(--copper)', cursor: 'pointer', fontFamily: 'inherit', marginLeft: 'auto' }} title="Exportar Excel"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/></svg>Excel</button>
-          <div className="col-panel-wrap"><button style={{ background: 'rgba(0,32,62,0.06)', border: '1px solid rgba(0,32,62,0.15)', borderRadius: 999, padding: '4px 10px', fontSize: 10, fontWeight: 600, color: 'var(--lt-text2)', cursor: 'pointer', fontFamily: 'inherit' }} onClick={() => setColPanelOpen(o => !o)}>⊞ Colunas</button><ColunasPanel visCols={visCols} setVisCols={setVisCols} open={colPanelOpen} onClose={() => setColPanelOpen(false)} /></div>
         </div>
 
         {isLimited && <div className="warn-strip">Exibindo {MAX_ROWS} de {filtered.length} — refine os filtros</div>}
