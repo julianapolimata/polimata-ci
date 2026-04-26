@@ -134,7 +134,7 @@ const NotificacoesPanel = () => {
             display: 'flex', alignItems: 'center', justifyContent: 'space-between',
             padding: '12px 16px', borderBottom: '1px solid rgba(255,255,255,0.06)'
           }}>
-            <span style={{ fontSize: 13, fontWeight: 600, color: '#F3EEE4' }}>🔔 Notificações</span>
+            <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--cream)' }}>🔔 Notificações</span>
             <button onClick={() => setOpen(false)} style={{ background: 'none', border: 'none', color: 'rgba(243,238,228,0.4)', cursor: 'pointer', fontSize: 16, padding: 4 }}>✕</button>
           </div>
 
@@ -157,7 +157,7 @@ const NotificacoesPanel = () => {
                       cursor: 'pointer',
                       transition: 'background .15s',
                       background: n.lida ? 'transparent' : 'rgba(204,145,94,0.04)',
-                      borderLeft: n.lida ? 'none' : '3px solid #CC915E',
+                      borderLeft: n.lida ? 'none' : '3px solid var(--copper)',
                     }}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
@@ -166,7 +166,7 @@ const NotificacoesPanel = () => {
                       </span>
                     </div>
                     <div style={{ fontSize: 11, color: 'rgba(243,238,228,0.7)', lineHeight: 1.5 }}>
-                      {n.de?.nome && <strong style={{ color: '#F3EEE4', fontWeight: 600 }}>{n.de.nome} </strong>}
+                      {n.de?.nome && <strong style={{ color: 'var(--cream)', fontWeight: 600 }}>{n.de.nome} </strong>}
                       {n.mensagem}
                     </div>
                     <div style={{ fontSize: 9, color: 'rgba(243,238,228,0.25)', marginTop: 4 }}>
@@ -188,7 +188,7 @@ const NotificacoesPanel = () => {
                 onClick={markAllRead}
                 disabled={naoLidas === 0}
                 style={{
-                  fontSize: 10, color: naoLidas > 0 ? '#CC915E' : 'rgba(243,238,228,0.25)',
+                  fontSize: 10, color: naoLidas > 0 ? 'var(--copper)' : 'rgba(243,238,228,0.25)',
                   background: 'none', border: 'none', cursor: naoLidas > 0 ? 'pointer' : 'default',
                   fontFamily: "'Montserrat', sans-serif", fontWeight: 600
                 }}

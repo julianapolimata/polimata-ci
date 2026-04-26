@@ -29,8 +29,8 @@ const CONFIG_PROFISSIONAL = {
   em_analise:     { label: 'Em Análise',     color: 'var(--copper)',     bg: 'rgba(204,145,94,0.1)' },
   teste_pendente: { label: 'Teste Pendente', color: '#CA8A04',          bg: 'rgba(234,179,8,0.1)' },
   em_revisao:     { label: 'Em Revisão',     color: '#2563EB',          bg: 'rgba(59,130,246,0.08)' },
-  aprovado:       { label: 'Aprovado',       color: '#16A34A',          bg: 'rgba(34,197,94,0.1)' },
-  reprovado:      { label: 'Devolvido',      color: '#DC2626',          bg: 'rgba(239,68,68,0.1)' },
+  aprovado:       { label: 'Aprovado',       color: 'var(--n4-vis)',          bg: 'rgba(34,197,94,0.1)' },
+  reprovado:      { label: 'Devolvido',      color: 'var(--n1)',          bg: 'rgba(239,68,68,0.1)' },
 }
 
 const CONFIG_CLIENTE = {
@@ -38,8 +38,8 @@ const CONFIG_CLIENTE = {
   em_analise:     { label: 'Em Análise',   color: 'var(--copper)',     bg: 'rgba(204,145,94,0.1)' },
   teste_pendente: { label: 'Em Análise',   color: 'var(--copper)',     bg: 'rgba(204,145,94,0.1)' },
   em_revisao:     { label: 'Em Revisão',   color: '#2563EB',          bg: 'rgba(59,130,246,0.08)' },
-  aprovado:       { label: 'Aprovado',     color: '#16A34A',          bg: 'rgba(34,197,94,0.1)' },
-  reprovado:      { label: 'Reprovado',    color: '#DC2626',          bg: 'rgba(239,68,68,0.1)' },
+  aprovado:       { label: 'Aprovado',     color: 'var(--n4-vis)',          bg: 'rgba(34,197,94,0.1)' },
+  reprovado:      { label: 'Reprovado',    color: 'var(--n1)',          bg: 'rgba(239,68,68,0.1)' },
 }
 
 // Fallback para status desconhecido

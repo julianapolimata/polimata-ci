@@ -25,7 +25,8 @@ import { carregarConstantes } from '../lib/constantesLoader'
 // CONSTANTES
 // ══════════════════════════════════════════════════════════════════════════════
 
-const FASES_CORES = ['#00203E', '#1D3B5C', '#660033', '#660066', '#A6512F']
+const FASES_CORES = ['var(--navy)', 'var(--navy-soft)', 'var(--f3-phase)', 'var(--f4-phase)', 'var(--copper-deep)']
+const FASES_CORES_HEX = ['#00203E', '#1D3B5C', '#660033', '#660066', '#A6512F'] // For JS color logic
 const FASES_PESOS = [10, 25, 25, 30, 10]
 const FASES_NOMES = ['Diagnóstico Inicial', 'Planos de Ação e Aderência', 'Controles Internos', 'Auditoria Contínua', 'Auditoria Independente']
 
@@ -377,7 +378,7 @@ function HomeDash({ projeto, areasCalc, todosControles, loading, ultimaAtualizac
           <div style={D.kpiSub}>Riscos sem controle identificado</div>
         </div>
         <div style={{ ...D.kpiCard, borderTop: 'none', position: 'relative', overflow: 'hidden' }}>
-          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3, background: 'linear-gradient(90deg, #CC915E, #A6512F)' }} />
+          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3, background: 'linear-gradient(90deg, var(--copper), var(--copper-deep))' }} />
           <div style={D.kpiLabel}>Planos de Ação</div>
           <div style={{ ...D.kpiValor, color: 'var(--copper)' }}>{kpis.pa}</div>
           <div style={D.kpiSub}>Em desenvolvimento</div>
@@ -644,9 +645,9 @@ function PorArea({ projeto, areasCalc, todosControles, loading, navigate, loadDa
   const bdgS = { display: 'inline-block', padding: '2px 8px', borderRadius: 999, fontSize: 10, fontWeight: 600 }
   function badgeR(r) {
     if (!r || r === 'Teste Não Realizado') return <span style={{ ...bdgS, background: 'rgba(10,37,64,0.05)', color: 'var(--lt-text3)' }}>{r||'—'}</span>
-    if (isEfetivo(r)) return <span style={{ ...bdgS, background: 'rgba(34,197,94,0.1)', color: '#16A34A' }}>Efetivo</span>
+    if (isEfetivo(r)) return <span style={{ ...bdgS, background: 'rgba(34,197,94,0.1)', color: 'var(--n4-vis)' }}>Efetivo</span>
     if (isInefetivo(r)) return <span style={{ ...bdgS, background: 'rgba(234,179,8,0.1)', color: '#CA8A04' }}>Inefetivo</span>
-    if (isGap(r)) return <span style={{ ...bdgS, background: 'rgba(239,68,68,0.1)', color: '#DC2626' }}>GAP</span>
+    if (isGap(r)) return <span style={{ ...bdgS, background: 'rgba(239,68,68,0.1)', color: 'var(--n1)' }}>GAP</span>
     return <span style={{ ...bdgS, background: 'rgba(10,37,64,0.05)', color: 'var(--lt-text3)' }}>{r}</span>
   }
   const IMP_C = { Crítico: { bg: 'rgba(239,68,68,0.1)', c: '#DC2626' }, Alto: { bg: 'rgba(249,115,22,0.1)', c: '#EA580C' }, Moderado: { bg: 'rgba(234,179,8,0.1)', c: '#CA8A04' }, Baixo: { bg: 'rgba(34,197,94,0.1)', c: '#16A34A' } }
@@ -721,23 +722,23 @@ function PorArea({ projeto, areasCalc, todosControles, loading, navigate, loadDa
             <div style={{ ...PA.kpiValor, color: 'var(--navy)' }}>{area.controles.length}</div>
             <div style={PA.kpiSub}>Peso empresa: {pesoEmpresa}%</div>
           </div>
-          <div style={{ ...PA.kpiCard, borderTopColor: '#22C55E' }}>
+          <div style={{ ...PA.kpiCard, borderTopColor: 'var(--res-ef)' }}>
             <div style={PA.kpiLabel}>Efetivos</div>
-            <div style={{ ...PA.kpiValor, color: '#22C55E' }}>{efetivos}</div>
+            <div style={{ ...PA.kpiValor, color: 'var(--res-ef)' }}>{efetivos}</div>
             <div style={PA.kpiSub}>{area.controles.length > 0 ? Math.round(efetivos / area.controles.length * 100) : 0}% do total</div>
           </div>
-          <div style={{ ...PA.kpiCard, borderTopColor: '#FACC15' }}>
+          <div style={{ ...PA.kpiCard, borderTopColor: 'var(--res-in)' }}>
             <div style={PA.kpiLabel}>Inefetivos</div>
-            <div style={{ ...PA.kpiValor, color: '#FACC15' }}>{inefetivos}</div>
+            <div style={{ ...PA.kpiValor, color: 'var(--res-in)' }}>{inefetivos}</div>
             <div style={PA.kpiSub}>Aguardam ação corretiva</div>
           </div>
-          <div style={{ ...PA.kpiCard, borderTopColor: '#EF4444' }}>
+          <div style={{ ...PA.kpiCard, borderTopColor: 'var(--res-gp)' }}>
             <div style={PA.kpiLabel}>GAP</div>
-            <div style={{ ...PA.kpiValor, color: '#EF4444' }}>{gaps}</div>
+            <div style={{ ...PA.kpiValor, color: 'var(--res-gp)' }}>{gaps}</div>
             <div style={PA.kpiSub}>Riscos sem controle</div>
           </div>
           <div style={{ ...PA.kpiCard, borderTop: 'none', position: 'relative', overflow: 'hidden' }}>
-            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3, background: 'linear-gradient(90deg, #CC915E, #A6512F)' }} />
+            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3, background: 'linear-gradient(90deg, var(--copper), var(--copper-deep))' }} />
             <div style={PA.kpiLabel}>Planos de Ação</div>
             <div style={{ ...PA.kpiValor, color: 'var(--copper)' }}>{planosAcao}</div>
             <div style={PA.kpiSub}>Em desenvolvimento</div>
@@ -793,13 +794,13 @@ function PorArea({ projeto, areasCalc, todosControles, loading, navigate, loadDa
               })}
               {/* Colunas de fase com headers coloridos */}
               {[
-                { h1: 'Fase 1', h2: 'Diagnóstico', w: 110, k: 'r1', color: '#00203E' },
-                { h1: 'Fase 2', h2: 'Desenho', w: 110, k: 'st_pa', color: '#1D3B5C' },
-                { h1: 'Fase 2', h2: 'Aderência', w: 110, k: 'r_ader', color: '#1D3B5C' },
-                { h1: 'Fase 3', h2: 'Revisão Integral', w: 110, k: 'r3', color: '#660033' },
-                { h1: 'Fase 4', h2: 'AI - Ciclo 1', w: 110, k: 'r_f4c1', color: '#660066' },
-                { h1: 'Fase 4', h2: 'AI - Ciclo 2', w: 110, k: 'r_f4c2', color: '#660066' },
-                { h1: 'Fase 5', h2: 'Auditoria Interna', w: 110, k: 'r_f5', color: '#A6512F' },
+                { h1: 'Fase 1', h2: 'Diagnóstico', w: 110, k: 'r1', color: 'var(--navy)' },
+                { h1: 'Fase 2', h2: 'Desenho', w: 110, k: 'st_pa', color: 'var(--navy-soft)' },
+                { h1: 'Fase 2', h2: 'Aderência', w: 110, k: 'r_ader', color: 'var(--navy-soft)' },
+                { h1: 'Fase 3', h2: 'Revisão Integral', w: 110, k: 'r3', color: 'var(--f3-phase)' },
+                { h1: 'Fase 4', h2: 'AI - Ciclo 1', w: 110, k: 'r_f4c1', color: 'var(--f4-phase)' },
+                { h1: 'Fase 4', h2: 'AI - Ciclo 2', w: 110, k: 'r_f4c2', color: 'var(--f4-phase)' },
+                { h1: 'Fase 5', h2: 'Auditoria Interna', w: 110, k: 'r_f5', color: 'var(--copper-deep)' },
               ].map((col, i) => {
                 const cw = paResize.getWidth(col.k, col.w)
                 return <th key={`f${i}`} className={`th-sort${paSort.sortKey===col.k?' sorted':''}`} onClick={() => paSort.toggleSort(col.k)} style={{ color: 'white', background: col.color, padding: '8px 8px', textAlign: 'center', verticalAlign: 'middle', position: 'sticky', top: 0, zIndex: 2, width: cw, minWidth: cw, borderBottom: '1px solid var(--lt-border)', borderLeft: '1px solid rgba(255,255,255,0.15)', borderRadius: '8px 8px 0 0', cursor: 'pointer', userSelect: 'none' }}>
@@ -848,7 +849,7 @@ function PorArea({ projeto, areasCalc, todosControles, loading, navigate, loadDa
                           <div style={{ display: 'flex', flexDirection: 'column', gap: 2, width: '100%', marginTop: 2 }}>
                             {canEdit && canEditControl(c.status_workflow) && <button onClick={e => { e.stopPropagation(); setAtualizarRow(c) }} style={{ background: 'rgba(204,145,94,0.08)', border: '1px solid rgba(204,145,94,0.2)', borderRadius: 4, padding: '2px 10px', fontSize: 10, fontWeight: 600, color: 'var(--copper)', cursor: 'pointer', fontFamily: 'inherit', width: '100%' }}>Atualizar</button>}
                             {canEdit && canRegisterResult(c.status_workflow) && <button onClick={e => { e.stopPropagation(); setRowRegistrarResultado(c) }} style={{ background: 'rgba(204,145,94,0.08)', border: '1px solid rgba(204,145,94,0.2)', borderRadius: 4, padding: '2px 10px', fontSize: 9, fontWeight: 600, color: 'var(--copper)', cursor: 'pointer', fontFamily: 'inherit', width: '100%' }}>Resultado</button>}
-                            {canEdit && isDevolvido(c.status_workflow) && <button onClick={e => { e.stopPropagation(); setRowRegistrarResultado(c) }} style={{ background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 4, padding: '2px 10px', fontSize: 9, fontWeight: 600, color: '#DC2626', cursor: 'pointer', fontFamily: 'inherit', width: '100%' }}>↩ Editar</button>}
+                            {canEdit && isDevolvido(c.status_workflow) && <button onClick={e => { e.stopPropagation(); setRowRegistrarResultado(c) }} style={{ background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 4, padding: '2px 10px', fontSize: 9, fontWeight: 600, color: 'var(--n1)', cursor: 'pointer', fontFamily: 'inherit', width: '100%' }}>↩ Editar</button>}
                             {isAdmin && isAguardandoRevisao(c.status_workflow) && <button onClick={e => { e.stopPropagation(); setRowRevisar(c) }} style={{ background: 'rgba(59,130,246,0.08)', border: '1px solid rgba(59,130,246,0.2)', borderRadius: 4, padding: '2px 10px', fontSize: 9, fontWeight: 700, color: '#2563EB', cursor: 'pointer', fontFamily: 'inherit', width: '100%' }}>🔍 Revisar</button>}
                           </div>
                         )}

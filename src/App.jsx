@@ -1,6 +1,8 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { useAuth } from './contexts/AuthContext'
 import { useState, useEffect } from 'react'
+import { ToastProvider } from './components/Toast'
+import { ConfirmProvider } from './components/ConfirmDialog'
 import Login from './pages/Login'
 import RedefinirSenha from './pages/RedefinirSenha'
 import Dashboard from './pages/Dashboard'
@@ -62,7 +64,7 @@ function PasswordSetupPage() {
         {ok ? (
           <>
             <div style={{ textAlign: 'center', padding: '8px 0' }}>
-              <div style={{ fontSize: 36, marginBottom: 8, color: '#22C55E' }}>&#10003;</div>
+              <div style={{ fontSize: 36, marginBottom: 8, color: 'var(--res-ef)' }}>&#10003;</div>
               <h1 className="login-title" style={{ marginBottom: 6 }}>Senha configurada!</h1>
               <p className="login-subtitle">Seu acesso está pronto. Faça login para acessar o sistema.</p>
             </div>
@@ -109,10 +111,14 @@ export default function App() {
   if (needsPasswordSetup) return <PasswordSetupPage />
 
   return (
-    <Routes>
-      <Route path="/login" element={user ? <Navigate to="/" replace /> : <Login />} />
-      <Route path="/redefinir-senha" element={<RedefinirSenha />} />
-      <Route path="/*" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
-    </Routes>
+    <ToastProvider>
+      <ConfirmProvider>
+        <Routes>
+          <Route path="/login" element={user ? <Navigate to="/" replace /> : <Login />} />
+          <Route path="/redefinir-senha" element={<RedefinirSenha />} />
+          <Route path="/*" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
+        </Routes>
+      </ConfirmProvider>
+    </ToastProvider>
   )
 }

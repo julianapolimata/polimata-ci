@@ -208,7 +208,7 @@ const ModalRevisar = ({ row, onClose, onAction }) => {
         </div>
         <div style={S.footer}>
           <button onClick={() => setView('review')} style={{ ...S.btn, border: '1px solid #D0D0D0', background: 'white', color: '#7A8B9C' }}>Voltar</button>
-          <button onClick={handleReprovar} disabled={processing || !nota.trim()} style={{ ...S.btn, border: '1px solid #EF4444', background: '#EF4444', color: 'white', opacity: processing || !nota.trim() ? 0.5 : 1 }}>
+          <button onClick={handleReprovar} disabled={processing || !nota.trim()} style={{ ...S.btn, border: '1px solid var(--res-gp)', background: 'var(--res-gp)', color: 'white', opacity: processing || !nota.trim() ? 0.5 : 1 }}>
             {processing ? 'Reprovando...' : '↩ Confirmar Reprovação'}
           </button>
         </div>
@@ -359,7 +359,7 @@ const ModalRevisar = ({ row, onClose, onAction }) => {
         {/* Footer com ações */}
         <div style={S.footer}>
           <button onClick={onClose} style={{ ...S.btn, border: '1px solid #D0D0D0', background: 'white', color: '#7A8B9C' }}>Fechar</button>
-          <button onClick={() => setView('reject')} style={{ ...S.btn, border: '1px solid #EF4444', background: 'white', color: '#EF4444' }}>↩ Reprovar</button>
+          <button onClick={() => setView('reject')} style={{ ...S.btn, border: '1px solid var(--res-gp)', background: 'white', color: '#EF4444' }}>↩ Reprovar</button>
           <button onClick={() => setView('approve')} style={{ ...S.btn, border: '1px solid #22C55E', background: '#22C55E', color: 'white' }}>✅ Aprovar</button>
         </div>
       </div>

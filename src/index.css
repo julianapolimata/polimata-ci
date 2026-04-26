@@ -70,16 +70,31 @@
   --na-bg: rgba(243,238,228,0.05);
   --bar-bg: rgba(243,238,228,0.06);
 
-  /* Criticidade */
+  /* Result colors (dashboard badge colors) */
+  --res-ef: #22C55E;
+  --res-in: #FACC15;
+  --res-gp: #EF4444;
+
+  /* Phase colors (dark theme, headings in table) */
+  --f3-phase: #660033;
+  --f4-phase: #660066;
+
+  /* Criticidade (nivel maturity display) */
   --c4-bg: rgba(240,86,86,0.12);
   --c3-bg: rgba(249,115,22,0.12);
   --c2-bg: rgba(212,160,48,0.12);
   --c1-bg: rgba(34,212,160,0.12);
-  --n1: #EF4444;
-  --n2: #F97316;
-  --n3: #D4A030;
-  --n4: #5B8FF9;
-  --n5: #22D4A0;
+  --n1: #DC2626;
+  --n2-vis: #EA580C;
+  --n3-vis: #EAB308;
+  --n4-vis: #16A34A;
+  --n5-vis: #15803D;
+
+  /* Criticidade severity */
+  --crit4: #EF4444;
+  --crit3: #F97316;
+  --crit2: #EAB308;
+  --crit1: #22C55E;
 
   /* Fases — Trilha de Desenvolvimento (INTOCÁVEIS) */
   --f1c: #5B8FF9;

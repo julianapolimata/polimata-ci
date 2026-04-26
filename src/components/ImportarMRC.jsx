@@ -21,6 +21,7 @@ const COL_MAP = {
   35: 'dt_teste', 36: 'dc_novo', 44: 'r_ader', 45: 'melhoria',
   46: 'incons_ader', 47: 'coment_ader', 50: 'status_risco',
   56: 'r3', 57: 'incons_f3', 58: 'rec_f3',
+  59: 'r_f4c1', 60: 'r_f4c2', 61: 'r_f5',
 }
 
 function parseCrit(val) {
@@ -331,12 +332,12 @@ export default function ImportarMRC({ projetoId, areas, onImported }) {
             <div style={{ fontSize: 40, marginBottom: 8 }}>⚠</div>
             <div style={{ fontSize: 16, fontWeight: 700, color: '#D97706', marginBottom: 12 }}>Confirmar importação</div>
             <div style={{ fontSize: 13, color: 'var(--lt-text2)', lineHeight: 1.6, marginBottom: 24, textAlign: 'left' }}>
-              Todos os controles existentes da área <strong>"{areaNome}"</strong> serão <span style={{ color: '#EF4444', fontWeight: 700 }}>permanentemente apagados</span> e substituídos pelos <strong>{previewCount} controles</strong> do arquivo.
+              Todos os controles existentes da área <strong>"{areaNome}"</strong> serão <span style={{ color: 'var(--res-gp)', fontWeight: 700 }}>permanentemente apagados</span> e substituídos pelos <strong>{previewCount} controles</strong> do arquivo.
               <br /><br /><strong>Essa ação não pode ser desfeita.</strong>
             </div>
             <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
               <button onClick={() => setShowConfirm(false)} style={{ background: 'transparent', color: 'var(--lt-text2)', border: '1px solid var(--lt-border)', borderRadius: 6, padding: '10px 24px', fontSize: 12, fontWeight: 600, fontFamily: 'inherit', cursor: 'pointer' }}>Cancelar</button>
-              <button onClick={handleImportar} style={{ background: '#EF4444', color: '#fff', border: 'none', borderRadius: 6, padding: '10px 24px', fontSize: 12, fontWeight: 700, fontFamily: 'inherit', cursor: 'pointer' }}>Sim, apagar e importar</button>
+              <button onClick={handleImportar} style={{ background: 'var(--res-gp)', color: '#fff', border: 'none', borderRadius: 6, padding: '10px 24px', fontSize: 12, fontWeight: 700, fontFamily: 'inherit', cursor: 'pointer' }}>Sim, apagar e importar</button>
             </div>
           </div>
         </div>

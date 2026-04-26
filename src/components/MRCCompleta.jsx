@@ -267,9 +267,9 @@ function TabelaMRC({ rows, onOpenModal }) {
   function badgeR(r) {
     if (!r || r === 'Teste Não Realizado') return <span style={{ ...bdgS, background: 'rgba(10,37,64,0.05)', color: 'var(--lt-text3)' }}>{r||'—'}</span>
     const v = (r||'').toLowerCase()
-    if (v === 'efetivo') return <span style={{ ...bdgS, background: 'rgba(34,197,94,0.1)', color: '#16A34A' }}>Efetivo</span>
+    if (v === 'efetivo') return <span style={{ ...bdgS, background: 'rgba(34,197,94,0.1)', color: 'var(--n4-vis)' }}>Efetivo</span>
     if (v === 'inefetivo') return <span style={{ ...bdgS, background: 'rgba(234,179,8,0.1)', color: '#CA8A04' }}>Inefetivo</span>
-    if (v === 'gap' || v === 'gap de processo') return <span style={{ ...bdgS, background: 'rgba(239,68,68,0.1)', color: '#DC2626' }}>GAP</span>
+    if (v === 'gap' || v === 'gap de processo') return <span style={{ ...bdgS, background: 'rgba(239,68,68,0.1)', color: 'var(--n1)' }}>GAP</span>
     return <span style={{ ...bdgS, background: 'rgba(10,37,64,0.05)', color: 'var(--lt-text3)' }}>{r}</span>
   }
   const CRT_C = { 4: { bg: 'rgba(239,68,68,0.1)', c: '#DC2626', l: '4. Crítico' }, 3: { bg: 'rgba(249,115,22,0.1)', c: '#EA580C', l: '3. Significativo' }, 2: { bg: 'rgba(234,179,8,0.1)', c: '#CA8A04', l: '2. Moderado' }, 1: { bg: 'rgba(34,197,94,0.1)', c: '#16A34A', l: '1. Baixo' } }
@@ -294,13 +294,13 @@ function TabelaMRC({ rows, onOpenModal }) {
     { h: 'Criticidade', w: 100, k: 'crit' },
   ]
   const FASE_COLS = [
-    { h1: 'Fase 1', h2: 'Diagnóstico', w: 110, k: 'r1', color: '#00203E' },
-    { h1: 'Fase 2', h2: 'Desenho', w: 110, k: 'st_pa', color: '#1D3B5C' },
-    { h1: 'Fase 2', h2: 'Aderência', w: 110, k: 'r_ader', color: '#1D3B5C' },
-    { h1: 'Fase 3', h2: 'Revisão Integral', w: 110, k: 'r3', color: '#660033' },
-    { h1: 'Fase 4', h2: 'AI - Ciclo 1', w: 110, k: 'r_f4c1', color: '#660066' },
-    { h1: 'Fase 4', h2: 'AI - Ciclo 2', w: 110, k: 'r_f4c2', color: '#660066' },
-    { h1: 'Fase 5', h2: 'Auditoria Interna', w: 110, k: 'r_f5', color: '#A6512F' },
+    { h1: 'Fase 1', h2: 'Diagnóstico', w: 110, k: 'r1', color: 'var(--navy)' },
+    { h1: 'Fase 2', h2: 'Desenho', w: 110, k: 'st_pa', color: 'var(--navy-soft)' },
+    { h1: 'Fase 2', h2: 'Aderência', w: 110, k: 'r_ader', color: 'var(--navy-soft)' },
+    { h1: 'Fase 3', h2: 'Revisão Integral', w: 110, k: 'r3', color: 'var(--f3-phase)' },
+    { h1: 'Fase 4', h2: 'AI - Ciclo 1', w: 110, k: 'r_f4c1', color: 'var(--f4-phase)' },
+    { h1: 'Fase 4', h2: 'AI - Ciclo 2', w: 110, k: 'r_f4c2', color: 'var(--f4-phase)' },
+    { h1: 'Fase 5', h2: 'Auditoria Interna', w: 110, k: 'r_f5', color: 'var(--copper-deep)' },
   ]
 
   return (
@@ -519,7 +519,7 @@ export default function MRCCompleta({ projetoId, clienteNome, projetoNome, notif
             <div style={ZS.kpiGrid}>
               <div style={{ ...ZS.kpiCard, borderTopColor: '#22C55E' }} onClick={() => setFiltroNivel(filtroNivel === 'N5' ? '' : 'N5')}>
                 <div style={ZS.kpiLbl}>Efetivos</div>
-                <div style={{ ...ZS.kpiVal, color: '#22C55E' }}>{ef}</div>
+                <div style={{ ...ZS.kpiVal, color: 'var(--res-ef)' }}>{ef}</div>
                 <div style={ZS.kpiSub}>{mrc.length > 0 ? Math.round(ef / mrc.length * 100) : 0}% do total</div>
               </div>
               <div style={{ ...ZS.kpiCard, borderTopColor: '#FACC15' }} onClick={() => setFiltroNivel(filtroNivel === 'N1' ? '' : 'N1')}>
@@ -529,12 +529,12 @@ export default function MRCCompleta({ projetoId, clienteNome, projetoNome, notif
               </div>
               <div style={{ ...ZS.kpiCard, borderTopColor: '#EF4444' }} onClick={() => setFiltroNivel(filtroNivel === 'N2' ? '' : 'N2')}>
                 <div style={ZS.kpiLbl}>GAP</div>
-                <div style={{ ...ZS.kpiVal, color: '#DC2626' }}>{gp}</div>
+                <div style={{ ...ZS.kpiVal, color: 'var(--n1)' }}>{gp}</div>
                 <div style={ZS.kpiSub}>Riscos sem controle</div>
               </div>
               <div style={{ ...ZS.kpiCard, borderTopColor: '#EF4444', cursor: 'default' }}>
                 <div style={ZS.kpiLbl}>Risco Crítico</div>
-                <div style={{ ...ZS.kpiVal, color: '#DC2626' }}>{cr4}</div>
+                <div style={{ ...ZS.kpiVal, color: 'var(--n1)' }}>{cr4}</div>
               </div>
               <div style={{ ...ZS.kpiCard, borderTopColor: '#F97316', cursor: 'default' }}>
                 <div style={ZS.kpiLbl}>Risco Significativo</div>
@@ -558,7 +558,7 @@ export default function MRCCompleta({ projetoId, clienteNome, projetoNome, notif
           <select value={filtroR1} onChange={e => setFiltroR1(e.target.value)} style={FS}><option value="">Todos resultados</option><option>Efetivo</option><option>Inefetivo</option><option>GAP</option><option>Teste Não Realizado</option></select>
           <select value={filtroStatus} onChange={e => setFiltroStatus(e.target.value)} style={FS}><option value="">Todos status</option>{statusDisponiveis.map(s => <option key={s} value={s}>{s}</option>)}</select>
           <div style={{ fontSize: 10, color: 'var(--lt-text3)', background: 'var(--lt-card)', border: '1px solid var(--lt-border)', borderRadius: 8, padding: '5px 10px' }}>{filtered.length} controles</div>
-          {temFiltro && <button onClick={limparFiltros} style={{ background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 999, padding: '4px 10px', fontSize: 10, fontWeight: 600, color: '#DC2626', cursor: 'pointer', fontFamily: 'inherit' }}>✕ Limpar filtros</button>}
+          {temFiltro && <button onClick={limparFiltros} style={{ background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 999, padding: '4px 10px', fontSize: 10, fontWeight: 600, color: 'var(--n1)', cursor: 'pointer', fontFamily: 'inherit' }}>✕ Limpar filtros</button>}
           <button onClick={() => exportarMRCExcel(filtered, 'MRC_Completa_' + new Date().toISOString().slice(0,10), 'MRC Completa', clienteNome, projetoNome)} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, background: 'rgba(204,145,94,0.1)', border: '1px solid rgba(204,145,94,0.25)', borderRadius: 999, padding: '5px 10px', fontSize: 10, fontWeight: 600, color: 'var(--copper)', cursor: 'pointer', fontFamily: 'inherit', marginLeft: 'auto' }} title="Exportar Excel"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/></svg>Excel</button>
         </div>
 
