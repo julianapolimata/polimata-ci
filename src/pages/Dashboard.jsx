@@ -784,13 +784,13 @@ function PorArea({ projeto, areasCalc, todosControles, loading, navigate, loadDa
               })}
               {/* Colunas de fase com headers coloridos */}
               {[
-                { h: 'Fase 1\nDiagnóstico', w: 100, k: 'r1', color: '#2E7D32' },
-                { h: 'Fase 2\nDesenho', w: 100, k: 'st_pa', color: '#6366F1' },
-                { h: 'Fase 2\nAderência', w: 100, k: 'r_ader', color: '#10B981' },
-                { h: 'Fase 3\nRevisão Integral', w: 110, k: 'r3', color: '#F59E0B' },
-                { h: 'Fase 4\nAI - Ciclo 1', w: 100, k: 'r_f4c1', color: '#0EA5E9' },
-                { h: 'Fase 4\nAI - Ciclo 2', w: 100, k: 'r_f4c2', color: '#0EA5E9' },
-                { h: 'Fase 5\nAuditoria Interna', w: 110, k: 'r_f5', color: '#7C3AED' },
+                { h: 'Fase 1\nDiagnóstico', w: 100, k: 'r1', color: '#00203E' },
+                { h: 'Fase 2\nDesenho', w: 100, k: 'st_pa', color: '#1D3B5C' },
+                { h: 'Fase 2\nAderência', w: 100, k: 'r_ader', color: '#1D3B5C' },
+                { h: 'Fase 3\nRevisão Integral', w: 110, k: 'r3', color: '#660033' },
+                { h: 'Fase 4\nAI - Ciclo 1', w: 100, k: 'r_f4c1', color: '#660066' },
+                { h: 'Fase 4\nAI - Ciclo 2', w: 100, k: 'r_f4c2', color: '#660066' },
+                { h: 'Fase 5\nAuditoria Interna', w: 110, k: 'r_f5', color: '#A6512F' },
               ].map((col, i) => {
                 const cw = paResize.getWidth(col.k, col.w)
                 return <th key={`f${i}`} className={`th-sort${paSort.sortKey===col.k?' sorted':''}`} onClick={() => paSort.toggleSort(col.k)} style={{ fontSize: 9, fontWeight: 600, letterSpacing: 0.3, color: 'white', background: col.color, padding: '8px 6px', textAlign: 'center', whiteSpace: 'pre-line', lineHeight: 1.3, position: 'sticky', top: 0, zIndex: 2, width: cw, minWidth: cw, borderBottom: '1px solid var(--lt-border)', cursor: 'pointer', userSelect: 'none' }}>

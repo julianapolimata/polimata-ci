@@ -80,13 +80,13 @@ const COL_GROUPS = [
 
 // Cores dos headers das colunas de fase
 const FASE_HEADER_COLORS = {
-  hist_f1:   '#2E7D32', // verde escuro
-  hist_f2d:  '#6366F1', // indigo
-  hist_f2a:  '#10B981', // verde esmeralda
-  hist_f3:   '#F59E0B', // âmbar
-  hist_f4c1: '#0EA5E9', // azul
-  hist_f4c2: '#0EA5E9', // azul
-  hist_f5:   '#7C3AED', // roxo
+  hist_f1:   '#00203E', // navy
+  hist_f2d:  '#1D3B5C', // navy claro
+  hist_f2a:  '#1D3B5C', // navy claro
+  hist_f3:   '#660033', // bordô
+  hist_f4c1: '#660066', // roxo
+  hist_f4c2: '#660066', // roxo
+  hist_f5:   '#A6512F', // terracota
 }
 
 const DEFAULT_COLS = new Set(COL_GROUPS.flatMap(g => g.cols.filter(c => c.default).map(c => c.id)))
