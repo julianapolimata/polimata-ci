@@ -6,11 +6,47 @@
     <title>Polímata CI</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300&display=swap" rel="stylesheet">
-    <script type="module" crossorigin src="/assets/index.DQZDVb-R.js"></script>
-    <link rel="stylesheet" crossorigin href="/assets/index.CdO3vEfY.css">
+    <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@200;300;400&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <script type="module" crossorigin src="/assets/index.BDWvwAHt.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index.enfNQEuF.css">
   </head>
   <body>
     <div id="root"></div>
+    <noscript>
+      <style>body{display:flex;align-items:center;justify-content:center;height:100vh;background:#F3EEE4;color:#00203E;font-family:Montserrat,sans-serif;text-align:center;}</style>
+      <p>JavaScript precisa estar habilitado para usar o Polímata CI.</p>
+    </noscript>
+    <script>
+      // If the app doesn't mount within 8s, offer a hard reload
+      setTimeout(function() {
+        var root = document.getElementById('root');
+        if (root && root.children.length === 0) {
+          root.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;background:#F3EEE4;font-family:Montserrat,sans-serif;color:#00203E;gap:16px;">'
+            + '<p style="font-size:14px;color:#7A8B9C;">Carregando nova versão...</p>'
+            + '<button onclick="location.reload(true)" style="padding:10px 24px;border-radius:8px;border:1px solid #CC915E;background:#CC915E;color:#fff;cursor:pointer;font-family:Montserrat,sans-serif;font-size:13px;">Recarregar</button>'
+            + '</div>';
+        }
+      }, 8000);
+    </script>
+    <script>
+      // Force-unregister any residual service workers and clear old caches
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(function(registrations) {
+          registrations.forEach(function(reg) {
+            reg.unregister().then(function() {
+              console.log('[SW] Unregistered residual service worker:', reg.scope);
+            });
+          });
+        });
+        if ('caches' in window) {
+          caches.keys().then(function(names) {
+            names.forEach(function(name) {
+              caches.delete(name);
+              console.log('[Cache] Deleted cache:', name);
+            });
+          });
+        }
+      }
+    </script>
   </body>
 </html>

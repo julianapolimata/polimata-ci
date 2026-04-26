@@ -134,8 +134,10 @@ const ModalNovoRisco = ({ onClose, onSaved, areas, projeto, areaFixa }) => {
   const canAdvanceStep1 = area && subprocesso && descRisco.trim()
   
   const canAdvanceStep2 = descControle.trim() && cat && freq && nat && car && sis && chave &&
-    (isAutomatic || quem.trim()) && quando.trim() && porque.trim() && como.trim() && 
-    onde.trim() && resultadoPremissa.trim() && resultado &&
+    (isAutomatic || quem.trim()) && quando.trim() && porque.trim() && como.trim() &&
+    onde.trim() && resultadoPremissa.trim()
+
+  const canSaveStep3 = resultado &&
     (resultado === 'efetivo' || inconsistencia.trim()) &&
     (melhoria === 'nao' || descMelhoria.trim()) &&
     impacto && probabilidade &&
@@ -198,95 +200,76 @@ const ModalNovoRisco = ({ onClose, onSaved, areas, projeto, areaFixa }) => {
     }
   }
 
-  // ═══ SALVAR NOVO RISCO (Passo 2) ═══
-  async function saveStep2() {
-    setSaving(true)
-    try {
-      const payload = {
-        ...novoRiscoData,
-        dc: descControle,
-        cat,
-        freq,
-        nat,
-        car,
-        sis,
-        chave,
-        premissa_quem: isAutomatic ? 'N/A' : quem,
-        premissa_quando: quando,
-        premissa_porque: porque,
-        premissa_como: como,
-        premissa_onde: onde,
-        premissa_resultado: resultadoPremissa,
-        r1: resultado,
-        incons: resultado !== 'efetivo' ? inconsistencia : null,
-        melhoria: melhoria === 'sim' ? true : false,
-        incons_ader: melhoria === 'sim' ? descMelhoria : null,
-        imp: parseInt(impacto),
-        prob: parseInt(probabilidade),
-        crit: criticidade,
-        crit_label: getCriticidadeLabel(criticidade).label,
-        dem_pa: temPA === 'sim' ? paDesc : null,
-        resp_pa: temPA === 'sim' ? paResp : null,
-        dt_pa: temPA === 'sim' ? paPrazo : null,
-        st_pa: temPA === 'sim' ? paStatus : null,
-        status_workflow: 'nao_iniciado',
-        ativo: true
-      }
+  // ═══ AVANÇAR DO PASSO 2 ═══
+  function saveStep2() {
+    setStep(3)
+  }
 
-      let result
-      if (novoRiscoData?.id) {
-        // Já inserido anteriormente (voltou do passo 3) → UPDATE
-        const { id, ...updatePayload } = payload
-        const { data: updated, error } = await supabase
-          .from('mrc')
-          .update(updatePayload)
-          .eq('id', novoRiscoData.id)
-          .select()
-        if (error) throw error
-        result = updated?.[0] || novoRiscoData
-      } else {
-        // Primeira vez → INSERT
-        const { data: inserted, error } = await supabase
-          .from('mrc')
-          .insert([payload])
-          .select()
-        if (error) throw error
-        result = inserted?.[0] || null
-      }
+  // ═══ SALVAR NO BANCO (chamado no Passo 3) ═══
+  async function salvarNoBanco() {
+    const payload = {
+      ...novoRiscoData,
+      dc: descControle,
+      cat, freq, nat, car, sis, chave,
+      premissa_quem: isAutomatic ? 'N/A' : quem,
+      premissa_quando: quando,
+      premissa_porque: porque,
+      premissa_como: como,
+      premissa_onde: onde,
+      premissa_resultado: resultadoPremissa,
+      r1: resultado,
+      incons: resultado !== 'efetivo' ? inconsistencia : null,
+      melhoria: melhoria === 'sim' ? true : false,
+      incons_ader: melhoria === 'sim' ? descMelhoria : null,
+      imp: parseInt(impacto),
+      prob: parseInt(probabilidade),
+      crit: criticidade,
+      crit_label: getCriticidadeLabel(criticidade).label,
+      dem_pa: temPA === 'sim' ? paDesc : null,
+      resp_pa: temPA === 'sim' ? paResp : null,
+      dt_pa: temPA === 'sim' ? paPrazo : null,
+      st_pa: temPA === 'sim' ? paStatus : null,
+      status_workflow: 'nao_iniciado',
+      ativo: true
+    }
 
-      setNovoRiscoData(result)
-      setStep(3)
-    } catch (err) {
-      console.error('Erro ao salvar Passo 2:', err)
-      alert('Erro ao salvar. Tente novamente.')
-    } finally {
-      setSaving(false)
+    if (novoRiscoData?.id) {
+      const { id, ...updatePayload } = payload
+      const { data: updated, error } = await supabase.from('mrc').update(updatePayload).eq('id', novoRiscoData.id).select()
+      if (error) throw error
+      return updated?.[0] || novoRiscoData
+    } else {
+      const { data: inserted, error } = await supabase.from('mrc').insert([payload]).select()
+      if (error) throw error
+      return inserted?.[0] || null
     }
   }
 
-  // ═══ GERAR FICHA EXCEL (Passo 3) ═══
+  // ═══ GERAR FICHA / SALVAR (Passo 3) ═══
   async function gerarFicha(comDownload = true) {
     setSaving(true)
     try {
-      // Atualizar status para em_analise (ficha gerada = pronto para teste)
-      const { error } = await supabase
-        .from('mrc')
-        .update({ status_workflow: 'em_analise' })
-        .eq('id', novoRiscoData.id)
+      // 1. Salvar no banco (INSERT ou UPDATE)
+      const saved = await salvarNoBanco()
+      if (!saved) throw new Error('Falha ao salvar no banco')
+      setNovoRiscoData(saved)
 
-      if (error) throw error
-
+      // 2. Se pediu ficha, atualizar status para em_analise
       if (comDownload) {
+        await supabase
+          .from('mrc')
+          .update({ status_workflow: 'em_analise' })
+          .eq('id', saved.id)
+
         // TODO: Implementar geração Excel aqui (reutilizar função do ModalAtualizar)
-        // Por enquanto apenas salvamos no banco e fechamos modal
-        alert('Ficha será gerada em breve. Função Excel em implementação.')
+        alert('Risco salvo com sucesso! Geração de ficha Excel em implementação.')
       }
 
-      onSaved?.(novoRiscoData)
+      onSaved?.(saved)
       onClose?.()
     } catch (err) {
-      console.error('Erro ao gerar ficha:', err)
-      alert('Erro ao gerar ficha. Tente novamente.')
+      console.error('Erro ao salvar:', err)
+      alert('Erro ao salvar. Tente novamente.')
     } finally {
       setSaving(false)
     }
@@ -647,29 +630,36 @@ const ModalNovoRisco = ({ onClose, onSaved, areas, projeto, areaFixa }) => {
                 </div>
               </div>
 
-              {/* Seção: Resultado do Teste */}
-              <div style={{ marginBottom: '2rem' }}>
-                <div style={{
-                  fontSize: '12px',
-                  fontWeight: 600,
-                  color: '#00203E',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.5px',
-                  marginBottom: '1rem',
-                  paddingBottom: '0.75rem',
-                  borderBottom: '2px solid #CC915E'
-                }}>
-                  4. Resultado da Análise
+            </div>
+          )}
+
+          {/* ─────────── PASSO 3: Avaliação ─────────── */}
+          {step === 3 && (
+            <div>
+              {/* Context Card */}
+              <div style={{ background: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: 8, padding: 12, marginBottom: 24 }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
+                  <div style={{ borderRight: '1px solid #e5e7eb', paddingRight: 12 }}>
+                    <div style={{ fontSize: 9, fontWeight: 700, color: '#7A8B9C', textTransform: 'uppercase', marginBottom: 4 }}>Ref. Risco</div>
+                    <div style={{ fontSize: 12, color: '#00203E', fontWeight: 500 }}>{novoRiscoData?.rr}</div>
+                  </div>
+                  <div style={{ borderRight: '1px solid #e5e7eb', paddingRight: 12 }}>
+                    <div style={{ fontSize: 9, fontWeight: 700, color: '#7A8B9C', textTransform: 'uppercase', marginBottom: 4 }}>Ref. Controle</div>
+                    <div style={{ fontSize: 12, color: '#00203E', fontWeight: 500 }}>{novoRiscoData?.rc}</div>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 9, fontWeight: 700, color: '#7A8B9C', textTransform: 'uppercase', marginBottom: 4 }}>Subprocesso</div>
+                    <div style={{ fontSize: 12, color: '#00203E', fontWeight: 500 }}>{subprocesso}</div>
+                  </div>
                 </div>
-                <label style={{
-                  display: 'block',
-                  fontSize: '13px',
-                  fontWeight: 500,
-                  color: '#00203E',
-                  marginBottom: '0.8rem',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.3px'
-                }}>
+              </div>
+
+              {/* Resultado do Teste */}
+              <div style={{ marginBottom: '2rem' }}>
+                <div style={{ fontSize: '12px', fontWeight: 600, color: '#00203E', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '1rem', paddingBottom: '0.75rem', borderBottom: '2px solid #CC915E' }}>
+                  1. Resultado da Análise
+                </div>
+                <label style={{ display: 'block', fontSize: '13px', fontWeight: 500, color: '#00203E', marginBottom: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.3px' }}>
                   Qual foi o resultado? <span style={{ color: '#E24B4A' }}>*</span>
                 </label>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
@@ -678,136 +668,38 @@ const ModalNovoRisco = ({ onClose, onSaved, areas, projeto, areaFixa }) => {
                     { value: 'inefetivo', label: 'Inefetivo', badge: '#FFF3E0', badgeText: '#E65100', badgeLabel: 'Falhou' },
                     { value: 'gap', label: 'GAP', badge: '#FFEBEE', badgeText: '#C62828', badgeLabel: 'Sem Controle' }
                   ].map(opt => (
-                    <div
-                      key={opt.value}
-                      onClick={() => handleResultadoChange(opt.value)}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '1rem',
-                        padding: '0.8rem',
-                        border: resultado === opt.value ? '2px solid #CC915E' : '1px solid #E0E0E0',
-                        borderRadius: '4px',
-                        background: resultado === opt.value ? '#F9F7F3' : 'white',
-                        cursor: 'pointer'
-                      }}
-                    >
-                      <input
-                        type="radio"
-                        name="resultado"
-                        value={opt.value}
-                        checked={resultado === opt.value}
-                        onChange={() => {}}
-                        style={{ width: '18px', height: '18px', cursor: 'pointer', accentColor: '#CC915E' }}
-                      />
+                    <div key={opt.value} onClick={() => handleResultadoChange(opt.value)} style={{ display: 'flex', alignItems: 'center', gap: '1rem', padding: '0.8rem', border: resultado === opt.value ? '2px solid #CC915E' : '1px solid #E0E0E0', borderRadius: '4px', background: resultado === opt.value ? '#F9F7F3' : 'white', cursor: 'pointer' }}>
+                      <input type="radio" name="resultado" value={opt.value} checked={resultado === opt.value} onChange={() => {}} style={{ width: '18px', height: '18px', cursor: 'pointer', accentColor: '#CC915E' }} />
                       <span style={{ fontSize: '14px', fontWeight: 500 }}>{opt.label}</span>
-                      <span style={{
-                        display: 'inline-block',
-                        padding: '0.2rem 0.6rem',
-                        borderRadius: '3px',
-                        fontSize: '11px',
-                        fontWeight: 600,
-                        textTransform: 'uppercase',
-                        background: opt.badge,
-                        color: opt.badgeText
-                      }}>
-                        {opt.badgeLabel}
-                      </span>
+                      <span style={{ display: 'inline-block', padding: '0.2rem 0.6rem', borderRadius: '3px', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', background: opt.badge, color: opt.badgeText }}>{opt.badgeLabel}</span>
                     </div>
                   ))}
                 </div>
               </div>
 
-              {/* Alerta Inconsistência */}
               {showInconsistenciaAlert && (
-                <div style={{
-                  background: '#FFF3E0',
-                  borderLeft: '3px solid #F57C00',
-                  padding: '0.8rem',
-                  borderRadius: '4px',
-                  marginBottom: '1rem',
-                  fontSize: '12px',
-                  color: '#E65100'
-                }}>
+                <div style={{ background: '#FFF3E0', borderLeft: '3px solid #F57C00', padding: '0.8rem', borderRadius: '4px', marginBottom: '1rem', fontSize: '12px', color: '#E65100' }}>
                   ⚠️ Ao mudar o resultado do teste, as informações do campo "Inconsistências" serão perdidas
                 </div>
               )}
 
-              {/* Inconsistência (se Inefetivo/GAP) */}
               {showInconsistencia && (
-                <div style={{
-                  background: '#F9F7F3',
-                  borderLeft: '3px solid #CC915E',
-                  padding: '1.5rem',
-                  borderRadius: '4px',
-                  marginBottom: '1.5rem'
-                }}>
-                  <div style={{
-                    fontSize: '12px',
-                    fontWeight: 600,
-                    color: '#00203E',
-                    textTransform: 'uppercase',
-                    marginBottom: '1rem',
-                    letterSpacing: '0.5px'
-                  }}>
-                    Inconsistência Identificada
-                  </div>
-                  <label style={{
-                    display: 'block',
-                    fontSize: '13px',
-                    fontWeight: 500,
-                    color: '#00203E',
-                    marginBottom: '0.5rem',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.3px'
-                  }}>
+                <div style={{ background: '#F9F7F3', borderLeft: '3px solid #CC915E', padding: '1.5rem', borderRadius: '4px', marginBottom: '1.5rem' }}>
+                  <div style={{ fontSize: '12px', fontWeight: 600, color: '#00203E', textTransform: 'uppercase', marginBottom: '1rem', letterSpacing: '0.5px' }}>Inconsistência Identificada</div>
+                  <label style={{ display: 'block', fontSize: '13px', fontWeight: 500, color: '#00203E', marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.3px' }}>
                     Qual inconsistência foi encontrada? <span style={{ color: '#E24B4A' }}>*</span>
                   </label>
-                  <textarea
-                    value={inconsistencia}
-                    onChange={e => setInconsistencia(e.target.value)}
-                    style={{
-                      width: '100%',
-                      padding: '0.8rem',
-                      border: '1px solid #D0D0D0',
-                      borderRadius: '4px',
-                      fontFamily: 'Montserrat, sans-serif',
-                      fontSize: '14px',
-                      minHeight: '80px',
-                      resize: 'vertical'
-                    }}
-                    placeholder="Descrever falha..."
-                  />
+                  <textarea value={inconsistencia} onChange={e => setInconsistencia(e.target.value)} style={{ width: '100%', padding: '0.8rem', border: '1px solid #D0D0D0', borderRadius: '4px', fontFamily: 'Montserrat, sans-serif', fontSize: '14px', minHeight: '80px', resize: 'vertical' }} placeholder="Descrever falha..." />
                 </div>
               )}
 
-              {/* Melhoria (sempre) */}
+              {/* Melhoria */}
               <div style={{ marginBottom: '2rem' }}>
-                <label style={{
-                  display: 'block',
-                  fontSize: '13px',
-                  fontWeight: 500,
-                  color: '#00203E',
-                  marginBottom: '0.8rem',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.3px'
-                }}>
-                  Melhoria identificada?
-                </label>
+                <label style={{ display: 'block', fontSize: '13px', fontWeight: 500, color: '#00203E', marginBottom: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.3px' }}>Melhoria identificada?</label>
                 <div style={{ display: 'flex', gap: '1rem' }}>
-                  {[
-                    { value: 'sim', label: 'Sim' },
-                    { value: 'nao', label: 'Não' }
-                  ].map(opt => (
+                  {[{ value: 'sim', label: 'Sim' }, { value: 'nao', label: 'Não' }].map(opt => (
                     <label key={opt.value} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', cursor: 'pointer' }}>
-                      <input
-                        type="radio"
-                        name="melhoria"
-                        value={opt.value}
-                        checked={melhoria === opt.value}
-                        onChange={e => setMelhoria(e.target.value)}
-                        style={{ accentColor: '#CC915E' }}
-                      />
+                      <input type="radio" name="melhoria" value={opt.value} checked={melhoria === opt.value} onChange={e => setMelhoria(e.target.value)} style={{ accentColor: '#CC915E' }} />
                       <span style={{ fontSize: '14px' }}>{opt.label}</span>
                     </label>
                   ))}
@@ -816,139 +708,42 @@ const ModalNovoRisco = ({ onClose, onSaved, areas, projeto, areaFixa }) => {
 
               {showDescMelhoria && (
                 <div style={{ marginBottom: '2rem' }}>
-                  <label style={{
-                    display: 'block',
-                    fontSize: '13px',
-                    fontWeight: 500,
-                    color: '#00203E',
-                    marginBottom: '0.5rem',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.3px'
-                  }}>
+                  <label style={{ display: 'block', fontSize: '13px', fontWeight: 500, color: '#00203E', marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.3px' }}>
                     Descrição da melhoria <span style={{ color: '#E24B4A' }}>*</span>
                   </label>
-                  <textarea
-                    value={descMelhoria}
-                    onChange={e => setDescMelhoria(e.target.value)}
-                    style={{
-                      width: '100%',
-                      padding: '0.8rem',
-                      border: '1px solid #D0D0D0',
-                      borderRadius: '4px',
-                      fontFamily: 'Montserrat, sans-serif',
-                      fontSize: '14px',
-                      minHeight: '80px',
-                      resize: 'vertical'
-                    }}
-                    placeholder="Melhorias identificadas..."
-                  />
+                  <textarea value={descMelhoria} onChange={e => setDescMelhoria(e.target.value)} style={{ width: '100%', padding: '0.8rem', border: '1px solid #D0D0D0', borderRadius: '4px', fontFamily: 'Montserrat, sans-serif', fontSize: '14px', minHeight: '80px', resize: 'vertical' }} placeholder="Melhorias identificadas..." />
                 </div>
               )}
 
               {/* Criticidade */}
               <div style={{ marginBottom: '2rem' }}>
-                <div style={{
-                  fontSize: '12px',
-                  fontWeight: 600,
-                  color: '#00203E',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.5px',
-                  marginBottom: '1rem',
-                  paddingBottom: '0.75rem',
-                  borderBottom: '2px solid #CC915E'
-                }}>
-                  5. Avaliação da Criticidade
+                <div style={{ fontSize: '12px', fontWeight: 600, color: '#00203E', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '1rem', paddingBottom: '0.75rem', borderBottom: '2px solid #CC915E' }}>
+                  2. Avaliação da Criticidade
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginBottom: '1rem' }}>
                   <div>
-                    <label style={{
-                      display: 'block',
-                      fontSize: '13px',
-                      fontWeight: 500,
-                      color: '#00203E',
-                      marginBottom: '0.5rem',
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.3px'
-                    }}>
+                    <label style={{ display: 'block', fontSize: '13px', fontWeight: 500, color: '#00203E', marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.3px' }}>
                       Impacto <span style={{ color: '#E24B4A' }}>*</span>
                     </label>
-                    <select
-                      value={impacto}
-                      onChange={e => setImpacto(e.target.value)}
-                      style={{
-                        width: '100%',
-                        padding: '0.8rem',
-                        border: '1px solid #D0D0D0',
-                        borderRadius: '4px',
-                        fontFamily: 'Montserrat, sans-serif',
-                        fontSize: '14px'
-                      }}
-                    >
+                    <select value={impacto} onChange={e => setImpacto(e.target.value)} style={{ width: '100%', padding: '0.8rem', border: '1px solid #D0D0D0', borderRadius: '4px', fontFamily: 'Montserrat, sans-serif', fontSize: '14px' }}>
                       <option value="">Selecionar...</option>
-                      <option value="1">Baixo</option>
-                      <option value="2">Moderado</option>
-                      <option value="3">Alto</option>
-                      <option value="4">Crítico</option>
-                      <option value="0">N/A</option>
+                      <option value="1">Baixo</option><option value="2">Moderado</option><option value="3">Alto</option><option value="4">Crítico</option><option value="0">N/A</option>
                     </select>
                   </div>
                   <div>
-                    <label style={{
-                      display: 'block',
-                      fontSize: '13px',
-                      fontWeight: 500,
-                      color: '#00203E',
-                      marginBottom: '0.5rem',
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.3px'
-                    }}>
+                    <label style={{ display: 'block', fontSize: '13px', fontWeight: 500, color: '#00203E', marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.3px' }}>
                       Probabilidade <span style={{ color: '#E24B4A' }}>*</span>
                     </label>
-                    <select
-                      value={probabilidade}
-                      onChange={e => setProbabilidade(e.target.value)}
-                      style={{
-                        width: '100%',
-                        padding: '0.8rem',
-                        border: '1px solid #D0D0D0',
-                        borderRadius: '4px',
-                        fontFamily: 'Montserrat, sans-serif',
-                        fontSize: '14px'
-                      }}
-                    >
+                    <select value={probabilidade} onChange={e => setProbabilidade(e.target.value)} style={{ width: '100%', padding: '0.8rem', border: '1px solid #D0D0D0', borderRadius: '4px', fontFamily: 'Montserrat, sans-serif', fontSize: '14px' }}>
                       <option value="">Selecionar...</option>
-                      <option value="1">Baixa</option>
-                      <option value="2">Média</option>
-                      <option value="3">Alta</option>
-                      <option value="4">Extrema</option>
-                      <option value="0">N/A</option>
+                      <option value="1">Baixa</option><option value="2">Média</option><option value="3">Alta</option><option value="4">Extrema</option><option value="0">N/A</option>
                     </select>
                   </div>
                 </div>
                 {criticidade && (
-                  <div style={{
-                    background: '#F3EEE4',
-                    border: '1px solid #E0D5C7',
-                    padding: '1rem',
-                    borderRadius: '4px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '1rem'
-                  }}>
-                    <span style={{
-                      padding: '0.4rem 0.8rem',
-                      borderRadius: '4px',
-                      fontWeight: 600,
-                      fontSize: '12px',
-                      textTransform: 'uppercase',
-                      background: getCriticidadeLabel(criticidade).color,
-                      color: getCriticidadeLabel(criticidade).colorText
-                    }}>
-                      {getCriticidadeLabel(criticidade).label}
-                    </span>
-                    <span style={{ fontSize: '13px', color: '#7A8B9C', fontWeight: 500 }}>
-                      Criticidade: {criticidade} (Impacto {impacto} × Prob {probabilidade}) / {getCriticidadeLabel(criticidade).label}
-                    </span>
+                  <div style={{ background: '#F3EEE4', border: '1px solid #E0D5C7', padding: '1rem', borderRadius: '4px', display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                    <span style={{ padding: '0.4rem 0.8rem', borderRadius: '4px', fontWeight: 600, fontSize: '12px', textTransform: 'uppercase', background: getCriticidadeLabel(criticidade).color, color: getCriticidadeLabel(criticidade).colorText }}>{getCriticidadeLabel(criticidade).label}</span>
+                    <span style={{ fontSize: '13px', color: '#7A8B9C', fontWeight: 500 }}>Criticidade: {criticidade} (Impacto {impacto} × Prob {probabilidade})</span>
                   </div>
                 )}
               </div>
@@ -1156,82 +951,7 @@ const ModalNovoRisco = ({ onClose, onSaved, areas, projeto, areaFixa }) => {
             </div>
           )}
 
-          {/* ─────────── PASSO 3 ─────────── */}
-          {step === 3 && (
-            <div>
-              <div style={{
-                background: '#E8F5E9',
-                border: '1px solid #A5D6A7',
-                padding: '1rem',
-                borderRadius: '4px',
-                marginBottom: '1.5rem',
-                fontSize: '14px',
-                color: '#1B5E20'
-              }}>
-                ✓ Tudo preenchido! Revise os dados abaixo e escolha como prosseguir.
-              </div>
-
-              {/* Resumo dos dados */}
-              <div style={{
-                background: '#F9F7F3',
-                border: '1px solid #E0D5C7',
-                padding: '1.5rem',
-                borderRadius: '4px',
-                marginBottom: '2rem',
-                display: 'grid',
-                gridTemplateColumns: '1fr 1fr',
-                gap: '1rem'
-              }}>
-                <div>
-                  <div style={{ fontSize: '12px', fontWeight: 600, color: '#7A8B9C', textTransform: 'uppercase' }}>Ref. Risco</div>
-                  <div style={{ fontSize: '16px', fontWeight: 600, color: '#00203E' }}>{novoRiscoData?.rr}</div>
-                </div>
-                <div>
-                  <div style={{ fontSize: '12px', fontWeight: 600, color: '#7A8B9C', textTransform: 'uppercase' }}>Ref. Controle</div>
-                  <div style={{ fontSize: '16px', fontWeight: 600, color: '#00203E' }}>{novoRiscoData?.rc}</div>
-                </div>
-                <div>
-                  <div style={{ fontSize: '12px', fontWeight: 600, color: '#7A8B9C', textTransform: 'uppercase' }}>Resultado</div>
-                  <div style={{ fontSize: '16px', fontWeight: 600, color: '#00203E', textTransform: 'capitalize' }}>{resultado}</div>
-                </div>
-                <div>
-                  <div style={{ fontSize: '12px', fontWeight: 600, color: '#7A8B9C', textTransform: 'uppercase' }}>Criticidade</div>
-                  <div style={{
-                    fontSize: '16px',
-                    fontWeight: 600,
-                    color: getCriticidadeLabel(criticidade).colorText,
-                    background: getCriticidadeLabel(criticidade).color,
-                    padding: '0.4rem 0.8rem',
-                    borderRadius: '4px',
-                    textTransform: 'uppercase',
-                    display: 'inline-block'
-                  }}>
-                    {getCriticidadeLabel(criticidade).label}
-                  </div>
-                </div>
-              </div>
-
-              {/* Instruções */}
-              <div style={{
-                fontSize: '12px',
-                fontWeight: 600,
-                color: '#00203E',
-                textTransform: 'uppercase',
-                letterSpacing: '0.5px',
-                marginBottom: '1rem',
-                paddingBottom: '0.75rem',
-                borderBottom: '2px solid #CC915E'
-              }}>
-                Próximos Passos
-              </div>
-              <ol style={{ fontSize: '14px', lineHeight: '1.8', color: '#00203E', paddingLeft: '1.5rem' }}>
-                <li><strong>Baixe a Ficha de Risco</strong> — Contém todas as informações do risco e premissas do controle</li>
-                <li><strong>Execute o teste</strong> — Preencha todos os passos de teste, realize o teste e armazene as evidências na ficha</li>
-                <li><strong>Volte ao sistema</strong> — Registre o resultado do teste e faça a avaliação da criticidade</li>
-                <li><strong>Finalize a análise</strong> — Sistema gera/atualiza o grau de maturidade conforme resultado do teste e criticidade do risco</li>
-              </ol>
-            </div>
-          )}
+          {/* old step 3 removed — avaliação agora está no novo passo 3 acima */}
         </div>
 
         {/* FOOTER */}
@@ -1251,10 +971,10 @@ const ModalNovoRisco = ({ onClose, onSaved, areas, projeto, areaFixa }) => {
           )}
           {step === 3 && (
             <>
-              <button onClick={() => gerarFicha(false)} disabled={saving} style={{ flex: 1, padding: '12px 16px', border: '1px solid #e5e7eb', borderRadius: 6, fontFamily: 'Montserrat, sans-serif', fontSize: 13, fontWeight: 700, cursor: 'pointer', background: 'white', color: '#00203E', opacity: saving ? 0.5 : 1 }}>
+              <button onClick={() => gerarFicha(false)} disabled={!canSaveStep3 || saving} style={{ flex: 1, padding: '12px 16px', border: '1px solid #e5e7eb', borderRadius: 6, fontFamily: 'Montserrat, sans-serif', fontSize: 13, fontWeight: 700, cursor: 'pointer', background: 'white', color: '#00203E', opacity: !canSaveStep3 || saving ? 0.5 : 1 }}>
                 Salvar sem ficha
               </button>
-              <button onClick={() => gerarFicha(true)} disabled={saving} style={{ flex: 1, padding: '12px 16px', border: 'none', borderRadius: 6, fontFamily: 'Montserrat, sans-serif', fontSize: 13, fontWeight: 700, cursor: 'pointer', background: '#CC915E', color: 'white', opacity: saving ? 0.5 : 1 }}>
+              <button onClick={() => gerarFicha(true)} disabled={!canSaveStep3 || saving} style={{ flex: 1, padding: '12px 16px', border: 'none', borderRadius: 6, fontFamily: 'Montserrat, sans-serif', fontSize: 13, fontWeight: 700, cursor: 'pointer', background: '#CC915E', color: 'white', opacity: !canSaveStep3 || saving ? 0.5 : 1 }}>
                 {saving ? 'Gerando...' : 'Salvar e gerar ficha'}
               </button>
             </>
