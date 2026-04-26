@@ -208,8 +208,8 @@ export default function Dashboard() {
           {sidebarOpen && areaExpanded && areasCalc.map(a => (
             <button key={a.id} className={`nav-item${location.pathname === '/area/' + a.id ? ' active' : ''}`}
               onClick={() => navigate('/area/' + a.id)}
-              style={{ padding: '5px 16px 5px 28px', fontSize: 11, gap: 6 }}>
-              <span style={{ fontSize: 10 }}>›</span> {a.nome}
+              style={{ padding: '8px 16px 8px 28px', fontSize: 13, gap: 6 }}>
+              <span style={{ fontSize: 12, color: 'var(--copper)' }}>›</span> {a.nome}
             </button>
           ))}
           {sidebarOpen && <div className="sb-sep">Operação</div>}
@@ -258,7 +258,7 @@ function SideNavItem({ icon, label, active, onClick, open, badge }) {
     <button className={`nav-item ${active ? 'active' : ''}`} onClick={onClick} style={open ? {} : { justifyContent: 'center', padding: '9px 0' }} title={open ? undefined : label}>
       <span className="nav-icon">{icon}</span>
       {open && <span>{label}</span>}
-      {open && badge && <span style={{ marginLeft: 'auto', fontSize: 9, background: 'rgba(204,145,94,.15)', padding: '1px 6px', borderRadius: 999, color: 'var(--copper)' }}>{badge}</span>}
+      {open && badge && <span style={{ marginLeft: 'auto', fontSize: 11, background: 'rgba(204,145,94,.15)', padding: '2px 8px', borderRadius: 999, color: 'var(--copper)' }}>{badge}</span>}
     </button>
   )
 }
