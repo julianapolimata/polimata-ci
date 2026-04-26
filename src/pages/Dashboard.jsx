@@ -801,7 +801,11 @@ function PorArea({ projeto, areasCalc, todosControles, loading, navigate, loadDa
               <th style={{ fontSize: 10, fontWeight: 500, color: 'var(--lt-text3)', background: 'var(--lt-card)', padding: '12px 16px', position: 'sticky', top: 0, zIndex: 2, width: 70, minWidth: 70, borderBottom: '1px solid var(--lt-border)' }}></th>
             </tr></thead>
             <tbody>{paSort.sortData(cf).map((c, i) => {
-              const frl = (val) => (!val || val === 'Teste Não Realizado') ? 'Não iniciado' : (val === 'Concluído' || val === 'concluido') ? 'Concluído' : val
+              const faseBdg = (val) => {
+                if (!val || val === 'Teste Não Realizado') return <span style={{ fontSize: 9, color: 'var(--lt-text3)', fontStyle: 'italic' }}>Não iniciado</span>
+                const label = val.charAt(0).toUpperCase() + val.slice(1)
+                return badgeR(label)
+              }
               return (
               <tr key={c.id||i} onClick={() => setModalRow(c)} style={{ cursor: 'pointer' }} onMouseEnter={e => e.currentTarget.style.background='rgba(204,145,94,0.04)'} onMouseLeave={e => e.currentTarget.style.background=''}>
                 <Td w={paResize.getWidth('dt_ult',100)}>{c.dt_ult ? new Date(c.dt_ult).toLocaleDateString('pt-BR') : '—'}</Td>
@@ -813,7 +817,7 @@ function PorArea({ projeto, areasCalc, todosControles, loading, navigate, loadDa
                 {/* Colunas de fase */}
                 {[c.r1, c.st_pa, c.r_ader, c.r3, c.r_f4c1, c.r_f4c2, c.r_f5].map((val, fi) => (
                   <td key={fi} style={{ ...tdS, textAlign: 'center', width: paResize.getWidth(['r1','st_pa','r_ader','r3','r_f4c1','r_f4c2','r_f5'][fi], 100), minWidth: 100 }}>
-                    <span style={{ fontSize: 10, fontWeight: 500 }}>{frl(val)}</span>
+                    {faseBdg(val)}
                   </td>
                 ))}
                 <td style={{ ...tdS, textAlign: 'center', width: 90, minWidth: 90 }}>

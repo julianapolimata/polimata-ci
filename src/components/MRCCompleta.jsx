@@ -368,10 +368,14 @@ const MRC_COLS = [
   { id:'hist_f5', label:'Fase 5\nAuditoria Interna', k:'r_f5', fase: true },
 ]
 
-function faseResultLabel(val) {
-  if (!val || val === 'Teste Não Realizado') return 'Não iniciado'
-  if (val === 'Concluído' || val === 'concluido') return 'Concluído'
-  return val
+function faseBadge(val) {
+  if (!val || val === 'Teste Não Realizado') {
+    return <span style={{ fontSize: 9, color: 'var(--lt-text3)', fontStyle: 'italic' }}>Não iniciado</span>
+  }
+  // Capitalizar primeira letra
+  const label = val.charAt(0).toUpperCase() + val.slice(1)
+  const cls = R1_MAP[val] || R1_MAP[label] || 'b-na'
+  return <span className={`bd ${cls}`}>{label}</span>
 }
 
 function TabelaMRC({ rows, visCols, onOpenModal, expandAll }) {
@@ -430,8 +434,8 @@ function TabelaMRC({ rows, visCols, onOpenModal, expandAll }) {
           {v('crit')&&<td style={{minWidth:getWidth('crit',undefined)}}>{critBadge(row.crit)}</td>}
           {/* Colunas de histórico por fase */}
           {['hist_f1','hist_f2d','hist_f2a','hist_f3','hist_f4c1','hist_f4c2','hist_f5'].map(fid => v(fid) && (
-            <td key={fid} style={{ minWidth: getWidth(fid, 100), textAlign: 'center', fontSize: 10 }}>
-              <span style={{ fontSize: 10, fontWeight: 500, color: 'var(--lt-text)' }}>{faseResultLabel(getFaseVal(row, fid))}</span>
+            <td key={fid} style={{ minWidth: getWidth(fid, 100), textAlign: 'center' }}>
+              {faseBadge(getFaseVal(row, fid))}
             </td>
           ))}
         </tr>
