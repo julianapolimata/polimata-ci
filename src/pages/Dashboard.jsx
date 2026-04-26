@@ -784,17 +784,18 @@ function PorArea({ projeto, areasCalc, todosControles, loading, navigate, loadDa
               })}
               {/* Colunas de fase com headers coloridos */}
               {[
-                { h: 'Fase 1\nDiagnóstico', w: 100, k: 'r1', color: '#00203E' },
-                { h: 'Fase 2\nDesenho', w: 100, k: 'st_pa', color: '#1D3B5C' },
-                { h: 'Fase 2\nAderência', w: 100, k: 'r_ader', color: '#1D3B5C' },
-                { h: 'Fase 3\nRevisão Integral', w: 110, k: 'r3', color: '#660033' },
-                { h: 'Fase 4\nAI - Ciclo 1', w: 100, k: 'r_f4c1', color: '#660066' },
-                { h: 'Fase 4\nAI - Ciclo 2', w: 100, k: 'r_f4c2', color: '#660066' },
-                { h: 'Fase 5\nAuditoria Interna', w: 110, k: 'r_f5', color: '#A6512F' },
+                { h1: 'Fase 1', h2: 'Diagnóstico', w: 110, k: 'r1', color: '#00203E' },
+                { h1: 'Fase 2', h2: 'Desenho', w: 110, k: 'st_pa', color: '#1D3B5C' },
+                { h1: 'Fase 2', h2: 'Aderência', w: 110, k: 'r_ader', color: '#1D3B5C' },
+                { h1: 'Fase 3', h2: 'Revisão Integral', w: 110, k: 'r3', color: '#660033' },
+                { h1: 'Fase 4', h2: 'AI - Ciclo 1', w: 110, k: 'r_f4c1', color: '#660066' },
+                { h1: 'Fase 4', h2: 'AI - Ciclo 2', w: 110, k: 'r_f4c2', color: '#660066' },
+                { h1: 'Fase 5', h2: 'Auditoria Interna', w: 110, k: 'r_f5', color: '#A6512F' },
               ].map((col, i) => {
                 const cw = paResize.getWidth(col.k, col.w)
-                return <th key={`f${i}`} className={`th-sort${paSort.sortKey===col.k?' sorted':''}`} onClick={() => paSort.toggleSort(col.k)} style={{ fontSize: 9, fontWeight: 600, letterSpacing: 0.3, color: 'white', background: col.color, padding: '8px 6px', textAlign: 'center', whiteSpace: 'pre-line', lineHeight: 1.3, position: 'sticky', top: 0, zIndex: 2, width: cw, minWidth: cw, borderBottom: '1px solid var(--lt-border)', cursor: 'pointer', userSelect: 'none' }}>
-                  {col.h}<span className="sort-arrow" style={{ color: 'rgba(255,255,255,0.7)' }}>{paSort.sortIndicator(col.k)}</span>
+                return <th key={`f${i}`} className={`th-sort${paSort.sortKey===col.k?' sorted':''}`} onClick={() => paSort.toggleSort(col.k)} style={{ color: 'white', background: col.color, padding: '8px 8px', textAlign: 'center', verticalAlign: 'middle', position: 'sticky', top: 0, zIndex: 2, width: cw, minWidth: cw, borderBottom: '1px solid var(--lt-border)', borderLeft: '1px solid rgba(255,255,255,0.15)', cursor: 'pointer', userSelect: 'none' }}>
+                  <div style={{ fontSize: 8, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5, opacity: 0.85 }}>{col.h1}</div>
+                  <div style={{ fontSize: 9, fontWeight: 600, marginTop: 2 }}>{col.h2}</div>
                   <span className="resize-handle" onClick={e => e.stopPropagation()} onMouseDown={e => paResize.onResizeStart(e, col.k)} />
                 </th>
               })}

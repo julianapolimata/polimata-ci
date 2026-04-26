@@ -394,14 +394,23 @@ function TabelaMRC({ rows, visCols, onOpenModal, expandAll }) {
     <div className="tbl-sc"><table><thead><tr>
       {MRC_COLS.filter(c => v(c.id)).map(c => {
         const faseColor = c.fase ? FASE_HEADER_COLORS[c.id] : null
+        if (faseColor) {
+          const [linha1, linha2] = c.label.split('\n')
+          return (
+            <th key={c.id} className={`th-sort${sortKey===c.k?' sorted':''}`}
+              style={{ minWidth: getWidth(c.id, 110), width: 110, background: faseColor, color: 'white', textAlign: 'center', padding: '8px 8px', verticalAlign: 'middle', borderLeft: '1px solid rgba(255,255,255,0.15)' }}
+              onClick={() => toggleSort(c.k)}>
+              <div style={{ fontSize: 8, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5, opacity: 0.85 }}>{linha1}</div>
+              <div style={{ fontSize: 9, fontWeight: 600, marginTop: 2 }}>{linha2}</div>
+              <span className="resize-handle" onClick={e => e.stopPropagation()} onMouseDown={e => onResizeStart(e, c.id)} />
+            </th>
+          )
+        }
         return (
           <th key={c.id} className={`th-sort${sortKey===c.k?' sorted':''}`}
-            style={{
-              minWidth: getWidth(c.id, c.fase ? 100 : undefined),
-              ...(faseColor ? { background: faseColor, color: 'white', fontSize: 9, lineHeight: 1.3, textAlign: 'center', padding: '8px 6px', whiteSpace: 'pre-line' } : {})
-            }}
+            style={{ minWidth: getWidth(c.id, undefined) }}
             onClick={() => toggleSort(c.k)}>
-            {c.label}<span className="sort-arrow" style={faseColor ? { color: 'rgba(255,255,255,0.7)' } : {}}>{sortIndicator(c.k)}</span>
+            {c.label}<span className="sort-arrow">{sortIndicator(c.k)}</span>
             <span className="resize-handle" onClick={e => e.stopPropagation()} onMouseDown={e => onResizeStart(e, c.id)} />
           </th>
         )
