@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../../lib/supabase'
+import { useSort } from '../../lib/useTableFeatures'
 
 export default function ClientesConfig() {
   const [clientes, setClientes] = useState([])
@@ -222,6 +223,8 @@ function DetalheCliente({ cliente, onBack }) {
   const [saving, setSaving] = useState(false)
   const [editandoProj, setEditandoProj] = useState(null)
   const [novoProj, setNovoProj] = useState(false)
+  const areaSort = useSort()
+  const projSort = useSort()
 
   // usa o primeiro projeto como padrão para áreas
   const projetoId = projetos[0]?.id || cliente.projetos?.[0]?.id
@@ -328,9 +331,14 @@ function DetalheCliente({ cliente, onBack }) {
               {novaArea && <AreaForm area={{nome:'',prefixo:'',peso:'',gerente:'',resp_processo:''}} onSave={salvarArea} onCancel={()=>setNovaArea(false)} saving={saving} />}
               <div className="cfg-table-wrap">
                 <table className="cfg-table">
-                  <thead><tr><th>Processo</th><th>Prefixo</th><th>Peso</th><th>Gerente</th><th>Resp. Processo</th><th style={{width:80}}></th></tr></thead>
+                  <thead><tr>
+                    {[{h:'Processo',k:'nome'},{h:'Prefixo',k:'prefixo'},{h:'Peso',k:'peso'},{h:'Gerente',k:'gerente'},{h:'Resp. Processo',k:'resp_processo'}].map(c => (
+                      <th key={c.k} className={`th-sort${areaSort.sortKey===c.k?' sorted':''}`} onClick={() => areaSort.toggleSort(c.k)} style={{cursor:'pointer',userSelect:'none'}}>{c.h}<span className="sort-arrow">{areaSort.sortIndicator(c.k)}</span></th>
+                    ))}
+                    <th style={{width:80}}></th>
+                  </tr></thead>
                   <tbody>
-                    {areas.map(a => (
+                    {areaSort.sortData(areas).map(a => (
                       editandoArea?.id===a.id ? (
                         <tr key={a.id}><td colSpan={6}><AreaForm area={editandoArea} onSave={salvarArea} onCancel={()=>setEditandoArea(null)} saving={saving} inline /></td></tr>
                       ) : (
@@ -388,9 +396,14 @@ function DetalheCliente({ cliente, onBack }) {
 
               <div className="cfg-table-wrap">
                 <table className="cfg-table">
-                  <thead><tr><th>Nome do Projeto</th><th>Fases</th><th>Matriz</th><th>Status</th><th style={{width:80}}></th></tr></thead>
+                  <thead><tr>
+                    {[{h:'Nome do Projeto',k:'nome'},{h:'Fases',k:'num_fases'},{h:'Matriz',k:'matriz_tamanho'},{h:'Status',k:'ativo'}].map(c => (
+                      <th key={c.k} className={`th-sort${projSort.sortKey===c.k?' sorted':''}`} onClick={() => projSort.toggleSort(c.k)} style={{cursor:'pointer',userSelect:'none'}}>{c.h}<span className="sort-arrow">{projSort.sortIndicator(c.k)}</span></th>
+                    ))}
+                    <th style={{width:80}}></th>
+                  </tr></thead>
                   <tbody>
-                    {projetos.map(p => (
+                    {projSort.sortData(projetos).map(p => (
                       editandoProj?.id === p.id ? (
                         <tr key={p.id}>
                           <td colSpan={5}>

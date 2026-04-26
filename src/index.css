@@ -472,6 +472,19 @@ tr:hover td { background: rgba(204,145,94,0.03); }
 .tbl-sc::-webkit-scrollbar-thumb { background: rgba(0,32,62,0.2); border-radius: 3px; }
 .tbl-sc::-webkit-scrollbar-thumb:hover { background: rgba(0,32,62,0.35); }
 
+/* ── Sortable + Resizable table headers ── */
+th.th-sort { cursor: pointer; user-select: none; position: relative; }
+th.th-sort:hover { background: rgba(204,145,94,0.06) !important; }
+th.th-sort .sort-arrow { opacity: 0.5; font-size: 8px; margin-left: 3px; }
+th.th-sort.sorted .sort-arrow { opacity: 1; color: var(--copper); }
+.resize-handle {
+  position: absolute; right: 0; top: 0; bottom: 0; width: 5px;
+  cursor: col-resize; z-index: 3; background: transparent;
+}
+.resize-handle:hover, .resize-handle:active { background: rgba(204,145,94,0.3); }
+.cfg-table th.th-sort { cursor: pointer; user-select: none; position: relative; }
+.cfg-table th.th-sort:hover { background: rgba(204,145,94,0.06); }
+
 .filters { padding: 14px 18px; border-bottom: 1px solid var(--lt-border); display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
 .filters input, .filters select {
   background: var(--lt-card); border: 1px solid var(--lt-border); color: var(--lt-text);

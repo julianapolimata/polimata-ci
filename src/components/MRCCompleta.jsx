@@ -1,7 +1,8 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
 import { exportarMRCExcel } from '../lib/exportMRC'
 import { getFaseInfo as getFaseInfoUtil } from '../lib/fases'
+import { useSort, useColumnResize } from '../lib/useTableFeatures'
 
 // ─── CONSTANTES ──────────────────────────────────────────────────────────────
 
@@ -322,70 +323,82 @@ export function ModalDetalhe({ row, onClose }) {
 
 // ─── TABELA MRC ──────────────────────────────────────────────────────────────
 
+const MRC_COLS = [
+  { id:'dt_ult', label:'Data Últ. Atualização', k:'dt_ult' },
+  { id:'ger', label:'Gerência', k:'ger' },
+  { id:'resp_sub', label:'Resp. Processo', k:'resp_sub' },
+  { id:'area', label:'Processo', k:'area' },
+  { id:'sub', label:'Subprocesso', k:'sub' },
+  { id:'rr', label:'Ref. Risco', k:'rr' },
+  { id:'dr', label:'Descrição do Risco', k:'dr' },
+  { id:'rc', label:'Ref. Controle', k:'rc' },
+  { id:'dc', label:'Descrição do Controle', k:'dc' },
+  { id:'cat', label:'Categoria de Controle', k:'cat' },
+  { id:'freq', label:'Frequência', k:'freq' },
+  { id:'nat', label:'Natureza', k:'nat' },
+  { id:'car', label:'Característica', k:'car' },
+  { id:'sis', label:'Sistema', k:'sis' },
+  { id:'chave', label:'Ctrl Chave?', k:'chave' },
+  { id:'passos_f1', label:'Passos de Teste', k:'passos_f1' },
+  { id:'r1', label:'F1 Resultado', k:'r1' },
+  { id:'incons', label:'Descrição da Inconsistência', k:'incons' },
+  { id:'rec', label:'Recomendação / Melhoria', k:'rec' },
+  { id:'r_ader', label:'F2 Aderência', k:'r_ader' },
+  { id:'r3', label:'F3 Resultado', k:'r3' },
+  { id:'r_f4c1', label:'F4-C1 Resultado', k:'r_f4c1' },
+  { id:'r_f4c2', label:'F4-C2 Resultado', k:'r_f4c2' },
+  { id:'r_f5', label:'F5 Resultado', k:'r_f5' },
+  { id:'imp', label:'Impacto', k:'imp' },
+  { id:'prob', label:'Probabilidade', k:'prob' },
+  { id:'crit', label:'Criticidade', k:'crit' },
+  { id:'fase', label:'Fase Atual', k:'fase' },
+]
+
 function TabelaMRC({ rows, visCols, onOpenModal, expandAll }) {
   const v = id => visCols.has(id); const ml = expandAll ? 9999 : 70
+  const { sortKey, sortDir, toggleSort, sortData, sortIndicator } = useSort()
+  const { onResizeStart, getWidth } = useColumnResize({})
+  const sorted = sortData(rows)
   return (
     <div className="tbl-sc"><table><thead><tr>
-      {v('dt_ult')&&<th>Data Últ. Atualização</th>}
-      {v('ger')&&<th>Gerência</th>}
-      {v('resp_sub')&&<th>Resp. Processo</th>}
-      {v('area')&&<th>Processo</th>}
-      {v('sub')&&<th>Subprocesso</th>}
-      {v('rr')&&<th>Ref. Risco</th>}
-      {v('dr')&&<th>Descrição do Risco</th>}
-      {v('rc')&&<th>Ref. Controle</th>}
-      {v('dc')&&<th>Descrição do Controle</th>}
-      {v('cat')&&<th>Categoria de Controle</th>}
-      {v('freq')&&<th>Frequência</th>}
-      {v('nat')&&<th>Natureza</th>}
-      {v('car')&&<th>Característica</th>}
-      {v('sis')&&<th>Sistema</th>}
-      {v('chave')&&<th>Ctrl Chave?</th>}
-      {v('passos_f1')&&<th>Passos de Teste</th>}
-      {v('r1')&&<th>F1 Resultado</th>}
-      {v('incons')&&<th>Descrição da Inconsistência</th>}
-      {v('rec')&&<th>Recomendação / Melhoria</th>}
-      {v('r_ader')&&<th>F2 Aderência</th>}
-      {v('r3')&&<th>F3 Resultado</th>}
-      {v('r_f4c1')&&<th>F4-C1 Resultado</th>}
-      {v('r_f4c2')&&<th>F4-C2 Resultado</th>}
-      {v('r_f5')&&<th>F5 Resultado</th>}
-      {v('imp')&&<th>Impacto</th>}
-      {v('prob')&&<th>Probabilidade</th>}
-      {v('crit')&&<th>Criticidade</th>}
-      {v('fase')&&<th>Fase Atual</th>}
+      {MRC_COLS.filter(c => v(c.id)).map(c => (
+        <th key={c.id} className={`th-sort${sortKey===c.k?' sorted':''}`} style={{ minWidth: getWidth(c.id, undefined) }} onClick={() => toggleSort(c.k)}>
+          {c.label}<span className="sort-arrow">{sortIndicator(c.k)}</span>
+          <span className="resize-handle" onClick={e => e.stopPropagation()} onMouseDown={e => onResizeStart(e, c.id)} />
+        </th>
+      ))}
     </tr></thead><tbody>
-      {rows.length === 0 && <tr><td colSpan={23} className="empty">Nenhum controle encontrado com os filtros aplicados.</td></tr>}
-      {rows.map(row => (
+      {sorted.length === 0 && <tr><td colSpan={23} className="empty">Nenhum controle encontrado com os filtros aplicados.</td></tr>}
+      {sorted.map(row => (
         <tr key={row.id} style={{ cursor:'pointer' }} onClick={() => onOpenModal(row)}>
-          {v('dt_ult')&&<td><span style={{fontSize:11,whiteSpace:'nowrap'}}>{row.dt_ult ? new Date(row.dt_ult).toLocaleDateString('pt-BR') : '—'}</span></td>}
-          {v('ger')&&<td><span style={{fontSize:11}}>{row.ger||'—'}</span></td>}
-          {v('resp_sub')&&<td><span style={{fontSize:11}}>{row.resp_sub||'—'}</span></td>}
-          {v('area')&&<td><span style={{fontSize:11}}>{row.area}</span></td>}
-          {v('sub')&&<td><span style={{fontSize:11}}>{row.sub}</span></td>}
-          {v('rr')&&<td><span style={{fontSize:11,color:'var(--gold)',fontWeight:600}}>{row.rr}</span></td>}
-          {v('dr')&&<td><ExpCell text={row.dr} maxLen={ml} expanded={expandAll}/></td>}
-          {v('rc')&&<td><span style={{fontSize:11,color:'var(--gold)',fontWeight:600}}>{row.rc}</span></td>}
-          {v('dc')&&<td><ExpCell text={row.dc} maxLen={ml} expanded={expandAll}/></td>}
-          {v('cat')&&<td><span style={{fontSize:11}}>{row.cat||'—'}</span></td>}
-          {v('freq')&&<td><span style={{fontSize:11}}>{row.freq||'—'}</span></td>}
-          {v('nat')&&<td><span style={{fontSize:11}}>{row.nat||'—'}</span></td>}
-          {v('car')&&<td><span style={{fontSize:11}}>{row.car||'—'}</span></td>}
-          {v('sis')&&<td><span style={{fontSize:11}}>{row.sis||'—'}</span></td>}
-          {v('chave')&&<td><span style={{fontSize:11}}>{row.chave||'—'}</span></td>}
-          {v('passos_f1')&&<td><ExpCell text={row.passos_f1} maxLen={ml} expanded={expandAll}/></td>}
-          {v('r1')&&<td>{badge(R1_MAP[row.r1]||'b-na', row.r1)}</td>}
-          {v('incons')&&<td><ExpCell text={row.incons} maxLen={ml} expanded={expandAll}/></td>}
-          {v('rec')&&<td><ExpCell text={row.rec} maxLen={ml} expanded={expandAll}/></td>}
-          {v('r_ader')&&<td>{badge(R1_MAP[row.r_ader]||'b-na', row.r_ader)}</td>}
-          {v('r3')&&<td>{badge(R1_MAP[row.r3]||'b-na', row.r3)}</td>}
-          {v('r_f4c1')&&<td>{badge(R1_MAP[row.r_f4c1]||'b-na', row.r_f4c1)}</td>}
-          {v('r_f4c2')&&<td>{badge(R1_MAP[row.r_f4c2]||'b-na', row.r_f4c2)}</td>}
-          {v('r_f5')&&<td>{badge(R1_MAP[row.r_f5]||'b-na', row.r_f5)}</td>}
-          {v('imp')&&<td>{badge(IMP_MAP[row.imp]||'b-na', row.imp)}</td>}
-          {v('prob')&&<td>{badge(PROB_MAP[row.prob]||'b-na', row.prob)}</td>}
-          {v('crit')&&<td>{critBadge(row.crit)}</td>}
-          {v('fase')&&<td><FaseAtual row={row}/></td>}
+          {v('dt_ult')&&<td style={{minWidth:getWidth('dt_ult',undefined)}}><span style={{fontSize:11,whiteSpace:'nowrap'}}>{row.dt_ult ? new Date(row.dt_ult).toLocaleDateString('pt-BR') : '—'}</span></td>}
+          {v('ger')&&<td style={{minWidth:getWidth('ger',undefined)}}><span style={{fontSize:11}}>{row.ger||'—'}</span></td>}
+          {v('resp_sub')&&<td style={{minWidth:getWidth('resp_sub',undefined)}}><span style={{fontSize:11}}>{row.resp_sub||'—'}</span></td>}
+          {v('area')&&<td style={{minWidth:getWidth('area',undefined)}}><span style={{fontSize:11}}>{row.area}</span></td>}
+          {v('sub')&&<td style={{minWidth:getWidth('sub',undefined)}}><span style={{fontSize:11}}>{row.sub}</span></td>}
+          {v('rr')&&<td style={{minWidth:getWidth('rr',undefined)}}><span style={{fontSize:11,color:'var(--gold)',fontWeight:600}}>{row.rr}</span></td>}
+          {v('dr')&&<td style={{minWidth:getWidth('dr',undefined)}}><ExpCell text={row.dr} maxLen={ml} expanded={expandAll}/></td>}
+          {v('rc')&&<td style={{minWidth:getWidth('rc',undefined)}}><span style={{fontSize:11,color:'var(--gold)',fontWeight:600}}>{row.rc}</span></td>}
+          {v('dc')&&<td style={{minWidth:getWidth('dc',undefined)}}><ExpCell text={row.dc} maxLen={ml} expanded={expandAll}/></td>}
+          {v('cat')&&<td style={{minWidth:getWidth('cat',undefined)}}><span style={{fontSize:11}}>{row.cat||'—'}</span></td>}
+          {v('freq')&&<td style={{minWidth:getWidth('freq',undefined)}}><span style={{fontSize:11}}>{row.freq||'—'}</span></td>}
+          {v('nat')&&<td style={{minWidth:getWidth('nat',undefined)}}><span style={{fontSize:11}}>{row.nat||'—'}</span></td>}
+          {v('car')&&<td style={{minWidth:getWidth('car',undefined)}}><span style={{fontSize:11}}>{row.car||'—'}</span></td>}
+          {v('sis')&&<td style={{minWidth:getWidth('sis',undefined)}}><span style={{fontSize:11}}>{row.sis||'—'}</span></td>}
+          {v('chave')&&<td style={{minWidth:getWidth('chave',undefined)}}><span style={{fontSize:11}}>{row.chave||'—'}</span></td>}
+          {v('passos_f1')&&<td style={{minWidth:getWidth('passos_f1',undefined)}}><ExpCell text={row.passos_f1} maxLen={ml} expanded={expandAll}/></td>}
+          {v('r1')&&<td style={{minWidth:getWidth('r1',undefined)}}>{badge(R1_MAP[row.r1]||'b-na', row.r1)}</td>}
+          {v('incons')&&<td style={{minWidth:getWidth('incons',undefined)}}><ExpCell text={row.incons} maxLen={ml} expanded={expandAll}/></td>}
+          {v('rec')&&<td style={{minWidth:getWidth('rec',undefined)}}><ExpCell text={row.rec} maxLen={ml} expanded={expandAll}/></td>}
+          {v('r_ader')&&<td style={{minWidth:getWidth('r_ader',undefined)}}>{badge(R1_MAP[row.r_ader]||'b-na', row.r_ader)}</td>}
+          {v('r3')&&<td style={{minWidth:getWidth('r3',undefined)}}>{badge(R1_MAP[row.r3]||'b-na', row.r3)}</td>}
+          {v('r_f4c1')&&<td style={{minWidth:getWidth('r_f4c1',undefined)}}>{badge(R1_MAP[row.r_f4c1]||'b-na', row.r_f4c1)}</td>}
+          {v('r_f4c2')&&<td style={{minWidth:getWidth('r_f4c2',undefined)}}>{badge(R1_MAP[row.r_f4c2]||'b-na', row.r_f4c2)}</td>}
+          {v('r_f5')&&<td style={{minWidth:getWidth('r_f5',undefined)}}>{badge(R1_MAP[row.r_f5]||'b-na', row.r_f5)}</td>}
+          {v('imp')&&<td style={{minWidth:getWidth('imp',undefined)}}>{badge(IMP_MAP[row.imp]||'b-na', row.imp)}</td>}
+          {v('prob')&&<td style={{minWidth:getWidth('prob',undefined)}}>{badge(PROB_MAP[row.prob]||'b-na', row.prob)}</td>}
+          {v('crit')&&<td style={{minWidth:getWidth('crit',undefined)}}>{critBadge(row.crit)}</td>}
+          {v('fase')&&<td style={{minWidth:getWidth('fase',undefined)}}><FaseAtual row={row}/></td>}
         </tr>
       ))}
     </tbody></table></div>

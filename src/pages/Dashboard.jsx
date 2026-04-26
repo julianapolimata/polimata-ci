@@ -1,7 +1,8 @@
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
-import { useEffect, useState, useMemo } from 'react'
+import { useEffect, useState, useMemo, useCallback } from 'react'
 import { getFaseNumero } from '../lib/fases'
+import { useSort, useColumnResize } from '../lib/useTableFeatures'
 import { Routes, Route, useNavigate, useLocation, useParams } from 'react-router-dom'
 import Configuracoes from './Configuracoes'
 import Perfil from './Perfil'
@@ -555,6 +556,8 @@ function PorArea({ projeto, areasCalc, todosControles, loading, navigate, loadDa
   const isRealAdmin = perfil?.papel === 'admin_polimata'
 
   // HOOKS devem ficar ANTES de qualquer early return (React rules of hooks)
+  const paSort = useSort()
+  const paResize = useColumnResize({})
   const controles = area?.controles || []
   const ultAtualArea = useMemo(() => getUltimaAtualizacao(controles), [controles])
   const areaHeatmap = useMemo(() => {
@@ -764,27 +767,32 @@ function PorArea({ projeto, areasCalc, todosControles, loading, navigate, loadDa
           <table style={{ width: 'max-content', minWidth: '100%', borderCollapse: 'collapse' }}>
             <thead><tr>
               {[
-                { h: 'Data Últ. Atual.', w: 100 }, { h: 'Gerência', w: 120 }, { h: 'Resp. Proc.', w: 120 },
-                { h: 'Processo', w: 140 }, { h: 'Subprocesso', w: 120 }, { h: 'Ref. Risco', w: 80 },
-                { h: 'Desc. Risco', w: 200 }, { h: 'Ref. Controle', w: 90 }, { h: 'Desc. Controle', w: 200 },
-                { h: 'Categoria', w: 110 }, { h: 'Frequência', w: 90 }, { h: 'Natureza', w: 80 },
-                { h: 'Caract.', w: 80 }, { h: 'Sistema', w: 80 }, { h: 'Ctrl Chave?', w: 80 },
-                { h: 'Passos Teste', w: 180 }, { h: 'Resultado', w: 80 }, { h: 'Desc. Inconsist.', w: 180 },
-                { h: 'Recomendação', w: 180 }, { h: 'Impacto', w: 80 }, { h: 'Probab.', w: 80 },
-                { h: 'Criticidade', w: 100 }, { h: 'Fase Atual', w: 160 },
-              ].map((col, i) =>
-                <th key={i} style={{ fontSize: 10, fontWeight: 500, textTransform: 'uppercase', letterSpacing: 0.5, color: 'var(--lt-text3)', background: 'var(--lt-card)', padding: '12px 16px', textAlign: 'left', whiteSpace: 'nowrap', position: 'sticky', top: 0, zIndex: 2, width: col.w, minWidth: col.w, borderBottom: '1px solid var(--lt-border)' }}>{col.h}</th>)}
+                { h: 'Data Últ. Atual.', w: 100, k: 'dt_ult' }, { h: 'Gerência', w: 120, k: 'ger' }, { h: 'Resp. Proc.', w: 120, k: 'resp_sub' },
+                { h: 'Processo', w: 140, k: 'area' }, { h: 'Subprocesso', w: 120, k: 'sub' }, { h: 'Ref. Risco', w: 80, k: 'rr' },
+                { h: 'Desc. Risco', w: 200, k: 'dr' }, { h: 'Ref. Controle', w: 90, k: 'rc' }, { h: 'Desc. Controle', w: 200, k: 'dc' },
+                { h: 'Categoria', w: 110, k: 'cat' }, { h: 'Frequência', w: 90, k: 'freq' }, { h: 'Natureza', w: 80, k: 'nat' },
+                { h: 'Caract.', w: 80, k: 'car' }, { h: 'Sistema', w: 80, k: 'sis' }, { h: 'Ctrl Chave?', w: 80, k: 'chave' },
+                { h: 'Passos Teste', w: 180, k: 'passos_f1' }, { h: 'Resultado', w: 80, k: 'r1' }, { h: 'Desc. Inconsist.', w: 180, k: 'incons' },
+                { h: 'Recomendação', w: 180, k: 'rec' }, { h: 'Impacto', w: 80, k: 'imp' }, { h: 'Probab.', w: 80, k: 'prob' },
+                { h: 'Criticidade', w: 100, k: 'crit' }, { h: 'Fase Atual', w: 160, k: 'fase' },
+              ].map((col, i) => {
+                const cw = paResize.getWidth(col.k, col.w)
+                return <th key={i} className={`th-sort${paSort.sortKey===col.k?' sorted':''}`} onClick={() => paSort.toggleSort(col.k)} style={{ fontSize: 10, fontWeight: 500, textTransform: 'uppercase', letterSpacing: 0.5, color: 'var(--lt-text3)', background: 'var(--lt-card)', padding: '12px 16px', textAlign: 'left', whiteSpace: 'nowrap', position: 'sticky', top: 0, zIndex: 2, width: cw, minWidth: cw, borderBottom: '1px solid var(--lt-border)', cursor: 'pointer', userSelect: 'none' }}>
+                  {col.h}<span className="sort-arrow">{paSort.sortIndicator(col.k)}</span>
+                  <span className="resize-handle" onClick={e => e.stopPropagation()} onMouseDown={e => paResize.onResizeStart(e, col.k)} />
+                </th>
+              })}
               <th style={{ fontSize: 10, fontWeight: 500, color: 'var(--lt-text3)', background: 'var(--lt-card)', padding: '12px 16px', position: 'sticky', top: 0, zIndex: 2, width: 70, minWidth: 70, borderBottom: '1px solid var(--lt-border)' }}></th>
             </tr></thead>
-            <tbody>{cf.map((c, i) => { const fl = faseLabel(c); return (
+            <tbody>{paSort.sortData(cf).map((c, i) => { const fl = faseLabel(c); return (
               <tr key={c.id||i} onClick={() => setModalRow(c)} style={{ cursor: 'pointer' }} onMouseEnter={e => e.currentTarget.style.background='rgba(204,145,94,0.04)'} onMouseLeave={e => e.currentTarget.style.background=''}>
-                <Td w={100}>{c.dt_ult ? new Date(c.dt_ult).toLocaleDateString('pt-BR') : '—'}</Td>
-                <Td w={120}>{c.ger}</Td><Td w={120}>{c.resp_sub}</Td><Td w={140}>{c.area}</Td><Td w={120}>{c.sub}</Td>
-                <td style={{ ...tdS, color: 'var(--copper)', fontWeight: 600, width: 80, minWidth: 80 }}>{c.rr}</td><Td w={200}>{c.dr}</Td>
-                <td style={{ ...tdS, color: 'var(--copper)', fontWeight: 600, width: 90, minWidth: 90 }}>{c.rc}</td><Td w={200}>{c.dc}</Td>
-                <Td w={110}>{c.cat}</Td><Td w={90}>{c.freq}</Td><Td w={80}>{c.nat}</Td><Td w={80}>{c.car}</Td><Td w={80}>{c.sis}</Td><Td w={80}>{c.chave}</Td>
-                <Td w={180}>{c.passos_f1}</Td><td style={{ ...tdS, width: 80, minWidth: 80 }}>{badgeR(c.r1)}</td><Td w={180}>{c.incons}</Td><Td w={180}>{c.rec}</Td>
-                <td style={{ ...tdS, width: 80, minWidth: 80 }}>{badgeImp(c.imp)}</td><td style={{ ...tdS, width: 80, minWidth: 80 }}>{badgeProb(c.prob)}</td><td style={{ ...tdS, width: 100, minWidth: 100 }}>{badgeCrit(c.crit)}</td>
+                <Td w={paResize.getWidth('dt_ult',100)}>{c.dt_ult ? new Date(c.dt_ult).toLocaleDateString('pt-BR') : '—'}</Td>
+                <Td w={paResize.getWidth('ger',120)}>{c.ger}</Td><Td w={paResize.getWidth('resp_sub',120)}>{c.resp_sub}</Td><Td w={paResize.getWidth('area',140)}>{c.area}</Td><Td w={paResize.getWidth('sub',120)}>{c.sub}</Td>
+                <td style={{ ...tdS, color: 'var(--copper)', fontWeight: 600, width: paResize.getWidth('rr',80), minWidth: paResize.getWidth('rr',80) }}>{c.rr}</td><Td w={paResize.getWidth('dr',200)}>{c.dr}</Td>
+                <td style={{ ...tdS, color: 'var(--copper)', fontWeight: 600, width: paResize.getWidth('rc',90), minWidth: paResize.getWidth('rc',90) }}>{c.rc}</td><Td w={paResize.getWidth('dc',200)}>{c.dc}</Td>
+                <Td w={paResize.getWidth('cat',110)}>{c.cat}</Td><Td w={paResize.getWidth('freq',90)}>{c.freq}</Td><Td w={paResize.getWidth('nat',80)}>{c.nat}</Td><Td w={paResize.getWidth('car',80)}>{c.car}</Td><Td w={paResize.getWidth('sis',80)}>{c.sis}</Td><Td w={paResize.getWidth('chave',80)}>{c.chave}</Td>
+                <Td w={paResize.getWidth('passos_f1',180)}>{c.passos_f1}</Td><td style={{ ...tdS, width: paResize.getWidth('r1',80), minWidth: paResize.getWidth('r1',80) }}>{badgeR(c.r1)}</td><Td w={paResize.getWidth('incons',180)}>{c.incons}</Td><Td w={paResize.getWidth('rec',180)}>{c.rec}</Td>
+                <td style={{ ...tdS, width: paResize.getWidth('imp',80), minWidth: paResize.getWidth('imp',80) }}>{badgeImp(c.imp)}</td><td style={{ ...tdS, width: paResize.getWidth('prob',80), minWidth: paResize.getWidth('prob',80) }}>{badgeProb(c.prob)}</td><td style={{ ...tdS, width: paResize.getWidth('crit',100), minWidth: paResize.getWidth('crit',100) }}>{badgeCrit(c.crit)}</td>
                 <td style={{ ...tdS, width: 160, minWidth: 160 }}><div style={{ fontSize: 10, fontWeight: 500, color: 'var(--lt-text)', borderLeft: '3px solid var(--copper)', paddingLeft: 6, lineHeight: 1.3 }}>{fl.f}</div><div style={{ fontSize: 9, color: 'var(--lt-text3)', paddingLeft: 9 }}>{fl.s}</div></td>
                 <td style={{ ...tdS, textAlign: 'center', width: 90, minWidth: 90 }}>
                   {isCliente ? (
