@@ -428,6 +428,7 @@ export default function MRCCompleta({ projetoId, clienteNome, projetoNome, notif
   const [filtroImp, setFiltroImp] = useState(''); const [filtroProb, setFiltroProb] = useState(''); const [filtroR1, setFiltroR1] = useState(''); const [filtroNivel, setFiltroNivel] = useState('')
   const [filtroFase, setFiltroFase] = useState('')
   const [modalRow, setModalRow] = useState(null)
+  const [dashCollapsed, setDashCollapsed] = useState(false)
 
   useEffect(() => {
     if (!projetoId) return
@@ -504,8 +505,15 @@ export default function MRCCompleta({ projetoId, clienteNome, projetoNome, notif
         </div>
       </div>
 
+      {/* TOGGLE COLAPSAR DASH */}
+      <div style={{ display: 'flex', justifyContent: 'center', margin: '2px 0' }}>
+        <button onClick={() => setDashCollapsed(c => !c)} style={{ background: 'var(--lt-card)', border: '1px solid var(--lt-border)', borderRadius: 999, padding: '2px 18px', cursor: 'pointer', fontSize: 10, color: 'var(--lt-text3)', fontFamily: 'inherit', display: 'flex', alignItems: 'center', gap: 4 }}>
+          {dashCollapsed ? '▼ Expandir painel' : '▲ Recolher painel'}
+        </button>
+      </div>
+
       {/* ZONA SUPERIOR — HEATMAP + KPIs (padrão PorArea) */}
-      <div style={{ display: 'flex', gap: 10, flexShrink: 0, margin: '6px 0 8px' }}>
+      {!dashCollapsed && <div style={{ display: 'flex', gap: 10, flexShrink: 0, margin: '6px 0 8px' }}>
         <div style={{ background: 'var(--lt-card)', border: '1px solid var(--lt-border)', borderRadius: 12, padding: '12px 14px', width: 320, flexShrink: 0, display: 'flex', flexDirection: 'column', boxShadow: '0 1px 3px rgba(10,37,64,0.06)' }}>
           <div style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 1.2, color: 'var(--lt-text3)', marginBottom: 8 }}>Mapa de Calor — Impacto × Probabilidade</div>
           <div style={{ display: 'flex', flex: 1 }}>
@@ -571,7 +579,7 @@ export default function MRCCompleta({ projetoId, clienteNome, projetoNome, notif
             <div style={kpiSubS}>Em desenvolvimento</div>
           </div>
         </div>
-      </div>
+      </div>}
 
       {/* FILTROS */}
       <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexShrink: 0, flexWrap: 'wrap', marginBottom: 6 }}>
