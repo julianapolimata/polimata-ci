@@ -468,7 +468,7 @@ export default function MRCCompleta({ projetoId, clienteNome, projetoNome, notif
 
       {/* ZONA SUPERIOR — HEATMAP + KPIs (padrão PorArea) */}
       <div style={{ display: 'flex', gap: 10, flexShrink: 0, margin: '6px 0 8px' }}>
-        <div className="mrc-hm-compact" style={{ background: 'var(--lt-card)', border: '1px solid var(--lt-border)', borderRadius: 12, padding: '12px 14px', width: 420, flexShrink: 0, boxShadow: '0 1px 3px rgba(10,37,64,0.06)' }}>
+        <div className="mrc-hm-compact" style={{ background: 'var(--lt-card)', border: '1px solid var(--lt-border)', borderRadius: 12, padding: '12px 14px', width: 320, flexShrink: 0, boxShadow: '0 1px 3px rgba(10,37,64,0.06)' }}>
           <Heatmap data={filtered} filtroImp={filtroImp} filtroProb={filtroProb} onFilterCell={handleHeatmapCell} />
         </div>
         <div style={{ flex: 1, display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gridTemplateRows: '1fr 1fr', gap: 8 }}>

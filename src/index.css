@@ -516,12 +516,12 @@ tr:hover td { background: rgba(204,145,94,0.03); }
 .mrc-stat-l { font-size: 9px; text-transform: uppercase; letter-spacing: 0.8px; color: var(--lt-text3); font-weight: 400; }
 
 /* Heatmap compact wrapper */
-.mrc-hm-compact .hm-wrap { margin-bottom: 12px; }
+.mrc-hm-compact .hm-wrap { margin-bottom: 12px; flex-direction: column; }
 .mrc-hm-compact .hm-cell { min-height: 44px; padding: 4px 4px; }
 .mrc-hm-compact .hm-n { font-size: 15px; }
 .mrc-hm-compact .hm-eig { font-size: 9px; gap: 3px; }
 .mrc-hm-compact .hm-ylabel { min-height: 44px; font-size: 10px; }
-.mrc-hm-compact .hm-legend { gap: 4px; min-width: 130px; }
+.mrc-hm-compact .hm-legend { display: none; }
 .mrc-hm-compact .hm-leg { padding: 6px 10px; }
 .mrc-hm-compact .hm-lnum { font-size: 14px; }
 .mrc-hm-compact .hm-lbl { font-size: 10px; }
