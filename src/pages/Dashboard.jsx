@@ -241,8 +241,8 @@ export default function Dashboard() {
       </aside>
 
       <main className={mainLightClass} style={{ flex: 1, overflowY: 'auto', background: isHomeDash ? 'var(--bg0)' : 'var(--lt-bg)', position: 'relative' }}>
-        {/* Notificações — canto superior direito (sticky top-bar). Oculto na MRC pois o header lá inclui o sino */}
-        {location.pathname !== '/mrc' && (
+        {/* Notificações — canto superior direito. Oculto na MRC e PorArea (header inclui o sino) */}
+        {location.pathname !== '/mrc' && !location.pathname.startsWith('/area/') && (
           <div className="top-bar" style={{ display: 'flex', justifyContent: 'flex-end', padding: '8px 16px 0', background: isHomeDash ? 'var(--bg0)' : 'var(--lt-bg)' }}>
             <NotificacoesPanel />
           </div>
@@ -652,20 +652,45 @@ function PorArea({ projeto, areasCalc, todosControles, loading, navigate, loadDa
   function badgeProb(v) { const m = PRB_C[v]; return m ? <span style={{ ...bdgS, background: m.bg, color: m.c }}>{v}</span> : <span style={{ ...bdgS, background: 'rgba(10,37,64,0.05)', color: 'var(--lt-text3)' }}>{v||'—'}</span> }
   function badgeCrit(v) { const m = CRT_C[v]; return m ? <span style={{ ...bdgS, background: m.bg, color: m.c }}><span style={{ width: 5, height: 5, borderRadius: '50%', background: 'currentColor', display: 'inline-block', marginRight: 4 }} />{m.l}</span> : <span style={{ ...bdgS, background: 'rgba(10,37,64,0.05)', color: 'var(--lt-text3)' }}>{v||'—'}</span> }
 
+  // Badge de fase — resultado ou "Não iniciado"
+  function badgeFase(val) {
+    if (!val || val === 'Teste Não Realizado' || val === 'N/A') return <span style={{ fontSize: 10, fontStyle: 'italic', color: 'var(--lt-text3)' }}>Não iniciado</span>
+    return badgeR(val)
+  }
+  // Headers de fase coloridos
+  const FASE_HDR = [
+    { h: 'Fase 1\nDiagnóstico', bg: '#00203E' },
+    { h: 'Fase 2\nDesenho', bg: '#1D3B5C' },
+    { h: 'Fase 2\nAderência', bg: '#3D1A2E' },
+    { h: 'Fase 3\nRevisão Integral', bg: '#660033' },
+    { h: 'Fase 4\nAI - Ciclo 1', bg: '#660066' },
+    { h: 'Fase 4\nAI - Ciclo 2', bg: '#7A3D7A' },
+    { h: 'Fase 5\nAuditoria Indep.', bg: '#A6512F' },
+  ]
+  const faseThS = { fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5, color: '#fff', padding: '10px 12px', textAlign: 'center', whiteSpace: 'pre-line', position: 'sticky', top: 0, zIndex: 2, minWidth: 110, borderBottom: 'none', borderRadius: '8px 8px 0 0' }
+
   const PA = paStyles
   const tdS = { padding: '7px 8px', borderBottom: '1px solid var(--lt-border)', fontSize: 11, color: 'var(--lt-text2)', whiteSpace: 'nowrap', verticalAlign: 'top' }
   function Td({ children, w = 150, wrap = false }) { return <td style={{ ...tdS, width: w, minWidth: w, maxWidth: w, overflow: 'hidden', textOverflow: wrap ? undefined : 'ellipsis', whiteSpace: wrap ? 'normal' : 'nowrap', lineHeight: wrap ? 1.4 : undefined }}>{children || '—'}</td> }
 
   return (
     <div style={PA.page}>
-      {/* HEADER — barra compacta */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 0 6px', flexShrink: 0 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+      {/* HEADER — padrão MRC Completa */}
+      <div className="mrc-header-bar">
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <button onClick={() => navigate('/')} style={PA.btnVoltar}>← VOLTAR</button>
-          <div style={{ fontSize: 16, fontWeight: 600, color: 'var(--lt-text)', fontFamily: "'Raleway', sans-serif" }}>{nome}</div>
-          <div style={{ fontSize: 9, color: 'var(--lt-text3)' }}>{area.controles.length} controles · Peso empresa: {pesoEmpresa}%</div>
+          <div>
+            <div className="dash-eye">Matriz de Riscos e Controles</div>
+            <div className="dash-ttl" style={{ marginBottom: 0, fontSize: 18 }}>{nome}</div>
+          </div>
         </div>
-        <div style={{ fontSize: 9, color: 'var(--lt-text3)', background: 'var(--lt-card)', border: '1px solid var(--lt-border)', borderRadius: 6, padding: '4px 10px', whiteSpace: 'nowrap' }}>Última atualização: {ultAtualArea}</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
+          <div className="mrc-header-stats">
+            <div className="mrc-stat"><span className="mrc-stat-n">{area.controles.length}</span><span className="mrc-stat-l">controles</span></div>
+            <div className="mrc-stat"><span className="mrc-stat-n">{pesoEmpresa}%</span><span className="mrc-stat-l">peso empresa</span></div>
+          </div>
+          <NotificacoesPanel />
+        </div>
       </div>
 
       {/* ZONA SUPERIOR — HEATMAP + KPI GRID */}
@@ -769,53 +794,45 @@ function PorArea({ projeto, areasCalc, todosControles, loading, navigate, loadDa
           <table style={{ width: 'max-content', minWidth: '100%', borderCollapse: 'collapse' }}>
             <thead><tr>
               {[
-                { h: 'Data Últ. Atual.', w: 100 }, { h: 'Gerência', w: 120 }, { h: 'Resp. Proc.', w: 120 },
-                { h: 'Processo', w: 140 }, { h: 'Subprocesso', w: 120 }, { h: 'Ref. Risco', w: 80 },
-                { h: 'Desc. Risco', w: 220 }, { h: 'Ref. Controle', w: 90 }, { h: 'Desc. Controle', w: 220 },
-                { h: 'Categoria', w: 110 }, { h: 'Frequência', w: 90 }, { h: 'Natureza', w: 80 },
-                { h: 'Caract.', w: 80 }, { h: 'Sistema', w: 80 }, { h: 'Ctrl Chave?', w: 80 },
-                { h: 'Passos Teste', w: 180 }, { h: 'Resultado', w: 80 }, { h: 'Desc. Inconsist.', w: 200 },
-                { h: 'Recomendação', w: 200 }, { h: 'Impacto', w: 80 }, { h: 'Probab.', w: 80 },
-                { h: 'Criticidade', w: 100 }, { h: 'Fase Atual', w: 160 },
+                { h: 'Subprocesso', w: 120 }, { h: 'Ref. Risco', w: 80 },
+                { h: 'Desc. Risco', w: 200 }, { h: 'Ref. Controle', w: 90 }, { h: 'Desc. Controle', w: 200 },
+                { h: 'Resultado', w: 90 }, { h: 'Criticidade', w: 110 },
               ].map((col, i) =>
-                <th key={i} style={{ fontSize: 10, fontWeight: 500, textTransform: 'uppercase', letterSpacing: 0.5, color: 'var(--lt-text3)', background: 'var(--lt-card)', padding: '12px 16px', textAlign: 'left', whiteSpace: 'nowrap', position: 'sticky', top: 0, zIndex: 2, width: col.w, minWidth: col.w, borderBottom: '1px solid var(--lt-border)' }}>{col.h}</th>)}
-              <th style={{ fontSize: 10, fontWeight: 500, color: 'var(--lt-text3)', background: 'var(--lt-card)', padding: '12px 16px', position: 'sticky', top: 0, zIndex: 2, width: 70, minWidth: 70, borderBottom: '1px solid var(--lt-border)' }}></th>
+                <th key={i} style={{ fontSize: 10, fontWeight: 500, textTransform: 'uppercase', letterSpacing: 0.5, color: 'var(--lt-text3)', background: 'var(--lt-card)', padding: '12px 12px', textAlign: 'left', whiteSpace: 'nowrap', position: 'sticky', top: 0, zIndex: 2, width: col.w, minWidth: col.w, borderBottom: '1px solid var(--lt-border)' }}>{col.h}</th>)}
+              {FASE_HDR.map((f, i) => <th key={`f${i}`} style={{ ...faseThS, background: f.bg }}>{f.h}</th>)}
+              <th style={{ fontSize: 10, fontWeight: 500, color: 'var(--lt-text3)', background: 'var(--lt-card)', padding: '12px 12px', position: 'sticky', top: 0, zIndex: 2, width: 90, minWidth: 90, borderBottom: '1px solid var(--lt-border)', textTransform: 'uppercase', letterSpacing: 0.5 }}>Status</th>
             </tr></thead>
-            <tbody>{cf.map((c, i) => { const fl = faseLabel(c); return (
+            <tbody>{cf.map((c, i) => (
               <tr key={c.id||i} onClick={() => setModalRow(c)} style={{ cursor: 'pointer' }} onMouseEnter={e => e.currentTarget.style.background='rgba(204,145,94,0.04)'} onMouseLeave={e => e.currentTarget.style.background=''}>
-                <Td w={100}>{fmtDate(c.dt_ult)}</Td>
-                <Td w={120}>{c.ger}</Td><Td w={120}>{c.resp_sub}</Td><Td w={140}>{c.area}</Td><Td w={120}>{c.sub}</Td>
-                <td style={{ ...tdS, color: 'var(--copper)', fontWeight: 600, width: 80, minWidth: 80 }}>{c.rr}</td><Td w={220} wrap>{c.dr}</Td>
-                <td style={{ ...tdS, color: 'var(--copper)', fontWeight: 600, width: 90, minWidth: 90 }}>{c.rc}</td><Td w={220} wrap>{c.dc}</Td>
-                <Td w={110}>{c.cat}</Td><Td w={90}>{c.freq}</Td><Td w={80}>{c.nat}</Td><Td w={80}>{c.car}</Td><Td w={80}>{c.sis}</Td><Td w={80}>{c.chave}</Td>
-                <Td w={180} wrap>{c.passos_f1}</Td><td style={{ ...tdS, width: 80, minWidth: 80 }}>{badgeR(c.r1)}</td><Td w={200} wrap>{c.incons}</Td><Td w={200} wrap>{c.rec}</Td>
-                <td style={{ ...tdS, width: 80, minWidth: 80 }}>{badgeImp(c.imp)}</td><td style={{ ...tdS, width: 80, minWidth: 80 }}>{badgeProb(c.prob)}</td><td style={{ ...tdS, width: 100, minWidth: 100 }}>{badgeCrit(c.crit)}</td>
-                <td style={{ ...tdS, width: 160, minWidth: 160 }}><div style={{ fontSize: 10, fontWeight: 500, color: 'var(--lt-text)', borderLeft: '3px solid var(--copper)', paddingLeft: 6, lineHeight: 1.3 }}>{fl.f}</div><div style={{ fontSize: 9, color: 'var(--lt-text3)', paddingLeft: 9 }}>{fl.s}</div></td>
+                <Td w={120}>{c.sub}</Td>
+                <td style={{ ...tdS, color: 'var(--copper)', fontWeight: 600, width: 80, minWidth: 80 }}>{c.rr}</td><Td w={200} wrap>{c.dr}</Td>
+                <td style={{ ...tdS, color: 'var(--copper)', fontWeight: 600, width: 90, minWidth: 90 }}>{c.rc}</td><Td w={200} wrap>{c.dc}</Td>
+                <td style={{ ...tdS, width: 90, minWidth: 90 }}>{badgeR(c.r1)}</td>
+                <td style={{ ...tdS, width: 110, minWidth: 110 }}>{badgeCrit(c.crit)}</td>
+                {/* Colunas de fase */}
+                <td style={{ ...tdS, width: 110, minWidth: 110, textAlign: 'center' }}>{badgeFase(c.r1)}</td>
+                <td style={{ ...tdS, width: 110, minWidth: 110, textAlign: 'center' }}>{badgeFase(c.st_pa)}</td>
+                <td style={{ ...tdS, width: 110, minWidth: 110, textAlign: 'center' }}>{badgeFase(c.r_ader)}</td>
+                <td style={{ ...tdS, width: 110, minWidth: 110, textAlign: 'center' }}>{badgeFase(c.r3)}</td>
+                <td style={{ ...tdS, width: 110, minWidth: 110, textAlign: 'center' }}>{badgeFase(c.r_f4c1)}</td>
+                <td style={{ ...tdS, width: 110, minWidth: 110, textAlign: 'center' }}>{badgeFase(c.r_f4c2)}</td>
+                <td style={{ ...tdS, width: 110, minWidth: 110, textAlign: 'center' }}>{badgeFase(c.r_f5)}</td>
                 <td style={{ ...tdS, textAlign: 'center', width: 90, minWidth: 90 }}>
                   {isCliente ? (
-                    /* ── Visão do cliente: status simplificado ── */
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 3, alignItems: 'center' }}>
-                      {(() => {
-                        const cfg = getStatusBadge(c.status_workflow)
-                        return <span style={{ fontSize: 8, fontWeight: 700, color: cfg.color, background: cfg.bg, padding: '2px 8px', borderRadius: 999, textTransform: 'uppercase', letterSpacing: 0.5 }}>{cfg.label}</span>
-                      })()}
+                      {(() => { const cfg = getStatusBadge(c.status_workflow); return <span style={{ fontSize: 8, fontWeight: 700, color: cfg.color, background: cfg.bg, padding: '2px 8px', borderRadius: 999, textTransform: 'uppercase', letterSpacing: 0.5 }}>{cfg.label}</span> })()}
                     </div>
                   ) : (
-                    /* ── Visão admin/consultor: ações + status detalhado ── */
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 3, alignItems: 'center' }}>
                       {canEdit && canEditControl(c.status_workflow) && <button onClick={e => { e.stopPropagation(); setAtualizarRow(c) }} style={{ background: 'rgba(204,145,94,0.08)', border: '1px solid rgba(204,145,94,0.2)', borderRadius: 4, padding: '2px 10px', fontSize: 10, fontWeight: 600, color: 'var(--copper)', cursor: 'pointer', fontFamily: 'inherit', width: '100%' }}>Atualizar</button>}
                       {canEdit && canRegisterResult(c.status_workflow) && <button onClick={e => { e.stopPropagation(); setRowRegistrarResultado(c) }} style={{ background: 'rgba(204,145,94,0.08)', border: '1px solid rgba(204,145,94,0.2)', borderRadius: 4, padding: '2px 10px', fontSize: 9, fontWeight: 600, color: 'var(--copper)', cursor: 'pointer', fontFamily: 'inherit', width: '100%' }}>Resultado</button>}
                       {canEdit && isDevolvido(c.status_workflow) && <button onClick={e => { e.stopPropagation(); setRowRegistrarResultado(c) }} style={{ background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 4, padding: '2px 10px', fontSize: 9, fontWeight: 600, color: '#DC2626', cursor: 'pointer', fontFamily: 'inherit', width: '100%' }}>↩ Editar</button>}
                       {isAdmin && isAguardandoRevisao(c.status_workflow) && <button onClick={e => { e.stopPropagation(); setRowRevisar(c) }} style={{ background: 'rgba(59,130,246,0.08)', border: '1px solid rgba(59,130,246,0.2)', borderRadius: 4, padding: '2px 10px', fontSize: 9, fontWeight: 700, color: '#2563EB', cursor: 'pointer', fontFamily: 'inherit', width: '100%' }}>🔍 Revisar</button>}
-                      {/* Badge de status */}
-                      {(() => {
-                        const cfg = getStatusBadge(c.status_workflow)
-                        return <span style={{ fontSize: 8, fontWeight: 700, color: cfg.color, background: cfg.bg, padding: '1px 6px', borderRadius: 999, textTransform: 'uppercase', letterSpacing: 0.5 }}>{cfg.label}</span>
-                      })()}
+                      {(() => { const cfg = getStatusBadge(c.status_workflow); return <span style={{ fontSize: 8, fontWeight: 700, color: cfg.color, background: cfg.bg, padding: '1px 6px', borderRadius: 999, textTransform: 'uppercase', letterSpacing: 0.5 }}>{cfg.label}</span> })()}
                     </div>
                   )}
                 </td>
-              </tr>)})}{cf.length === 0 && <tr><td colSpan={24} style={{ padding: 32, textAlign: 'center', color: 'var(--lt-text3)' }}>Nenhum controle encontrado.</td></tr>}</tbody>
+              </tr>))}{cf.length === 0 && <tr><td colSpan={15} style={{ padding: 32, textAlign: 'center', color: 'var(--lt-text3)' }}>Nenhum controle encontrado.</td></tr>}</tbody>
           </table>
         </div>
       </div>
