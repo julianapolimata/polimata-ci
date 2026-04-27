@@ -824,8 +824,8 @@ function PorArea({ projeto, areasCalc, todosControles, loading, navigate, loadDa
               <tr key={c.id||i} onClick={() => setModalRow(c)} style={{ cursor: 'pointer' }} onMouseEnter={e => e.currentTarget.style.background='rgba(204,145,94,0.04)'} onMouseLeave={e => e.currentTarget.style.background=''}>
                 <td style={{ ...tdS, width: 95, minWidth: 95, fontSize: 10, color: 'var(--lt-text3)' }}>{fmtDate(c.dt_ult || c.atualizado_em || c.criado_em)}</td>
                 <Td w={120}>{c.sub}</Td>
-                <td style={{ ...tdS, color: 'var(--copper)', fontWeight: 600, width: 80, minWidth: 80 }}>{c.rr}</td><Td w={200} wrap>{c.dr}</Td>
-                <td style={{ ...tdS, color: 'var(--copper)', fontWeight: 600, width: 90, minWidth: 90 }}>{c.rc}</td><Td w={200} wrap>{c.dc}</Td>
+                <td style={{ ...tdS, color: 'var(--copper)', fontWeight: 600, width: 80, minWidth: 80 }}>{c.rr}</td><Td w={200}>{c.dr}</Td>
+                <td style={{ ...tdS, color: 'var(--copper)', fontWeight: 600, width: 90, minWidth: 90 }}>{c.rc}</td><Td w={200}>{c.dc}</Td>
                 <td style={{ ...tdS, width: 90, minWidth: 90 }}>{badgeR(c.r1)}</td>
                 <td style={{ ...tdS, width: 110, minWidth: 110 }}>{badgeCrit(c.crit)}</td>
                 {/* Colunas de fase */}

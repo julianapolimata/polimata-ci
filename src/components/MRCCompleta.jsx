@@ -400,9 +400,9 @@ function TabelaMRC({ rows, onOpenModal }) {
               <TdMRC w={120}>{row.area}</TdMRC>
               <TdMRC w={120}>{row.sub}</TdMRC>
               <td style={{ ...mrcTdS, color: 'var(--copper)', fontWeight: 600, width: 80, minWidth: 80 }}>{row.rr}</td>
-              <TdMRC w={200} wrap>{row.dr}</TdMRC>
+              <TdMRC w={200}>{row.dr}</TdMRC>
               <td style={{ ...mrcTdS, color: 'var(--copper)', fontWeight: 600, width: 90, minWidth: 90 }}>{row.rc}</td>
-              <TdMRC w={200} wrap>{row.dc}</TdMRC>
+              <TdMRC w={200}>{row.dc}</TdMRC>
               <td style={{ ...mrcTdS, width: 90, minWidth: 90 }}>{badgeResultado(row.r1)}</td>
               <td style={{ ...mrcTdS, width: 110, minWidth: 110 }}>{critBadge(row.crit)}</td>
               <td style={{ ...mrcTdS, width: FASE_W, minWidth: FASE_W, maxWidth: FASE_W, textAlign: 'center' }}>{badgeFaseMRC(row.r1)}</td>
