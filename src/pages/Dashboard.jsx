@@ -217,7 +217,7 @@ export default function Dashboard() {
             badge={todosControles.length > 0 ? todosControles.length : null} />
           {isAdmin && (<>{sidebarOpen && <div className="sb-sep">Administração</div>}
             <SideNavItem icon="⚙️" label="Configurações" active={location.pathname.startsWith('/configuracoes')} onClick={() => navigate('/configuracoes')} open={sidebarOpen} />
-            <SideNavItem icon="📥" label="Importar MRC" active={location.pathname === '/importar-mrc'} onClick={() => navigate('/importar-mrc')} open={sidebarOpen} /></>)}
+            <SideNavItem icon="📥" label="Manutenção MRC" active={location.pathname === '/importar-mrc'} onClick={() => navigate('/importar-mrc')} open={sidebarOpen} /></>)}
         </nav>
         <button onClick={() => setSidebarOpen(o => !o)} style={{ background: 'transparent', border: 'none', borderTop: '1px solid var(--brd)', color: 'var(--txt3)', padding: '10px', cursor: 'pointer', fontSize: 14, textAlign: 'center' }}>
           {sidebarOpen ? '◂' : '▸'}
@@ -647,7 +647,7 @@ function PorArea({ projeto, areasCalc, todosControles, loading, navigate, loadDa
 
   const PA = paStyles
   const tdS = { padding: '7px 8px', borderBottom: '1px solid var(--lt-border)', fontSize: 11, color: 'var(--lt-text2)', whiteSpace: 'nowrap', verticalAlign: 'top' }
-  function Td({ children, w = 150 }) { return <td style={{ ...tdS, width: w, minWidth: w, maxWidth: w, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{children || '—'}</td> }
+  function Td({ children, w = 150, wrap = false }) { return <td style={{ ...tdS, width: w, minWidth: w, maxWidth: w, overflow: 'hidden', textOverflow: wrap ? undefined : 'ellipsis', whiteSpace: wrap ? 'normal' : 'nowrap', lineHeight: wrap ? 1.4 : undefined }}>{children || '—'}</td> }
 
   return (
     <div style={PA.page}>
@@ -778,10 +778,10 @@ function PorArea({ projeto, areasCalc, todosControles, loading, navigate, loadDa
               <tr key={c.id||i} onClick={() => setModalRow(c)} style={{ cursor: 'pointer' }} onMouseEnter={e => e.currentTarget.style.background='rgba(204,145,94,0.04)'} onMouseLeave={e => e.currentTarget.style.background=''}>
                 <Td w={100}>{c.dt_ult || '—'}</Td>
                 <Td w={120}>{c.ger}</Td><Td w={120}>{c.resp_sub}</Td><Td w={140}>{c.area}</Td><Td w={120}>{c.sub}</Td>
-                <td style={{ ...tdS, color: 'var(--copper)', fontWeight: 600, width: 80, minWidth: 80 }}>{c.rr}</td><Td w={200}>{c.dr}</Td>
-                <td style={{ ...tdS, color: 'var(--copper)', fontWeight: 600, width: 90, minWidth: 90 }}>{c.rc}</td><Td w={200}>{c.dc}</Td>
+                <td style={{ ...tdS, color: 'var(--copper)', fontWeight: 600, width: 80, minWidth: 80 }}>{c.rr}</td><Td w={220} wrap>{c.dr}</Td>
+                <td style={{ ...tdS, color: 'var(--copper)', fontWeight: 600, width: 90, minWidth: 90 }}>{c.rc}</td><Td w={220} wrap>{c.dc}</Td>
                 <Td w={110}>{c.cat}</Td><Td w={90}>{c.freq}</Td><Td w={80}>{c.nat}</Td><Td w={80}>{c.car}</Td><Td w={80}>{c.sis}</Td><Td w={80}>{c.chave}</Td>
-                <Td w={180}>{c.passos_f1}</Td><td style={{ ...tdS, width: 80, minWidth: 80 }}>{badgeR(c.r1)}</td><Td w={180}>{c.incons}</Td><Td w={180}>{c.rec}</Td>
+                <Td w={180} wrap>{c.passos_f1}</Td><td style={{ ...tdS, width: 80, minWidth: 80 }}>{badgeR(c.r1)}</td><Td w={200} wrap>{c.incons}</Td><Td w={200} wrap>{c.rec}</Td>
                 <td style={{ ...tdS, width: 80, minWidth: 80 }}>{badgeImp(c.imp)}</td><td style={{ ...tdS, width: 80, minWidth: 80 }}>{badgeProb(c.prob)}</td><td style={{ ...tdS, width: 100, minWidth: 100 }}>{badgeCrit(c.crit)}</td>
                 <td style={{ ...tdS, width: 160, minWidth: 160 }}><div style={{ fontSize: 10, fontWeight: 500, color: 'var(--lt-text)', borderLeft: '3px solid var(--copper)', paddingLeft: 6, lineHeight: 1.3 }}>{fl.f}</div><div style={{ fontSize: 9, color: 'var(--lt-text3)', paddingLeft: 9 }}>{fl.s}</div></td>
                 <td style={{ ...tdS, textAlign: 'center', width: 90, minWidth: 90 }}>

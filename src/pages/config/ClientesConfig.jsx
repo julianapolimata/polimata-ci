@@ -83,9 +83,6 @@ function NovoClienteForm({ onSave, onCancel }) {
   const [cnpjErro, setCnpjErro] = useState('')
   const [nome, setNome] = useState('')
   const [nomeFantasia, setNomeFantasia] = useState('')
-  const [nomeProj, setNomeProj] = useState('Controles Internos 2025')
-  const [sistemas, setSistemas] = useState([{ nome: '' }])
-  const [areas, setAreas] = useState([{ nome: '', prefixo: '', peso: '', gerente: '', subprocessos: [{ nome: '', responsavel: '' }] }])
   const [saving, setSaving] = useState(false)
   const [erro, setErro] = useState('')
 
@@ -118,24 +115,12 @@ function NovoClienteForm({ onSave, onCancel }) {
   }
 
   async function salvar() {
-    if (!nome.trim()) { setErro('Nome do cliente é obrigatório'); return }
-    const areasInvalidas = areas.filter(a => a.nome.trim() && !(parseFloat(a.peso) > 0))
-    if (areasInvalidas.length) { setErro('Todas as áreas devem ter peso maior que 0%'); return }
+    if (!nome.trim()) { setErro('Razão Social é obrigatória'); return }
     setSaving(true); setErro('')
     try {
-      const { data: cli, error: eCli } = await supabase
-        .from('clientes').insert({ nome: nome.trim(), slug: toSlug(nome), cnpj: cnpj.replace(/\D/g,'') || null }).select().single()
+      const { error: eCli } = await supabase
+        .from('clientes').insert({ nome: nome.trim(), nome_fantasia: nomeFantasia.trim() || null, slug: toSlug(nome), cnpj: cnpj.replace(/\D/g,'') || null }).select().single()
       if (eCli) throw new Error(eCli.message)
-      const { data: proj, error: eProj } = await supabase
-        .from('projetos').insert({ cliente_id: cli.id, nome: nomeProj.trim() }).select().single()
-      if (eProj) throw new Error(eProj.message)
-      const sisValidos = sistemas.filter(s => s.nome.trim())
-      if (sisValidos.length) await supabase.from('sistemas').insert(sisValidos.map(s => ({ cliente_id: cli.id, nome: s.nome.trim() })))
-      for (let i = 0; i < areas.length; i++) {
-        const a = areas[i]
-        if (!a.nome.trim()) continue
-        await supabase.from('areas').insert({ projeto_id: proj.id, nome: a.nome.trim(), prefixo: a.prefixo.trim().toUpperCase(), peso: parseFloat(a.peso)||0, gerente: a.gerente.trim(), ordem: i+1 })
-      }
       onSave()
     } catch(e) { setErro(e.message); setSaving(false) }
   }
@@ -161,40 +146,6 @@ function NovoClienteForm({ onSave, onCancel }) {
           <div className="cfg-field"><label>Razão Social <span className="req">*</span></label><input className="input-light" value={nome} onChange={e => setNome(e.target.value)} placeholder="Razão Social" /></div>
           <div className="cfg-field"><label>Nome Fantasia</label><input className="input-light" value={nomeFantasia} onChange={e => setNomeFantasia(e.target.value)} placeholder="Nome Fantasia" /></div>
         </div>
-        <div className="cfg-field"><label>Nome do Projeto <span className="req">*</span></label><input className="input-light" value={nomeProj} onChange={e => setNomeProj(e.target.value)} /></div>
-      </div>
-      <div className="cfg-group">
-        <div className="cfg-group-hdr"><div className="cfg-group-title">Sistemas / Ferramentas</div><button className="btn-cfg-sm" onClick={() => setSistemas([...sistemas, {nome:''}])}>+ Adicionar</button></div>
-        {sistemas.map((s,i) => (
-          <div key={i} className="cfg-list-row">
-            <input className="input-light" style={{flex:1}} value={s.nome} onChange={e=>{const n=[...sistemas];n[i].nome=e.target.value;setSistemas(n)}} placeholder="Ex: TOTVS Datasul, Fluig..." />
-            {sistemas.length>1 && <button className="btn-cfg-remove" onClick={()=>setSistemas(sistemas.filter((_,idx)=>idx!==i))}>✕</button>}
-          </div>
-        ))}
-      </div>
-      <div className="cfg-group">
-        <div className="cfg-group-hdr"><div className="cfg-group-title">Processos / Áreas</div><button className="btn-cfg-sm" onClick={()=>setAreas([...areas,{nome:'',prefixo:'',peso:'',gerente:'',subprocessos:[{nome:'',responsavel:''}]}])}>+ Área</button></div>
-        {areas.map((a,ai) => (
-          <div key={ai} className="cfg-area-block">
-            <div className="cfg-area-hdr"><span className="cfg-area-num">Área {ai+1}</span>{areas.length>1 && <button className="btn-cfg-remove" onClick={()=>setAreas(areas.filter((_,i)=>i!==ai))}>✕ Remover</button>}</div>
-            <div className="cfg-row3">
-              <div className="cfg-field"><label>Processo <span className="req">*</span></label><input className="input-light" value={a.nome} onChange={e=>{const n=[...areas];n[ai].nome=e.target.value;setAreas(n)}} placeholder="Ex: Compras" /></div>
-              <div className="cfg-field"><label>Prefixo <span className="req">*</span></label><input className="input-light" value={a.prefixo} onChange={e=>{const n=[...areas];n[ai].prefixo=e.target.value.toUpperCase();setAreas(n)}} placeholder="COM" maxLength={8} /></div>
-              <div className="cfg-field"><label>Peso (%)</label><input className="input-light" type="number" value={a.peso} onChange={e=>{const n=[...areas];n[ai].peso=e.target.value;setAreas(n)}} placeholder="13.5" /></div>
-            </div>
-            <div className="cfg-field" style={{marginTop:10}}><label>Gerente</label><input className="input-light" value={a.gerente} onChange={e=>{const n=[...areas];n[ai].gerente=e.target.value;setAreas(n)}} placeholder="Nome do gerente" /></div>
-            <div className="cfg-sub-section">
-              <div className="cfg-sub-hdr"><span className="cfg-sub-label">Subprocessos e Responsáveis</span><button className="btn-cfg-sm" onClick={()=>{const n=[...areas];n[ai].subprocessos.push({nome:'',responsavel:''});setAreas(n)}}>+ Sub</button></div>
-              {a.subprocessos.map((sp,si) => (
-                <div key={si} className="cfg-sub-row">
-                  <div className="cfg-field" style={{flex:2}}>{si===0&&<label>Subprocesso</label>}<input className="input-light" value={sp.nome} onChange={e=>{const n=[...areas];n[ai].subprocessos[si].nome=e.target.value;setAreas(n)}} placeholder="Nome do subprocesso" /></div>
-                  <div className="cfg-field" style={{flex:1}}>{si===0&&<label>Responsável</label>}<input className="input-light" value={sp.responsavel} onChange={e=>{const n=[...areas];n[ai].subprocessos[si].responsavel=e.target.value;setAreas(n)}} placeholder="Nome" /></div>
-                  {a.subprocessos.length>1 && <button className="btn-cfg-remove" style={{marginTop:si===0?20:0}} onClick={()=>{const n=[...areas];n[ai].subprocessos=n[ai].subprocessos.filter((_,i)=>i!==si);setAreas(n)}}>✕</button>}
-                </div>
-              ))}
-            </div>
-          </div>
-        ))}
       </div>
       <div className="cfg-form-footer">
         <button className="btn-cfg-cancel" onClick={onCancel}>Cancelar</button>

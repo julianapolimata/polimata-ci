@@ -234,7 +234,7 @@ export function ModalDetalhe({ row, onClose }) {
   return (
     <div className="overlay open" onClick={e => e.target === e.currentTarget && onClose()}>
       <div className="modal">
-        <div className="modal-hdr"><div><div className="modal-ttl">{row.rc} · {row.area}</div><div className="modal-sub">{row.sub}</div></div><button className="modal-cls" onClick={onClose}>×</button></div>
+        <div className="modal-hdr"><div><div className="modal-ttl">{row.rc}{row.area ? ` · ${row.area}` : ''}</div><div className="modal-sub">{row.sub}</div></div><button className="modal-cls" onClick={onClose}>×</button></div>
         <div className="modal-tabs">{tabs.map(t => (<div key={t.id} className={`mtab ${tab === t.id ? 'active' : ''}`} onClick={() => setTab(t.id)}>{t.label}</div>))}</div>
         <div className="modal-body">
 
