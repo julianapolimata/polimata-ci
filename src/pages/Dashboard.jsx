@@ -633,16 +633,13 @@ function PorArea({ projeto, areasCalc, todosControles, loading, navigate, loadDa
   const sortArrow = (k) => sortCol === k ? (sortDir === 'asc' ? ' ▲' : ' ▼') : ''
   function paSortVal(row, k) { if (k === '_dt') return row.dt_ult || row.atualizado_em || row.criado_em || ''; return row[k] ?? '' }
 
-  const cfSorted = useMemo(() => {
-    if (!sortCol) return cf
-    return [...cf].sort((a, b) => {
-      let va = paSortVal(a, sortCol), vb = paSortVal(b, sortCol)
-      if (sortCol === '_dt') { va = va ? new Date(va).getTime() : 0; vb = vb ? new Date(vb).getTime() : 0; return sortDir === 'asc' ? va - vb : vb - va }
-      va = String(va).toLowerCase(); vb = String(vb).toLowerCase()
-      const cmp = va.localeCompare(vb, 'pt-BR')
-      return sortDir === 'asc' ? cmp : -cmp
-    })
-  }, [cf, sortCol, sortDir])
+  const cfSorted = !sortCol ? cf : [...cf].sort((a, b) => {
+    let va = paSortVal(a, sortCol), vb = paSortVal(b, sortCol)
+    if (sortCol === '_dt') { va = va ? new Date(va).getTime() : 0; vb = vb ? new Date(vb).getTime() : 0; return sortDir === 'asc' ? va - vb : vb - va }
+    va = String(va).toLowerCase(); vb = String(vb).toLowerCase()
+    const cmp = va.localeCompare(vb, 'pt-BR')
+    return sortDir === 'asc' ? cmp : -cmp
+  })
 
   const crits = [...new Set(area.controles.map(c => String(c.crit_label||'')).filter(v => v))].sort()
   const imps = [...new Set(area.controles.map(c => String(c.imp||'')).filter(v => v))].sort()
