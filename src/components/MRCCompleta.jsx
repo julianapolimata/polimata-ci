@@ -325,73 +325,70 @@ export function ModalDetalhe({ row, onClose }) {
 
 // ─── TABELA MRC ──────────────────────────────────────────────────────────────
 
-function TabelaMRC({ rows, visCols, onOpenModal, expandAll }) {
-  const v = id => visCols.has(id); const ml = expandAll ? 9999 : 70
+// Headers de fase coloridos (padrão PorArea)
+const MRC_FASE_HDR = [
+  { h: 'Fase 1\nDiagnóstico', bg: '#00203E' },
+  { h: 'Fase 2\nE1 - Desenho', bg: '#1D3B5C' },
+  { h: 'Fase 2\nE2 - Efetividade', bg: '#1D3B5C' },
+  { h: 'Fase 3\nRevisão Integral', bg: '#660033' },
+  { h: 'Fase 4\nAI - Ciclo 1', bg: '#660066' },
+  { h: 'Fase 4\nAI - Ciclo 2', bg: '#660066' },
+  { h: 'Fase 5\nAuditoria Indep.', bg: '#A6512F' },
+]
+const mrcFaseThS = { fontSize: 9, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5, color: '#fff', padding: '8px 8px', textAlign: 'center', whiteSpace: 'pre-line', position: 'sticky', top: 0, zIndex: 2, minWidth: 100, borderBottom: 'none', borderRadius: '8px 8px 0 0' }
+const mrcThS = { fontSize: 10, fontWeight: 500, textTransform: 'uppercase', letterSpacing: 0.5, color: 'var(--lt-text3)', background: 'var(--lt-card)', padding: '10px 10px', textAlign: 'left', whiteSpace: 'nowrap', position: 'sticky', top: 0, zIndex: 2, borderBottom: '1px solid var(--lt-border)' }
+const mrcTdS = { padding: '5px 8px', borderBottom: '1px solid var(--lt-border)', fontSize: 11, color: 'var(--lt-text2)', whiteSpace: 'nowrap', verticalAlign: 'middle' }
+
+function badgeFaseMRC(val) {
+  if (!val || val === 'Teste Não Realizado' || val === 'N/A') return <span style={{ fontSize: 10, fontStyle: 'italic', color: 'var(--lt-text3)' }}>Não iniciado</span>
+  return badge(R1_MAP[val] || 'b-na', val)
+}
+
+function badgeResultado(val) {
+  if (!val || val === 'N/A') return <span style={{ color: 'var(--lt-text3)', fontSize: 10 }}>—</span>
+  return <span className={`bd ${R1_MAP[val] || 'b-na'}`}>{val}</span>
+}
+
+function TdMRC({ children, w = 150, wrap = false }) {
+  return <td style={{ ...mrcTdS, width: w, minWidth: w, maxWidth: w, overflow: 'hidden', textOverflow: wrap ? undefined : 'ellipsis', whiteSpace: wrap ? 'normal' : 'nowrap', lineHeight: wrap ? 1.4 : undefined }}>{children || '—'}</td>
+}
+
+function TabelaMRC({ rows, onOpenModal }) {
   return (
-    <div className="tbl-sc"><table><thead><tr>
-      {v('dt_ult')&&<th>Data Últ. Atualização</th>}
-      {v('ger')&&<th>Gerência</th>}
-      {v('resp_sub')&&<th>Resp. Processo</th>}
-      {v('area')&&<th>Processo</th>}
-      {v('sub')&&<th>Subprocesso</th>}
-      {v('rr')&&<th>Ref. Risco</th>}
-      {v('dr')&&<th>Descrição do Risco</th>}
-      {v('rc')&&<th>Ref. Controle</th>}
-      {v('dc')&&<th>Descrição do Controle</th>}
-      {v('cat')&&<th>Categoria de Controle</th>}
-      {v('freq')&&<th>Frequência</th>}
-      {v('nat')&&<th>Natureza</th>}
-      {v('car')&&<th>Característica</th>}
-      {v('sis')&&<th>Sistema</th>}
-      {v('chave')&&<th>Ctrl Chave?</th>}
-      {v('passos_f1')&&<th>Passos de Teste</th>}
-      {v('r1')&&<th>F1 Resultado</th>}
-      {v('incons')&&<th>Descrição da Inconsistência</th>}
-      {v('rec')&&<th>Recomendação / Melhoria</th>}
-      {v('r_ader')&&<th>F2 Aderência</th>}
-      {v('r3')&&<th>F3 Resultado</th>}
-      {v('r_f4c1')&&<th>F4-C1 Resultado</th>}
-      {v('r_f4c2')&&<th>F4-C2 Resultado</th>}
-      {v('r_f5')&&<th>F5 Resultado</th>}
-      {v('imp')&&<th>Impacto</th>}
-      {v('prob')&&<th>Probabilidade</th>}
-      {v('crit')&&<th>Criticidade</th>}
-      {v('fase')&&<th>Fase Atual</th>}
-    </tr></thead><tbody>
-      {rows.length === 0 && <tr><td colSpan={23} className="empty">Nenhum controle encontrado com os filtros aplicados.</td></tr>}
-      {rows.map(row => (
-        <tr key={row.id} style={{ cursor:'pointer' }} onClick={() => onOpenModal(row)}>
-          {v('dt_ult')&&<td><span style={{fontSize:11,whiteSpace:'nowrap'}}>{fmtDate(row.dt_ult)}</span></td>}
-          {v('ger')&&<td><span style={{fontSize:11}}>{row.ger||'—'}</span></td>}
-          {v('resp_sub')&&<td><span style={{fontSize:11}}>{row.resp_sub||'—'}</span></td>}
-          {v('area')&&<td><span style={{fontSize:11}}>{row.area}</span></td>}
-          {v('sub')&&<td><span style={{fontSize:11}}>{row.sub}</span></td>}
-          {v('rr')&&<td><span style={{fontSize:11,color:'var(--gold)',fontWeight:600}}>{row.rr}</span></td>}
-          {v('dr')&&<td><ExpCell text={row.dr} maxLen={ml} expanded={expandAll}/></td>}
-          {v('rc')&&<td><span style={{fontSize:11,color:'var(--gold)',fontWeight:600}}>{row.rc}</span></td>}
-          {v('dc')&&<td><ExpCell text={row.dc} maxLen={ml} expanded={expandAll}/></td>}
-          {v('cat')&&<td><span style={{fontSize:11}}>{row.cat||'—'}</span></td>}
-          {v('freq')&&<td><span style={{fontSize:11}}>{row.freq||'—'}</span></td>}
-          {v('nat')&&<td><span style={{fontSize:11}}>{row.nat||'—'}</span></td>}
-          {v('car')&&<td><span style={{fontSize:11}}>{row.car||'—'}</span></td>}
-          {v('sis')&&<td><span style={{fontSize:11}}>{row.sis||'—'}</span></td>}
-          {v('chave')&&<td><span style={{fontSize:11}}>{row.chave||'—'}</span></td>}
-          {v('passos_f1')&&<td><ExpCell text={row.passos_f1} maxLen={ml} expanded={expandAll}/></td>}
-          {v('r1')&&<td>{badge(R1_MAP[row.r1]||'b-na', row.r1)}</td>}
-          {v('incons')&&<td><ExpCell text={row.incons} maxLen={ml} expanded={expandAll}/></td>}
-          {v('rec')&&<td><ExpCell text={row.rec} maxLen={ml} expanded={expandAll}/></td>}
-          {v('r_ader')&&<td>{badge(R1_MAP[row.r_ader]||'b-na', row.r_ader)}</td>}
-          {v('r3')&&<td>{badge(R1_MAP[row.r3]||'b-na', row.r3)}</td>}
-          {v('r_f4c1')&&<td>{badge(R1_MAP[row.r_f4c1]||'b-na', row.r_f4c1)}</td>}
-          {v('r_f4c2')&&<td>{badge(R1_MAP[row.r_f4c2]||'b-na', row.r_f4c2)}</td>}
-          {v('r_f5')&&<td>{badge(R1_MAP[row.r_f5]||'b-na', row.r_f5)}</td>}
-          {v('imp')&&<td>{badge(IMP_MAP[row.imp]||'b-na', row.imp)}</td>}
-          {v('prob')&&<td>{badge(PROB_MAP[row.prob]||'b-na', row.prob)}</td>}
-          {v('crit')&&<td>{critBadge(row.crit)}</td>}
-          {v('fase')&&<td><FaseAtual row={row}/></td>}
-        </tr>
-      ))}
-    </tbody></table></div>
+    <div style={{ flex: 1, overflowX: 'scroll', overflowY: 'auto', minHeight: 0 }}>
+      <table style={{ width: 'max-content', minWidth: '100%', borderCollapse: 'collapse' }}>
+        <thead><tr>
+          {[
+            { h: 'Processo', w: 120 }, { h: 'Subprocesso', w: 120 }, { h: 'Ref. Risco', w: 80 },
+            { h: 'Desc. Risco', w: 200 }, { h: 'Ref. Controle', w: 90 }, { h: 'Desc. Controle', w: 200 },
+            { h: 'Resultado', w: 90 }, { h: 'Criticidade', w: 110 },
+          ].map((col, i) => <th key={i} style={{ ...mrcThS, width: col.w, minWidth: col.w }}>{col.h}</th>)}
+          {MRC_FASE_HDR.map((f, i) => <th key={`f${i}`} style={{ ...mrcFaseThS, background: f.bg }}>{f.h}</th>)}
+        </tr></thead>
+        <tbody>
+          {rows.length === 0 && <tr><td colSpan={15} style={{ textAlign: 'center', padding: 24, color: 'var(--lt-text3)', fontSize: 12 }}>Nenhum controle encontrado com os filtros aplicados.</td></tr>}
+          {rows.map(row => (
+            <tr key={row.id} style={{ cursor: 'pointer' }} onClick={() => onOpenModal(row)} onMouseEnter={e => e.currentTarget.style.background='rgba(204,145,94,0.04)'} onMouseLeave={e => e.currentTarget.style.background=''}>
+              <TdMRC w={120}>{row.area}</TdMRC>
+              <TdMRC w={120}>{row.sub}</TdMRC>
+              <td style={{ ...mrcTdS, color: 'var(--copper)', fontWeight: 600, width: 80, minWidth: 80 }}>{row.rr}</td>
+              <TdMRC w={200} wrap>{row.dr}</TdMRC>
+              <td style={{ ...mrcTdS, color: 'var(--copper)', fontWeight: 600, width: 90, minWidth: 90 }}>{row.rc}</td>
+              <TdMRC w={200} wrap>{row.dc}</TdMRC>
+              <td style={{ ...mrcTdS, width: 90, minWidth: 90 }}>{badgeResultado(row.r1)}</td>
+              <td style={{ ...mrcTdS, width: 110, minWidth: 110 }}>{critBadge(row.crit)}</td>
+              <td style={{ ...mrcTdS, width: 100, minWidth: 100, textAlign: 'center' }}>{badgeFaseMRC(row.r1)}</td>
+              <td style={{ ...mrcTdS, width: 100, minWidth: 100, textAlign: 'center' }}>{badgeFaseMRC(row.st_pa)}</td>
+              <td style={{ ...mrcTdS, width: 100, minWidth: 100, textAlign: 'center' }}>{badgeFaseMRC(row.r_ader)}</td>
+              <td style={{ ...mrcTdS, width: 100, minWidth: 100, textAlign: 'center' }}>{badgeFaseMRC(row.r3)}</td>
+              <td style={{ ...mrcTdS, width: 100, minWidth: 100, textAlign: 'center' }}>{badgeFaseMRC(row.r_f4c1)}</td>
+              <td style={{ ...mrcTdS, width: 100, minWidth: 100, textAlign: 'center' }}>{badgeFaseMRC(row.r_f4c2)}</td>
+              <td style={{ ...mrcTdS, width: 100, minWidth: 100, textAlign: 'center' }}>{badgeFaseMRC(row.r_f5)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   )
 }
 
@@ -402,8 +399,7 @@ export default function MRCCompleta({ projetoId, clienteNome, projetoNome, notif
   const [busca, setBusca] = useState(''); const [filtroArea, setFiltroArea] = useState(''); const [filtroCrit, setFiltroCrit] = useState('')
   const [filtroImp, setFiltroImp] = useState(''); const [filtroProb, setFiltroProb] = useState(''); const [filtroR1, setFiltroR1] = useState(''); const [filtroNivel, setFiltroNivel] = useState('')
   const [filtroFase, setFiltroFase] = useState('')
-  const [visCols, setVisCols] = useState(new Set(DEFAULT_COLS)); const [colPanelOpen, setColPanelOpen] = useState(false)
-  const [expandAll, setExpandAll] = useState(false); const [modalRow, setModalRow] = useState(null)
+  const [modalRow, setModalRow] = useState(null)
 
   useEffect(() => {
     if (!projetoId) return
@@ -549,27 +545,21 @@ export default function MRCCompleta({ projetoId, clienteNome, projetoNome, notif
         </div>
       </div>
 
-      <div className="card">
-        <div className="filters">
-          <input type="text" placeholder="Buscar ref., área, risco, controle, inconsistência, passos…" value={busca} onChange={e => setBusca(e.target.value)} />
-          <select value={filtroCrit} onChange={e => setFiltroCrit(e.target.value)}><option value="">Todas criticidades</option><option value="4">Crítico</option><option value="3">Significativo</option><option value="2">Moderado</option><option value="1">Baixo</option></select>
-          <select value={filtroFase} onChange={e => setFiltroFase(e.target.value)}><option value="">Todas as fases</option>{fasesDisponiveis.map(f => <option key={f} value={f}>{f}</option>)}</select>
-          <select value={filtroR1} onChange={e => setFiltroR1(e.target.value)}><option value="">Todos resultados</option><option>Efetivo</option><option>Inefetivo</option><option>GAP</option><option>Teste Não Realizado</option></select>
-          <span className="chip">{filtered.length} controles</span>
-        </div>
+      {/* FILTROS */}
+      <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexShrink: 0, flexWrap: 'wrap', marginBottom: 6 }}>
+        <input value={busca} onChange={e => setBusca(e.target.value)} placeholder="Buscar ref., área, risco, controle, inconsistência…" style={{ flex: 1, minWidth: 200, background: 'var(--lt-card)', border: '1px solid var(--lt-border)', borderRadius: 8, padding: '6px 10px', fontFamily: 'inherit', fontSize: 11, outline: 'none', color: 'var(--lt-text)' }} />
+        <select value={filtroCrit} onChange={e => setFiltroCrit(e.target.value)} style={{ background: 'var(--lt-card)', border: '1px solid var(--lt-border)', borderRadius: 8, padding: '5px 8px', fontFamily: 'inherit', fontSize: 11, color: 'var(--lt-text2)', cursor: 'pointer', outline: 'none' }}><option value="">Todas criticidades</option><option value="4">Crítico</option><option value="3">Significativo</option><option value="2">Moderado</option><option value="1">Baixo</option></select>
+        <select value={filtroFase} onChange={e => setFiltroFase(e.target.value)} style={{ background: 'var(--lt-card)', border: '1px solid var(--lt-border)', borderRadius: 8, padding: '5px 8px', fontFamily: 'inherit', fontSize: 11, color: 'var(--lt-text2)', cursor: 'pointer', outline: 'none' }}><option value="">Todas as fases</option>{fasesDisponiveis.map(f => <option key={f} value={f}>{f}</option>)}</select>
+        <select value={filtroR1} onChange={e => setFiltroR1(e.target.value)} style={{ background: 'var(--lt-card)', border: '1px solid var(--lt-border)', borderRadius: 8, padding: '5px 8px', fontFamily: 'inherit', fontSize: 11, color: 'var(--lt-text2)', cursor: 'pointer', outline: 'none' }}><option value="">Todos resultados</option><option>Efetivo</option><option>Inefetivo</option><option>GAP</option><option>Teste Não Realizado</option></select>
+        <span style={{ fontSize: 10, color: 'var(--lt-text3)', fontWeight: 600 }}>{filtered.length} controles</span>
+        {temFiltro && <button onClick={limparFiltros} style={{ background: 'none', border: 'none', fontSize: 10, color: 'var(--copper)', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 600 }}>✕ Limpar</button>}
+        <button style={{ display: 'inline-flex', alignItems: 'center', gap: 5, background: 'rgba(204,145,94,0.1)', border: '1px solid rgba(204,145,94,0.25)', borderRadius: 999, padding: '5px 10px', fontSize: 10, fontWeight: 600, color: 'var(--copper)', cursor: 'pointer', fontFamily: 'inherit', marginLeft: 'auto' }} onClick={() => exportarMRCExcel(filtered, 'MRC_Completa_' + new Date().toISOString().slice(0,10), 'MRC Completa', clienteNome, projetoNome)}>Excel</button>
+      </div>
 
-        <div className="mrc-actions" style={{ padding:'8px 14px',borderBottom:'1px solid var(--brd)' }}>
-          <button className="btn btn-xs" onClick={() => setExpandAll(o => !o)}>⊞ {expandAll ? 'Recolher Tudo' : 'Expandir Tudo'}</button>
-          {temFiltro && <button className="btn btn-ghost btn-sm" onClick={limparFiltros}>✕ Limpar filtros</button>}
-          <div className="mrc-actions-right">
-            <button className="btn-export btn-export-xl" title="Exportar para Excel" onClick={() => exportarMRCExcel(filtered, 'MRC_Completa_' + new Date().toISOString().slice(0,10), 'MRC Completa', clienteNome, projetoNome)}><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/></svg>Excel</button>
-            <button className="btn-export btn-export-pdf" title="Exportar para PDF"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>PDF</button>
-            <div className="col-panel-wrap"><button className="btn btn-xs" onClick={() => setColPanelOpen(o => !o)}>⊞ Colunas</button><ColunasPanel visCols={visCols} setVisCols={setVisCols} open={colPanelOpen} onClose={() => setColPanelOpen(false)} /></div>
-          </div>
-        </div>
-
-        {isLimited && <div className="warn-strip">Exibindo {MAX_ROWS} de {filtered.length} — refine os filtros</div>}
-        <TabelaMRC rows={visibleRows} visCols={visCols} onOpenModal={setModalRow} expandAll={expandAll} />
+      {/* TABELA */}
+      <div style={{ flex: 1, minHeight: 0, background: 'var(--lt-card)', borderRadius: 12, border: '1px solid var(--lt-border)', display: 'flex', flexDirection: 'column', overflow: 'hidden', boxShadow: '0 1px 3px rgba(10,37,64,0.06)' }}>
+        {isLimited && <div style={{ background: 'rgba(234,179,8,0.1)', color: '#92400E', fontSize: 10, padding: '4px 14px', borderBottom: '1px solid var(--lt-border)', fontWeight: 500 }}>Exibindo {MAX_ROWS} de {filtered.length} — refine os filtros</div>}
+        <TabelaMRC rows={visibleRows} onOpenModal={setModalRow} />
       </div>
 
       {modalRow && <ModalDetalhe row={modalRow} onClose={() => setModalRow(null)} />}

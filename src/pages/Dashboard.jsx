@@ -660,17 +660,17 @@ function PorArea({ projeto, areasCalc, todosControles, loading, navigate, loadDa
   // Headers de fase coloridos
   const FASE_HDR = [
     { h: 'Fase 1\nDiagnóstico', bg: '#00203E' },
-    { h: 'Fase 2\nDesenho', bg: '#1D3B5C' },
-    { h: 'Fase 2\nAderência', bg: '#3D1A2E' },
+    { h: 'Fase 2\nE1 - Desenho', bg: '#1D3B5C' },
+    { h: 'Fase 2\nE2 - Efetividade', bg: '#1D3B5C' },
     { h: 'Fase 3\nRevisão Integral', bg: '#660033' },
     { h: 'Fase 4\nAI - Ciclo 1', bg: '#660066' },
-    { h: 'Fase 4\nAI - Ciclo 2', bg: '#7A3D7A' },
+    { h: 'Fase 4\nAI - Ciclo 2', bg: '#660066' },
     { h: 'Fase 5\nAuditoria Indep.', bg: '#A6512F' },
   ]
-  const faseThS = { fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5, color: '#fff', padding: '10px 12px', textAlign: 'center', whiteSpace: 'pre-line', position: 'sticky', top: 0, zIndex: 2, minWidth: 110, borderBottom: 'none', borderRadius: '8px 8px 0 0' }
+  const faseThS = { fontSize: 9, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5, color: '#fff', padding: '8px 8px', textAlign: 'center', whiteSpace: 'pre-line', position: 'sticky', top: 0, zIndex: 2, minWidth: 100, borderBottom: 'none', borderRadius: '8px 8px 0 0' }
 
   const PA = paStyles
-  const tdS = { padding: '7px 8px', borderBottom: '1px solid var(--lt-border)', fontSize: 11, color: 'var(--lt-text2)', whiteSpace: 'nowrap', verticalAlign: 'top' }
+  const tdS = { padding: '5px 8px', borderBottom: '1px solid var(--lt-border)', fontSize: 11, color: 'var(--lt-text2)', whiteSpace: 'nowrap', verticalAlign: 'middle' }
   function Td({ children, w = 150, wrap = false }) { return <td style={{ ...tdS, width: w, minWidth: w, maxWidth: w, overflow: 'hidden', textOverflow: wrap ? undefined : 'ellipsis', whiteSpace: wrap ? 'normal' : 'nowrap', lineHeight: wrap ? 1.4 : undefined }}>{children || '—'}</td> }
 
   return (
@@ -810,13 +810,13 @@ function PorArea({ projeto, areasCalc, todosControles, loading, navigate, loadDa
                 <td style={{ ...tdS, width: 90, minWidth: 90 }}>{badgeR(c.r1)}</td>
                 <td style={{ ...tdS, width: 110, minWidth: 110 }}>{badgeCrit(c.crit)}</td>
                 {/* Colunas de fase */}
-                <td style={{ ...tdS, width: 110, minWidth: 110, textAlign: 'center' }}>{badgeFase(c.r1)}</td>
-                <td style={{ ...tdS, width: 110, minWidth: 110, textAlign: 'center' }}>{badgeFase(c.st_pa)}</td>
-                <td style={{ ...tdS, width: 110, minWidth: 110, textAlign: 'center' }}>{badgeFase(c.r_ader)}</td>
-                <td style={{ ...tdS, width: 110, minWidth: 110, textAlign: 'center' }}>{badgeFase(c.r3)}</td>
-                <td style={{ ...tdS, width: 110, minWidth: 110, textAlign: 'center' }}>{badgeFase(c.r_f4c1)}</td>
-                <td style={{ ...tdS, width: 110, minWidth: 110, textAlign: 'center' }}>{badgeFase(c.r_f4c2)}</td>
-                <td style={{ ...tdS, width: 110, minWidth: 110, textAlign: 'center' }}>{badgeFase(c.r_f5)}</td>
+                <td style={{ ...tdS, width: 100, minWidth: 100, textAlign: 'center' }}>{badgeFase(c.r1)}</td>
+                <td style={{ ...tdS, width: 100, minWidth: 100, textAlign: 'center' }}>{badgeFase(c.st_pa)}</td>
+                <td style={{ ...tdS, width: 100, minWidth: 100, textAlign: 'center' }}>{badgeFase(c.r_ader)}</td>
+                <td style={{ ...tdS, width: 100, minWidth: 100, textAlign: 'center' }}>{badgeFase(c.r3)}</td>
+                <td style={{ ...tdS, width: 100, minWidth: 100, textAlign: 'center' }}>{badgeFase(c.r_f4c1)}</td>
+                <td style={{ ...tdS, width: 100, minWidth: 100, textAlign: 'center' }}>{badgeFase(c.r_f4c2)}</td>
+                <td style={{ ...tdS, width: 100, minWidth: 100, textAlign: 'center' }}>{badgeFase(c.r_f5)}</td>
                 <td style={{ ...tdS, textAlign: 'center', width: 90, minWidth: 90 }}>
                   {isCliente ? (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 3, alignItems: 'center' }}>
