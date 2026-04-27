@@ -104,6 +104,13 @@ function getUltimaAtualizacao(controles) {
   return max ? max.toLocaleDateString('pt-BR') : '—'
 }
 
+function fmtDate(v) {
+  if (!v) return '—'
+  const d = new Date(v)
+  if (isNaN(d)) return '—'
+  return d.toLocaleDateString('pt-BR')
+}
+
 // Mapeia imp/prob string para index (0=mais grave)
 function impToIdx(v) { return { 'Crítico': 0, 'Alto': 1, 'Moderado': 2, 'Baixo': 3 }[(v || '')] ?? -1 }
 function probToIdx(v) { return { 'Extrema': 0, 'Alta': 1, 'Média': 2, 'Baixa': 3 }[(v || '')] ?? -1 }
@@ -764,11 +771,11 @@ function PorArea({ projeto, areasCalc, todosControles, loading, navigate, loadDa
               {[
                 { h: 'Data Últ. Atual.', w: 100 }, { h: 'Gerência', w: 120 }, { h: 'Resp. Proc.', w: 120 },
                 { h: 'Processo', w: 140 }, { h: 'Subprocesso', w: 120 }, { h: 'Ref. Risco', w: 80 },
-                { h: 'Desc. Risco', w: 200 }, { h: 'Ref. Controle', w: 90 }, { h: 'Desc. Controle', w: 200 },
+                { h: 'Desc. Risco', w: 220 }, { h: 'Ref. Controle', w: 90 }, { h: 'Desc. Controle', w: 220 },
                 { h: 'Categoria', w: 110 }, { h: 'Frequência', w: 90 }, { h: 'Natureza', w: 80 },
                 { h: 'Caract.', w: 80 }, { h: 'Sistema', w: 80 }, { h: 'Ctrl Chave?', w: 80 },
-                { h: 'Passos Teste', w: 180 }, { h: 'Resultado', w: 80 }, { h: 'Desc. Inconsist.', w: 180 },
-                { h: 'Recomendação', w: 180 }, { h: 'Impacto', w: 80 }, { h: 'Probab.', w: 80 },
+                { h: 'Passos Teste', w: 180 }, { h: 'Resultado', w: 80 }, { h: 'Desc. Inconsist.', w: 200 },
+                { h: 'Recomendação', w: 200 }, { h: 'Impacto', w: 80 }, { h: 'Probab.', w: 80 },
                 { h: 'Criticidade', w: 100 }, { h: 'Fase Atual', w: 160 },
               ].map((col, i) =>
                 <th key={i} style={{ fontSize: 10, fontWeight: 500, textTransform: 'uppercase', letterSpacing: 0.5, color: 'var(--lt-text3)', background: 'var(--lt-card)', padding: '12px 16px', textAlign: 'left', whiteSpace: 'nowrap', position: 'sticky', top: 0, zIndex: 2, width: col.w, minWidth: col.w, borderBottom: '1px solid var(--lt-border)' }}>{col.h}</th>)}
@@ -776,7 +783,7 @@ function PorArea({ projeto, areasCalc, todosControles, loading, navigate, loadDa
             </tr></thead>
             <tbody>{cf.map((c, i) => { const fl = faseLabel(c); return (
               <tr key={c.id||i} onClick={() => setModalRow(c)} style={{ cursor: 'pointer' }} onMouseEnter={e => e.currentTarget.style.background='rgba(204,145,94,0.04)'} onMouseLeave={e => e.currentTarget.style.background=''}>
-                <Td w={100}>{c.dt_ult || '—'}</Td>
+                <Td w={100}>{fmtDate(c.dt_ult)}</Td>
                 <Td w={120}>{c.ger}</Td><Td w={120}>{c.resp_sub}</Td><Td w={140}>{c.area}</Td><Td w={120}>{c.sub}</Td>
                 <td style={{ ...tdS, color: 'var(--copper)', fontWeight: 600, width: 80, minWidth: 80 }}>{c.rr}</td><Td w={220} wrap>{c.dr}</Td>
                 <td style={{ ...tdS, color: 'var(--copper)', fontWeight: 600, width: 90, minWidth: 90 }}>{c.rc}</td><Td w={220} wrap>{c.dc}</Td>
