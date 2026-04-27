@@ -17,7 +17,7 @@ const IMP_MAP = { Crítico:'i-crit', Alto:'i-alto', Moderado:'i-mod', Baixo:'i-b
 const PROB_MAP= { Extrema:'p-ext', Alta:'p-alt', Média:'p-med', Baixa:'p-bx' }
 
 const HM_IMPS   = ['Crítico', 'Alto', 'Moderado', 'Baixo']
-const HM_PROBS  = ['Baixa', 'Média', 'Alta', 'Extrema']
+const HM_PROBS  = ['Extrema', 'Alta', 'Média', 'Baixa']
 
 function fmtDate(v) {
   if (!v) return '—'
@@ -25,12 +25,17 @@ function fmtDate(v) {
   if (isNaN(d)) return '—'
   return d.toLocaleDateString('pt-BR')
 }
+// Cores do heatmap (mesmo padrão PorArea) — [imp][prob] com Extrema=col0
 const HM_COLORS = [
-  ['#FFC000','#FF0000','#FF0000','#FF0000'],
-  ['#00B050','#FFC000','#FF0000','#FF0000'],
-  ['#00B050','#00B050','#FFC000','#FF0000'],
-  ['#00B050','#00B050','#00B050','#FFC000'],
+  ['#EF4444', '#EF4444', '#F97316', '#EAB308'],
+  ['#EF4444', '#F97316', '#EAB308', '#EAB308'],
+  ['#F97316', '#EAB308', '#EAB308', '#22C55E'],
+  ['#EAB308', '#22C55E', '#22C55E', '#22C55E'],
 ]
+const CRIT_LABELS_HM = ['Crítico', 'Significativo', 'Moderado', 'Baixo']
+const CRIT_CORES_HM = ['#EF4444', '#F97316', '#EAB308', '#22C55E']
+function impToIdx(v) { return { 'Crítico': 0, 'Alto': 1, 'Moderado': 2, 'Baixo': 3 }[(v || '')] ?? -1 }
+function probToIdx(v) { return { 'Extrema': 0, 'Alta': 1, 'Média': 2, 'Baixa': 3 }[(v || '')] ?? -1 }
 
 const NIVEIS = [
   { id: 'N1', label: 'N1', nome: 'Inefetivo', cls: 'rn1', resultado: 'Inefetivo' },
@@ -428,6 +433,15 @@ export default function MRCCompleta({ projetoId, clienteNome, projetoNome, notif
     return { ef, inf, gap, pa }
   }, [mrc])
 
+  const heatGrid = useMemo(() => {
+    const grid = Array.from({ length: 4 }, () => Array(4).fill(0))
+    mrc.forEach(c => {
+      const ri = impToIdx(c.imp), ci = probToIdx(c.prob)
+      if (ri >= 0 && ci >= 0) grid[ri][ci]++
+    })
+    return grid
+  }, [mrc])
+
   const filtered = mrc.filter(r => {
     if (filtroArea && r.area !== filtroArea) return false
     if (filtroCrit && r.crit !== parseInt(filtroCrit)) return false
@@ -468,8 +482,37 @@ export default function MRCCompleta({ projetoId, clienteNome, projetoNome, notif
 
       {/* ZONA SUPERIOR — HEATMAP + KPIs (padrão PorArea) */}
       <div style={{ display: 'flex', gap: 10, flexShrink: 0, margin: '6px 0 8px' }}>
-        <div className="mrc-hm-compact" style={{ background: 'var(--lt-card)', border: '1px solid var(--lt-border)', borderRadius: 12, padding: '12px 14px', width: 320, flexShrink: 0, boxShadow: '0 1px 3px rgba(10,37,64,0.06)' }}>
-          <Heatmap data={filtered} filtroImp={filtroImp} filtroProb={filtroProb} onFilterCell={handleHeatmapCell} />
+        <div style={{ background: 'var(--lt-card)', border: '1px solid var(--lt-border)', borderRadius: 12, padding: '12px 14px', width: 320, flexShrink: 0, display: 'flex', flexDirection: 'column', boxShadow: '0 1px 3px rgba(10,37,64,0.06)' }}>
+          <div style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 1.2, color: 'var(--lt-text3)', marginBottom: 8 }}>Mapa de Calor — Impacto × Probabilidade</div>
+          <div style={{ display: 'flex', flex: 1 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-around', paddingRight: 6, width: 55, flexShrink: 0 }}>
+              {HM_IMPS.map(l => <div key={l} style={{ fontSize: 9, fontWeight: 600, color: 'var(--lt-text3)', textAlign: 'right', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', flex: 1 }}>{l}</div>)}
+            </div>
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
+              {heatGrid.map((row, ri) => (
+                <div key={ri} style={{ display: 'flex', gap: 2, flex: 1 }}>
+                  {row.map((val, ci) => (
+                    <div key={ci} style={{ flex: 1, borderRadius: 4, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 700, color: '#fff', minHeight: 36, background: val === 0 ? 'rgba(10,37,64,0.04)' : HM_COLORS[ri][ci], cursor: 'pointer' }}
+                      onClick={() => handleHeatmapCell(HM_IMPS[ri], HM_PROBS[ci], filtroImp === HM_IMPS[ri] && filtroProb === HM_PROBS[ci])}>
+                      {val}
+                    </div>
+                  ))}
+                </div>
+              ))}
+            </div>
+          </div>
+          <div style={{ display: 'flex', paddingLeft: 61, paddingTop: 4, gap: 2 }}>
+            {HM_PROBS.map(l => <div key={l} style={{ flex: 1, textAlign: 'center', fontSize: 9, fontWeight: 600, color: 'var(--lt-text3)' }}>{l}</div>)}
+          </div>
+          <div style={{ textAlign: 'center', marginTop: 1, fontSize: 7, fontWeight: 600, letterSpacing: 1, textTransform: 'uppercase', color: 'var(--lt-text3)' }}>Probabilidade →</div>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, marginTop: 6, paddingTop: 6, borderTop: '1px solid var(--lt-border)' }}>
+            {CRIT_LABELS_HM.map((l, i) => (
+              <div key={l} style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 9, color: 'var(--lt-text3)' }}>
+                <div style={{ width: 8, height: 8, borderRadius: 2, background: CRIT_CORES_HM[i] }} />
+                {l}
+              </div>
+            ))}
+          </div>
         </div>
         <div style={{ flex: 1, display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gridTemplateRows: '1fr 1fr', gap: 8 }}>
           <div style={{ background: 'var(--lt-card)', border: '1px solid var(--lt-border)', borderRadius: 12, padding: '12px 14px', borderTop: '3px solid var(--navy)', display: 'flex', flexDirection: 'column', justifyContent: 'center', boxShadow: '0 1px 3px rgba(10,37,64,0.06)' }}>
