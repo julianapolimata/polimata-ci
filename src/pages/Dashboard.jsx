@@ -667,7 +667,8 @@ function PorArea({ projeto, areasCalc, todosControles, loading, navigate, loadDa
     { h: 'Fase 4\nAI - Ciclo 2', bg: '#660066' },
     { h: 'Fase 5\nAuditoria Indep.', bg: '#A6512F' },
   ]
-  const faseThS = { fontSize: 9, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5, color: '#fff', padding: '8px 8px', textAlign: 'center', whiteSpace: 'pre-line', position: 'sticky', top: 0, zIndex: 2, minWidth: 100, borderBottom: 'none', borderRadius: '8px 8px 0 0' }
+  const FASE_W = 90
+  const faseThS = { fontSize: 9, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5, color: '#fff', padding: '4px 6px', textAlign: 'center', whiteSpace: 'pre-line', position: 'sticky', top: 0, zIndex: 2, width: FASE_W, minWidth: FASE_W, maxWidth: FASE_W, borderBottom: 'none', borderRadius: '8px 8px 0 0' }
 
   const PA = paStyles
   const tdS = { padding: '5px 8px', borderBottom: '1px solid var(--lt-border)', fontSize: 11, color: 'var(--lt-text2)', whiteSpace: 'nowrap', verticalAlign: 'middle' }
@@ -810,13 +811,13 @@ function PorArea({ projeto, areasCalc, todosControles, loading, navigate, loadDa
                 <td style={{ ...tdS, width: 90, minWidth: 90 }}>{badgeR(c.r1)}</td>
                 <td style={{ ...tdS, width: 110, minWidth: 110 }}>{badgeCrit(c.crit)}</td>
                 {/* Colunas de fase */}
-                <td style={{ ...tdS, width: 100, minWidth: 100, textAlign: 'center' }}>{badgeFase(c.r1)}</td>
-                <td style={{ ...tdS, width: 100, minWidth: 100, textAlign: 'center' }}>{badgeFase(c.st_pa)}</td>
-                <td style={{ ...tdS, width: 100, minWidth: 100, textAlign: 'center' }}>{badgeFase(c.r_ader)}</td>
-                <td style={{ ...tdS, width: 100, minWidth: 100, textAlign: 'center' }}>{badgeFase(c.r3)}</td>
-                <td style={{ ...tdS, width: 100, minWidth: 100, textAlign: 'center' }}>{badgeFase(c.r_f4c1)}</td>
-                <td style={{ ...tdS, width: 100, minWidth: 100, textAlign: 'center' }}>{badgeFase(c.r_f4c2)}</td>
-                <td style={{ ...tdS, width: 100, minWidth: 100, textAlign: 'center' }}>{badgeFase(c.r_f5)}</td>
+                <td style={{ ...tdS, width: FASE_W, minWidth: FASE_W, maxWidth: FASE_W, textAlign: 'center' }}>{badgeFase(c.r1)}</td>
+                <td style={{ ...tdS, width: FASE_W, minWidth: FASE_W, maxWidth: FASE_W, textAlign: 'center' }}>{badgeFase(c.st_pa)}</td>
+                <td style={{ ...tdS, width: FASE_W, minWidth: FASE_W, maxWidth: FASE_W, textAlign: 'center' }}>{badgeFase(c.r_ader)}</td>
+                <td style={{ ...tdS, width: FASE_W, minWidth: FASE_W, maxWidth: FASE_W, textAlign: 'center' }}>{badgeFase(c.r3)}</td>
+                <td style={{ ...tdS, width: FASE_W, minWidth: FASE_W, maxWidth: FASE_W, textAlign: 'center' }}>{badgeFase(c.r_f4c1)}</td>
+                <td style={{ ...tdS, width: FASE_W, minWidth: FASE_W, maxWidth: FASE_W, textAlign: 'center' }}>{badgeFase(c.r_f4c2)}</td>
+                <td style={{ ...tdS, width: FASE_W, minWidth: FASE_W, maxWidth: FASE_W, textAlign: 'center' }}>{badgeFase(c.r_f5)}</td>
                 <td style={{ ...tdS, textAlign: 'center', width: 90, minWidth: 90 }}>
                   {isCliente ? (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 3, alignItems: 'center' }}>

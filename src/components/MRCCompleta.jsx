@@ -335,7 +335,8 @@ const MRC_FASE_HDR = [
   { h: 'Fase 4\nAI - Ciclo 2', bg: '#660066' },
   { h: 'Fase 5\nAuditoria Indep.', bg: '#A6512F' },
 ]
-const mrcFaseThS = { fontSize: 9, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5, color: '#fff', padding: '8px 8px', textAlign: 'center', whiteSpace: 'pre-line', position: 'sticky', top: 0, zIndex: 2, minWidth: 100, borderBottom: 'none', borderRadius: '8px 8px 0 0' }
+const FASE_W = 90
+const mrcFaseThS = { fontSize: 9, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5, color: '#fff', padding: '4px 6px', textAlign: 'center', whiteSpace: 'pre-line', position: 'sticky', top: 0, zIndex: 2, width: FASE_W, minWidth: FASE_W, maxWidth: FASE_W, borderBottom: 'none', borderRadius: '8px 8px 0 0' }
 const mrcThS = { fontSize: 10, fontWeight: 500, textTransform: 'uppercase', letterSpacing: 0.5, color: 'var(--lt-text3)', background: 'var(--lt-card)', padding: '10px 10px', textAlign: 'left', whiteSpace: 'nowrap', position: 'sticky', top: 0, zIndex: 2, borderBottom: '1px solid var(--lt-border)' }
 const mrcTdS = { padding: '5px 8px', borderBottom: '1px solid var(--lt-border)', fontSize: 11, color: 'var(--lt-text2)', whiteSpace: 'nowrap', verticalAlign: 'middle' }
 
@@ -377,13 +378,13 @@ function TabelaMRC({ rows, onOpenModal }) {
               <TdMRC w={200} wrap>{row.dc}</TdMRC>
               <td style={{ ...mrcTdS, width: 90, minWidth: 90 }}>{badgeResultado(row.r1)}</td>
               <td style={{ ...mrcTdS, width: 110, minWidth: 110 }}>{critBadge(row.crit)}</td>
-              <td style={{ ...mrcTdS, width: 100, minWidth: 100, textAlign: 'center' }}>{badgeFaseMRC(row.r1)}</td>
-              <td style={{ ...mrcTdS, width: 100, minWidth: 100, textAlign: 'center' }}>{badgeFaseMRC(row.st_pa)}</td>
-              <td style={{ ...mrcTdS, width: 100, minWidth: 100, textAlign: 'center' }}>{badgeFaseMRC(row.r_ader)}</td>
-              <td style={{ ...mrcTdS, width: 100, minWidth: 100, textAlign: 'center' }}>{badgeFaseMRC(row.r3)}</td>
-              <td style={{ ...mrcTdS, width: 100, minWidth: 100, textAlign: 'center' }}>{badgeFaseMRC(row.r_f4c1)}</td>
-              <td style={{ ...mrcTdS, width: 100, minWidth: 100, textAlign: 'center' }}>{badgeFaseMRC(row.r_f4c2)}</td>
-              <td style={{ ...mrcTdS, width: 100, minWidth: 100, textAlign: 'center' }}>{badgeFaseMRC(row.r_f5)}</td>
+              <td style={{ ...mrcTdS, width: FASE_W, minWidth: FASE_W, maxWidth: FASE_W, textAlign: 'center' }}>{badgeFaseMRC(row.r1)}</td>
+              <td style={{ ...mrcTdS, width: FASE_W, minWidth: FASE_W, maxWidth: FASE_W, textAlign: 'center' }}>{badgeFaseMRC(row.st_pa)}</td>
+              <td style={{ ...mrcTdS, width: FASE_W, minWidth: FASE_W, maxWidth: FASE_W, textAlign: 'center' }}>{badgeFaseMRC(row.r_ader)}</td>
+              <td style={{ ...mrcTdS, width: FASE_W, minWidth: FASE_W, maxWidth: FASE_W, textAlign: 'center' }}>{badgeFaseMRC(row.r3)}</td>
+              <td style={{ ...mrcTdS, width: FASE_W, minWidth: FASE_W, maxWidth: FASE_W, textAlign: 'center' }}>{badgeFaseMRC(row.r_f4c1)}</td>
+              <td style={{ ...mrcTdS, width: FASE_W, minWidth: FASE_W, maxWidth: FASE_W, textAlign: 'center' }}>{badgeFaseMRC(row.r_f4c2)}</td>
+              <td style={{ ...mrcTdS, width: FASE_W, minWidth: FASE_W, maxWidth: FASE_W, textAlign: 'center' }}>{badgeFaseMRC(row.r_f5)}</td>
             </tr>
           ))}
         </tbody>
