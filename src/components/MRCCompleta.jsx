@@ -354,22 +354,47 @@ function TdMRC({ children, w = 150, wrap = false }) {
   return <td style={{ ...mrcTdS, width: w, minWidth: w, maxWidth: w, overflow: 'hidden', textOverflow: wrap ? undefined : 'ellipsis', whiteSpace: wrap ? 'normal' : 'nowrap', lineHeight: wrap ? 1.4 : undefined }}>{children || '—'}</td>
 }
 
+const MRC_DATA_COLS = [
+  { h: 'Última Alteração', w: 95, k: '_dt' },
+  { h: 'Processo', w: 120, k: 'area' }, { h: 'Subprocesso', w: 120, k: 'sub' }, { h: 'Ref. Risco', w: 80, k: 'rr' },
+  { h: 'Desc. Risco', w: 200, k: 'dr' }, { h: 'Ref. Controle', w: 90, k: 'rc' }, { h: 'Desc. Controle', w: 200, k: 'dc' },
+  { h: 'Resultado', w: 90, k: 'r1' }, { h: 'Criticidade', w: 110, k: 'crit' },
+]
+const MRC_FASE_KEYS = ['r1', 'st_pa', 'r_ader', 'r3', 'r_f4c1', 'r_f4c2', 'r_f5']
+
+function sortVal(row, k) {
+  if (k === '_dt') return row.dt_ult || row.atualizado_em || row.criado_em || ''
+  return row[k] ?? ''
+}
+
 function TabelaMRC({ rows, onOpenModal }) {
+  const [sortCol, setSortCol] = useState(null)
+  const [sortDir, setSortDir] = useState('asc')
+  const toggle = (k) => { if (sortCol === k) { setSortDir(d => d === 'asc' ? 'desc' : 'asc') } else { setSortCol(k); setSortDir('asc') } }
+  const arrow = (k) => sortCol === k ? (sortDir === 'asc' ? ' ▲' : ' ▼') : ''
+
+  const sorted = useMemo(() => {
+    if (!sortCol) return rows
+    return [...rows].sort((a, b) => {
+      let va = sortVal(a, sortCol), vb = sortVal(b, sortCol)
+      if (sortCol === '_dt') { va = va ? new Date(va).getTime() : 0; vb = vb ? new Date(vb).getTime() : 0; return sortDir === 'asc' ? va - vb : vb - va }
+      va = String(va).toLowerCase(); vb = String(vb).toLowerCase()
+      const cmp = va.localeCompare(vb, 'pt-BR')
+      return sortDir === 'asc' ? cmp : -cmp
+    })
+  }, [rows, sortCol, sortDir])
+
+  const thClick = { cursor: 'pointer', userSelect: 'none' }
   return (
     <div style={{ flex: 1, overflowX: 'scroll', overflowY: 'auto', minHeight: 0 }}>
       <table style={{ width: 'max-content', minWidth: '100%', borderCollapse: 'collapse' }}>
         <thead><tr>
-          {[
-            { h: 'Última Alteração', w: 95 },
-            { h: 'Processo', w: 120 }, { h: 'Subprocesso', w: 120 }, { h: 'Ref. Risco', w: 80 },
-            { h: 'Desc. Risco', w: 200 }, { h: 'Ref. Controle', w: 90 }, { h: 'Desc. Controle', w: 200 },
-            { h: 'Resultado', w: 90 }, { h: 'Criticidade', w: 110 },
-          ].map((col, i) => <th key={i} style={{ ...mrcThS, width: col.w, minWidth: col.w }}>{col.h}</th>)}
-          {MRC_FASE_HDR.map((f, i) => <th key={`f${i}`} style={{ ...mrcFaseThS, background: f.bg }}>{f.h}</th>)}
+          {MRC_DATA_COLS.map((col, i) => <th key={i} style={{ ...mrcThS, width: col.w, minWidth: col.w, ...thClick }} onClick={() => toggle(col.k)}>{col.h}{arrow(col.k)}</th>)}
+          {MRC_FASE_HDR.map((f, i) => <th key={`f${i}`} style={{ ...mrcFaseThS, background: f.bg, ...thClick }} onClick={() => toggle(MRC_FASE_KEYS[i])}>{f.h}{arrow(MRC_FASE_KEYS[i])}</th>)}
         </tr></thead>
         <tbody>
-          {rows.length === 0 && <tr><td colSpan={16} style={{ textAlign: 'center', padding: 24, color: 'var(--lt-text3)', fontSize: 12 }}>Nenhum controle encontrado com os filtros aplicados.</td></tr>}
-          {rows.map(row => (
+          {sorted.length === 0 && <tr><td colSpan={16} style={{ textAlign: 'center', padding: 24, color: 'var(--lt-text3)', fontSize: 12 }}>Nenhum controle encontrado com os filtros aplicados.</td></tr>}
+          {sorted.map(row => (
             <tr key={row.id} style={{ cursor: 'pointer' }} onClick={() => onOpenModal(row)} onMouseEnter={e => e.currentTarget.style.background='rgba(204,145,94,0.04)'} onMouseLeave={e => e.currentTarget.style.background=''}>
               <td style={{ ...mrcTdS, width: 95, minWidth: 95, fontSize: 10, color: 'var(--lt-text3)' }}>{fmtData(row.dt_ult || row.atualizado_em || row.criado_em)}</td>
               <TdMRC w={120}>{row.area}</TdMRC>

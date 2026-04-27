@@ -549,6 +549,8 @@ function PorArea({ projeto, areasCalc, todosControles, loading, navigate, loadDa
   const [filtImp, setFiltImp] = useState('')
   const [filtRes, setFiltRes] = useState('')
   const [filtFase, setFiltFase] = useState('')
+  const [sortCol, setSortCol] = useState(null)
+  const [sortDir, setSortDir] = useState('asc')
   const [simularPerfil, setSimularPerfil] = useState(null)
   const [modalRow, setModalRow] = useState(null)
   const [atualizarRow, setAtualizarRow] = useState(null)
@@ -619,6 +621,28 @@ function PorArea({ projeto, areasCalc, todosControles, loading, navigate, loadDa
     if (filtFase) { const fc = getFaseCodigo(c); if (fc !== filtFase) return false }
     return true
   })
+
+  const PA_DATA_COLS = [
+    { h: 'Última Alteração', w: 95, k: '_dt' },
+    { h: 'Subprocesso', w: 120, k: 'sub' }, { h: 'Ref. Risco', w: 80, k: 'rr' },
+    { h: 'Desc. Risco', w: 200, k: 'dr' }, { h: 'Ref. Controle', w: 90, k: 'rc' }, { h: 'Desc. Controle', w: 200, k: 'dc' },
+    { h: 'Resultado', w: 90, k: 'r1' }, { h: 'Criticidade', w: 110, k: 'crit' },
+  ]
+  const PA_FASE_KEYS = ['r1', 'st_pa', 'r_ader', 'r3', 'r_f4c1', 'r_f4c2', 'r_f5']
+  const toggleSort = (k) => { if (sortCol === k) { setSortDir(d => d === 'asc' ? 'desc' : 'asc') } else { setSortCol(k); setSortDir('asc') } }
+  const sortArrow = (k) => sortCol === k ? (sortDir === 'asc' ? ' ▲' : ' ▼') : ''
+  function paSortVal(row, k) { if (k === '_dt') return row.dt_ult || row.atualizado_em || row.criado_em || ''; return row[k] ?? '' }
+
+  const cfSorted = useMemo(() => {
+    if (!sortCol) return cf
+    return [...cf].sort((a, b) => {
+      let va = paSortVal(a, sortCol), vb = paSortVal(b, sortCol)
+      if (sortCol === '_dt') { va = va ? new Date(va).getTime() : 0; vb = vb ? new Date(vb).getTime() : 0; return sortDir === 'asc' ? va - vb : vb - va }
+      va = String(va).toLowerCase(); vb = String(vb).toLowerCase()
+      const cmp = va.localeCompare(vb, 'pt-BR')
+      return sortDir === 'asc' ? cmp : -cmp
+    })
+  }, [cf, sortCol, sortDir])
 
   const crits = [...new Set(area.controles.map(c => String(c.crit_label||'')).filter(v => v))].sort()
   const imps = [...new Set(area.controles.map(c => String(c.imp||'')).filter(v => v))].sort()
@@ -794,17 +818,12 @@ function PorArea({ projeto, areasCalc, todosControles, loading, navigate, loadDa
         <div style={{ flex: 1, overflowX: 'scroll', overflowY: 'auto', minHeight: 0 }}>
           <table style={{ width: 'max-content', minWidth: '100%', borderCollapse: 'collapse' }}>
             <thead><tr>
-              {[
-                { h: 'Última Alteração', w: 95 },
-                { h: 'Subprocesso', w: 120 }, { h: 'Ref. Risco', w: 80 },
-                { h: 'Desc. Risco', w: 200 }, { h: 'Ref. Controle', w: 90 }, { h: 'Desc. Controle', w: 200 },
-                { h: 'Resultado', w: 90 }, { h: 'Criticidade', w: 110 },
-              ].map((col, i) =>
-                <th key={i} style={{ fontSize: 10, fontWeight: 500, textTransform: 'uppercase', letterSpacing: 0.5, color: 'var(--lt-text3)', background: 'var(--lt-card)', padding: '12px 12px', textAlign: 'left', whiteSpace: 'nowrap', position: 'sticky', top: 0, zIndex: 2, width: col.w, minWidth: col.w, borderBottom: '1px solid var(--lt-border)' }}>{col.h}</th>)}
-              {FASE_HDR.map((f, i) => <th key={`f${i}`} style={{ ...faseThS, background: f.bg }}>{f.h}</th>)}
-              <th style={{ fontSize: 10, fontWeight: 500, color: 'var(--lt-text3)', background: 'var(--lt-card)', padding: '12px 12px', position: 'sticky', top: 0, zIndex: 2, width: 90, minWidth: 90, borderBottom: '1px solid var(--lt-border)', textTransform: 'uppercase', letterSpacing: 0.5 }}>Status</th>
+              {PA_DATA_COLS.map((col, i) =>
+                <th key={i} style={{ fontSize: 10, fontWeight: 500, textTransform: 'uppercase', letterSpacing: 0.5, color: 'var(--lt-text3)', background: 'var(--lt-card)', padding: '12px 12px', textAlign: 'left', whiteSpace: 'nowrap', position: 'sticky', top: 0, zIndex: 2, width: col.w, minWidth: col.w, borderBottom: '1px solid var(--lt-border)', cursor: 'pointer', userSelect: 'none' }} onClick={() => toggleSort(col.k)}>{col.h}{sortArrow(col.k)}</th>)}
+              {FASE_HDR.map((f, i) => <th key={`f${i}`} style={{ ...faseThS, background: f.bg, cursor: 'pointer', userSelect: 'none' }} onClick={() => toggleSort(PA_FASE_KEYS[i])}>{f.h}{sortArrow(PA_FASE_KEYS[i])}</th>)}
+              <th style={{ fontSize: 10, fontWeight: 500, color: 'var(--lt-text3)', background: 'var(--lt-card)', padding: '12px 12px', position: 'sticky', top: 0, zIndex: 2, width: 90, minWidth: 90, borderBottom: '1px solid var(--lt-border)', textTransform: 'uppercase', letterSpacing: 0.5, cursor: 'pointer', userSelect: 'none' }} onClick={() => toggleSort('status_workflow')}>Status{sortArrow('status_workflow')}</th>
             </tr></thead>
-            <tbody>{cf.map((c, i) => (
+            <tbody>{cfSorted.map((c, i) => (
               <tr key={c.id||i} onClick={() => setModalRow(c)} style={{ cursor: 'pointer' }} onMouseEnter={e => e.currentTarget.style.background='rgba(204,145,94,0.04)'} onMouseLeave={e => e.currentTarget.style.background=''}>
                 <td style={{ ...tdS, width: 95, minWidth: 95, fontSize: 10, color: 'var(--lt-text3)' }}>{fmtDate(c.dt_ult || c.atualizado_em || c.criado_em)}</td>
                 <Td w={120}>{c.sub}</Td>
