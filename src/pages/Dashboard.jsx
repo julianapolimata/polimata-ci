@@ -557,6 +557,7 @@ function PorArea({ projeto, areasCalc, todosControles, loading, navigate, loadDa
   const [modalNovoRisco, setModalNovoRisco] = useState(false)
   const [rowRegistrarResultado, setRowRegistrarResultado] = useState(null)
   const [rowRevisar, setRowRevisar] = useState(null)
+  const [dashCollapsed, setDashCollapsed] = useState(false)
   const papelAtivo = simularPerfil || perfil?.papel
   const canEdit = papelAtivo === 'admin_polimata' || papelAtivo === 'consultor_polimata'
   const isAdmin = papelAtivo === 'admin_polimata'
@@ -715,8 +716,15 @@ function PorArea({ projeto, areasCalc, todosControles, loading, navigate, loadDa
         </div>
       </div>
 
+      {/* TOGGLE COLAPSAR DASH */}
+      <div style={{ display: 'flex', justifyContent: 'center', margin: '2px 0' }}>
+        <button onClick={() => setDashCollapsed(c => !c)} style={{ background: 'var(--lt-card)', border: '1px solid var(--lt-border)', borderRadius: 999, padding: '2px 18px', cursor: 'pointer', fontSize: 10, color: 'var(--lt-text3)', fontFamily: 'inherit', display: 'flex', alignItems: 'center', gap: 4 }}>
+          {dashCollapsed ? '▼ Expandir painel' : '▲ Recolher painel'}
+        </button>
+      </div>
+
       {/* ZONA SUPERIOR — HEATMAP + KPI GRID */}
-      <div style={PA.zonaSuperior}>
+      {!dashCollapsed && <div style={PA.zonaSuperior}>
         {/* HEATMAP */}
         <div style={PA.heatCard}>
           <div style={PA.cardTitle}>Mapa de Calor — Impacto × Probabilidade</div>
@@ -784,7 +792,7 @@ function PorArea({ projeto, areasCalc, todosControles, loading, navigate, loadDa
             <div style={PA.kpiSub}>Em desenvolvimento</div>
           </div>
         </div>
-      </div>
+      </div>}
 
       {/* FILTROS */}
       <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexShrink: 0, flexWrap: 'wrap', marginBottom: 6 }}>
