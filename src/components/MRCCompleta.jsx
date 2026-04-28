@@ -343,7 +343,8 @@ const mrcThS = { fontSize: 10, fontWeight: 500, textTransform: 'uppercase', lett
 const mrcTdS = { padding: '5px 8px', borderBottom: '1px solid var(--lt-border)', fontSize: 11, color: 'var(--lt-text2)', whiteSpace: 'nowrap', verticalAlign: 'middle' }
 
 function badgeFaseMRC(val) {
-  if (!val || val === 'Teste Não Realizado' || val === 'N/A') return <span style={{ fontSize: 10, fontStyle: 'italic', color: 'var(--lt-text3)' }}>Não iniciado</span>
+  if (val === 'N/A') return <span style={{ fontSize: 10, fontStyle: 'italic', color: 'var(--lt-text3)' }}>N/A</span>
+  if (!val || val === 'Teste Não Realizado') return <span style={{ fontSize: 10, fontStyle: 'italic', color: 'var(--lt-text3)' }}>Não iniciado</span>
   return badge(R1_MAP[val] || 'b-na', val)
 }
 
@@ -420,8 +421,8 @@ function TabelaMRC({ rows, onOpenModal }) {
               <td style={{ ...mrcTdS, width: 130, minWidth: 130, fontSize: 10 }}>{getFaseLabel(row)}</td>
               <td style={{ ...mrcTdS, width: 110, minWidth: 110, textAlign: 'center' }}>{(() => { const st = getStatusComputado(row); const cfg = getStatusConfig(st); return <span style={{ fontSize: 8, fontWeight: 700, color: cfg.color, background: cfg.bg, padding: '2px 8px', borderRadius: 999, textTransform: 'uppercase', letterSpacing: 0.5 }}>{cfg.label}</span> })()}</td>
               <td style={{ ...mrcTdS, width: FASE_W, minWidth: FASE_W, maxWidth: FASE_W, textAlign: 'center' }}>{badgeFaseMRC(row.r1)}</td>
-              <td style={{ ...mrcTdS, width: FASE_W, minWidth: FASE_W, maxWidth: FASE_W, textAlign: 'center' }}>{badgeFaseMRC(row.st_pa)}</td>
-              <td style={{ ...mrcTdS, width: FASE_W, minWidth: FASE_W, maxWidth: FASE_W, textAlign: 'center' }}>{badgeFaseMRC(row.r_ader)}</td>
+              <td style={{ ...mrcTdS, width: FASE_W, minWidth: FASE_W, maxWidth: FASE_W, textAlign: 'center' }}>{badgeFaseMRC((row.r1||'').toLowerCase() === 'efetivo' && !row.st_pa ? 'N/A' : row.st_pa)}</td>
+              <td style={{ ...mrcTdS, width: FASE_W, minWidth: FASE_W, maxWidth: FASE_W, textAlign: 'center' }}>{badgeFaseMRC((row.r1||'').toLowerCase() === 'efetivo' && !row.r_ader ? 'N/A' : row.r_ader)}</td>
               <td style={{ ...mrcTdS, width: FASE_W, minWidth: FASE_W, maxWidth: FASE_W, textAlign: 'center' }}>{badgeFaseMRC(row.r3)}</td>
               <td style={{ ...mrcTdS, width: FASE_W, minWidth: FASE_W, maxWidth: FASE_W, textAlign: 'center' }}>{badgeFaseMRC(row.r_f4c1)}</td>
               <td style={{ ...mrcTdS, width: FASE_W, minWidth: FASE_W, maxWidth: FASE_W, textAlign: 'center' }}>{badgeFaseMRC(row.r_f4c2)}</td>
