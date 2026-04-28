@@ -92,14 +92,13 @@ const ModalNovoRisco = ({ onClose, onSaved, areas, projeto, areaFixa }) => {
 
   async function loadSubprocessos(areaId) {
     const { data } = await supabase
-      .from('mrc')
-      .select('sub')
+      .from('subprocessos')
+      .select('id, nome')
       .eq('area_id', areaId)
-      .eq('projeto_id', projeto.id)
       .eq('ativo', true)
+      .order('ordem')
     if (data) {
-      const unique = [...new Set(data.map(d => d.sub).filter(Boolean))].sort()
-      setSubprocessos(unique)
+      setSubprocessos(data)
     }
   }
 
@@ -179,10 +178,12 @@ const ModalNovoRisco = ({ onClose, onSaved, areas, projeto, areaFixa }) => {
       const refRisco = `${prefixo}.${String(nextNum).padStart(2, '0')}`
       const refControle = `C.${refRisco}`
 
+      const subObj = subprocessos.find(s => s.nome === subprocesso)
       const tempData = {
         rr: refRisco,
         rc: refControle,
         sub: subprocesso,
+        subprocesso_id: subObj?.id || null,
         ger: areaObj?.gerente || '',
         resp_sub: areaObj?.resp_processo || '',
         dr: descRisco,
@@ -406,7 +407,7 @@ const ModalNovoRisco = ({ onClose, onSaved, areas, projeto, areaFixa }) => {
                 >
                   <option value="">Selecionar...</option>
                   {subprocessos.map(s => (
-                    <option key={s} value={s}>{s}</option>
+                    <option key={s.id} value={s.nome}>{s.nome}</option>
                   ))}
                 </select>
               </div>
