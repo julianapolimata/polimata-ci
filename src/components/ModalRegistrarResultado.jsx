@@ -71,9 +71,7 @@ const ModalRegistrarResultado = ({ row, onClose, onSaved, responsaveis }) => {
   // ═══ VALIDAÇÃO ═══
   const canSave = resultado &&
     (resultado === 'efetivo' || inconsistencia.trim()) &&
-    (melhoria === 'nao' || descMelhoria.trim()) &&
-    impacto && probabilidade &&
-    (resultado === 'efetivo' || (temPA === 'sim' ? (paDesc.trim() && paResp && paPrazo && paStatus) : justificativaPA.trim()))
+    (melhoria === 'nao' || descMelhoria.trim())
 
   // ═══ MUDAR RESULTADO ═══
   const handleResultadoChange = (novoResultado) => {
@@ -486,7 +484,7 @@ const ModalRegistrarResultado = ({ row, onClose, onSaved, responsaveis }) => {
                   textTransform: 'uppercase',
                   letterSpacing: '0.3px'
                 }}>
-                  Impacto <span style={{ color: '#E24B4A' }}>*</span>
+                  Impacto
                 </label>
                 <select
                   value={impacto}
@@ -518,7 +516,7 @@ const ModalRegistrarResultado = ({ row, onClose, onSaved, responsaveis }) => {
                   textTransform: 'uppercase',
                   letterSpacing: '0.3px'
                 }}>
-                  Probabilidade <span style={{ color: '#E24B4A' }}>*</span>
+                  Probabilidade
                 </label>
                 <select
                   value={probabilidade}
@@ -596,7 +594,7 @@ const ModalRegistrarResultado = ({ row, onClose, onSaved, responsaveis }) => {
                 textTransform: 'uppercase',
                 letterSpacing: '0.3px'
               }}>
-                Haverá plano de ação? <span style={{ color: '#E24B4A' }}>*</span>
+                Haverá plano de ação?
               </label>
               <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
                 {[
@@ -748,7 +746,7 @@ const ModalRegistrarResultado = ({ row, onClose, onSaved, responsaveis }) => {
                     textTransform: 'uppercase',
                     letterSpacing: '0.3px'
                   }}>
-                    Por que não haverá plano de ação? <span style={{ color: '#E24B4A' }}>*</span>
+                    Por que não haverá plano de ação?
                   </label>
                   <textarea
                     value={justificativaPA}

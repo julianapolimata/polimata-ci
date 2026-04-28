@@ -586,6 +586,22 @@ function PorArea({ projeto, areasCalc, todosControles, loading, navigate, loadDa
     return getStatusConfig(sw, papelAtivo)
   }
 
+  // Alertas pendentes para coluna Ação
+  function getAlertas(c) {
+    const alertas = []
+    const sw = c.status_workflow
+    const rv = (getResultadoVitrine(c) || '').toLowerCase()
+    // Devolvido (reprovado na revisão) — prioridade máxima
+    if (sw === 'reprovado') alertas.push({ label: 'Devolvido', color: '#DC2626', bg: 'rgba(239,68,68,0.08)' })
+    // Ficha pendente: salvou dados mas não baixou a ficha de teste
+    if (sw === 'teste_pendente') alertas.push({ label: 'Ficha Pendente', color: '#7C3AED', bg: 'rgba(124,58,237,0.08)' })
+    // Resultado pendente: tem dados na fase (em_analise) mas não registrou resultado formal
+    if (sw === 'em_analise') alertas.push({ label: 'Resultado Pendente', color: '#CA8A04', bg: 'rgba(234,179,8,0.08)' })
+    // Criticidade pendente: tem resultado mas falta impacto ou probabilidade
+    if (rv && rv !== '—' && rv !== 'teste não realizado' && (!c.imp || !c.prob)) alertas.push({ label: 'Criticidade Pendente', color: '#EA580C', bg: 'rgba(234,88,12,0.08)' })
+    return alertas
+  }
+
   if (loading) return <Spinner light />
   if (!projeto) return <NoProjeto />
   if (!area) return <div style={{ background: 'var(--lt-bg)', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 12, fontFamily: "'Montserrat', sans-serif" }}><div style={{ color: 'var(--lt-text3)' }}>Área não encontrada.</div><button onClick={() => navigate('/')} style={{ marginTop: 12, padding: '6px 16px', borderRadius: 999, border: '1px solid var(--lt-border)', background: 'var(--lt-card)', color: 'var(--lt-text)', cursor: 'pointer', fontFamily: 'inherit', fontSize: 11 }}>← Voltar</button></div>
@@ -827,7 +843,7 @@ function PorArea({ projeto, areasCalc, todosControles, loading, navigate, loadDa
               {PA_DATA_COLS.map((col, i) =>
                 <th key={i} style={{ fontSize: 10, fontWeight: 500, textTransform: 'uppercase', letterSpacing: 0.5, color: 'var(--lt-text3)', background: '#F0F2F5', padding: '12px 12px', textAlign: 'left', whiteSpace: 'nowrap', position: 'sticky', top: 0, zIndex: 2, width: col.w, minWidth: col.w, borderBottom: '1px solid var(--lt-border)', cursor: 'pointer', userSelect: 'none' }} onClick={() => toggleSort(col.k)}>{col.h}{sortArrow(col.k)}</th>)}
               {FASE_HDR.map((f, i) => <th key={`f${i}`} style={{ ...faseThS, background: f.bg, cursor: 'pointer', userSelect: 'none' }} onClick={() => toggleSort(PA_FASE_KEYS[i])}>{f.h}{sortArrow(PA_FASE_KEYS[i])}</th>)}
-              {!isCliente && <th style={{ fontSize: 10, fontWeight: 500, color: 'var(--lt-text3)', background: '#F0F2F5', padding: '12px 12px', position: 'sticky', top: 0, zIndex: 2, width: 90, minWidth: 90, borderBottom: '1px solid var(--lt-border)', textTransform: 'uppercase', letterSpacing: 0.5 }}>Ação</th>}
+              {!isCliente && <th style={{ fontSize: 10, fontWeight: 500, color: 'var(--lt-text3)', background: '#F0F2F5', padding: '12px 12px', position: 'sticky', top: 0, zIndex: 2, width: 120, minWidth: 120, borderBottom: '1px solid var(--lt-border)', textTransform: 'uppercase', letterSpacing: 0.5 }}>Ação</th>}
             </tr></thead>
             <tbody>{cfSorted.map((c, i) => (
               <tr key={c.id||i} onClick={() => setModalRow(c)} style={{ cursor: 'pointer' }} onMouseEnter={e => e.currentTarget.style.background='rgba(204,145,94,0.04)'} onMouseLeave={e => e.currentTarget.style.background=''}>
@@ -847,12 +863,11 @@ function PorArea({ projeto, areasCalc, todosControles, loading, navigate, loadDa
                 <td style={{ ...tdS, width: FASE_W, minWidth: FASE_W, maxWidth: FASE_W, textAlign: 'center' }}>{badgeFase(c.r_f4c1)}</td>
                 <td style={{ ...tdS, width: FASE_W, minWidth: FASE_W, maxWidth: FASE_W, textAlign: 'center' }}>{badgeFase(c.r_f4c2)}</td>
                 <td style={{ ...tdS, width: FASE_W, minWidth: FASE_W, maxWidth: FASE_W, textAlign: 'center' }}>{badgeFase(c.r_f5)}</td>
-                {!isCliente && <td style={{ ...tdS, textAlign: 'center', width: 90, minWidth: 90 }}>
+                {!isCliente && <td style={{ ...tdS, textAlign: 'center', width: 120, minWidth: 120 }}>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 3, alignItems: 'center' }}>
-                      {canEdit && canEditControl(getStatusComputado(c)) && <button onClick={e => { e.stopPropagation(); setAtualizarRow(c) }} style={{ background: 'rgba(204,145,94,0.08)', border: '1px solid rgba(204,145,94,0.2)', borderRadius: 4, padding: '2px 10px', fontSize: 10, fontWeight: 600, color: 'var(--copper)', cursor: 'pointer', fontFamily: 'inherit', width: '100%' }}>Atualizar</button>}
-                      {canEdit && canRegisterResult(getStatusComputado(c)) && <button onClick={e => { e.stopPropagation(); setRowRegistrarResultado(c) }} style={{ background: 'rgba(204,145,94,0.08)', border: '1px solid rgba(204,145,94,0.2)', borderRadius: 4, padding: '2px 10px', fontSize: 9, fontWeight: 600, color: 'var(--copper)', cursor: 'pointer', fontFamily: 'inherit', width: '100%' }}>Resultado</button>}
-                      {canEdit && isDevolvido(getStatusComputado(c)) && <button onClick={e => { e.stopPropagation(); setRowRegistrarResultado(c) }} style={{ background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 4, padding: '2px 10px', fontSize: 9, fontWeight: 600, color: '#DC2626', cursor: 'pointer', fontFamily: 'inherit', width: '100%' }}>↩ Editar</button>}
-                      {isAdmin && isAguardandoRevisao(getStatusComputado(c)) && <button onClick={e => { e.stopPropagation(); setRowRevisar(c) }} style={{ background: 'rgba(59,130,246,0.08)', border: '1px solid rgba(59,130,246,0.2)', borderRadius: 4, padding: '2px 10px', fontSize: 9, fontWeight: 700, color: '#2563EB', cursor: 'pointer', fontFamily: 'inherit', width: '100%' }}>🔍 Revisar</button>}
+                      {canEdit && <button onClick={e => { e.stopPropagation(); setAtualizarRow(c) }} style={{ background: 'rgba(204,145,94,0.08)', border: '1px solid rgba(204,145,94,0.2)', borderRadius: 4, padding: '2px 10px', fontSize: 10, fontWeight: 600, color: 'var(--copper)', cursor: 'pointer', fontFamily: 'inherit', width: '100%' }}>Atualizar</button>}
+                      {isAdmin && isAguardandoRevisao(getStatusComputado(c)) && <button onClick={e => { e.stopPropagation(); setRowRevisar(c) }} style={{ background: 'rgba(59,130,246,0.08)', border: '1px solid rgba(59,130,246,0.2)', borderRadius: 4, padding: '2px 10px', fontSize: 9, fontWeight: 700, color: '#2563EB', cursor: 'pointer', fontFamily: 'inherit', width: '100%' }}>Revisar</button>}
+                      {getAlertas(c).map((a, idx) => <span key={idx} style={{ fontSize: 7, fontWeight: 600, color: a.color, background: a.bg, padding: '2px 6px', borderRadius: 999, textTransform: 'uppercase', letterSpacing: 0.3, whiteSpace: 'nowrap', lineHeight: 1.2 }}>{a.label}</span>)}
                     </div>
                 </td>}
               </tr>))}{cf.length === 0 && <tr><td colSpan={15} style={{ padding: 32, textAlign: 'center', color: 'var(--lt-text3)' }}>Nenhum controle encontrado.</td></tr>}</tbody>
