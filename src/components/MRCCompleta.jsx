@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
 import { supabase } from '../lib/supabase'
 import { exportarMRCExcel } from '../lib/exportMRC'
-import { getFaseInfo as getFaseInfoUtil, getResultadoVitrine, getStatusComputado, getFaseLabel } from '../lib/fases'
+import { getFaseInfo as getFaseInfoUtil, getResultadoVitrine, getStatusComputado, getFaseLabel, getFaseDisplayOverride } from '../lib/fases'
 import { getStatusConfig } from '../lib/statusWorkflow'
 
 // ─── CONSTANTES ──────────────────────────────────────────────────────────────
@@ -344,8 +344,16 @@ const mrcTdS = { padding: '5px 8px', borderBottom: '1px solid var(--lt-border)',
 
 function badgeFaseMRC(val) {
   if (val === 'N/A') return <span style={{ fontSize: 10, fontStyle: 'italic', color: 'var(--lt-text3)' }}>N/A</span>
+  if (val === 'Evitado') return <span className="bd b-na" style={{ fontStyle: 'italic', background: 'rgba(107,114,128,0.1)', color: '#6B7280' }}>Evitado</span>
+  if (val === 'Transferido') return <span className="bd b-na" style={{ fontStyle: 'italic', background: 'rgba(99,102,241,0.1)', color: '#6366F1' }}>Transferido</span>
   if (!val || val === 'Teste Não Realizado') return <span style={{ fontSize: 10, fontStyle: 'italic', color: 'var(--lt-text3)' }}>Não iniciado</span>
   return badge(R1_MAP[val] || 'b-na', val)
+}
+function faseValMRC(row, key, rawVal) {
+  const override = getFaseDisplayOverride(row, key)
+  if (override !== null) return override
+  if ((key === 'st_pa' || key === 'r_ader') && (row.r1||'').toLowerCase() === 'efetivo' && !rawVal) return 'N/A'
+  return rawVal
 }
 
 function badgeResultado(val) {
@@ -408,7 +416,7 @@ function TabelaMRC({ rows, onOpenModal }) {
         <tbody>
           {sorted.length === 0 && <tr><td colSpan={18} style={{ textAlign: 'center', padding: 24, color: 'var(--lt-text3)', fontSize: 12 }}>Nenhum controle encontrado com os filtros aplicados.</td></tr>}
           {sorted.map(row => (
-            <tr key={row.id} style={{ cursor: 'pointer' }} onClick={() => onOpenModal(row)} onMouseEnter={e => e.currentTarget.style.background='rgba(204,145,94,0.04)'} onMouseLeave={e => e.currentTarget.style.background=''}>
+            <tr key={row.id} style={{ cursor: 'pointer', ...((row.status_risco === 'evitado' || row.status_risco === 'transferido') ? { opacity: 0.55, fontStyle: 'italic' } : {}) }} onClick={() => onOpenModal(row)} onMouseEnter={e => e.currentTarget.style.background='rgba(204,145,94,0.04)'} onMouseLeave={e => e.currentTarget.style.background=''}>
               <td style={{ ...mrcTdS, width: 95, minWidth: 95, fontSize: 10, color: 'var(--lt-text3)' }}>{fmtDate(row.dt_ult || row.atualizado_em || row.criado_em)}</td>
               <TdMRC w={120}>{row.area}</TdMRC>
               <TdMRC w={120}>{row.sub}</TdMRC>
@@ -420,13 +428,13 @@ function TabelaMRC({ rows, onOpenModal }) {
               <td style={{ ...mrcTdS, width: 110, minWidth: 110 }}>{critBadge(row.crit)}</td>
               <td style={{ ...mrcTdS, width: 130, minWidth: 130, fontSize: 10 }}>{getFaseLabel(row)}</td>
               <td style={{ ...mrcTdS, width: 110, minWidth: 110, textAlign: 'center' }}>{(() => { const st = getStatusComputado(row); const cfg = getStatusConfig(st); return <span style={{ fontSize: 8, fontWeight: 700, color: cfg.color, background: cfg.bg, padding: '2px 8px', borderRadius: 999, textTransform: 'uppercase', letterSpacing: 0.5 }}>{cfg.label}</span> })()}</td>
-              <td style={{ ...mrcTdS, width: FASE_W, minWidth: FASE_W, maxWidth: FASE_W, textAlign: 'center' }}>{badgeFaseMRC(row.r1)}</td>
-              <td style={{ ...mrcTdS, width: FASE_W, minWidth: FASE_W, maxWidth: FASE_W, textAlign: 'center' }}>{badgeFaseMRC((row.r1||'').toLowerCase() === 'efetivo' && !row.st_pa ? 'N/A' : row.st_pa)}</td>
-              <td style={{ ...mrcTdS, width: FASE_W, minWidth: FASE_W, maxWidth: FASE_W, textAlign: 'center' }}>{badgeFaseMRC((row.r1||'').toLowerCase() === 'efetivo' && !row.r_ader ? 'N/A' : row.r_ader)}</td>
-              <td style={{ ...mrcTdS, width: FASE_W, minWidth: FASE_W, maxWidth: FASE_W, textAlign: 'center' }}>{badgeFaseMRC(row.r3)}</td>
-              <td style={{ ...mrcTdS, width: FASE_W, minWidth: FASE_W, maxWidth: FASE_W, textAlign: 'center' }}>{badgeFaseMRC(row.r_f4c1)}</td>
-              <td style={{ ...mrcTdS, width: FASE_W, minWidth: FASE_W, maxWidth: FASE_W, textAlign: 'center' }}>{badgeFaseMRC(row.r_f4c2)}</td>
-              <td style={{ ...mrcTdS, width: FASE_W, minWidth: FASE_W, maxWidth: FASE_W, textAlign: 'center' }}>{badgeFaseMRC(row.r_f5)}</td>
+              <td style={{ ...mrcTdS, width: FASE_W, minWidth: FASE_W, maxWidth: FASE_W, textAlign: 'center' }}>{badgeFaseMRC(faseValMRC(row, 'r1', row.r1))}</td>
+              <td style={{ ...mrcTdS, width: FASE_W, minWidth: FASE_W, maxWidth: FASE_W, textAlign: 'center' }}>{badgeFaseMRC(faseValMRC(row, 'st_pa', row.st_pa))}</td>
+              <td style={{ ...mrcTdS, width: FASE_W, minWidth: FASE_W, maxWidth: FASE_W, textAlign: 'center' }}>{badgeFaseMRC(faseValMRC(row, 'r_ader', row.r_ader))}</td>
+              <td style={{ ...mrcTdS, width: FASE_W, minWidth: FASE_W, maxWidth: FASE_W, textAlign: 'center' }}>{badgeFaseMRC(faseValMRC(row, 'r3', row.r3))}</td>
+              <td style={{ ...mrcTdS, width: FASE_W, minWidth: FASE_W, maxWidth: FASE_W, textAlign: 'center' }}>{badgeFaseMRC(faseValMRC(row, 'r_f4c1', row.r_f4c1))}</td>
+              <td style={{ ...mrcTdS, width: FASE_W, minWidth: FASE_W, maxWidth: FASE_W, textAlign: 'center' }}>{badgeFaseMRC(faseValMRC(row, 'r_f4c2', row.r_f4c2))}</td>
+              <td style={{ ...mrcTdS, width: FASE_W, minWidth: FASE_W, maxWidth: FASE_W, textAlign: 'center' }}>{badgeFaseMRC(faseValMRC(row, 'r_f5', row.r_f5))}</td>
             </tr>
           ))}
         </tbody>
@@ -442,6 +450,7 @@ export default function MRCCompleta({ projetoId, clienteNome, projetoNome, notif
   const [busca, setBusca] = useState(''); const [filtroArea, setFiltroArea] = useState(''); const [filtroCrit, setFiltroCrit] = useState('')
   const [filtroImp, setFiltroImp] = useState(''); const [filtroProb, setFiltroProb] = useState(''); const [filtroR1, setFiltroR1] = useState(''); const [filtroNivel, setFiltroNivel] = useState('')
   const [filtroFase, setFiltroFase] = useState('')
+  const [filtroSit, setFiltroSit] = useState('existente')
   const [modalRow, setModalRow] = useState(null)
   const [dashCollapsed, setDashCollapsed] = useState(false)
 
@@ -487,7 +496,14 @@ export default function MRCCompleta({ projetoId, clienteNome, projetoNome, notif
     return grid
   }, [mrc])
 
-  const filtered = mrc.filter(r => {
+  const mrcVisiveis = mrc.filter(r => {
+    const sr = (r.status_risco || 'existente').toLowerCase()
+    if (filtroSit === 'existente') return sr === 'existente' || sr === '' || !r.status_risco
+    if (filtroSit === 'evitado') return sr === 'evitado'
+    if (filtroSit === 'transferido') return sr === 'transferido'
+    return true // 'todos'
+  })
+  const filtered = mrcVisiveis.filter(r => {
     if (filtroArea && r.area !== filtroArea) return false
     if (filtroCrit && r.crit !== parseInt(filtroCrit)) return false
     if (filtroImp && r.imp !== filtroImp) return false
@@ -503,8 +519,8 @@ export default function MRCCompleta({ projetoId, clienteNome, projetoNome, notif
 
   const visibleRows = filtered.slice(0, MAX_ROWS); const isLimited = filtered.length > MAX_ROWS
   const handleHeatmapCell = (imp, prob, sel) => { if (sel) { setFiltroImp(''); setFiltroProb('') } else { setFiltroImp(imp); setFiltroProb(prob) } }
-  const limparFiltros = () => { setBusca(''); setFiltroArea(''); setFiltroCrit(''); setFiltroImp(''); setFiltroProb(''); setFiltroR1(''); setFiltroNivel(''); setFiltroFase('') }
-  const temFiltro = busca || filtroArea || filtroCrit || filtroImp || filtroProb || filtroR1 || filtroNivel || filtroFase
+  const limparFiltros = () => { setBusca(''); setFiltroArea(''); setFiltroCrit(''); setFiltroImp(''); setFiltroProb(''); setFiltroR1(''); setFiltroNivel(''); setFiltroFase(''); setFiltroSit('existente') }
+  const temFiltro = busca || filtroArea || filtroCrit || filtroImp || filtroProb || filtroR1 || filtroNivel || filtroFase || filtroSit !== 'existente'
 
   if (loading) return <div style={{ display:'flex',alignItems:'center',justifyContent:'center',height:300,color:'var(--txt3)' }}><div className="spinner" style={{marginRight:10}}/><span>Carregando MRC…</span></div>
   if (erro) return <div style={{ padding:32,color:'var(--in)' }}>Erro ao carregar MRC: {erro}</div>
@@ -607,6 +623,7 @@ export default function MRCCompleta({ projetoId, clienteNome, projetoNome, notif
         <select value={filtroCrit} onChange={e => setFiltroCrit(e.target.value)} style={{ background: 'var(--lt-card)', border: '1px solid var(--lt-border)', borderRadius: 8, padding: '5px 8px', fontFamily: 'inherit', fontSize: 11, color: 'var(--lt-text2)', cursor: 'pointer', outline: 'none' }}><option value="">Todas criticidades</option><option value="4">Crítico</option><option value="3">Significativo</option><option value="2">Moderado</option><option value="1">Baixo</option></select>
         <select value={filtroFase} onChange={e => setFiltroFase(e.target.value)} style={{ background: 'var(--lt-card)', border: '1px solid var(--lt-border)', borderRadius: 8, padding: '5px 8px', fontFamily: 'inherit', fontSize: 11, color: 'var(--lt-text2)', cursor: 'pointer', outline: 'none' }}><option value="">Todas as fases</option>{fasesDisponiveis.map(f => <option key={f} value={f}>{f}</option>)}</select>
         <select value={filtroR1} onChange={e => setFiltroR1(e.target.value)} style={{ background: 'var(--lt-card)', border: '1px solid var(--lt-border)', borderRadius: 8, padding: '5px 8px', fontFamily: 'inherit', fontSize: 11, color: 'var(--lt-text2)', cursor: 'pointer', outline: 'none' }}><option value="">Todos resultados</option><option>Efetivo</option><option>Inefetivo</option><option>GAP</option><option>Teste Não Realizado</option></select>
+        <select value={filtroSit} onChange={e => setFiltroSit(e.target.value)} style={{ background: 'var(--lt-card)', border: '1px solid var(--lt-border)', borderRadius: 8, padding: '5px 8px', fontFamily: 'inherit', fontSize: 11, color: 'var(--lt-text2)', cursor: 'pointer', outline: 'none' }}><option value="existente">Existentes</option><option value="evitado">Evitados</option><option value="transferido">Transferidos</option><option value="todos">Todos</option></select>
         <span style={{ fontSize: 10, color: 'var(--lt-text3)', fontWeight: 600 }}>{filtered.length} controles</span>
         {temFiltro && <button onClick={limparFiltros} style={{ background: 'none', border: 'none', fontSize: 10, color: 'var(--copper)', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 600 }}>✕ Limpar</button>}
         <button style={{ display: 'inline-flex', alignItems: 'center', gap: 5, background: 'rgba(34,197,94,0.1)', border: '1px solid rgba(34,197,94,0.3)', borderRadius: 999, padding: '5px 10px', fontSize: 10, fontWeight: 600, color: '#16A34A', cursor: 'pointer', fontFamily: 'inherit', marginLeft: 'auto' }} onClick={() => exportarMRCExcel(filtered, 'MRC_Completa_' + new Date().toISOString().slice(0,10), 'MRC Completa', clienteNome, projetoNome)}>Excel</button>

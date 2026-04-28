@@ -197,6 +197,56 @@ export function getStatusComputado(c) {
   return 'nao_iniciado'
 }
 
+/**
+ * Ordem das fases para comparação de progressão.
+ * Cada chave de resultado do MRC mapeada a um índice ordinal.
+ */
+const FASE_ORDER = { r1: 0, st_pa: 1, r_ader: 2, r3: 3, r_f4c1: 4, r_f4c2: 5, r_f5: 6 }
+const FASE_KEYS = ['r1', 'st_pa', 'r_ader', 'r3', 'r_f4c1', 'r_f4c2', 'r_f5']
+
+/**
+ * Retorna a chave da fase onde o controle parou (última fase com dados).
+ * Usada para deduzir em qual fase o risco foi evitado/transferido.
+ */
+function getLastPhaseKey(c) {
+  for (let i = FASE_KEYS.length - 1; i >= 0; i--) {
+    const k = FASE_KEYS[i]
+    const v = c[k]
+    if (v && v !== '' && v !== 'Teste Não Realizado') return k
+  }
+  return 'r1' // sem dados = estava na F1
+}
+
+/**
+ * Para controles evitados/transferidos, retorna o que exibir em cada coluna de fase.
+ * - Na fase onde parou: 'Evitado' ou 'Transferido'
+ * - Nas fases seguintes: 'N/A'
+ * - Nas fases anteriores: valor normal
+ * - null = usar lógica normal
+ *
+ * @param {Object} c - registro MRC
+ * @param {string} faseKey - chave da coluna (r1, st_pa, r_ader, r3, r_f4c1, r_f4c2, r_f5)
+ * @returns {string|null} override de display ou null para lógica normal
+ */
+export function getFaseDisplayOverride(c, faseKey) {
+  if (!c) return null
+  const sr = (c.status_risco || '').toLowerCase()
+  if (sr !== 'evitado' && sr !== 'transferido') return null
+
+  const stoppedAt = getLastPhaseKey(c)
+  const stoppedIdx = FASE_ORDER[stoppedAt] ?? 0
+  const currentIdx = FASE_ORDER[faseKey] ?? 0
+
+  // Na fase em que parou: mostrar o status_risco com primeira letra maiúscula
+  if (currentIdx === stoppedIdx) {
+    return sr === 'evitado' ? 'Evitado' : 'Transferido'
+  }
+  // Fases posteriores: N/A (nunca serão executadas)
+  if (currentIdx > stoppedIdx) return 'N/A'
+  // Fases anteriores: mostrar valor normal (return null)
+  return null
+}
+
 // Constantes de referência
 const FASES = {
   F1: {

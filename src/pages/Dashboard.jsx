@@ -1,7 +1,7 @@
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
 import { useEffect, useState, useMemo, useRef } from 'react'
-import { getFaseNumero, getResultadoVitrine, getFaseLabel, getStatusComputado } from '../lib/fases'
+import { getFaseNumero, getResultadoVitrine, getFaseLabel, getStatusComputado, getFaseDisplayOverride } from '../lib/fases'
 import { Routes, Route, useNavigate, useLocation, useParams } from 'react-router-dom'
 import Configuracoes from './Configuracoes'
 import Perfil from './Perfil'
@@ -157,7 +157,7 @@ export default function Dashboard() {
       // Buscar áreas, controles e maturidade em paralelo (maturidade vem do banco via RPC)
       const [areasRes, mrcRes, matRes] = await Promise.all([
         supabase.from('areas').select('id, nome, prefixo, peso, gerente, ordem').eq('projeto_id', pid).order('ordem'),
-        supabase.from('mrc').select('*').eq('projeto_id', pid).neq('ativo', false),
+        supabase.from('mrc').select('*').eq('projeto_id', pid),
         supabase.from('vw_maturidade_areas').select('area_id, percentual, nivel, nome, total, efetivos, inefetivos, gaps, regredidos').eq('projeto_id', pid),
       ])
       const controles = mrcRes.data || [], areas = areasRes.data || []
@@ -550,6 +550,7 @@ function PorArea({ projeto, areasCalc, todosControles, loading, navigate, loadDa
   const [filtImp, setFiltImp] = useState('')
   const [filtRes, setFiltRes] = useState('')
   const [filtFase, setFiltFase] = useState('')
+  const [filtSit, setFiltSit] = useState('existente')
   const [sortCol, setSortCol] = useState(null)
   const [sortDir, setSortDir] = useState('asc')
   const [simularPerfil, setSimularPerfil] = useState(null)
@@ -629,7 +630,14 @@ function PorArea({ projeto, areasCalc, todosControles, loading, navigate, loadDa
     return faseLabel(c).f
   }
 
-  const cf = area.controles.filter(c => {
+  const controlesVisiveis = area.controles.filter(c => {
+    const sr = (c.status_risco || 'existente').toLowerCase()
+    if (filtSit === 'existente') return sr === 'existente' || sr === '' || !c.status_risco
+    if (filtSit === 'evitado') return sr === 'evitado'
+    if (filtSit === 'transferido') return sr === 'transferido'
+    return true // 'todos'
+  })
+  const cf = controlesVisiveis.filter(c => {
     if (busca) { const b = busca.toLowerCase(); if (![c.rr,c.rc,c.dr,c.dc,c.incons,c.rec].some(f => (f||'').toLowerCase().includes(b))) return false }
     if (filtCrit && String(c.crit_label||c.crit||'') !== filtCrit) return false
     if (filtImp && String(c.imp||'') !== filtImp) return false
@@ -693,8 +701,18 @@ function PorArea({ projeto, areasCalc, todosControles, loading, navigate, loadDa
   // Badge de fase — resultado ou "Não iniciado"
   function badgeFase(val) {
     if (val === 'N/A') return <span style={{ fontSize: 10, fontStyle: 'italic', color: 'var(--lt-text3)' }}>N/A</span>
+    if (val === 'Evitado') return <span style={{ ...bdgS, background: 'rgba(107,114,128,0.1)', color: '#6B7280', fontStyle: 'italic' }}>Evitado</span>
+    if (val === 'Transferido') return <span style={{ ...bdgS, background: 'rgba(99,102,241,0.1)', color: '#6366F1', fontStyle: 'italic' }}>Transferido</span>
     if (!val || val === 'Teste Não Realizado') return <span style={{ fontSize: 10, fontStyle: 'italic', color: 'var(--lt-text3)' }}>Não iniciado</span>
     return badgeR(val)
+  }
+  // Helper: resolve o valor de exibição de uma fase, considerando F1 efetivo e evitado/transferido
+  function faseVal(c, key, rawVal) {
+    const override = getFaseDisplayOverride(c, key)
+    if (override !== null) return override
+    // F1 efetivo → F2 columns show N/A
+    if ((key === 'st_pa' || key === 'r_ader') && (c.r1||'').toLowerCase() === 'efetivo' && !rawVal) return 'N/A'
+    return rawVal
   }
   // Headers de fase coloridos
   const FASE_HDR = [
@@ -817,6 +835,7 @@ function PorArea({ projeto, areasCalc, todosControles, loading, navigate, loadDa
         <select value={filtCrit} onChange={e => setFiltCrit(e.target.value)} style={PA.filtroSel}><option value="">Todas criticidades</option>{crits.map(c => <option key={c} value={c}>{c}</option>)}</select>
         <select value={filtFase} onChange={e => setFiltFase(e.target.value)} style={PA.filtroSel}><option value="">Todas as fases</option>{fasesDisponiveis.map(f => <option key={f} value={f}>{f}</option>)}</select>
         <select value={filtRes} onChange={e => setFiltRes(e.target.value)} style={PA.filtroSel}><option value="">Todos resultados</option>{ress.map(c => <option key={c} value={c}>{c}</option>)}</select>
+        <select value={filtSit} onChange={e => setFiltSit(e.target.value)} style={PA.filtroSel}><option value="existente">Existentes</option><option value="evitado">Evitados</option><option value="transferido">Transferidos</option><option value="todos">Todos</option></select>
         <div style={{ fontSize: 10, color: 'var(--lt-text3)', background: 'var(--lt-card)', border: '1px solid var(--lt-border)', borderRadius: 8, padding: '5px 10px' }}>{cf.length} controles</div>
         {canEdit && <button onClick={() => setModalNovoRisco(true)} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, background: '#00203E', border: '1px solid #00203E', borderRadius: 999, padding: '5px 14px', fontSize: 10, fontWeight: 600, color: 'white', cursor: 'pointer', fontFamily: 'inherit' }} title="Criar novo risco"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Novo Risco</button>}
         <button onClick={() => exportarMRCExcel(cf, `MRC_${nome.replace(/\s+/g, '_')}_${new Date().toISOString().slice(0,10)}`, nome, projeto?.clientes?.nome || '', projeto?.nome || '')} style={PA.btnExport} title="Exportar Excel da área">
@@ -847,7 +866,7 @@ function PorArea({ projeto, areasCalc, todosControles, loading, navigate, loadDa
               {!isCliente && <th style={{ fontSize: 10, fontWeight: 500, color: 'var(--lt-text3)', background: '#F0F2F5', padding: '12px 12px', position: 'sticky', top: 0, zIndex: 2, width: 120, minWidth: 120, borderBottom: '1px solid var(--lt-border)', textTransform: 'uppercase', letterSpacing: 0.5 }}>Ação</th>}
             </tr></thead>
             <tbody>{cfSorted.map((c, i) => (
-              <tr key={c.id||i} onClick={() => setModalRow(c)} style={{ cursor: 'pointer' }} onMouseEnter={e => e.currentTarget.style.background='rgba(204,145,94,0.04)'} onMouseLeave={e => e.currentTarget.style.background=''}>
+              <tr key={c.id||i} onClick={() => setModalRow(c)} style={{ cursor: 'pointer', ...((c.status_risco === 'evitado' || c.status_risco === 'transferido') ? { opacity: 0.55, fontStyle: 'italic' } : {}) }} onMouseEnter={e => e.currentTarget.style.background='rgba(204,145,94,0.04)'} onMouseLeave={e => e.currentTarget.style.background=''}>
                 <td style={{ ...tdS, width: 95, minWidth: 95, fontSize: 10, color: 'var(--lt-text3)' }}>{fmtDate(c.dt_ult || c.atualizado_em || c.criado_em)}</td>
                 <Td w={120}>{c.sub}</Td>
                 <td style={{ ...tdS, color: 'var(--copper)', fontWeight: 600, width: 80, minWidth: 80 }}>{c.rr}</td><Td w={200}>{c.dr}</Td>
@@ -857,13 +876,13 @@ function PorArea({ projeto, areasCalc, todosControles, loading, navigate, loadDa
                 <td style={{ ...tdS, width: 130, minWidth: 130, fontSize: 10 }}>{getFaseLabel(c)}</td>
                 <td style={{ ...tdS, width: 110, minWidth: 110, textAlign: 'center' }}>{(() => { const st = getStatusComputado(c); const cfg = getStatusBadge(st); return <span style={{ fontSize: 8, fontWeight: 700, color: cfg.color, background: cfg.bg, padding: '2px 8px', borderRadius: 999, textTransform: 'uppercase', letterSpacing: 0.5 }}>{cfg.label}</span> })()}</td>
                 {/* Colunas de fase */}
-                <td style={{ ...tdS, width: FASE_W, minWidth: FASE_W, maxWidth: FASE_W, textAlign: 'center' }}>{badgeFase(c.r1)}</td>
-                <td style={{ ...tdS, width: FASE_W, minWidth: FASE_W, maxWidth: FASE_W, textAlign: 'center' }}>{badgeFase((c.r1||'').toLowerCase() === 'efetivo' && !c.st_pa ? 'N/A' : c.st_pa)}</td>
-                <td style={{ ...tdS, width: FASE_W, minWidth: FASE_W, maxWidth: FASE_W, textAlign: 'center' }}>{badgeFase((c.r1||'').toLowerCase() === 'efetivo' && !c.r_ader ? 'N/A' : c.r_ader)}</td>
-                <td style={{ ...tdS, width: FASE_W, minWidth: FASE_W, maxWidth: FASE_W, textAlign: 'center' }}>{badgeFase(c.r3)}</td>
-                <td style={{ ...tdS, width: FASE_W, minWidth: FASE_W, maxWidth: FASE_W, textAlign: 'center' }}>{badgeFase(c.r_f4c1)}</td>
-                <td style={{ ...tdS, width: FASE_W, minWidth: FASE_W, maxWidth: FASE_W, textAlign: 'center' }}>{badgeFase(c.r_f4c2)}</td>
-                <td style={{ ...tdS, width: FASE_W, minWidth: FASE_W, maxWidth: FASE_W, textAlign: 'center' }}>{badgeFase(c.r_f5)}</td>
+                <td style={{ ...tdS, width: FASE_W, minWidth: FASE_W, maxWidth: FASE_W, textAlign: 'center' }}>{badgeFase(faseVal(c, 'r1', c.r1))}</td>
+                <td style={{ ...tdS, width: FASE_W, minWidth: FASE_W, maxWidth: FASE_W, textAlign: 'center' }}>{badgeFase(faseVal(c, 'st_pa', c.st_pa))}</td>
+                <td style={{ ...tdS, width: FASE_W, minWidth: FASE_W, maxWidth: FASE_W, textAlign: 'center' }}>{badgeFase(faseVal(c, 'r_ader', c.r_ader))}</td>
+                <td style={{ ...tdS, width: FASE_W, minWidth: FASE_W, maxWidth: FASE_W, textAlign: 'center' }}>{badgeFase(faseVal(c, 'r3', c.r3))}</td>
+                <td style={{ ...tdS, width: FASE_W, minWidth: FASE_W, maxWidth: FASE_W, textAlign: 'center' }}>{badgeFase(faseVal(c, 'r_f4c1', c.r_f4c1))}</td>
+                <td style={{ ...tdS, width: FASE_W, minWidth: FASE_W, maxWidth: FASE_W, textAlign: 'center' }}>{badgeFase(faseVal(c, 'r_f4c2', c.r_f4c2))}</td>
+                <td style={{ ...tdS, width: FASE_W, minWidth: FASE_W, maxWidth: FASE_W, textAlign: 'center' }}>{badgeFase(faseVal(c, 'r_f5', c.r_f5))}</td>
                 {!isCliente && <td style={{ ...tdS, textAlign: 'center', width: 120, minWidth: 120 }}>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 3, alignItems: 'center' }}>
                       {canEdit && <button onClick={e => { e.stopPropagation(); setAtualizarRow(c) }} style={{ background: 'rgba(204,145,94,0.08)', border: '1px solid rgba(204,145,94,0.2)', borderRadius: 4, padding: '2px 10px', fontSize: 10, fontWeight: 600, color: 'var(--copper)', cursor: 'pointer', fontFamily: 'inherit', width: '100%' }}>Atualizar</button>}
