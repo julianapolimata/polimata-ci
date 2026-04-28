@@ -423,23 +423,43 @@ function buildMRCSheet(wb, controles, tituloAba, iconId, clienteNome, projetoNom
   colHeaderRow.height = 28
 
   // ── FUNÇÕES VITRINE ──
-  // Resultado: pega o mais recente de trás pra frente (F5 → F1)
+  // Mapeamento: cada fase tem { resultado, incons, rec }
+  const FASE_CHAIN = [
+    { r: 'r_f5',   i: 'incons_f5',   rec: 'rec_f5' },
+    { r: 'r_f4c2', i: 'incons_f4c2', rec: 'rec_f4c2' },
+    { r: 'r_f4c1', i: 'incons_f4c1', rec: 'rec_f4c1' },
+    { r: 'r3',     i: 'incons_f3',   rec: 'rec_f3' },
+    { r: 'r_ader', i: 'incons_ader', rec: 'melhoria' },
+    { r: 'st_pa',  i: null,          rec: null },
+    { r: 'r1',     i: 'incons',      rec: 'rec' },
+  ]
+  // Encontra a fase mais recente com resultado válido
+  function vitrineFase(row) {
+    for (const f of FASE_CHAIN) {
+      const v = row[f.r]
+      if (v && v !== 'Teste Não Realizado' && v !== 'N/A') return f
+    }
+    return FASE_CHAIN[FASE_CHAIN.length - 1]
+  }
+  // Resultado: último resultado válido (F5 → F1)
   function vitrineResultado(row) {
-    const chain = [row.r_f5, row.r_f4c2, row.r_f4c1, row.r3, row.r_ader, row.st_pa, row.r1]
-    for (const v of chain) { if (v && v !== 'Teste Não Realizado' && v !== 'N/A') return v }
-    return row.r1 || '—'
+    const f = vitrineFase(row)
+    const v = row[f.r]
+    return (v && v !== 'Teste Não Realizado' && v !== 'N/A') ? v : (row.r1 || '—')
   }
-  // Inconsistência: pega a mais recente
+  // Inconsistência: da MESMA fase que forneceu o resultado. Se vazio → "—"
   function vitrineIncons(row) {
-    const chain = [row.incons_f5, row.incons_f4c2, row.incons_f4c1, row.incons_f3, row.incons_ader, row.incons]
-    for (const v of chain) { if (v && v.trim()) return v }
-    return '—'
+    const f = vitrineFase(row)
+    if (!f.i) return '—'
+    const v = row[f.i]
+    return (v && v.trim()) ? v : '—'
   }
-  // Recomendação: pega a mais recente
+  // Recomendação: da MESMA fase que forneceu o resultado. Se vazio → "—"
   function vitrineRec(row) {
-    const chain = [row.rec_f5, row.rec_f4c2, row.rec_f4c1, row.rec_f3, row.melhoria, row.rec]
-    for (const v of chain) { if (v && v.trim()) return v }
-    return '—'
+    const f = vitrineFase(row)
+    if (!f.rec) return '—'
+    const v = row[f.rec]
+    return (v && v.trim()) ? v : '—'
   }
   // Histórico por fase: normaliza o resultado para exibição
   function fmtHist(v) {

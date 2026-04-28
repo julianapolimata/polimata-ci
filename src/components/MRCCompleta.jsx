@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
 import { supabase } from '../lib/supabase'
 import { exportarMRCExcel } from '../lib/exportMRC'
-import { getFaseInfo as getFaseInfoUtil } from '../lib/fases'
+import { getFaseInfo as getFaseInfoUtil, getResultadoVitrine } from '../lib/fases'
 
 // ─── CONSTANTES ──────────────────────────────────────────────────────────────
 
@@ -124,7 +124,8 @@ function getFaseInfo(row) {
 }
 
 function FaseAtual({ row }) {
-  const { label, resultado, cor } = getFaseInfo(row)
+  const { label, cor } = getFaseInfo(row)
+  const resultado = getResultadoVitrine(row)
   return (
     <div className="fase-atual-cell">
       <div className="fase-atual-label" style={{ borderLeftColor: cor }}>{label}</div>

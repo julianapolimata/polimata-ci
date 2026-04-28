@@ -1,7 +1,7 @@
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
 import { useEffect, useState, useMemo, useRef } from 'react'
-import { getFaseNumero } from '../lib/fases'
+import { getFaseNumero, getResultadoVitrine } from '../lib/fases'
 import { Routes, Route, useNavigate, useLocation, useParams } from 'react-router-dom'
 import Configuracoes from './Configuracoes'
 import Perfil from './Perfil'
@@ -86,7 +86,7 @@ function calcKpisPorFase(controles) {
   controles.forEach(c => {
     const f = getFaseAtual(c) - 1
     k.controles[f]++; k.controles[5]++
-    const r = f === 0 ? c.r1 : f === 1 ? (c.r_ader || c.st_pa || c.r1) : c.r3 || c.r1
+    const r = getResultadoVitrine(c)
     if (isEfetivo(r)) { k.efetivos[f]++; k.efetivos[5]++ }
     else if (isInefetivo(r)) { k.inefetivos[f]++; k.inefetivos[5]++ }
     else if (isGap(r)) { k.gap[f]++; k.gap[5]++ }
@@ -602,16 +602,9 @@ function PorArea({ projeto, areasCalc, todosControles, loading, navigate, loadDa
 
   // Resultado geral: retorna o resultado da fase mais avançada do controle
   function getResultadoGeral(c) {
-    let v = null
-    if (c.r_f5 && c.r_f5 !== 'Teste Não Realizado') v = c.r_f5
-    else if (c.r_f4c2 && c.r_f4c2 !== 'Teste Não Realizado') v = c.r_f4c2
-    else if (c.r_f4c1 && c.r_f4c1 !== 'Teste Não Realizado') v = c.r_f4c1
-    else if (c.r3 && c.r3 !== 'Teste Não Realizado') v = c.r3
-    else if (c.r_ader && c.r_ader !== 'Teste Não Realizado') v = c.r_ader
-    else if (c.st_pa && c.st_pa !== '') v = c.st_pa
-    else if (c.r1 && c.r1 !== 'Teste Não Realizado') v = c.r1
-    // Normalizar capitalização (ex: "efetivo" → "Efetivo")
-    return v ? v.charAt(0).toUpperCase() + v.slice(1).toLowerCase() : null
+    const v = getResultadoVitrine(c)
+    if (!v || v === '—') return null
+    return v.charAt(0).toUpperCase() + v.slice(1).toLowerCase()
   }
 
   function getFaseCodigo(c) {
