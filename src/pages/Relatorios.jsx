@@ -122,9 +122,11 @@ const SITUACAO_OPTIONS = [
 
 const FASE_OPTIONS = [
   { value: 'f1', label: 'F1 — Diagnóstico' },
-  { value: 'f2', label: 'F2 — Aderência' },
+  { value: 'f2e1', label: 'F2-E1 — Teste de Desenho' },
+  { value: 'f2e2', label: 'F2-E2 — Efetividade' },
   { value: 'f3', label: 'F3 — Revisão Integral' },
-  { value: 'f4', label: 'F4 — Auditoria Contínua' },
+  { value: 'f4c1', label: 'F4-C1 — Auditoria Contínua' },
+  { value: 'f4c2', label: 'F4-C2 — Auditoria Contínua' },
   { value: 'f5', label: 'F5 — Auditoria Independente' },
 ]
 
@@ -161,12 +163,15 @@ export default function Relatorios({ projeto, areasCalc, todosControles, cliente
 
     if (filtroFase.length > 0) {
       lista = lista.filter(c => {
+        const done = f => f && f !== 'Teste Não Realizado'
         return filtroFase.some(fase => {
-          if (fase === 'f1') return !!c.r1 && (c.r1 || '').toLowerCase() !== 'teste não realizado'
-          if (fase === 'f2') return !!c.r_ader && c.r_ader !== 'Teste Não Realizado'
-          if (fase === 'f3') return !!c.r3 && c.r3 !== 'Teste Não Realizado'
-          if (fase === 'f4') return !!c.r_f4c1 && c.r_f4c1 !== 'Teste Não Realizado'
-          if (fase === 'f5') return !!c.r_f5 && c.r_f5 !== 'Teste Não Realizado'
+          if (fase === 'f1') return done(c.r1)
+          if (fase === 'f2e1') return done(c.st_pa)
+          if (fase === 'f2e2') return done(c.r_ader)
+          if (fase === 'f3') return done(c.r3)
+          if (fase === 'f4c1') return done(c.r_f4c1)
+          if (fase === 'f4c2') return done(c.r_f4c2)
+          if (fase === 'f5') return done(c.r_f5)
           return false
         })
       })
