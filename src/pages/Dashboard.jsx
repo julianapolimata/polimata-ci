@@ -118,6 +118,79 @@ function probToIdx(v) { return { 'Extrema': 0, 'Alta': 1, 'Média': 2, 'Baixa': 
 function critToIdx(c) { return Math.max(0, Math.min(3, 4 - (c || 1))) }
 
 // ══════════════════════════════════════════════════════════════════════════════
+// SELETOR DE PROJETOS (tela pós-login)
+// ══════════════════════════════════════════════════════════════════════════════
+
+function ProjectSelector({ projetos, resumos, perfil, onSelect, signOut }) {
+  const nome = perfil?.nome?.split(' ')[0] || ''
+  return (
+    <div style={{ minHeight: '100vh', background: 'var(--bg0)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '40px 20px' }}>
+      <div style={{ width: '100%', maxWidth: 640 }}>
+        <div style={{ textAlign: 'center', marginBottom: 32 }}>
+          <img src="/logotipo-2cores.png" alt="Polímata GRC" style={{ height: 40, marginBottom: 20, objectFit: 'contain' }} />
+          <h1 style={{ fontSize: 20, fontWeight: 300, color: 'var(--cream)', fontFamily: "'Raleway', sans-serif", letterSpacing: '.3px', margin: '0 0 6px' }}>
+            Selecione um projeto
+          </h1>
+          <p style={{ fontSize: 13, color: 'rgba(247,243,238,0.5)', margin: 0 }}>
+            {nome ? `Bem-vindo(a), ${nome}` : 'Bem-vindo(a) ao Polímata GRC'}
+          </p>
+        </div>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          {projetos.map(p => {
+            const r = resumos[p.id] || {}
+            const clienteNome = p.clientes?.nome || '—'
+            const isAtivo = p.ativo !== false
+            return (
+              <div
+                key={p.id}
+                onClick={() => onSelect(p)}
+                style={{
+                  background: 'var(--bg2)', border: '1px solid var(--brd)', borderRadius: 12,
+                  padding: '16px 20px', cursor: 'pointer', transition: 'border-color .15s, transform .1s',
+                  opacity: isAtivo ? 1 : 0.55,
+                }}
+                onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--copper)'; e.currentTarget.style.transform = 'translateY(-1px)' }}
+                onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--brd)'; e.currentTarget.style.transform = 'none' }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
+                  <div>
+                    <div style={{ fontSize: 10, color: 'var(--txt3)', textTransform: 'uppercase', letterSpacing: '.5px', marginBottom: 2 }}>{clienteNome}</div>
+                    <div style={{ fontSize: 15, fontWeight: 500, color: 'var(--cream)' }}>{p.nome}</div>
+                  </div>
+                  <span style={{
+                    fontSize: 10, padding: '2px 10px', borderRadius: 6, fontWeight: 500,
+                    background: isAtivo ? 'rgba(34,197,94,0.12)' : 'rgba(255,255,255,0.06)',
+                    color: isAtivo ? '#22C55E' : 'var(--txt3)',
+                  }}>
+                    {isAtivo ? 'Ativo' : 'Concluído'}
+                  </span>
+                </div>
+                <div style={{ display: 'flex', gap: 20, fontSize: 11, color: 'var(--txt3)', flexWrap: 'wrap' }}>
+                  <span>{r.totalControles ?? '—'} controles</span>
+                  <span>{r.totalAreas ?? '—'} áreas</span>
+                  {r.maturidade && <span>Maturidade: {r.maturidade}</span>}
+                  {r.ultimaAtividade && <span>Últ. atividade: {r.ultimaAtividade}</span>}
+                </div>
+              </div>
+            )
+          })}
+        </div>
+
+        <div style={{ textAlign: 'center', marginTop: 24 }}>
+          <p style={{ fontSize: 11, color: 'rgba(247,243,238,0.35)', marginBottom: 12 }}>
+            {papelLabel(perfil?.papel)} — {projetos.length} projeto{projetos.length !== 1 ? 's' : ''} disponíve{projetos.length !== 1 ? 'is' : 'l'}
+          </p>
+          <button onClick={signOut} style={{ background: 'transparent', border: '1px solid var(--brd)', borderRadius: 8, color: 'var(--txt3)', fontSize: 11, padding: '6px 16px', cursor: 'pointer', fontFamily: 'inherit' }}>
+            Sair
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
 // SHELL
 // ══════════════════════════════════════════════════════════════════════════════
 
@@ -127,6 +200,7 @@ export default function Dashboard() {
   const location = useLocation()
   const [projetos, setProjetos] = useState([])
   const [projetoAtivo, setProjetoAtivo] = useState(null)
+  const [projetoResumos, setProjetoResumos] = useState({})
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [areasCalc, setAreasCalc] = useState([])
   const [todosControles, setTodosControles] = useState([])
@@ -137,7 +211,46 @@ export default function Dashboard() {
 
   async function loadProjetos() {
     const { data } = await supabase.from('projetos').select('*, clientes(nome, slug)').eq('ativo', true).order('criado_em', { ascending: false })
-    if (data) { setProjetos(data); if (data.length > 0) setProjetoAtivo(data[0]) }
+    if (data) {
+      setProjetos(data)
+      // Buscar resumos para o seletor de projetos
+      loadResumos(data)
+    }
+  }
+
+  async function loadResumos(projs) {
+    const resumos = {}
+    await Promise.all(projs.map(async (p) => {
+      try {
+        const [mrcRes, areaRes, matRes] = await Promise.all([
+          supabase.from('mrc').select('id, dt_ult, atualizado_em, criado_em', { count: 'exact' }).eq('projeto_id', p.id),
+          supabase.from('areas').select('id', { count: 'exact' }).eq('projeto_id', p.id),
+          supabase.from('vw_maturidade_areas').select('percentual').eq('projeto_id', p.id),
+        ])
+        const totalControles = mrcRes.count || 0
+        const totalAreas = areaRes.count || 0
+        // Maturidade média ponderada (simples aqui, usa view)
+        const matRows = matRes.data || []
+        let maturidade = null
+        if (matRows.length > 0) {
+          const avg = matRows.reduce((s, m) => s + (m.percentual || 0), 0) / matRows.length
+          maturidade = getNivelMaturidade(avg / 100)
+        }
+        // Última atividade
+        let maxDate = null
+        ;(mrcRes.data || []).forEach(c => {
+          const d = c.dt_ult || c.atualizado_em || c.criado_em
+          if (d) { const dt = new Date(d); if (!isNaN(dt) && (!maxDate || dt > maxDate)) maxDate = dt }
+        })
+        resumos[p.id] = {
+          totalControles,
+          totalAreas,
+          maturidade,
+          ultimaAtividade: maxDate ? maxDate.toLocaleDateString('pt-BR') : null,
+        }
+      } catch { resumos[p.id] = {} }
+    }))
+    setProjetoResumos(resumos)
   }
 
   useEffect(() => { if (projetoAtivo?.id) loadDados(projetoAtivo.id) }, [projetoAtivo])
@@ -188,6 +301,14 @@ export default function Dashboard() {
   const mainLightClass = isHomeDash ? '' : 'main-light'
   const ultimaAtualizacao = useMemo(() => getUltimaAtualizacao(todosControles), [todosControles])
 
+  // Seletor de projetos — exibido quando nenhum projeto está selecionado
+  if (!projetoAtivo && projetos.length > 0) {
+    return <ProjectSelector projetos={projetos} resumos={projetoResumos} perfil={perfil} onSelect={p => { setProjetoAtivo(p); navigate('/') }} signOut={signOut} />
+  }
+  if (!projetoAtivo && projetos.length === 0 && !loading) {
+    return <NoProjeto />
+  }
+
   return (
     <div style={{ display: 'flex', height: '100vh', overflow: 'hidden' }}>
       <aside style={{ width: sw, minWidth: sw, background: 'var(--bg1)', borderRight: '1px solid var(--brd)', display: 'flex', flexDirection: 'column', overflow: 'hidden', transition: 'width .25s ease, min-width .25s ease', position: 'relative', zIndex: 250 }}>
@@ -196,12 +317,23 @@ export default function Dashboard() {
             ? <img src="/logotipo-2cores.png" alt="Polímata" style={{ width: '100%', maxWidth: 180, height: 'auto', objectFit: 'contain' }} />
             : <img src="/logotipo-2cores.png" alt="P" style={{ width: 32, height: 32, objectFit: 'contain' }} />}
         </div>
-        {sidebarOpen && projetos.length > 0 && (
+        {sidebarOpen && projetoAtivo && (
           <div className="sb-projeto">
-            <div className="sb-projeto-label">Projeto ativo</div>
-            <select className="sb-projeto-sel" value={projetoAtivo?.id || ''} onChange={e => setProjetoAtivo(projetos.find(p => p.id === e.target.value))}>
-              {projetos.map(p => <option key={p.id} value={p.id}>{p.clientes?.nome} · {p.nome}</option>)}
-            </select>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div className="sb-projeto-label">Projeto ativo</div>
+              {projetos.length > 1 && (
+                <button onClick={() => { setProjetoAtivo(null); navigate('/') }}
+                  style={{ background: 'none', border: 'none', color: 'var(--copper)', fontSize: 10, cursor: 'pointer', padding: 0, fontFamily: 'inherit' }}>
+                  Trocar
+                </button>
+              )}
+            </div>
+            <div style={{ fontSize: 12, color: 'var(--cream)', fontWeight: 500, lineHeight: 1.3, marginTop: 4 }}>
+              {projetoAtivo.clientes?.nome}
+            </div>
+            <div style={{ fontSize: 11, color: 'var(--txt3)', marginTop: 1 }}>
+              {projetoAtivo.nome}
+            </div>
           </div>
         )}
         <nav style={{ flex: 1, overflowY: 'auto', padding: '8px 0', display: 'flex', flexDirection: 'column', gap: 1 }}>
