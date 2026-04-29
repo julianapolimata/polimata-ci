@@ -169,7 +169,7 @@ function ProjectSelector({ projetos, resumos, perfil, onSelect, signOut }) {
                 <div style={{ display: 'flex', gap: 20, fontSize: 11, color: 'var(--txt3)', flexWrap: 'wrap' }}>
                   <span>{r.totalControles ?? '—'} controles</span>
                   <span>{r.totalAreas ?? '—'} áreas</span>
-                  {r.maturidade && <span>Maturidade: {r.maturidade}</span>}
+                  {r.maturidade && <span>Maturidade: {r.maturidade.nivel} — {r.maturidade.nome}</span>}
                   {r.ultimaAtividade && <span>Últ. atividade: {r.ultimaAtividade}</span>}
                 </div>
               </div>
