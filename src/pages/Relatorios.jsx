@@ -1,11 +1,130 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useRef, useEffect } from 'react'
 import { gerarRelatorioExcel } from '../lib/gerarRelatorio'
+import { getStatusComputado } from '../lib/fases'
 
+// ── Multi-select dropdown component ──────────────────────────────────────────
+function MultiSelect({ label, options, selected, onChange, placeholder }) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef(null)
+
+  useEffect(() => {
+    const handler = e => { if (ref.current && !ref.current.contains(e.target)) setOpen(false) }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [])
+
+  const toggle = val => {
+    if (selected.includes(val)) onChange(selected.filter(v => v !== val))
+    else onChange([...selected, val])
+  }
+
+  const displayText = selected.length === 0
+    ? placeholder
+    : selected.length === options.length
+      ? 'Todos'
+      : selected.length <= 2
+        ? selected.map(v => options.find(o => o.value === v)?.label || v).join(', ')
+        : `${selected.length} selecionados`
+
+  return (
+    <div ref={ref} style={{ position: 'relative' }}>
+      <label style={{ fontSize: 11, color: 'var(--txt3)', display: 'block', marginBottom: 4, fontWeight: 500 }}>{label}</label>
+      <button
+        onClick={() => setOpen(o => !o)}
+        style={{
+          width: '100%', padding: '8px 10px', fontSize: 12,
+          border: selected.length > 0 ? '1.5px solid var(--copper)' : '1px solid var(--brd)',
+          borderRadius: 6, background: 'var(--card-bg, #fff)', color: 'var(--txt1)',
+          fontFamily: 'inherit', textAlign: 'left', cursor: 'pointer',
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        }}
+      >
+        <span style={{
+          overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1,
+          color: selected.length === 0 ? 'var(--txt3)' : 'var(--txt1)',
+        }}>{displayText}</span>
+        <span style={{ fontSize: 10, color: 'var(--txt3)', marginLeft: 4 }}>{open ? '▴' : '▾'}</span>
+      </button>
+      {open && (
+        <div style={{
+          position: 'absolute', top: '100%', left: 0, right: 0, marginTop: 4,
+          background: 'var(--card-bg, #fff)', border: '1px solid var(--brd)',
+          borderRadius: 8, boxShadow: '0 4px 16px rgba(0,0,0,0.12)',
+          zIndex: 100, maxHeight: 220, overflowY: 'auto', padding: '4px 0',
+        }}>
+          {/* Select all / clear */}
+          <div style={{ padding: '6px 12px', borderBottom: '1px solid var(--brd)', display: 'flex', gap: 8 }}>
+            <button
+              onClick={() => onChange(options.map(o => o.value))}
+              style={{ fontSize: 11, color: 'var(--copper)', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 500, padding: 0 }}
+            >Todos</button>
+            <span style={{ color: 'var(--brd)' }}>|</span>
+            <button
+              onClick={() => onChange([])}
+              style={{ fontSize: 11, color: 'var(--txt3)', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', padding: 0 }}
+            >Limpar</button>
+          </div>
+          {options.map(opt => (
+            <label
+              key={opt.value}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 8, padding: '7px 12px',
+                cursor: 'pointer', fontSize: 12, color: 'var(--txt1)',
+                background: selected.includes(opt.value) ? 'rgba(204,145,94,0.06)' : 'transparent',
+                transition: 'background .1s',
+              }}
+              onMouseEnter={e => { if (!selected.includes(opt.value)) e.currentTarget.style.background = 'rgba(0,0,0,0.03)' }}
+              onMouseLeave={e => { e.currentTarget.style.background = selected.includes(opt.value) ? 'rgba(204,145,94,0.06)' : 'transparent' }}
+            >
+              <span style={{
+                width: 16, height: 16, borderRadius: 3, flexShrink: 0,
+                border: selected.includes(opt.value) ? '1.5px solid var(--copper)' : '1.5px solid var(--brd)',
+                background: selected.includes(opt.value) ? 'var(--copper)' : 'transparent',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                transition: 'all .1s',
+              }}>
+                {selected.includes(opt.value) && <span style={{ color: '#fff', fontSize: 10, lineHeight: 1 }}>✓</span>}
+              </span>
+              {opt.label}
+            </label>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ── Status options ───────────────────────────────────────────────────────────
+const STATUS_OPTIONS = [
+  { value: 'nao_iniciado', label: 'Não Iniciado' },
+  { value: 'teste_pendente', label: 'Teste Pendente' },
+  { value: 'em_analise', label: 'Em Análise' },
+  { value: 'em_revisao', label: 'Em Revisão' },
+  { value: 'aprovado', label: 'Aprovado' },
+  { value: 'reprovado', label: 'Devolvido' },
+]
+
+const SITUACAO_OPTIONS = [
+  { value: 'existente', label: 'Existente' },
+  { value: 'evitado', label: 'Evitado' },
+  { value: 'transferido', label: 'Transferido' },
+]
+
+const FASE_OPTIONS = [
+  { value: 'f1', label: 'F1 — Diagnóstico' },
+  { value: 'f2', label: 'F2 — Aderência' },
+  { value: 'f3', label: 'F3 — Revisão Integral' },
+  { value: 'f4', label: 'F4 — Auditoria Contínua' },
+  { value: 'f5', label: 'F5 — Auditoria Independente' },
+]
+
+// ── Main component ───────────────────────────────────────────────────────────
 export default function Relatorios({ projeto, areasCalc, todosControles, clienteNome, projetoNome }) {
   const [secoes, setSecoes] = useState({ resumo: true, detalhamento: true, matriz: true, planos: true })
-  const [filtroArea, setFiltroArea] = useState('')
-  const [filtroSituacao, setFiltroSituacao] = useState('')
-  const [filtroFase, setFiltroFase] = useState('')
+  const [filtroAreas, setFiltroAreas] = useState([])
+  const [filtroSituacao, setFiltroSituacao] = useState([])
+  const [filtroFase, setFiltroFase] = useState([])
+  const [filtroStatus, setFiltroStatus] = useState([])
   const [gerando, setGerando] = useState(false)
 
   const areas = useMemo(() => {
@@ -13,23 +132,38 @@ export default function Relatorios({ projeto, areasCalc, todosControles, cliente
     return [...areasCalc].sort((a, b) => (a.nome || '').localeCompare(b.nome || ''))
   }, [areasCalc])
 
+  const areaOptions = useMemo(() => areas.map(a => ({ value: a.id, label: a.nome })), [areas])
+
   const controlesFiltrados = useMemo(() => {
     let lista = todosControles || []
-    if (filtroArea) lista = lista.filter(c => c.area_id === filtroArea)
-    if (filtroSituacao) lista = lista.filter(c => (c.status_risco || 'existente') === filtroSituacao)
-    if (filtroFase) {
+
+    if (filtroAreas.length > 0) {
+      lista = lista.filter(c => filtroAreas.includes(c.area_id))
+    }
+
+    if (filtroSituacao.length > 0) {
+      lista = lista.filter(c => filtroSituacao.includes(c.status_risco || 'existente'))
+    }
+
+    if (filtroStatus.length > 0) {
+      lista = lista.filter(c => filtroStatus.includes(getStatusComputado(c)))
+    }
+
+    if (filtroFase.length > 0) {
       lista = lista.filter(c => {
-        const r1 = (c.r1 || '').toLowerCase()
-        if (filtroFase === 'f1') return !!c.r1 && r1 !== 'teste não realizado'
-        if (filtroFase === 'f2') return !!c.r_ader && c.r_ader !== 'Teste Não Realizado'
-        if (filtroFase === 'f3') return !!c.r3 && c.r3 !== 'Teste Não Realizado'
-        if (filtroFase === 'f4') return !!c.r_f4c1 && c.r_f4c1 !== 'Teste Não Realizado'
-        if (filtroFase === 'f5') return !!c.r_f5 && c.r_f5 !== 'Teste Não Realizado'
-        return true
+        return filtroFase.some(fase => {
+          if (fase === 'f1') return !!c.r1 && (c.r1 || '').toLowerCase() !== 'teste não realizado'
+          if (fase === 'f2') return !!c.r_ader && c.r_ader !== 'Teste Não Realizado'
+          if (fase === 'f3') return !!c.r3 && c.r3 !== 'Teste Não Realizado'
+          if (fase === 'f4') return !!c.r_f4c1 && c.r_f4c1 !== 'Teste Não Realizado'
+          if (fase === 'f5') return !!c.r_f5 && c.r_f5 !== 'Teste Não Realizado'
+          return false
+        })
       })
     }
+
     return lista
-  }, [todosControles, filtroArea, filtroSituacao, filtroFase])
+  }, [todosControles, filtroAreas, filtroSituacao, filtroFase, filtroStatus])
 
   const toggle = key => setSecoes(prev => ({ ...prev, [key]: !prev[key] }))
 
@@ -53,6 +187,9 @@ export default function Relatorios({ projeto, areasCalc, todosControles, cliente
     }
   }
 
+  const temFiltroAtivo = filtroAreas.length > 0 || filtroSituacao.length > 0 || filtroFase.length > 0 || filtroStatus.length > 0
+  const limparFiltros = () => { setFiltroAreas([]); setFiltroSituacao([]); setFiltroFase([]); setFiltroStatus([]) }
+
   const algumaSelecionada = Object.values(secoes).some(Boolean)
 
   const SECOES = [
@@ -63,7 +200,7 @@ export default function Relatorios({ projeto, areasCalc, todosControles, cliente
   ]
 
   return (
-    <div style={{ padding: '32px 40px', maxWidth: 900, fontFamily: "'Montserrat', sans-serif" }}>
+    <div style={{ padding: '32px 40px', maxWidth: 960, fontFamily: "'Montserrat', sans-serif" }}>
       <h2 style={{ fontSize: 20, fontWeight: 600, color: 'var(--txt1)', margin: '0 0 4px' }}>
         Gerar relatório
       </h2>
@@ -105,62 +242,44 @@ export default function Relatorios({ projeto, areasCalc, todosControles, cliente
 
       {/* Filtros */}
       <div style={{ borderTop: '1px solid var(--brd)', paddingTop: 20, marginBottom: 24 }}>
-        <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--txt1)', marginBottom: 14 }}>Filtros</div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16 }}>
-          <div>
-            <label style={{ fontSize: 11, color: 'var(--txt3)', display: 'block', marginBottom: 4, fontWeight: 500 }}>Área</label>
-            <select
-              value={filtroArea}
-              onChange={e => setFiltroArea(e.target.value)}
-              style={{
-                width: '100%', padding: '8px 10px', fontSize: 12,
-                border: '1px solid var(--brd)', borderRadius: 6,
-                background: 'var(--card-bg, #fff)', color: 'var(--txt1)',
-                fontFamily: 'inherit',
-              }}
-            >
-              <option value="">Todas as áreas</option>
-              {areas.map(a => <option key={a.id} value={a.id}>{a.nome}</option>)}
-            </select>
-          </div>
-          <div>
-            <label style={{ fontSize: 11, color: 'var(--txt3)', display: 'block', marginBottom: 4, fontWeight: 500 }}>Situação do risco</label>
-            <select
-              value={filtroSituacao}
-              onChange={e => setFiltroSituacao(e.target.value)}
-              style={{
-                width: '100%', padding: '8px 10px', fontSize: 12,
-                border: '1px solid var(--brd)', borderRadius: 6,
-                background: 'var(--card-bg, #fff)', color: 'var(--txt1)',
-                fontFamily: 'inherit',
-              }}
-            >
-              <option value="">Todos</option>
-              <option value="existente">Existente</option>
-              <option value="evitado">Evitado</option>
-              <option value="transferido">Transferido</option>
-            </select>
-          </div>
-          <div>
-            <label style={{ fontSize: 11, color: 'var(--txt3)', display: 'block', marginBottom: 4, fontWeight: 500 }}>Fase mínima concluída</label>
-            <select
-              value={filtroFase}
-              onChange={e => setFiltroFase(e.target.value)}
-              style={{
-                width: '100%', padding: '8px 10px', fontSize: 12,
-                border: '1px solid var(--brd)', borderRadius: 6,
-                background: 'var(--card-bg, #fff)', color: 'var(--txt1)',
-                fontFamily: 'inherit',
-              }}
-            >
-              <option value="">Qualquer fase</option>
-              <option value="f1">F1 — Diagnóstico</option>
-              <option value="f2">F2 — Aderência</option>
-              <option value="f3">F3 — Revisão Integral</option>
-              <option value="f4">F4 — Auditoria Contínua</option>
-              <option value="f5">F5 — Auditoria Independente</option>
-            </select>
-          </div>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+          <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--txt1)' }}>Filtros</div>
+          {temFiltroAtivo && (
+            <button
+              onClick={limparFiltros}
+              style={{ fontSize: 11, color: 'var(--copper)', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 500 }}
+            >Limpar todos</button>
+          )}
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 14 }}>
+          <MultiSelect
+            label="Área"
+            options={areaOptions}
+            selected={filtroAreas}
+            onChange={setFiltroAreas}
+            placeholder="Todas as áreas"
+          />
+          <MultiSelect
+            label="Status"
+            options={STATUS_OPTIONS}
+            selected={filtroStatus}
+            onChange={setFiltroStatus}
+            placeholder="Todos os status"
+          />
+          <MultiSelect
+            label="Situação do risco"
+            options={SITUACAO_OPTIONS}
+            selected={filtroSituacao}
+            onChange={setFiltroSituacao}
+            placeholder="Todas"
+          />
+          <MultiSelect
+            label="Fase mínima concluída"
+            options={FASE_OPTIONS}
+            selected={filtroFase}
+            onChange={setFiltroFase}
+            placeholder="Qualquer fase"
+          />
         </div>
       </div>
 
@@ -168,7 +287,16 @@ export default function Relatorios({ projeto, areasCalc, todosControles, cliente
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderTop: '1px solid var(--brd)', paddingTop: 20 }}>
         <div style={{ fontSize: 13, color: 'var(--txt3)' }}>
           <strong style={{ color: 'var(--txt1)' }}>{controlesFiltrados.length}</strong> controles selecionados
-          {filtroArea && <span> · {areas.find(a => a.id === filtroArea)?.nome || 'Área'}</span>}
+          {temFiltroAtivo && (
+            <span style={{ marginLeft: 6, fontSize: 11, color: 'var(--copper)' }}>
+              ({[
+                filtroAreas.length > 0 && `${filtroAreas.length} área${filtroAreas.length > 1 ? 's' : ''}`,
+                filtroStatus.length > 0 && `${filtroStatus.length} status`,
+                filtroSituacao.length > 0 && `${filtroSituacao.length} situação`,
+                filtroFase.length > 0 && `${filtroFase.length} fase${filtroFase.length > 1 ? 's' : ''}`,
+              ].filter(Boolean).join(', ')})
+            </span>
+          )}
         </div>
         <button
           onClick={handleGerar}
