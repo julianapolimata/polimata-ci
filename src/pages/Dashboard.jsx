@@ -358,12 +358,22 @@ export default function Dashboard() {
           <div className="sb-projeto">
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div className="sb-projeto-label">Projeto ativo</div>
-              {projetos.length > 1 && (
-                <button onClick={() => { setProjetoAtivo(null); navigate('/') }}
-                  style={{ background: 'none', border: 'none', color: 'var(--copper)', fontSize: 10, cursor: 'pointer', padding: 0, fontFamily: 'inherit' }}>
-                  Trocar
-                </button>
-              )}
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                {isAdmin && (
+                  <button onClick={() => navigate('/admin')}
+                    style={{ background: 'none', border: 'none', color: 'var(--txt3)', fontSize: 10, cursor: 'pointer', padding: 0, fontFamily: 'inherit', opacity: 0.7, transition: 'opacity .15s' }}
+                    onMouseEnter={e => e.target.style.opacity = 1} onMouseLeave={e => e.target.style.opacity = 0.7}
+                    title="Painel de Projetos">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                  </button>
+                )}
+                {projetos.length > 1 && (
+                  <button onClick={() => { setProjetoAtivo(null); navigate('/') }}
+                    style={{ background: 'none', border: 'none', color: 'var(--copper)', fontSize: 10, cursor: 'pointer', padding: 0, fontFamily: 'inherit' }}>
+                    Trocar
+                  </button>
+                )}
+              </div>
             </div>
             <div style={{ fontSize: 12, color: 'var(--cream)', fontWeight: 500, lineHeight: 1.3, marginTop: 4 }}>
               {projetoAtivo.clientes?.nome}
