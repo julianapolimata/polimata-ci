@@ -21,13 +21,13 @@
   display: flex; align-items: center; gap: 7px;
   padding: 9px 18px;
   background: transparent; border: none;
-  color: var(--txt2); font-family: inherit; font-size: 12px;
-  font-weight: 500; cursor: pointer;
+  color: var(--navy, #00203E); font-family: inherit; font-size: 12px;
+  font-weight: 500; cursor: pointer; opacity: 0.5;
   border-bottom: 2px solid transparent;
   margin-bottom: -1px; transition: all .15s;
 }
-.cfg-tab:hover { color: var(--txt1); }
-.cfg-tab.active { color: var(--gold); border-bottom-color: var(--gold); }
+.cfg-tab:hover { opacity: 0.8; }
+.cfg-tab.active { color: var(--gold); border-bottom-color: var(--gold); font-weight: 600; opacity: 1; }
 
 /* ── Section ── */
 .cfg-section { display: flex; flex-direction: column; gap: 20px; }
