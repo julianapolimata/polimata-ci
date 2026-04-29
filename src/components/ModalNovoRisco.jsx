@@ -8,7 +8,7 @@ const ModalNovoRisco = ({ onClose, onSaved, areas, projeto, areaFixa }) => {
   const [saving, setSaving] = useState(false)
   const [perfil, setPerfil] = useState(null)
   const [novoRiscoData, setNovoRiscoData] = useState(null)
-  const [responsaveis, setResponsaveis] = useState([])
+  // responsaveis removido — não há resp. por subprocesso na metodologia
   const [sistemas, setSistemas] = useState([])
   const [subprocessos, setSubprocessos] = useState([])
 
@@ -52,7 +52,6 @@ const ModalNovoRisco = ({ onClose, onSaved, areas, projeto, areaFixa }) => {
 
   useEffect(() => {
     loadPerfil()
-    loadResponsaveis()
     loadSistemas()
   }, [])
 
@@ -72,14 +71,7 @@ const ModalNovoRisco = ({ onClose, onSaved, areas, projeto, areaFixa }) => {
     }
   }
 
-  async function loadResponsaveis() {
-    const { data } = await supabase
-      .from('responsaveis')
-      .select('id, nome')
-      .eq('projeto_id', projeto.id)
-      .order('nome')
-    if (data) setResponsaveis(data)
-  }
+  // loadResponsaveis removido
 
   async function loadSistemas() {
     const { data } = await supabase
@@ -829,23 +821,21 @@ const ModalNovoRisco = ({ onClose, onSaved, areas, projeto, areaFixa }) => {
                           }}>
                             Responsável <span style={{ color: '#E24B4A' }}>*</span>
                           </label>
-                          <select
+                          <input
+                            type="text"
                             value={paResp}
                             onChange={e => setPaResp(e.target.value)}
+                            placeholder="Nome do responsável..."
                             style={{
                               width: '100%',
                               padding: '0.8rem',
                               border: '1px solid #D0D0D0',
                               borderRadius: '4px',
                               fontFamily: 'Montserrat, sans-serif',
-                              fontSize: '14px'
+                              fontSize: '14px',
+                              boxSizing: 'border-box'
                             }}
-                          >
-                            <option value="">Selecionar...</option>
-                            {responsaveis.map(r => (
-                              <option key={r.id} value={r.id}>{r.nome}</option>
-                            ))}
-                          </select>
+                          />
                         </div>
                         <div>
                           <label style={{

@@ -169,25 +169,22 @@ function DetalheProjeto({ projeto, onBack }) {
   const [dados, setDados] = useState(null)
   const [areas, setAreas] = useState([])
   const [subprocessos, setSubprocessos] = useState([])
-  const [responsaveis, setResponsaveis] = useState([])
+  // responsaveis removido — gerência e resp. área já estão na Estrutura Organizacional
   const [loading, setLoading] = useState(true)
   const [aba, setAba] = useState('caract')
   const [editandoCaract, setEditandoCaract] = useState(false)
 
   const loadDados = useCallback(async () => {
     setLoading(true)
-    const [{ data: proj }, { data: ars }, { data: subs }, { data: resps }] = await Promise.all([
+    const [{ data: proj }, { data: ars }, { data: subs }] = await Promise.all([
       supabase.from('projetos').select('*, clientes(nome, nome_fantasia)').eq('id', projeto.id).single(),
       supabase.from('areas').select('*').eq('projeto_id', projeto.id).order('ordem'),
       supabase.from('subprocessos').select('*').order('ordem'),
-      supabase.from('responsaveis').select('*').eq('projeto_id', projeto.id).order('nome'),
     ])
     setDados(proj)
     setAreas(ars || [])
-    // Filter subprocessos to only those belonging to this project's areas
     const areaIds = new Set((ars || []).map(a => a.id))
     setSubprocessos((subs || []).filter(s => areaIds.has(s.area_id)))
-    setResponsaveis(resps || [])
     setLoading(false)
   }, [projeto.id])
 
@@ -213,7 +210,6 @@ function DetalheProjeto({ projeto, onBack }) {
         {[
           {id:'caract', label:'Características'},
           {id:'estrutura', label:'Estrutura Organizacional'},
-          {id:'responsaveis', label:'Responsáveis'},
         ].map(t => (
           <button key={t.id} className={`cfg-tab ${aba===t.id?'active':''}`} onClick={()=>setAba(t.id)}>
             {t.label}
@@ -226,9 +222,6 @@ function DetalheProjeto({ projeto, onBack }) {
       )}
       {aba === 'estrutura' && (
         <AbaEstrutura projetoId={projeto.id} areas={areas} subprocessos={subprocessos} onReload={loadDados} />
-      )}
-      {aba === 'responsaveis' && (
-        <AbaResponsaveis projetoId={projeto.id} responsaveis={responsaveis} onReload={loadDados} />
       )}
     </div>
   )
@@ -533,50 +526,6 @@ function AreaFormV2({ area, onSave, onCancel, saving }) {
       <div style={{display:'flex',gap:8,marginTop:10}}>
         <button className="btn-cfg-cancel" onClick={onCancel}>Cancelar</button>
         <button className="btn-cfg-save" onClick={()=>onSave(form)} disabled={saving||!form.nome?.trim()||!form.prefixo?.trim()}>{saving?'Salvando...':'✓ Salvar'}</button>
-      </div>
-    </div>
-  )
-}
-
-// ── Aba Responsáveis ──
-function AbaResponsaveis({ projetoId, responsaveis, onReload }) {
-  const [novoNome, setNovoNome] = useState('')
-  const [novoEmail, setNovoEmail] = useState('')
-
-  async function adicionar() {
-    if (!novoNome.trim()) return
-    await supabase.from('responsaveis').insert({ projeto_id: projetoId, nome: novoNome.trim(), email: novoEmail.trim() || null })
-    setNovoNome(''); setNovoEmail(''); onReload()
-  }
-
-  async function remover(id) {
-    await supabase.from('responsaveis').delete().eq('id', id); onReload()
-  }
-
-  return (
-    <div>
-      <div style={{fontSize:11,color:'var(--txt3)',marginBottom:16}}>
-        Responsáveis pelos subprocessos. São usados como opção no cadastro de cada controle.
-      </div>
-      <div className="cfg-table-wrap">
-        <table className="cfg-table">
-          <thead><tr><th>Nome</th><th>Email</th><th style={{width:50}}></th></tr></thead>
-          <tbody>
-            {responsaveis.map(r => (
-              <tr key={r.id}>
-                <td>{r.nome}</td>
-                <td style={{color:'var(--txt2)'}}>{r.email || '—'}</td>
-                <td><button className="btn-tbl-del" onClick={()=>remover(r.id)}>✕</button></td>
-              </tr>
-            ))}
-            {!responsaveis.length && <tr><td colSpan={3} style={{textAlign:'center',color:'var(--txt3)',padding:24}}>Nenhum responsável cadastrado.</td></tr>}
-          </tbody>
-        </table>
-      </div>
-      <div style={{display:'flex',gap:8,marginTop:12,maxWidth:600}}>
-        <input className="input-light" style={{flex:1}} value={novoNome} onChange={e=>setNovoNome(e.target.value)} placeholder="Nome..." />
-        <input className="input-light" style={{flex:1}} value={novoEmail} onChange={e=>setNovoEmail(e.target.value)} placeholder="Email (opcional)" onKeyDown={e=>e.key==='Enter'&&adicionar()} />
-        <button className="btn-cfg-sm" onClick={adicionar}>+ Adicionar</button>
       </div>
     </div>
   )
