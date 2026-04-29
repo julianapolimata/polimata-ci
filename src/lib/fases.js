@@ -247,6 +247,31 @@ export function getFaseDisplayOverride(c, faseKey) {
   return null
 }
 
+/**
+ * Normaliza o valor bruto de uma coluna de fase para os 7 status padronizados:
+ * Efetivo, Inefetivo, GAP, Em Análise, Não Iniciado, Evitado, Transferido
+ * Retorna null/undefined sem alteração (tratados pelo chamador).
+ */
+export function normalizeFaseValue(val) {
+  if (!val || val === '—') return null
+  const v = val.trim().toLowerCase()
+  // Resultado final
+  if (v === 'efetivo') return 'Efetivo'
+  if (v === 'inefetivo') return 'Inefetivo'
+  if (v === 'gap') return 'GAP'
+  // Evitado / Transferido (já normalizados pelo getFaseDisplayOverride)
+  if (v === 'evitado') return 'Evitado'
+  if (v === 'transferido') return 'Transferido'
+  // N/A (F2 pulada, fases pós-evitado, etc.)
+  if (v === 'n/a') return 'N/A'
+  // Não iniciado
+  if (v === 'teste não realizado' || v === 'não iniciado') return 'Não Iniciado'
+  // Em análise
+  if (v === 'em desenvolvimento' || v === 'em revisão' || v === 'pendente' || v === 'em análise' || v === 'em andamento') return 'Em Análise'
+  // Fallback: valor desconhecido → mostrar como está (capitalizado)
+  return val
+}
+
 // Constantes de referência
 const FASES = {
   F1: {

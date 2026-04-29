@@ -1,7 +1,7 @@
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
 import { useEffect, useState, useMemo, useRef } from 'react'
-import { getFaseNumero, getResultadoVitrine, getFaseLabel, getStatusComputado, getFaseDisplayOverride } from '../lib/fases'
+import { getFaseNumero, getResultadoVitrine, getFaseLabel, getStatusComputado, getFaseDisplayOverride, normalizeFaseValue } from '../lib/fases'
 import { Routes, Route, useNavigate, useLocation, useParams } from 'react-router-dom'
 import Configuracoes from './Configuracoes'
 import Perfil from './Perfil'
@@ -751,7 +751,7 @@ function PorArea({ projeto, areasCalc, todosControles, loading, navigate, loadDa
     if (override !== null) return override
     // F1 efetivo → F2 columns show N/A
     if ((key === 'st_pa' || key === 'r_ader') && (c.r1||'').toLowerCase() === 'efetivo' && !rawVal) return 'N/A'
-    return rawVal
+    return normalizeFaseValue(rawVal)
   }
   // Headers de fase coloridos
   const FASE_HDR = [

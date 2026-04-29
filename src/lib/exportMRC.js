@@ -1,5 +1,5 @@
 import ExcelJS from 'exceljs'
-import { getFaseLabel as getFaseLabelUtil, getFaseInfo, getStatusComputado } from './fases'
+import { getFaseLabel as getFaseLabelUtil, getFaseInfo, getStatusComputado, normalizeFaseValue } from './fases'
 import { getStatusConfig } from './statusWorkflow'
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -463,9 +463,7 @@ function buildMRCSheet(wb, controles, tituloAba, iconId, clienteNome, projetoNom
   }
   // Histórico por fase: normaliza o resultado para exibição
   function fmtHist(v) {
-    if (!v || v === 'Teste Não Realizado') return 'Não Iniciado'
-    if (v === 'N/A') return 'N/A'
-    return v.charAt(0).toUpperCase() + v.slice(1).toLowerCase()
+    return normalizeFaseValue(v) || 'Não Iniciado'
   }
 
   // Conjunto de keys que recebem cor de resultado

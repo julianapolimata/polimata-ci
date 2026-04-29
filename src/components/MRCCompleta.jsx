@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
 import { supabase } from '../lib/supabase'
 import { exportarMRCExcel } from '../lib/exportMRC'
-import { getFaseInfo as getFaseInfoUtil, getResultadoVitrine, getStatusComputado, getFaseLabel, getFaseDisplayOverride } from '../lib/fases'
+import { getFaseInfo as getFaseInfoUtil, getResultadoVitrine, getStatusComputado, getFaseLabel, getFaseDisplayOverride, normalizeFaseValue } from '../lib/fases'
 import { getStatusConfig } from '../lib/statusWorkflow'
 
 // ─── CONSTANTES ──────────────────────────────────────────────────────────────
@@ -353,7 +353,7 @@ function faseValMRC(row, key, rawVal) {
   const override = getFaseDisplayOverride(row, key)
   if (override !== null) return override
   if ((key === 'st_pa' || key === 'r_ader') && (row.r1||'').toLowerCase() === 'efetivo' && !rawVal) return 'N/A'
-  return rawVal
+  return normalizeFaseValue(rawVal)
 }
 
 function badgeResultado(val) {
