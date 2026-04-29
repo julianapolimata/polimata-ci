@@ -137,6 +137,7 @@ export default function Relatorios({ projeto, areasCalc, todosControles, cliente
   const [filtroSituacao, setFiltroSituacao] = useState([])
   const [filtroFase, setFiltroFase] = useState([])
   const [filtroStatus, setFiltroStatus] = useState([])
+  const [filtroRegredidos, setFiltroRegredidos] = useState(false)
   const [gerando, setGerando] = useState(false)
 
   const areas = useMemo(() => {
@@ -177,8 +178,12 @@ export default function Relatorios({ projeto, areasCalc, todosControles, cliente
       })
     }
 
+    if (filtroRegredidos) {
+      lista = lista.filter(c => (c.num_regressoes || 0) > 0)
+    }
+
     return lista
-  }, [todosControles, filtroAreas, filtroSituacao, filtroFase, filtroStatus])
+  }, [todosControles, filtroAreas, filtroSituacao, filtroFase, filtroStatus, filtroRegredidos])
 
   const toggle = key => setSecoes(prev => ({ ...prev, [key]: !prev[key] }))
 
@@ -202,8 +207,8 @@ export default function Relatorios({ projeto, areasCalc, todosControles, cliente
     }
   }
 
-  const temFiltroAtivo = filtroAreas.length > 0 || filtroSituacao.length > 0 || filtroFase.length > 0 || filtroStatus.length > 0
-  const limparFiltros = () => { setFiltroAreas([]); setFiltroSituacao([]); setFiltroFase([]); setFiltroStatus([]) }
+  const temFiltroAtivo = filtroAreas.length > 0 || filtroSituacao.length > 0 || filtroFase.length > 0 || filtroStatus.length > 0 || filtroRegredidos
+  const limparFiltros = () => { setFiltroAreas([]); setFiltroSituacao([]); setFiltroFase([]); setFiltroStatus([]); setFiltroRegredidos(false) }
 
   const algumaSelecionada = Object.values(secoes).some(Boolean)
 
@@ -266,7 +271,7 @@ export default function Relatorios({ projeto, areasCalc, todosControles, cliente
             >Limpar todos</button>
           )}
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 14 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr auto', gap: 14, alignItems: 'end' }}>
           <MultiSelect
             label="Área"
             options={areaOptions}
@@ -295,6 +300,22 @@ export default function Relatorios({ projeto, areasCalc, todosControles, cliente
             onChange={setFiltroFase}
             placeholder="Qualquer fase"
           />
+          <div>
+            <label style={{ fontSize: 11, color: 'var(--txt3)', display: 'block', marginBottom: 4, fontWeight: 500 }}>Regredidos</label>
+            <button
+              onClick={() => setFiltroRegredidos(v => !v)}
+              style={{
+                width: '100%', padding: '8px 10px', fontSize: 12,
+                border: filtroRegredidos ? '1.5px solid #F9A825' : '1px solid var(--brd)',
+                borderRadius: 6, background: filtroRegredidos ? '#FFF8E1' : 'var(--card-bg, #fff)',
+                color: filtroRegredidos ? '#7A5700' : 'var(--txt3)',
+                fontFamily: 'inherit', textAlign: 'left', cursor: 'pointer',
+                fontWeight: filtroRegredidos ? 600 : 400,
+              }}
+            >
+              {filtroRegredidos ? '⚠ Apenas regredidos' : 'Todos'}
+            </button>
+          </div>
         </div>
       </div>
 
@@ -309,6 +330,7 @@ export default function Relatorios({ projeto, areasCalc, todosControles, cliente
                 filtroStatus.length > 0 && `${filtroStatus.length} status`,
                 filtroSituacao.length > 0 && `${filtroSituacao.length} situação`,
                 filtroFase.length > 0 && `${filtroFase.length} fase${filtroFase.length > 1 ? 's' : ''}`,
+                filtroRegredidos && 'regredidos',
               ].filter(Boolean).join(', ')})
             </span>
           )}

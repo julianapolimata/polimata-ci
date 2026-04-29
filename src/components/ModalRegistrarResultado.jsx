@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
 import { getFaseAtual } from '../lib/fases'
-import { logRegistrarResultado } from '../lib/auditLog'
+import { logRegistrarResultado, logRegressao } from '../lib/auditLog'
+import { getFaseInfo } from '../lib/fases'
 
 const ModalRegistrarResultado = ({ row, onClose, onSaved, responsaveis }) => {
   // ═══ STATE ═══
@@ -11,7 +12,11 @@ const ModalRegistrarResultado = ({ row, onClose, onSaved, responsaveis }) => {
   const [submitting, setSubmitting] = useState(false)
   const [notaReprovacao, setNotaReprovacao] = useState(null)
   const faseAtual = getFaseAtual(row || {})
+  const faseInfo = getFaseInfo(row || {})
   const isReprovado = row?.status_workflow === 'reprovado'
+  // Fases que causam regressão ao marcar Inefetivo/GAP
+  const FASES_REGRESSAO = ['F2E2', 'F3', 'F4C1', 'F4C2', 'F5']
+  const fasePermiteRegressao = FASES_REGRESSAO.includes(faseInfo.codigo)
 
   // Se controle foi reprovado, buscar a última nota de reprovação
   useEffect(() => {
@@ -86,9 +91,12 @@ const ModalRegistrarResultado = ({ row, onClose, onSaved, responsaveis }) => {
     setResultado(novoResultado)
   }
 
+  // ═══ DETECTAR REGRESSÃO ═══
+  const isRegressao = (resultado === 'inefetivo' || resultado === 'gap') && fasePermiteRegressao
+
   // ═══ DADOS COMUNS PARA SALVAR ═══
   function buildUpdatePayload() {
-    return {
+    const payload = {
       r1: resultado,
       incons: resultado !== 'efetivo' ? inconsistencia : null,
       melhoria: melhoria === 'sim' ? true : false,
@@ -102,6 +110,11 @@ const ModalRegistrarResultado = ({ row, onClose, onSaved, responsaveis }) => {
       dt_pa: resultado !== 'efetivo' && temPA === 'sim' ? paPrazo : null,
       st_pa: resultado !== 'efetivo' && temPA === 'sim' ? paStatus : null,
     }
+    // Se é regressão, incrementar contador
+    if (isRegressao) {
+      payload.num_regressoes = (row?.num_regressoes || 0) + 1
+    }
+    return payload
   }
 
   // ═══ SALVAR APENAS (mantém status atual, não submete) ═══
@@ -121,6 +134,10 @@ const ModalRegistrarResultado = ({ row, onClose, onSaved, responsaveis }) => {
         .eq('id', row.id)
 
       if (error) throw error
+      // Log de regressão se aplicável
+      if (isRegressao) {
+        logRegressao(row, faseInfo.label, (row?.num_regressoes || 0) + 1, row.projeto_id)
+      }
       onSaved?.(row)
       onClose?.()
     } catch (err) {
@@ -191,6 +208,10 @@ const ModalRegistrarResultado = ({ row, onClose, onSaved, responsaveis }) => {
 
       // Audit log
       logRegistrarResultado(row, faseAtual, 'Submetido para revisão', row.projeto_id)
+      // Log de regressão se aplicável
+      if (isRegressao) {
+        logRegressao(row, faseInfo.label, (row?.num_regressoes || 0) + 1, row.projeto_id)
+      }
 
       onSaved?.(row)
       onClose?.()
@@ -261,6 +282,35 @@ const ModalRegistrarResultado = ({ row, onClose, onSaved, responsaveis }) => {
                 Reprovado por <strong style={{ color: '#7A8B9C' }}>{notaReprovacao.autor?.nome || '—'}</strong> em{' '}
                 {new Date(notaReprovacao.criado_em).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                 {' · '}<span style={{ color: '#CC915E' }}>{faseAtual}</span>
+              </div>
+            </div>
+          )}
+
+          {/* Banner de regressão (se resultado Inefetivo/GAP em F3+) */}
+          {isRegressao && (
+            <div style={{
+              background: '#FFF8E1',
+              borderLeft: '4px solid #F9A825',
+              padding: '1rem 1.25rem',
+              borderRadius: '4px',
+              marginBottom: '1.5rem',
+              display: 'flex',
+              alignItems: 'flex-start',
+              gap: '0.75rem'
+            }}>
+              <span style={{ fontSize: 20, lineHeight: 1 }}>&#9888;</span>
+              <div>
+                <div style={{ fontSize: 12, fontWeight: 700, color: '#E65100', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 4 }}>
+                  Atenção — Regressão de Controle
+                </div>
+                <div style={{ fontSize: 13, color: '#00203E', lineHeight: 1.5 }}>
+                  Este resultado regredirá o controle à <strong>Fase 2-E1 (Teste de Desenho)</strong> e a regressão impactará o nível de maturidade da área.
+                  {(row?.num_regressoes || 0) > 0 && (
+                    <span style={{ display: 'block', marginTop: 4, fontSize: 12, color: '#7A8B9C' }}>
+                      Este controle já regrediu {row.num_regressoes} vez{row.num_regressoes > 1 ? 'es' : ''} anteriormente.
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
           )}

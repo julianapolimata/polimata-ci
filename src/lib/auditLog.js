@@ -111,6 +111,23 @@ export function logLogout() {
   })
 }
 
+export function logRegressao(controle, faseOrigem, numRegressao, projetoId) {
+  return registrarAuditLog({
+    tabela: 'mrc',
+    registroId: controle.id,
+    acao: 'REGRESSAO',
+    campo: 'num_regressoes',
+    valorAnterior: String(numRegressao - 1),
+    valorNovo: String(numRegressao),
+    projetoId,
+    detalhes: {
+      descricao: `Regressão #${numRegressao}: controle "${controle.controle || controle.rc || controle.id}" regrediu de ${faseOrigem} para F2-E1`,
+      fase_origem: faseOrigem,
+      num_regressao: numRegressao,
+    },
+  })
+}
+
 export function logAtualizarControle(controle, projetoId) {
   return registrarAuditLog({
     tabela: 'mrc',

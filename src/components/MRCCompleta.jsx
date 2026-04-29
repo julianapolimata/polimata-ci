@@ -356,6 +356,19 @@ function faseValMRC(row, key, rawVal) {
   return normalizeFaseValue(rawVal)
 }
 
+function RegressaoBadgeMRC({ n }) {
+  if (!n || n <= 0) return null
+  return (
+    <span title={`Regressão #${n} — controle retornou à F2-E1`} style={{
+      display: 'inline-flex', alignItems: 'center', gap: 2,
+      fontSize: 8, fontWeight: 700, color: '#7A5700',
+      background: '#FFF3CD', border: '1px solid #F9A825',
+      borderRadius: 3, padding: '1px 4px', marginLeft: 4,
+      verticalAlign: 'middle', lineHeight: 1, whiteSpace: 'nowrap',
+    }}>&#9888;{n}</span>
+  )
+}
+
 function badgeResultado(val) {
   if (!val || val === 'N/A') return <span style={{ color: 'var(--lt-text3)', fontSize: 10 }}>—</span>
   return <span className={`bd ${R1_MAP[val] || 'b-na'}`}>{val}</span>
@@ -422,7 +435,7 @@ function TabelaMRC({ rows, onOpenModal }) {
               <TdMRC w={200}>{row.dc}</TdMRC>
               <td style={{ ...mrcTdS, width: 90, minWidth: 90 }}>{badgeResultado(getResultadoVitrine(row))}</td>
               <td style={{ ...mrcTdS, width: 110, minWidth: 110 }}>{critBadge(row.crit)}</td>
-              <td style={{ ...mrcTdS, width: 130, minWidth: 130, fontSize: 10 }}>{getFaseLabel(row)}</td>
+              <td style={{ ...mrcTdS, width: 130, minWidth: 130, fontSize: 10 }}>{getFaseLabel(row)}{row.num_regressoes > 0 && <RegressaoBadgeMRC n={row.num_regressoes} />}</td>
               <td style={{ ...mrcTdS, width: 110, minWidth: 110, textAlign: 'center' }}>{(() => { const st = getStatusComputado(row); const cfg = getStatusConfig(st); return <span style={{ fontSize: 8, fontWeight: 700, color: cfg.color, background: cfg.bg, padding: '2px 8px', borderRadius: 999, textTransform: 'uppercase', letterSpacing: 0.5 }}>{cfg.label}</span> })()}</td>
               <td style={{ ...mrcTdS, width: FASE_W, minWidth: FASE_W, maxWidth: FASE_W, textAlign: 'center' }}>{badgeFaseMRC(faseValMRC(row, 'r1', row.r1))}</td>
               <td style={{ ...mrcTdS, width: FASE_W, minWidth: FASE_W, maxWidth: FASE_W, textAlign: 'center' }}>{badgeFaseMRC(faseValMRC(row, 'st_pa', row.st_pa))}</td>

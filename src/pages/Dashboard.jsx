@@ -959,6 +959,19 @@ function PorArea({ projeto, areasCalc, todosControles, loading, navigate, loadDa
     if ((key === 'st_pa' || key === 'r_ader') && (c.r1||'').toLowerCase() === 'efetivo') return 'N/A'
     return normalizeFaseValue(rawVal)
   }
+  // Badge de regressão (triângulo amarelo com número)
+  function RegressaoBadge({ n }) {
+    if (!n || n <= 0) return null
+    return (
+      <span title={`Regressão #${n} — controle retornou à F2-E1`} style={{
+        display: 'inline-flex', alignItems: 'center', gap: 2,
+        fontSize: 8, fontWeight: 700, color: '#7A5700',
+        background: '#FFF3CD', border: '1px solid #F9A825',
+        borderRadius: 3, padding: '1px 4px', marginLeft: 4,
+        verticalAlign: 'middle', lineHeight: 1, whiteSpace: 'nowrap',
+      }}>&#9888;{n}</span>
+    )
+  }
   // Headers de fase coloridos
   const FASE_HDR = [
     { h: 'Fase 1\nDiagnóstico', bg: '#00203E' },
@@ -1119,7 +1132,7 @@ function PorArea({ projeto, areasCalc, todosControles, loading, navigate, loadDa
                 <td style={{ ...tdS, color: 'var(--copper)', fontWeight: 600, width: 90, minWidth: 90 }}>{c.rc}</td><Td w={200}>{c.dc}</Td>
                 <td style={{ ...tdS, width: 90, minWidth: 90 }}>{badgeR(getResultadoVitrine(c))}</td>
                 <td style={{ ...tdS, width: 110, minWidth: 110 }}>{badgeCrit(c.crit)}</td>
-                <td style={{ ...tdS, width: 130, minWidth: 130, fontSize: 10 }}>{getFaseLabel(c)}</td>
+                <td style={{ ...tdS, width: 130, minWidth: 130, fontSize: 10 }}>{getFaseLabel(c)}{c.num_regressoes > 0 && <RegressaoBadge n={c.num_regressoes} />}</td>
                 <td style={{ ...tdS, width: 110, minWidth: 110, textAlign: 'center' }}>{(() => { const st = getStatusComputado(c); const cfg = getStatusBadge(st); return <span style={{ fontSize: 8, fontWeight: 700, color: cfg.color, background: cfg.bg, padding: '2px 8px', borderRadius: 999, textTransform: 'uppercase', letterSpacing: 0.5 }}>{cfg.label}</span> })()}</td>
                 {/* Colunas de fase */}
                 <td style={{ ...tdS, width: FASE_W, minWidth: FASE_W, maxWidth: FASE_W, textAlign: 'center' }}>{badgeFase(faseVal(c, 'r1', c.r1))}</td>

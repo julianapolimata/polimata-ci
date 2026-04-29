@@ -68,6 +68,7 @@ const MRC_COLUMNS = [
   // ── COMPUTADOS (AE-AF) ──
   { key: 'fase', header: 'Fase Atual', width: 24, computed: true },
   { key: 'status_atual', header: 'Status Atual', width: 18, computed: true },
+  { key: 'num_regressoes', header: 'Regressões', width: 12 },
 ]
 
 const CRIT_LABEL_MAP = { 4: '4. Crítico', 3: '3. Significativo', 2: '2. Moderado', 1: '1. Baixo' }
