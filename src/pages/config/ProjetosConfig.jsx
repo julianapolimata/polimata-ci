@@ -386,6 +386,7 @@ function AbaEstrutura({ projetoId, areas, subprocessos, onReload }) {
       nome: area.nome, prefixo: (area.prefixo||'').toUpperCase(),
       peso: parseFloat(area.peso) || 0,
       gerencia: area.gerencia || null,
+      gerencia_email: area.gerencia_email || null,
       resp_area_nome: area.resp_area_nome || null,
       resp_area_email: area.resp_area_email || null,
     }
@@ -455,8 +456,8 @@ function AbaEstrutura({ projetoId, areas, subprocessos, onReload }) {
                   <div>
                     <div style={{fontSize:13,fontWeight:500,color:'var(--txt1)'}}>{a.nome}</div>
                     <div style={{fontSize:10,color:'var(--txt3)',marginTop:2}}>
-                      {a.gerencia && <span>Gerência: {a.gerencia} · </span>}
-                      {a.resp_area_nome && <span>Resp: {a.resp_area_nome} · </span>}
+                      {a.gerencia && <span>Gerência: {a.gerencia}{a.gerencia_email ? ` (${a.gerencia_email})` : ''} · </span>}
+                      {a.resp_area_nome && <span>Resp: {a.resp_area_nome}{a.resp_area_email ? ` (${a.resp_area_email})` : ''} · </span>}
                       Peso: {(a.peso*100).toFixed(1)}%
                       <span style={{margin:'0 4px',opacity:0.3}}>·</span>
                       {(subsMap[a.id]||[]).length} subprocesso{(subsMap[a.id]||[]).length !== 1 ? 's' : ''}
@@ -521,7 +522,10 @@ function AreaFormV2({ area, onSave, onCancel, saving }) {
           <span style={{fontSize:10,color:'var(--txt3)'}}>Deixe vazio para calcular automaticamente</span>
         </div>
       </div>
-      <div className="cfg-field" style={{marginTop:10}}><label>Gerência</label><input className="input-light" value={form.gerencia||''} onChange={e=>u('gerencia',e.target.value)} placeholder="Ex: Diretoria Financeira" /></div>
+      <div className="cfg-row2" style={{marginTop:10}}>
+        <div className="cfg-field"><label>Gerência</label><input className="input-light" value={form.gerencia||''} onChange={e=>u('gerencia',e.target.value)} placeholder="Ex: Diretoria Financeira" /></div>
+        <div className="cfg-field"><label>Email da Gerência</label><input className="input-light" type="email" value={form.gerencia_email||''} onChange={e=>u('gerencia_email',e.target.value)} placeholder="gerencia@empresa.com" /></div>
+      </div>
       <div className="cfg-row2" style={{marginTop:10}}>
         <div className="cfg-field"><label>Responsável da Área</label><input className="input-light" value={form.resp_area_nome||''} onChange={e=>u('resp_area_nome',e.target.value)} placeholder="Nome do responsável" /></div>
         <div className="cfg-field"><label>Email do Responsável</label><input className="input-light" type="email" value={form.resp_area_email||''} onChange={e=>u('resp_area_email',e.target.value)} placeholder="resp@empresa.com" /></div>
