@@ -375,6 +375,7 @@ function AbaEstrutura({ projetoId, areas, subprocessos, onReload }) {
 
   async function salvarArea(area) {
     setSaving(true)
+    const subNomes = area._subprocessos || []
     const payload = {
       nome: area.nome, prefixo: (area.prefixo||'').toUpperCase(),
       peso: parseFloat(area.peso) || 0,
@@ -383,15 +384,29 @@ function AbaEstrutura({ projetoId, areas, subprocessos, onReload }) {
       resp_area_nome: area.resp_area_nome || null,
       resp_area_email: area.resp_area_email || null,
     }
+    let areaId = area.id
     if (area.id) {
       await supabase.from('areas').update(payload).eq('id', area.id)
     } else {
-      // Auto-calculate peso if 0
       const numAreas = areas.length + 1
       if (!payload.peso) payload.peso = parseFloat((1 / numAreas).toFixed(4))
-      await supabase.from('areas').insert({ projeto_id: projetoId, ...payload, ordem: areas.length + 1 })
-      // Recalculate all weights if needed
+      const { data: inserted } = await supabase.from('areas').insert({ projeto_id: projetoId, ...payload, ordem: areas.length + 1 }).select('id').single()
+      areaId = inserted?.id
       await recalcPesos(projetoId, numAreas)
+    }
+    // Sincronizar subprocessos: remover antigos, inserir novos
+    if (areaId) {
+      const existentes = subprocessos.filter(s => s.area_id === areaId)
+      const existentesNomes = existentes.map(s => s.nome)
+      // Remover os que foram apagados
+      const remover = existentes.filter(s => !subNomes.includes(s.nome))
+      for (const s of remover) { await supabase.from('subprocessos').delete().eq('id', s.id) }
+      // Inserir os novos
+      const novos = subNomes.filter(n => !existentesNomes.includes(n))
+      if (novos.length > 0) {
+        const baseOrdem = existentes.length - remover.length
+        await supabase.from('subprocessos').insert(novos.map((n, i) => ({ area_id: areaId, nome: n, ordem: baseOrdem + i + 1 })))
+      }
     }
     setEditandoArea(null); setNovaArea(false); setSaving(false)
     onReload()
@@ -439,7 +454,7 @@ function AbaEstrutura({ projetoId, areas, subprocessos, onReload }) {
       {areas.map(a => (
         <div key={a.id} style={{marginBottom:12}}>
           {editandoArea?.id === a.id ? (
-            <AreaFormV2 area={editandoArea} onSave={salvarArea} onCancel={()=>setEditandoArea(null)} saving={saving} />
+            <AreaFormV2 area={editandoArea} onSave={salvarArea} onCancel={()=>setEditandoArea(null)} saving={saving} subprocessosExistentes={subsMap[editandoArea.id]||[]} />
           ) : (
             <div className="cfg-group" style={{padding:'14px 18px'}}>
               <div style={{display:'flex',alignItems:'center',justifyContent:'space-between'}}>
@@ -503,9 +518,22 @@ async function recalcPesos(projetoId, totalAreas) {
   }
 }
 
-function AreaFormV2({ area, onSave, onCancel, saving }) {
+function AreaFormV2({ area, onSave, onCancel, saving, subprocessosExistentes }) {
   const [form, setForm] = useState({...area})
+  const existentes = (subprocessosExistentes || []).map(s => s.nome)
+  const iniciais = existentes.length > 0 ? existentes : Array(10).fill('')
+  // Garantir pelo menos 10 campos
+  while (iniciais.length < 10) iniciais.push('')
+  const [subs, setSubs] = useState(iniciais)
   const u = (f,v) => setForm(p=>({...p,[f]:v}))
+  const uSub = (i,v) => { const n = [...subs]; n[i] = v; setSubs(n) }
+  const addMoreSubs = () => setSubs(p => [...p, ...Array(5).fill('')])
+
+  function handleSave() {
+    const subNomes = subs.map(s => s.trim()).filter(Boolean)
+    onSave({ ...form, _subprocessos: subNomes })
+  }
+
   return (
     <div className="cfg-area-block" style={{marginBottom:12}}>
       <div className="cfg-row3">
@@ -523,9 +551,25 @@ function AreaFormV2({ area, onSave, onCancel, saving }) {
         <div className="cfg-field"><label>Responsável da Área</label><input className="input-light" value={form.resp_area_nome||''} onChange={e=>u('resp_area_nome',e.target.value)} placeholder="Nome do responsável" /></div>
         <div className="cfg-field"><label>Email do Responsável</label><input className="input-light" type="email" value={form.resp_area_email||''} onChange={e=>u('resp_area_email',e.target.value)} placeholder="resp@empresa.com" /></div>
       </div>
-      <div style={{display:'flex',gap:8,marginTop:10}}>
+
+      {/* Subprocessos inline */}
+      <div style={{marginTop:16,paddingTop:14,borderTop:'1px solid rgba(255,255,255,0.08)'}}>
+        <label style={{fontSize:10,fontWeight:600,color:'var(--txt3)',textTransform:'uppercase',letterSpacing:'.4px',marginBottom:10,display:'block'}}>Subprocessos</label>
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'6px 12px'}}>
+          {subs.map((s,i) => (
+            <input key={i} className="input-light" style={{fontSize:11}} value={s} onChange={e=>uSub(i,e.target.value)}
+              placeholder={`Subprocesso ${i+1}`} />
+          ))}
+        </div>
+        <button type="button" onClick={addMoreSubs}
+          style={{background:'none',border:'none',color:'var(--copper, #CC915E)',cursor:'pointer',fontSize:11,fontWeight:500,marginTop:8,padding:'4px 0',fontFamily:'inherit'}}>
+          + Mais campos
+        </button>
+      </div>
+
+      <div style={{display:'flex',gap:8,marginTop:12}}>
         <button className="btn-cfg-cancel" onClick={onCancel}>Cancelar</button>
-        <button className="btn-cfg-save" onClick={()=>onSave(form)} disabled={saving||!form.nome?.trim()||!form.prefixo?.trim()}>{saving?'Salvando...':'✓ Salvar'}</button>
+        <button className="btn-cfg-save" onClick={handleSave} disabled={saving||!form.nome?.trim()||!form.prefixo?.trim()}>{saving?'Salvando...':'✓ Salvar'}</button>
       </div>
     </div>
   )
