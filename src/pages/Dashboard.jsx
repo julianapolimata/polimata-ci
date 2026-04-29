@@ -208,49 +208,60 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true)
   const [areaExpanded, setAreaExpanded] = useState(true)
 
-  useEffect(() => { carregarConstantes().then(() => loadProjetos()) }, [])
+  useEffect(() => {
+    carregarConstantes()
+      .then(() => loadProjetos())
+      .catch(err => {
+        console.error('Erro ao inicializar:', err)
+        setProjetosLoaded(true)
+      })
+  }, [])
 
   async function loadProjetos() {
-    const { data } = await supabase.from('projetos').select('*, clientes(nome, slug)').eq('ativo', true).order('criado_em', { ascending: false })
-    if (data) {
-      setProjetos(data)
-      loadResumos(data)
+    try {
+      const { data, error } = await supabase.from('projetos').select('*, clientes(nome, slug)').eq('ativo', true).order('criado_em', { ascending: false })
+      if (error) console.error('Erro ao carregar projetos:', error)
+      if (data && data.length > 0) {
+        setProjetos(data)
+        // Carregar resumos em background (não bloqueia a tela)
+        loadResumos(data).catch(err => console.error('Erro ao carregar resumos:', err))
+      }
+    } catch (err) {
+      console.error('Erro ao carregar projetos:', err)
+    } finally {
+      setProjetosLoaded(true)
     }
-    setProjetosLoaded(true)
   }
 
   async function loadResumos(projs) {
     const resumos = {}
-    await Promise.all(projs.map(async (p) => {
-      try {
-        const [mrcRes, areaRes, matRes] = await Promise.all([
-          supabase.from('mrc').select('id, dt_ult, atualizado_em, criado_em', { count: 'exact' }).eq('projeto_id', p.id),
-          supabase.from('areas').select('id', { count: 'exact' }).eq('projeto_id', p.id),
-          supabase.from('vw_maturidade_areas').select('percentual').eq('projeto_id', p.id),
-        ])
-        const totalControles = mrcRes.count || 0
-        const totalAreas = areaRes.count || 0
-        // Maturidade média ponderada (simples aqui, usa view)
-        const matRows = matRes.data || []
-        let maturidade = null
-        if (matRows.length > 0) {
-          const avg = matRows.reduce((s, m) => s + (m.percentual || 0), 0) / matRows.length
-          maturidade = getNivelMaturidade(avg / 100)
-        }
-        // Última atividade
-        let maxDate = null
-        ;(mrcRes.data || []).forEach(c => {
-          const d = c.dt_ult || c.atualizado_em || c.criado_em
-          if (d) { const dt = new Date(d); if (!isNaN(dt) && (!maxDate || dt > maxDate)) maxDate = dt }
-        })
-        resumos[p.id] = {
-          totalControles,
-          totalAreas,
-          maturidade,
-          ultimaAtividade: maxDate ? maxDate.toLocaleDateString('pt-BR') : null,
-        }
-      } catch { resumos[p.id] = {} }
-    }))
+    try {
+      await Promise.all(projs.map(async (p) => {
+        try {
+          const [mrcRes, areaRes, matRes] = await Promise.all([
+            supabase.from('mrc').select('id, dt_ult, atualizado_em, criado_em', { count: 'exact' }).eq('projeto_id', p.id),
+            supabase.from('areas').select('id', { count: 'exact' }).eq('projeto_id', p.id),
+            supabase.from('vw_maturidade_areas').select('percentual').eq('projeto_id', p.id),
+          ])
+          const totalControles = mrcRes.count || 0
+          const totalAreas = areaRes.count || 0
+          const matRows = matRes.data || []
+          let maturidade = null
+          if (matRows.length > 0) {
+            const avg = matRows.reduce((s, m) => s + (m.percentual || 0), 0) / matRows.length
+            maturidade = getNivelMaturidade(avg)
+          }
+          let maxDate = null
+          ;(mrcRes.data || []).forEach(c => {
+            const d = c.dt_ult || c.atualizado_em || c.criado_em
+            if (d) { const dt = new Date(d); if (!isNaN(dt) && (!maxDate || dt > maxDate)) maxDate = dt }
+          })
+          resumos[p.id] = { totalControles, totalAreas, maturidade, ultimaAtividade: maxDate ? maxDate.toLocaleDateString('pt-BR') : null }
+        } catch { resumos[p.id] = {} }
+      }))
+    } catch (err) {
+      console.error('Erro ao carregar resumos:', err)
+    }
     setProjetoResumos(resumos)
   }
 
