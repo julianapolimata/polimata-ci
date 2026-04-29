@@ -186,8 +186,16 @@
 .adm-main .cfg-card { border-color: rgba(0,32,62,0.1); }
 .adm-main .cfg-empty { color: #64748b; }
 .adm-main .cfg-erro { color: #dc2626; }
+/* Botões fora dos cards (fundo claro) */
 .adm-main .btn-cfg-sm { color: var(--navy, #00203E); border-color: rgba(0,32,62,0.2); }
 .adm-main .btn-cfg-sm:hover { border-color: var(--copper, #CC915E); color: var(--copper, #CC915E); }
+/* Botões DENTRO dos cards dark — reverter para cor clara */
+.adm-main .cfg-card .btn-cfg-sm { color: var(--cream, #F7F3EE); border-color: rgba(255,255,255,0.2); }
+.adm-main .cfg-card .btn-cfg-sm:hover { border-color: var(--copper, #CC915E); color: var(--copper, #CC915E); }
+/* Inputs dentro dos cards dark */
+.adm-main .cfg-card .input-light { background: rgba(255,255,255,0.08); color: var(--cream, #F7F3EE); border-color: rgba(255,255,255,0.15); }
+.adm-main .cfg-card .input-light::placeholder { color: rgba(255,255,255,0.4); }
+.adm-main .cfg-card .input-light:focus { border-color: var(--copper, #CC915E); }
 
 /* Tabela de config no fundo claro */
 .adm-main .cfg-table-wrap { border-color: rgba(0,32,62,0.12); }
