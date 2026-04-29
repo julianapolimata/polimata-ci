@@ -478,23 +478,6 @@ function AbaEstrutura({ projetoId, areas, subprocessos, onReload }) {
                 </div>
               </div>
 
-              {expandido[a.id] && (
-                <div style={{marginTop:12,paddingTop:12,borderTop:'1px solid var(--brd)'}}>
-                  <div style={{fontSize:10,fontWeight:600,color:'var(--txt3)',textTransform:'uppercase',letterSpacing:'.4px',marginBottom:8}}>Subprocessos</div>
-                  {(subsMap[a.id]||[]).map(s => (
-                    <div key={s.id} style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'6px 0',borderBottom:'1px solid var(--brd)'}}>
-                      <span style={{fontSize:12,color:'var(--txt1)'}}>{s.nome}</span>
-                      <button onClick={()=>removerSubprocesso(s.id)} style={{background:'none',border:'none',color:'var(--txt3)',cursor:'pointer',fontSize:11}}>✕</button>
-                    </div>
-                  ))}
-                  {!(subsMap[a.id]||[]).length && <div style={{fontSize:11,color:'var(--txt3)',fontStyle:'italic',padding:'4px 0'}}>Nenhum subprocesso cadastrado</div>}
-                  <div style={{display:'flex',gap:8,marginTop:10}}>
-                    <input className="input-light" style={{flex:1,fontSize:11}} value={novoSub[a.id]||''} onChange={e=>setNovoSub(p=>({...p,[a.id]:e.target.value}))}
-                      placeholder="Nome do subprocesso..." onKeyDown={e=>e.key==='Enter'&&adicionarSubprocesso(a.id)} />
-                    <button className="btn-cfg-sm" style={{fontSize:10}} onClick={()=>adicionarSubprocesso(a.id)}>+ Adicionar</button>
-                  </div>
-                </div>
-              )}
             </div>
           )}
         </div>
