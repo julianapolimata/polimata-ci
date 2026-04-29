@@ -26,6 +26,9 @@ export default function AdminPanel() {
     <div className="adm-layout">
       {/* Sidebar do admin */}
       <aside className="adm-sidebar">
+        <div className="adm-sidebar-logo">
+          <img src="/logotipo-2cores.png" alt="Polímata" style={{ width: '100%', maxWidth: 160, height: 'auto', objectFit: 'contain' }} />
+        </div>
         <div className="adm-sidebar-hdr">
           <button className="adm-voltar" onClick={() => navigate('/')} title="Voltar ao projeto">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
