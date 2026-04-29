@@ -4,6 +4,7 @@ import { useEffect, useState, useMemo, useRef } from 'react'
 import { getFaseNumero, getResultadoVitrine, getFaseLabel, getStatusComputado, getFaseDisplayOverride, normalizeFaseValue } from '../lib/fases'
 import { Routes, Route, useNavigate, useLocation, useParams } from 'react-router-dom'
 import Configuracoes from './Configuracoes'
+import AdminPanel from './AdminPanel'
 import Perfil from './Perfil'
 import MRCCompleta, { ModalDetalhe } from '../components/MRCCompleta'
 import ModalAtualizar from '../components/ModalAtualizar'
@@ -317,6 +318,10 @@ export default function Dashboard() {
   if (!projetosLoaded) {
     return <div className="loading-screen"><div className="spinner" /></div>
   }
+  // Painel Admin — tela própria, fora do contexto de projeto
+  if (isAdmin && location.pathname.startsWith('/admin')) {
+    return <AdminPanel />
+  }
   // Seletor de projetos — exibido quando nenhum projeto está selecionado
   if (!projetoAtivo && projetos.length > 0) {
     return <ProjectSelector projetos={projetos} resumos={projetoResumos} perfil={perfil} onSelect={p => { setProjetoAtivo(p); navigate('/') }} signOut={signOut} />
@@ -371,12 +376,24 @@ export default function Dashboard() {
           <SideNavItem icon="📋" label="MRC Completa" active={location.pathname === '/mrc'} onClick={() => navigate('/mrc')} open={sidebarOpen}
             badge={todosControles.length > 0 ? todosControles.length : null} />
           {isAdmin && (<>{sidebarOpen && <div className="sb-sep">Administração</div>}
-            <SideNavItem icon="⚙️" label="Configurações" active={location.pathname.startsWith('/configuracoes')} onClick={() => navigate('/configuracoes')} open={sidebarOpen} />
             <SideNavItem icon="📥" label="Manutenção MRC" active={location.pathname === '/importar-mrc'} onClick={() => navigate('/importar-mrc')} open={sidebarOpen} /></>)}
         </nav>
         <button onClick={() => setSidebarOpen(o => !o)} style={{ background: 'transparent', border: 'none', borderTop: '1px solid var(--brd)', color: 'var(--txt3)', padding: '10px', cursor: 'pointer', fontSize: 14, textAlign: 'center' }}>
           {sidebarOpen ? '◂' : '▸'}
         </button>
+        {isAdmin && (
+          <button
+            onClick={() => navigate('/admin')}
+            className={`sb-admin-gear${location.pathname.startsWith('/admin') ? ' active' : ''}`}
+            title="Administração da plataforma"
+            style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', background: location.pathname.startsWith('/admin') ? 'rgba(204,145,94,0.08)' : 'transparent', border: 'none', borderTop: '1px solid var(--brd)', color: location.pathname.startsWith('/admin') ? 'var(--copper)' : 'var(--txt3)', padding: '10px 14px', cursor: 'pointer', fontFamily: "'Montserrat', sans-serif", fontSize: 11, fontWeight: 500, transition: 'all .15s' }}
+          >
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+            </svg>
+            {sidebarOpen && <span>Administração</span>}
+          </button>
+        )}
         <div className="sb-footer">
           <div className="sb-user" style={{ cursor: 'pointer' }} onClick={() => navigate('/perfil')}>
             <div className="sb-user-avatar">
