@@ -121,22 +121,53 @@ function ClienteForm({ cliente, onSave, onCancel }) {
       .replace(/(\d{4})(\d)/,'$1-$2')
   }
 
+  // Validação dos dígitos verificadores do CNPJ (algoritmo oficial da Receita)
+  function isCnpjValido(nums) {
+    if (nums.length !== 14) return false
+    if (/^(\d)\1{13}$/.test(nums)) return false  // todos iguais (000…, 111…)
+    const calc = (s, p) => {
+      let sum = 0
+      for (let i = 0; i < s.length; i++) sum += parseInt(s[i]) * p[i]
+      const r = sum % 11
+      return r < 2 ? 0 : 11 - r
+    }
+    const p1 = [5,4,3,2,9,8,7,6,5,4,3,2]
+    const p2 = [6,5,4,3,2,9,8,7,6,5,4,3,2]
+    const d1 = calc(nums.slice(0, 12), p1)
+    const d2 = calc(nums.slice(0, 13), p2)
+    return d1 === parseInt(nums[12]) && d2 === parseInt(nums[13])
+  }
+
   async function buscarCNPJ() {
     const nums = form.cnpj.replace(/\D/g,'')
     if (nums.length !== 14) { setCnpjErro('CNPJ deve ter 14 dígitos'); return }
+    if (!isCnpjValido(nums)) { setCnpjErro('CNPJ inválido — verifique os dígitos'); return }
     setCnpjLoading(true); setCnpjErro('')
-    try {
-      const res = await fetch(`https://brasilapi.com.br/api/cnpj/v1/${nums}`)
-      if (!res.ok) throw new Error('CNPJ não encontrado')
-      const data = await res.json()
-      setForm(p => ({
-        ...p,
-        nome: data.razao_social || p.nome,
-        nome_fantasia: data.nome_fantasia || p.nome_fantasia,
-        cidade: data.municipio || p.cidade,
-        estado: data.uf || p.estado,
-      }))
-    } catch(e) { setCnpjErro('CNPJ não encontrado na Receita Federal') }
+    let lastErr = null
+    // Tenta endpoints em sequência (BrasilAPI v1 → ReceitaWS via brasilapi v2 fallback)
+    const fontes = [
+      `https://brasilapi.com.br/api/cnpj/v1/${nums}`,
+    ]
+    for (const url of fontes) {
+      try {
+        const res = await fetch(url)
+        if (res.status === 429) { lastErr = 'Limite de consultas atingido — aguarde alguns segundos e tente novamente.'; continue }
+        if (res.status === 404) { lastErr = 'CNPJ não encontrado na Receita Federal'; continue }
+        if (!res.ok) { lastErr = `Erro ${res.status} ao consultar a Receita`; continue }
+        const data = await res.json()
+        setForm(p => ({
+          ...p,
+          nome: data.razao_social || p.nome,
+          nome_fantasia: data.nome_fantasia || p.nome_fantasia,
+          cidade: data.municipio || p.cidade,
+          estado: data.uf || p.estado,
+        }))
+        setCnpjLoading(false); setCnpjErro(''); return
+      } catch (e) {
+        lastErr = 'Falha de conexão — verifique sua rede ou se há bloqueio (ad-blocker, firewall)'
+      }
+    }
+    setCnpjErro(lastErr || 'Não foi possível consultar a Receita')
     setCnpjLoading(false)
   }
 
