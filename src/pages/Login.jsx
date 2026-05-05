@@ -123,15 +123,12 @@ function AuthCard({ children }) {
       WebkitBackdropFilter: 'blur(10px)',
       border: '1px solid rgba(204,145,94,0.20)',
       borderRadius: 16,
-      padding: '52px 48px 44px',
+      padding: '40px 48px 36px',
       boxShadow: '0 16px 48px rgba(0,17,44,0.40)',
       maxWidth: 540,
       width: '100%',
       margin: '0 auto',
     }}>
-      <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 20 }}>
-        <img src="/icon.png" alt="Polímata" style={{ height: 64, width: 'auto', objectFit: 'contain' }} />
-      </div>
       {children}
       <div style={{
         fontSize: 11, color: 'rgba(247,243,238,0.40)',
