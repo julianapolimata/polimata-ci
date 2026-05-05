@@ -594,13 +594,13 @@ function HomeDash({ projeto, areasCalc, todosControles, loading, ultimaAtualizac
 
   return (
     <div style={D.page}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 0 6px', flexShrink: 0 }}>
-        <div style={{ display: 'flex', alignItems: 'baseline', gap: 10 }}>
-          <div style={{ fontSize: 16, fontWeight: 300, fontFamily: "'Raleway', sans-serif", color: 'var(--cream)' }}>Maturidade do Ambiente de Controles Internos</div>
-          <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: 1, textTransform: 'uppercase', color: 'var(--copper)' }}>{clienteNome} · {projeto.nome || 'Controles Internos'}</div>
-          <div style={{ fontSize: 10, color: 'rgba(247,243,238,0.65)' }}>{areasCalc.length} áreas · {todosControles.length} controles</div>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 0 16px', flexShrink: 0 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+          <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: 2, textTransform: 'uppercase', color: 'var(--copper)' }}>{clienteNome} · {projeto.nome || 'Controles Internos'}</div>
+          <div style={{ fontSize: 22, fontWeight: 200, fontFamily: "'Raleway', sans-serif", color: 'var(--cream)', letterSpacing: 0.3, lineHeight: 1.2 }}>Maturidade do Ambiente de Controles Internos</div>
+          <div style={{ fontSize: 11, color: 'rgba(247,243,238,0.65)', marginTop: 2 }}>{areasCalc.length} áreas · {todosControles.length} controles</div>
         </div>
-        <div style={{ fontSize: 10, color: 'rgba(247,243,238,0.72)', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 6, padding: '5px 12px', whiteSpace: 'nowrap' }}>Última atualização: {ultimaAtualizacao}</div>
+        <div style={{ fontSize: 10, color: 'rgba(247,243,238,0.72)', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 6, padding: '6px 14px', whiteSpace: 'nowrap' }}>Última atualização: {ultimaAtualizacao}</div>
       </div>
 
       <div style={D.kpiRow}>
