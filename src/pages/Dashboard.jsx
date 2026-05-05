@@ -897,11 +897,11 @@ function PorArea({ projeto, areasCalc, todosControles, loading, navigate, loadDa
   })
 
   const PA_DATA_COLS = [
-    { h: 'Última Alteração', w: 95, k: '_dt' },
-    { h: 'Subprocesso', w: 120, k: 'sub' }, { h: 'Ref. Risco', w: 80, k: 'rr' },
-    { h: 'Desc. Risco', w: 200, k: 'dr' }, { h: 'Ref. Controle', w: 90, k: 'rc' }, { h: 'Desc. Controle', w: 200, k: 'dc' },
-    { h: 'Resultado', w: 90, k: '_resultado' }, { h: 'Criticidade', w: 110, k: 'crit' },
-    { h: 'Fase Atual', w: 130, k: '_fase_atual' }, { h: 'Status Atual', w: 110, k: '_status_atual' },
+    { h: 'Última Alteração', w: 95, k: '_dt', align: 'center' },
+    { h: 'Subprocesso', w: 120, k: 'sub' }, { h: 'Ref. Risco', w: 80, k: 'rr', align: 'center' },
+    { h: 'Desc. Risco', w: 200, k: 'dr' }, { h: 'Ref. Controle', w: 90, k: 'rc', align: 'center' }, { h: 'Desc. Controle', w: 200, k: 'dc' },
+    { h: 'Resultado', w: 90, k: '_resultado', align: 'center' }, { h: 'Criticidade', w: 110, k: 'crit', align: 'center' },
+    { h: 'Fase Atual', w: 130, k: '_fase_atual', align: 'center' }, { h: 'Status Atual', w: 110, k: '_status_atual', align: 'center' },
   ]
   const PA_FASE_KEYS = ['r1', 'st_pa', 'r_ader', 'r3', 'r_f4c1', 'r_f4c2', 'r_f5']
   const toggleSort = (k) => { if (sortCol === k) { setSortDir(d => d === 'asc' ? 'desc' : 'asc') } else { setSortCol(k); setSortDir('asc') } }
@@ -991,7 +991,7 @@ function PorArea({ projeto, areasCalc, todosControles, loading, navigate, loadDa
   const faseThS = { fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5, color: '#fff', padding: '6px 6px', textAlign: 'center', whiteSpace: 'pre-line', position: 'sticky', top: 0, zIndex: 2, width: FASE_W, minWidth: FASE_W, maxWidth: FASE_W, borderBottom: 'none', borderRadius: '8px 8px 0 0' }
 
   const PA = paStyles
-  const tdS = { padding: '7px 10px', borderBottom: '1px solid var(--lt-border)', fontSize: 12, color: 'var(--lt-text2)', whiteSpace: 'nowrap', verticalAlign: 'middle' }
+  const tdS = { padding: '7px 10px', borderBottom: '1px solid var(--lt-border)', borderRight: '1px solid rgba(0,32,62,0.05)', fontSize: 12, color: 'var(--lt-text2)', whiteSpace: 'nowrap', verticalAlign: 'middle' }
   function Td({ children, w = 150, wrap = false }) { return <td style={{ ...tdS, width: w, minWidth: w, maxWidth: w, overflow: 'hidden', textOverflow: wrap ? undefined : 'ellipsis', whiteSpace: wrap ? 'normal' : 'nowrap', lineHeight: wrap ? 1.4 : undefined }}>{children || '—'}</td> }
 
   return (
@@ -1160,19 +1160,19 @@ function PorArea({ projeto, areasCalc, todosControles, loading, navigate, loadDa
           <table style={{ width: 'max-content', minWidth: '100%', borderCollapse: 'collapse' }}>
             <thead><tr>
               {PA_DATA_COLS.map((col, i) =>
-                <th key={i} style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5, color: 'var(--lt-text3)', background: '#F0F2F5', padding: '12px 12px', textAlign: 'left', whiteSpace: 'nowrap', position: 'sticky', top: 0, zIndex: 2, width: col.w, minWidth: col.w, borderBottom: '1px solid var(--lt-border)', cursor: 'pointer', userSelect: 'none' }} onClick={() => toggleSort(col.k)}>{col.h}{sortArrow(col.k)}</th>)}
-              {FASE_HDR.map((f, i) => <th key={`f${i}`} style={{ ...faseThS, background: f.bg, cursor: 'pointer', userSelect: 'none' }} onClick={() => toggleSort(PA_FASE_KEYS[i])}>{f.h}{sortArrow(PA_FASE_KEYS[i])}</th>)}
+                <th key={i} style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5, color: 'var(--lt-text3)', background: '#F0F2F5', padding: '12px 12px', textAlign: col.align || 'left', whiteSpace: 'nowrap', position: 'sticky', top: 0, zIndex: 2, width: col.w, minWidth: col.w, borderBottom: '1px solid var(--lt-border)', borderRight: '1px solid rgba(0,32,62,0.05)', cursor: 'pointer', userSelect: 'none' }} onClick={() => toggleSort(col.k)}>{col.h}{sortArrow(col.k)}</th>)}
+              {FASE_HDR.map((f, i) => <th key={`f${i}`} style={{ ...faseThS, background: f.bg, borderRight: '1px solid rgba(255,255,255,0.18)', cursor: 'pointer', userSelect: 'none' }} onClick={() => toggleSort(PA_FASE_KEYS[i])}>{f.h}{sortArrow(PA_FASE_KEYS[i])}</th>)}
               {!isCliente && <th style={{ fontSize: 11, fontWeight: 600, color: 'var(--lt-text3)', background: '#F0F2F5', padding: '12px 12px', position: 'sticky', top: 0, zIndex: 2, width: 120, minWidth: 120, borderBottom: '1px solid var(--lt-border)', textTransform: 'uppercase', letterSpacing: 0.5, textAlign: 'center' }}>Ação</th>}
             </tr></thead>
             <tbody>{cfSorted.map((c, i) => (
               <tr key={c.id||i} onClick={() => setModalRow(c)} style={{ cursor: 'pointer', ...((c.status_risco === 'evitado' || c.status_risco === 'transferido') ? { opacity: 0.55, fontStyle: 'italic' } : {}) }} onMouseEnter={e => e.currentTarget.style.background='rgba(204,145,94,0.04)'} onMouseLeave={e => e.currentTarget.style.background=''}>
-                <td style={{ ...tdS, width: 95, minWidth: 95, fontSize: 11, color: 'var(--lt-text3)' }}>{fmtDate(c.dt_ult || c.atualizado_em || c.criado_em)}</td>
+                <td style={{ ...tdS, width: 95, minWidth: 95, fontSize: 11, color: 'var(--lt-text3)', textAlign: 'center' }}>{fmtDate(c.dt_ult || c.atualizado_em || c.criado_em)}</td>
                 <Td w={120}>{c.sub}</Td>
-                <td style={{ ...tdS, color: 'var(--copper-text)', fontWeight: 700, width: 80, minWidth: 80 }}>{c.rr}</td><Td w={200}>{c.dr}</Td>
-                <td style={{ ...tdS, color: 'var(--copper-text)', fontWeight: 700, width: 90, minWidth: 90 }}>{c.rc}</td><Td w={200}>{c.dc}</Td>
-                <td style={{ ...tdS, width: 90, minWidth: 90 }}>{badgeR(getResultadoVitrine(c))}</td>
-                <td style={{ ...tdS, width: 110, minWidth: 110 }}>{badgeCrit(c.crit)}</td>
-                <td style={{ ...tdS, width: 130, minWidth: 130, fontSize: 11, fontWeight: 500 }}>{getFaseLabel(c)}{c.num_regressoes > 0 && <RegressaoBadge n={c.num_regressoes} />}</td>
+                <td style={{ ...tdS, color: 'var(--copper-text)', fontWeight: 700, width: 80, minWidth: 80, textAlign: 'center' }}>{c.rr}</td><Td w={200}>{c.dr}</Td>
+                <td style={{ ...tdS, color: 'var(--copper-text)', fontWeight: 700, width: 90, minWidth: 90, textAlign: 'center' }}>{c.rc}</td><Td w={200}>{c.dc}</Td>
+                <td style={{ ...tdS, width: 90, minWidth: 90, textAlign: 'center' }}>{badgeR(getResultadoVitrine(c))}</td>
+                <td style={{ ...tdS, width: 110, minWidth: 110, textAlign: 'center' }}>{badgeCrit(c.crit)}</td>
+                <td style={{ ...tdS, width: 130, minWidth: 130, fontSize: 11, fontWeight: 500, textAlign: 'center' }}>{getFaseLabel(c)}{c.num_regressoes > 0 && <RegressaoBadge n={c.num_regressoes} />}</td>
                 <td style={{ ...tdS, width: 110, minWidth: 110, textAlign: 'center' }}>{(() => { const st = getStatusComputado(c); const cfg = getStatusBadge(st); return <span style={{ fontSize: 10, fontWeight: 700, color: cfg.color, background: cfg.bg, padding: '3px 10px', borderRadius: 999, textTransform: 'uppercase', letterSpacing: 0.4 }}>{cfg.label}</span> })()}</td>
                 {/* Colunas de fase */}
                 <td style={{ ...tdS, width: FASE_W, minWidth: FASE_W, maxWidth: FASE_W, textAlign: 'center' }}>{badgeFase(faseVal(c, 'r1', c.r1))}</td>

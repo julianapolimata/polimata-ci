@@ -338,9 +338,9 @@ const MRC_FASE_HDR = [
   { h: 'Fase 5\nAuditoria Indep.', bg: '#A6512F' },
 ]
 const FASE_W = 90
-const mrcFaseThS = { fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5, color: '#fff', padding: '6px 6px', textAlign: 'center', whiteSpace: 'pre-line', position: 'sticky', top: 0, zIndex: 2, width: FASE_W, minWidth: FASE_W, maxWidth: FASE_W, borderBottom: 'none', borderRadius: '8px 8px 0 0' }
-const mrcThS = { fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5, color: 'var(--lt-text3)', background: '#F0F2F5', padding: '12px 10px', textAlign: 'left', whiteSpace: 'nowrap', position: 'sticky', top: 0, zIndex: 2, borderBottom: '1px solid var(--lt-border)' }
-const mrcTdS = { padding: '7px 10px', borderBottom: '1px solid var(--lt-border)', fontSize: 12, color: 'var(--lt-text2)', whiteSpace: 'nowrap', verticalAlign: 'middle' }
+const mrcFaseThS = { fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5, color: '#fff', padding: '6px 6px', textAlign: 'center', whiteSpace: 'pre-line', position: 'sticky', top: 0, zIndex: 2, width: FASE_W, minWidth: FASE_W, maxWidth: FASE_W, borderRight: '1px solid rgba(255,255,255,0.18)', borderBottom: 'none', borderRadius: '8px 8px 0 0' }
+const mrcThS = { fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5, color: 'var(--lt-text3)', background: '#F0F2F5', padding: '12px 10px', textAlign: 'left', whiteSpace: 'nowrap', position: 'sticky', top: 0, zIndex: 2, borderBottom: '1px solid var(--lt-border)', borderRight: '1px solid rgba(0,32,62,0.05)' }
+const mrcTdS = { padding: '7px 10px', borderBottom: '1px solid var(--lt-border)', borderRight: '1px solid rgba(0,32,62,0.05)', fontSize: 12, color: 'var(--lt-text2)', whiteSpace: 'nowrap', verticalAlign: 'middle' }
 
 function badgeFaseMRC(val) {
   if (val === 'N/A') return <span style={{ fontSize: 10, fontStyle: 'italic', color: 'var(--lt-text3)' }}>N/A</span>
@@ -379,11 +379,11 @@ function TdMRC({ children, w = 150, wrap = false }) {
 }
 
 const MRC_DATA_COLS = [
-  { h: 'Última Alteração', w: 95, k: '_dt' },
-  { h: 'Processo', w: 120, k: 'area' }, { h: 'Subprocesso', w: 120, k: 'sub' }, { h: 'Ref. Risco', w: 80, k: 'rr' },
-  { h: 'Desc. Risco', w: 200, k: 'dr' }, { h: 'Ref. Controle', w: 90, k: 'rc' }, { h: 'Desc. Controle', w: 200, k: 'dc' },
-  { h: 'Resultado', w: 90, k: '_resultado' }, { h: 'Criticidade', w: 110, k: 'crit' },
-  { h: 'Fase Atual', w: 130, k: '_fase_atual' }, { h: 'Status Atual', w: 110, k: '_status_atual' },
+  { h: 'Última Alteração', w: 95, k: '_dt', align: 'center' },
+  { h: 'Processo', w: 120, k: 'area' }, { h: 'Subprocesso', w: 120, k: 'sub' }, { h: 'Ref. Risco', w: 80, k: 'rr', align: 'center' },
+  { h: 'Desc. Risco', w: 200, k: 'dr' }, { h: 'Ref. Controle', w: 90, k: 'rc', align: 'center' }, { h: 'Desc. Controle', w: 200, k: 'dc' },
+  { h: 'Resultado', w: 90, k: '_resultado', align: 'center' }, { h: 'Criticidade', w: 110, k: 'crit', align: 'center' },
+  { h: 'Fase Atual', w: 130, k: '_fase_atual', align: 'center' }, { h: 'Status Atual', w: 110, k: '_status_atual', align: 'center' },
 ]
 const MRC_FASE_KEYS = ['r1', 'st_pa', 'r_ader', 'r3', 'r_f4c1', 'r_f4c2', 'r_f5']
 
@@ -419,23 +419,23 @@ function TabelaMRC({ rows, onOpenModal }) {
     <div ref={tableRef} style={{ flex: 1, overflowX: 'auto', overflowY: 'auto', minHeight: 0 }}>
       <table style={{ width: 'max-content', minWidth: '100%', borderCollapse: 'collapse' }}>
         <thead><tr>
-          {MRC_DATA_COLS.map((col, i) => <th key={i} style={{ ...mrcThS, width: col.w, minWidth: col.w, ...thClick }} onClick={() => toggle(col.k)}>{col.h}{arrow(col.k)}</th>)}
+          {MRC_DATA_COLS.map((col, i) => <th key={i} style={{ ...mrcThS, width: col.w, minWidth: col.w, textAlign: col.align || 'left', ...thClick }} onClick={() => toggle(col.k)}>{col.h}{arrow(col.k)}</th>)}
           {MRC_FASE_HDR.map((f, i) => <th key={`f${i}`} style={{ ...mrcFaseThS, background: f.bg, ...thClick }} onClick={() => toggle(MRC_FASE_KEYS[i])}>{f.h}{arrow(MRC_FASE_KEYS[i])}</th>)}
         </tr></thead>
         <tbody>
           {sorted.length === 0 && <tr><td colSpan={18} style={{ textAlign: 'center', padding: 24, color: 'var(--lt-text3)', fontSize: 12 }}>Nenhum controle encontrado com os filtros aplicados.</td></tr>}
           {sorted.map(row => (
             <tr key={row.id} style={{ cursor: 'pointer', ...((row.status_risco === 'evitado' || row.status_risco === 'transferido') ? { opacity: 0.55, fontStyle: 'italic' } : {}) }} onClick={() => onOpenModal(row)} onMouseEnter={e => e.currentTarget.style.background='rgba(204,145,94,0.04)'} onMouseLeave={e => e.currentTarget.style.background=''}>
-              <td style={{ ...mrcTdS, width: 95, minWidth: 95, fontSize: 11, color: 'var(--lt-text3)' }}>{fmtDate(row.dt_ult || row.atualizado_em || row.criado_em)}</td>
+              <td style={{ ...mrcTdS, width: 95, minWidth: 95, fontSize: 11, color: 'var(--lt-text3)', textAlign: 'center' }}>{fmtDate(row.dt_ult || row.atualizado_em || row.criado_em)}</td>
               <TdMRC w={120}>{row.area}</TdMRC>
               <TdMRC w={120}>{row.sub}</TdMRC>
-              <td style={{ ...mrcTdS, color: 'var(--copper-text)', fontWeight: 700, width: 80, minWidth: 80 }}>{row.rr}</td>
+              <td style={{ ...mrcTdS, color: 'var(--copper-text)', fontWeight: 700, width: 80, minWidth: 80, textAlign: 'center' }}>{row.rr}</td>
               <TdMRC w={200}>{row.dr}</TdMRC>
-              <td style={{ ...mrcTdS, color: 'var(--copper-text)', fontWeight: 700, width: 90, minWidth: 90 }}>{row.rc}</td>
+              <td style={{ ...mrcTdS, color: 'var(--copper-text)', fontWeight: 700, width: 90, minWidth: 90, textAlign: 'center' }}>{row.rc}</td>
               <TdMRC w={200}>{row.dc}</TdMRC>
-              <td style={{ ...mrcTdS, width: 90, minWidth: 90 }}>{badgeResultado(getResultadoVitrine(row))}</td>
-              <td style={{ ...mrcTdS, width: 110, minWidth: 110 }}>{critBadge(row.crit)}</td>
-              <td style={{ ...mrcTdS, width: 130, minWidth: 130, fontSize: 11, fontWeight: 500 }}>{getFaseLabel(row)}{row.num_regressoes > 0 && <RegressaoBadgeMRC n={row.num_regressoes} />}</td>
+              <td style={{ ...mrcTdS, width: 90, minWidth: 90, textAlign: 'center' }}>{badgeResultado(getResultadoVitrine(row))}</td>
+              <td style={{ ...mrcTdS, width: 110, minWidth: 110, textAlign: 'center' }}>{critBadge(row.crit)}</td>
+              <td style={{ ...mrcTdS, width: 130, minWidth: 130, fontSize: 11, fontWeight: 500, textAlign: 'center' }}>{getFaseLabel(row)}{row.num_regressoes > 0 && <RegressaoBadgeMRC n={row.num_regressoes} />}</td>
               <td style={{ ...mrcTdS, width: 110, minWidth: 110, textAlign: 'center' }}>{(() => { const st = getStatusComputado(row); const cfg = getStatusConfig(st); return <span style={{ fontSize: 10, fontWeight: 700, color: cfg.color, background: cfg.bg, padding: '3px 10px', borderRadius: 999, textTransform: 'uppercase', letterSpacing: 0.4 }}>{cfg.label}</span> })()}</td>
               <td style={{ ...mrcTdS, width: FASE_W, minWidth: FASE_W, maxWidth: FASE_W, textAlign: 'center' }}>{badgeFaseMRC(faseValMRC(row, 'r1', row.r1))}</td>
               <td style={{ ...mrcTdS, width: FASE_W, minWidth: FASE_W, maxWidth: FASE_W, textAlign: 'center' }}>{badgeFaseMRC(faseValMRC(row, 'st_pa', row.st_pa))}</td>
