@@ -21,6 +21,32 @@ const SITE = {
   container:    1200,
 }
 
+// Sistema tipográfico unificado — 6 tamanhos, 4 níveis de texto + 2 accents
+const T = {
+  // Tamanhos
+  display:    'clamp(28px, 3vw, 38px)',
+  title:      22,
+  body:       15,
+  cardValue:  15,
+  small:      14,
+  eyebrow:    12,
+  // Pesos
+  light:      200,
+  regular:    400,
+  medium:     500,
+  semibold:   600,
+  // Cores texto (sobre fundo navy/escuro)
+  text:        'rgba(255,255,255,0.95)',
+  textMuted:   'rgba(255,255,255,0.70)',
+  textSubtle:  'rgba(255,255,255,0.55)',
+  textFaint:   'rgba(255,255,255,0.40)',
+  accent:      SITE.copper,       // #C8895C — eyebrow, links primários
+  accentSoft:  SITE.copperSoft,   // #D89E74 — links secundários
+  // Letter-spacing
+  lsEyebrow:   '0.2em',
+  lsTitle:     '0.5px',
+}
+
 const BG_GRADIENT = `linear-gradient(145deg, ${SITE.navyDeep} 0%, ${SITE.navy} 60%, ${SITE.navySoft} 100%)`
 
 const ICONS = {
@@ -48,7 +74,7 @@ function ContatoItem({ icon, label, value, href }) {
         border: '1px solid rgba(255,255,255,0.10)',
         borderRadius: SITE.radius,
         textDecoration: 'none',
-        color: '#fff',
+        color: T.text,
         transition: 'all .2s ease',
       }}
       onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.08)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.18)' }}
@@ -57,15 +83,15 @@ function ContatoItem({ icon, label, value, href }) {
       <div style={{
         width: 44, height: 44, borderRadius: '50%',
         background: 'rgba(200,137,92,0.20)',
-        color: SITE.copperSoft,
+        color: T.accentSoft,
         display: 'grid', placeItems: 'center',
         flexShrink: 0,
       }}>
         {icon}
       </div>
       <div style={{ minWidth: 0 }}>
-        <span style={{ display: 'block', fontSize: '0.8rem', color: 'rgba(255,255,255,0.6)', marginBottom: 2 }}>{label}</span>
-        <span style={{ display: 'block', fontSize: '1rem', color: '#fff', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{value}</span>
+        <span style={{ display: 'block', fontSize: T.eyebrow, fontWeight: T.semibold, color: T.textSubtle, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4 }}>{label}</span>
+        <span style={{ display: 'block', fontSize: T.cardValue, color: T.text, fontWeight: T.medium, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{value}</span>
       </div>
     </a>
   )
@@ -75,23 +101,23 @@ function Hero() {
   return (
     <div>
       <div style={{
-        fontSize: '0.75rem', color: SITE.copper,
+        fontSize: T.eyebrow, color: T.accent,
         fontFamily: "'Montserrat', sans-serif",
-        letterSpacing: '0.2em', fontWeight: 600, textTransform: 'uppercase',
+        letterSpacing: T.lsEyebrow, fontWeight: T.semibold, textTransform: 'uppercase',
         marginBottom: 16,
       }}>
         Acesso ao Sistema
       </div>
       <h1 style={{
-        fontSize: 'clamp(28px, 3vw, 38px)', fontWeight: 200,
-        color: 'var(--cream)', fontFamily: "'Raleway', sans-serif",
-        lineHeight: 1.18, letterSpacing: '0.5px',
+        fontSize: T.display, fontWeight: T.light,
+        color: T.text, fontFamily: "'Raleway', sans-serif",
+        lineHeight: 1.18, letterSpacing: T.lsTitle,
         margin: '0 0 22px',
       }}>
         Sua área de gestão de projetos
       </h1>
       <p style={{
-        fontSize: 15, color: 'rgba(247,243,238,0.70)',
+        fontSize: T.body, color: T.textMuted,
         lineHeight: 1.75, margin: '0 0 28px', maxWidth: 460,
       }}>
         Acompanhe a evolução dos projetos, a maturidade dos seus
@@ -105,14 +131,14 @@ function Hero() {
         background: 'rgba(200,137,92,0.08)',
         border: '1px dashed rgba(200,137,92,0.30)',
         borderRadius: SITE.radius,
-        fontSize: 13, color: 'rgba(255,255,255,0.75)',
+        fontSize: T.small, color: T.textMuted,
         lineHeight: 1.65,
         marginBottom: 18,
       }}>
-        <strong style={{ color: SITE.copper, fontWeight: 600 }}>Ainda não é cliente?</strong>{' '}
+        <strong style={{ color: T.accent, fontWeight: T.semibold }}>Ainda não é cliente?</strong>{' '}
         Conheça nossa metodologia de Governança, Riscos e Compliance no{' '}
         <a href="https://polimatagrc.com.br" target="_blank" rel="noopener noreferrer"
-           style={{ color: SITE.copperSoft, textDecoration: 'underline', textUnderlineOffset: 2 }}>
+           style={{ color: T.accentSoft, textDecoration: 'underline', textUnderlineOffset: 2 }}>
           site institucional
         </a>{' '}— ou fale com a gente abaixo.
       </div>
@@ -145,9 +171,8 @@ function AuthCard({ children }) {
     }}>
       {children}
       <div style={{
-        fontSize: 11, color: 'rgba(247,243,238,0.40)',
+        fontSize: T.small, color: T.textFaint,
         textAlign: 'center', marginTop: 28,
-        letterSpacing: '0.04em',
       }}>
         Polímata Consultoria em GRC · {new Date().getFullYear()}
       </div>
@@ -203,8 +228,8 @@ export default function Login() {
             background: SITE.copper,
             color: SITE.navy,
             borderRadius: 999,
-            fontSize: '0.95rem',
-            fontWeight: 500,
+            fontSize: T.body,
+            fontWeight: T.medium,
             letterSpacing: '0.01em',
             fontFamily: "'Montserrat', sans-serif",
             whiteSpace: 'nowrap',
@@ -282,28 +307,28 @@ export default function Login() {
 const fieldStyle = {
   width: '100%',
   padding: '13px 16px',
-  fontSize: 14,
+  fontSize: T.body,
   fontFamily: 'inherit',
   background: 'rgba(255,255,255,0.06)',
   border: '1px solid rgba(255,255,255,0.18)',
   borderRadius: 8,
-  color: '#fff',
+  color: T.text,
   outline: 'none',
   transition: 'border-color .15s ease',
   boxSizing: 'border-box',
 }
 const labelStyle = {
-  fontSize: 10, fontWeight: 600,
-  color: 'rgba(247,243,238,0.70)',
+  fontSize: T.eyebrow, fontWeight: T.semibold,
+  color: T.textSubtle,
   textTransform: 'uppercase',
-  letterSpacing: '0.10em',
+  letterSpacing: '0.08em',
   marginBottom: 6,
   display: 'block',
 }
 const submitBtnStyle = {
   width: '100%',
   padding: '14px 18px',
-  fontSize: 14, fontWeight: 600,
+  fontSize: T.body, fontWeight: T.semibold,
   background: `linear-gradient(135deg, ${SITE.copper} 0%, ${SITE.copperDeep} 100%)`,
   border: 'none',
   borderRadius: 8,
@@ -335,18 +360,17 @@ function TelaLogin({ onEsqueci }) {
   return (
     <>
       <h2 style={{
-        fontSize: 28, fontWeight: 200,
-        color: 'var(--cream)',
+        fontSize: T.title, fontWeight: T.light,
+        color: T.text,
         fontFamily: "'Raleway', sans-serif",
-        letterSpacing: '0.4px',
+        letterSpacing: T.lsTitle,
         margin: '0 0 6px', textAlign: 'center',
       }}>
         Acesse sua conta
       </h2>
       <p style={{
-        fontSize: 11, color: 'rgba(247,243,238,0.50)',
+        fontSize: T.small, color: T.textSubtle,
         margin: '0 0 28px', textAlign: 'center',
-        letterSpacing: '0.04em',
       }}>
         Polímata Consultoria em Governança Corporativa
       </p>
@@ -371,7 +395,7 @@ function TelaLogin({ onEsqueci }) {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
             <label style={{ ...labelStyle, marginBottom: 0 }}>Senha</label>
             <button type="button" onClick={() => setShowSenha(v => !v)}
-              style={{ background: 'none', border: 'none', color: 'rgba(247,243,238,0.55)', fontSize: 10, cursor: 'pointer', letterSpacing: '0.04em', padding: 0 }}>
+              style={{ background: 'none', border: 'none', color: T.textSubtle, fontSize: T.eyebrow, cursor: 'pointer', padding: 0 }}>
               {showSenha ? 'Ocultar' : 'Mostrar'}
             </button>
           </div>
@@ -385,14 +409,14 @@ function TelaLogin({ onEsqueci }) {
             onFocus={e => e.target.style.borderColor = 'rgba(204,145,94,0.60)'}
             onBlur={e => e.target.style.borderColor = 'rgba(204,145,94,0.20)'}
           />
-          <div style={{ fontSize: 10, color: 'rgba(247,243,238,0.45)', marginTop: 6, lineHeight: 1.6 }}>
+          <div style={{ fontSize: T.eyebrow, color: T.textFaint, marginTop: 6, lineHeight: 1.6 }}>
             Mínimo 8 caracteres · letras maiúsculas e minúsculas · um número e um caractere especial
           </div>
         </div>
 
         {erro && (
           <div style={{
-            padding: '10px 14px', fontSize: 12,
+            padding: '10px 14px', fontSize: T.small,
             background: 'rgba(239,68,68,0.10)',
             border: '1px solid rgba(239,68,68,0.30)',
             borderRadius: 8,
@@ -407,7 +431,7 @@ function TelaLogin({ onEsqueci }) {
         </button>
 
         <button type="button" onClick={onEsqueci}
-          style={{ background: 'none', border: 'none', color: SITE.copperSoft, fontSize: 11, cursor: 'pointer', textAlign: 'center', padding: '6px 0', letterSpacing: '0.04em', textDecoration: 'underline', textUnderlineOffset: 3 }}>
+          style={{ background: 'none', border: 'none', color: T.accentSoft, fontSize: T.small, cursor: 'pointer', textAlign: 'center', padding: '6px 0', textDecoration: 'underline', textUnderlineOffset: 3 }}>
           Esqueci minha senha
         </button>
       </form>
@@ -434,13 +458,13 @@ function TelaEsqueci({ onVoltar, onEnviado }) {
   return (
     <>
       <button onClick={onVoltar}
-        style={{ background: 'none', border: 'none', color: 'rgba(247,243,238,0.55)', fontSize: 11, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5, marginBottom: 18, padding: 0, letterSpacing: '0.04em' }}>
+        style={{ background: 'none', border: 'none', color: T.textSubtle, fontSize: T.small, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5, marginBottom: 18, padding: 0 }}>
         ← Voltar ao login
       </button>
-      <h2 style={{ fontSize: 22, fontWeight: 200, color: 'var(--cream)', fontFamily: "'Raleway', sans-serif", letterSpacing: '0.4px', margin: '0 0 6px', textAlign: 'center' }}>
+      <h2 style={{ fontSize: T.title, fontWeight: T.light, color: T.text, fontFamily: "'Raleway', sans-serif", letterSpacing: T.lsTitle, margin: '0 0 6px', textAlign: 'center' }}>
         Recuperar senha
       </h2>
-      <p style={{ fontSize: 12, color: 'rgba(247,243,238,0.55)', textAlign: 'center', margin: '0 0 24px', lineHeight: 1.6 }}>
+      <p style={{ fontSize: T.small, color: T.textMuted, textAlign: 'center', margin: '0 0 24px', lineHeight: 1.6 }}>
         Informe seu email e enviaremos um link para redefinir sua senha.
       </p>
 
@@ -456,7 +480,7 @@ function TelaEsqueci({ onVoltar, onEnviado }) {
         </div>
 
         {erro && (
-          <div style={{ padding: '10px 14px', fontSize: 12, background: 'rgba(239,68,68,0.10)', border: '1px solid rgba(239,68,68,0.30)', borderRadius: 8, color: '#FCA5A5' }}>{erro}</div>
+          <div style={{ padding: '10px 14px', fontSize: T.small, background: 'rgba(239,68,68,0.10)', border: '1px solid rgba(239,68,68,0.30)', borderRadius: 8, color: '#FCA5A5' }}>{erro}</div>
         )}
 
         <button type="submit" disabled={loading} style={submitBtnStyle}>
@@ -476,15 +500,15 @@ function TelaEnviado({ onVoltar }) {
           background: 'rgba(34,197,94,0.12)',
           border: '1px solid rgba(34,197,94,0.40)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: 26, color: '#22C55E', fontWeight: 700,
+          fontSize: 26, color: '#22C55E', fontWeight: T.semibold,
         }}>✓</div>
         <div>
-          <div style={{ fontSize: 18, fontWeight: 200, color: 'var(--cream)', fontFamily: "'Raleway', sans-serif", marginBottom: 8 }}>Email enviado!</div>
-          <div style={{ fontSize: 12, color: 'rgba(247,243,238,0.65)', lineHeight: 1.7, maxWidth: 320 }}>
+          <div style={{ fontSize: T.title, fontWeight: T.light, color: T.text, fontFamily: "'Raleway', sans-serif", marginBottom: 8 }}>Email enviado!</div>
+          <div style={{ fontSize: T.small, color: T.textMuted, lineHeight: 1.7, maxWidth: 320 }}>
             Verifique sua caixa de entrada e clique no link para redefinir sua senha. O link expira em 1 hora.
           </div>
         </div>
-        <div style={{ background: 'rgba(204,145,94,0.06)', border: '1px solid rgba(204,145,94,0.20)', borderRadius: 10, padding: '10px 16px', fontSize: 11, color: 'rgba(247,243,238,0.60)', lineHeight: 1.6 }}>
+        <div style={{ background: 'rgba(200,137,92,0.06)', border: '1px solid rgba(200,137,92,0.20)', borderRadius: 10, padding: '10px 16px', fontSize: T.small, color: T.textSubtle, lineHeight: 1.6 }}>
           Não recebeu? Verifique a pasta de spam ou tente novamente.
         </div>
       </div>
