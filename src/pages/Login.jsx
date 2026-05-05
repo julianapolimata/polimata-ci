@@ -155,7 +155,7 @@ export default function Login() {
       minHeight: '100vh',
       background: BG_GRADIENT,
       position: 'relative',
-      overflow: 'hidden',
+      overflowX: 'hidden',
       fontFamily: "'Montserrat', sans-serif",
     }}>
       {/* Header branco — espelho do site institucional */}
@@ -185,14 +185,19 @@ export default function Login() {
             />
           </a>
           <div style={{
-            display: 'flex',
+            display: 'inline-flex',
             alignItems: 'center',
             gap: 8,
-            color: 'var(--copper-deep)',
-            fontSize: 15,
+            padding: '10px 22px',
+            background: 'linear-gradient(135deg, #CC915E 0%, #B97744 100%)',
+            color: '#fff',
+            borderRadius: 999,
+            fontSize: 14,
             fontWeight: 600,
             letterSpacing: '0.02em',
             fontFamily: "'Montserrat', sans-serif",
+            boxShadow: '0 4px 14px rgba(204,145,94,0.25)',
+            whiteSpace: 'nowrap',
           }}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
@@ -224,7 +229,7 @@ export default function Login() {
         maxWidth: 1280,
         margin: '0 auto',
         padding: '40px 40px 60px',
-        minHeight: 'calc(100vh - 90px)',
+        
         alignItems: 'start',
         position: 'relative',
         zIndex: 1,
@@ -246,7 +251,7 @@ export default function Login() {
           header { min-height: 70px !important; }
           header > div { padding: 14px 20px !important; gap: 12px !important; }
           header img { height: 40px !important; }
-          header > div > div:last-child { font-size: 12px !important; }
+          header > div > div:last-child { font-size: 11px !important; padding: 7px 14px !important; }
           .login-grid {
             grid-template-columns: 1fr !important;
             gap: 32px !important;
