@@ -165,15 +165,17 @@ export default function Login() {
         backdropFilter: 'blur(8px)',
         WebkitBackdropFilter: 'blur(8px)',
         borderBottom: '1px solid rgba(0,32,62,0.08)',
-        padding: '14px 40px',
+        padding: '20px 40px',
         display: 'flex',
         alignItems: 'center',
+        justifyContent: 'center',
+        minHeight: 90,
       }}>
-        <a href="https://polimatagrc.com.br" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none' }}>
+        <a href="https://polimatagrc.com.br" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none' }} title="Voltar ao site institucional">
           <img
-            src="/logotipo-2cores.png"
+            src="/logotipo-tight.png"
             alt="Polímata Consultoria em GRC"
-            style={{ height: 38, width: 'auto', objectFit: 'contain' }}
+            style={{ height: 50, width: 'auto', objectFit: 'contain' }}
           />
         </a>
       </header>
@@ -199,7 +201,7 @@ export default function Login() {
         maxWidth: 1180,
         margin: '0 auto',
         padding: '40px 40px 60px',
-        minHeight: 'calc(100vh - 80px)',
+        minHeight: 'calc(100vh - 90px)',
         alignItems: 'center',
         position: 'relative',
         zIndex: 1,
@@ -218,8 +220,8 @@ export default function Login() {
       {/* Responsivo: mobile vira stack */}
       <style>{`
         @media (max-width: 880px) {
-          header { padding: 12px 20px !important; }
-          header img { height: 32px !important; }
+          header { padding: 16px 20px !important; min-height: 70px !important; }
+          header img { height: 38px !important; }
           .login-grid {
             grid-template-columns: 1fr !important;
             gap: 32px !important;
