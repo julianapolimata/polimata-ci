@@ -991,7 +991,7 @@ function PorArea({ projeto, areasCalc, todosControles, loading, navigate, loadDa
   const faseThS = { fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5, color: '#fff', padding: '6px 6px', textAlign: 'center', whiteSpace: 'pre-line', position: 'sticky', top: 0, zIndex: 2, width: FASE_W, minWidth: FASE_W, maxWidth: FASE_W, borderBottom: 'none', borderRadius: '8px 8px 0 0' }
 
   const PA = paStyles
-  const tdS = { padding: '7px 10px', borderBottom: '1px solid var(--lt-border)', borderRight: '1px solid rgba(0,32,62,0.05)', fontSize: 12, color: 'var(--lt-text2)', whiteSpace: 'nowrap', verticalAlign: 'middle' }
+  const tdS = { padding: '7px 10px', borderBottom: '1px solid var(--lt-border)', borderRight: '1px solid var(--lt-border)', fontSize: 12, color: 'var(--lt-text2)', whiteSpace: 'nowrap', verticalAlign: 'middle' }
   function Td({ children, w = 150, wrap = false }) { return <td style={{ ...tdS, width: w, minWidth: w, maxWidth: w, overflow: 'hidden', textOverflow: wrap ? undefined : 'ellipsis', whiteSpace: wrap ? 'normal' : 'nowrap', lineHeight: wrap ? 1.4 : undefined }}>{children || '—'}</td> }
 
   return (
@@ -1160,8 +1160,8 @@ function PorArea({ projeto, areasCalc, todosControles, loading, navigate, loadDa
           <table style={{ width: 'max-content', minWidth: '100%', borderCollapse: 'collapse' }}>
             <thead><tr>
               {PA_DATA_COLS.map((col, i) =>
-                <th key={i} style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5, color: 'var(--lt-text3)', background: '#F0F2F5', padding: '12px 12px', textAlign: col.align || 'left', whiteSpace: 'nowrap', position: 'sticky', top: 0, zIndex: 2, width: col.w, minWidth: col.w, borderBottom: '1px solid var(--lt-border)', borderRight: '1px solid rgba(0,32,62,0.05)', cursor: 'pointer', userSelect: 'none' }} onClick={() => toggleSort(col.k)}>{col.h}{sortArrow(col.k)}</th>)}
-              {FASE_HDR.map((f, i) => <th key={`f${i}`} style={{ ...faseThS, background: f.bg, borderRight: '1px solid rgba(255,255,255,0.18)', cursor: 'pointer', userSelect: 'none' }} onClick={() => toggleSort(PA_FASE_KEYS[i])}>{f.h}{sortArrow(PA_FASE_KEYS[i])}</th>)}
+                <th key={i} style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5, color: 'var(--lt-text3)', background: '#F0F2F5', padding: '12px 12px', textAlign: col.align || 'left', whiteSpace: 'nowrap', position: 'sticky', top: 0, zIndex: 2, width: col.w, minWidth: col.w, borderBottom: '1px solid var(--lt-border)', borderRight: '1px solid var(--lt-border)', cursor: 'pointer', userSelect: 'none' }} onClick={() => toggleSort(col.k)}>{col.h}{sortArrow(col.k)}</th>)}
+              {FASE_HDR.map((f, i) => <th key={`f${i}`} style={{ ...faseThS, background: f.bg, borderRight: '1px solid rgba(255,255,255,0.28)', cursor: 'pointer', userSelect: 'none' }} onClick={() => toggleSort(PA_FASE_KEYS[i])}>{f.h}{sortArrow(PA_FASE_KEYS[i])}</th>)}
               {!isCliente && <th style={{ fontSize: 11, fontWeight: 600, color: 'var(--lt-text3)', background: '#F0F2F5', padding: '12px 12px', position: 'sticky', top: 0, zIndex: 2, width: 120, minWidth: 120, borderBottom: '1px solid var(--lt-border)', textTransform: 'uppercase', letterSpacing: 0.5, textAlign: 'center' }}>Ação</th>}
             </tr></thead>
             <tbody>{cfSorted.map((c, i) => (
