@@ -2,33 +2,252 @@ import { useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
 
-function Logo() {
+// ════════════════════════════════════════════════════════════════════════
+// Login — identidade visual alinhada com o site institucional
+// (seção "Fale com a gente" do polimatagrc.com.br)
+// ════════════════════════════════════════════════════════════════════════
+
+const BG_GRADIENT = 'linear-gradient(145deg, #00112C 0%, #00203E 60%, #1D3B5C 100%)'
+
+const ICONS = {
+  whatsapp: (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M17.6 6.32A7.85 7.85 0 0012.05 4 7.94 7.94 0 005.18 16L4 20l4.1-1.07a7.93 7.93 0 003.95 1h.01a7.94 7.94 0 005.54-13.6zm-5.55 12.21a6.6 6.6 0 01-3.36-.92l-.24-.14-2.43.64.65-2.37-.16-.25a6.61 6.61 0 01-1-3.49 6.6 6.6 0 0111.27-4.66 6.55 6.55 0 011.93 4.67 6.6 6.6 0 01-6.66 6.52zm3.61-4.94c-.2-.1-1.17-.58-1.35-.64s-.31-.1-.45.1-.51.64-.63.78-.23.15-.43.05a5.43 5.43 0 01-1.6-1 6 6 0 01-1.1-1.37c-.12-.2 0-.31.09-.41s.2-.23.3-.34a1.34 1.34 0 00.2-.34.37.37 0 000-.35c-.05-.1-.45-1.08-.62-1.48s-.33-.34-.45-.34h-.39a.74.74 0 00-.54.25 2.27 2.27 0 00-.7 1.69 3.94 3.94 0 00.83 2.1 9 9 0 003.45 3.05c.48.2.86.33 1.16.42a2.81 2.81 0 001.28.08 2.1 2.1 0 001.37-.96 1.69 1.69 0 00.12-.96c-.05-.09-.18-.14-.38-.24z"/></svg>
+  ),
+  email: (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+  ),
+  globe: (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+  ),
+}
+
+function ContatoItem({ icon, label, value, href }) {
   return (
-    <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 24 }}>
-      <img
-        src="/icon.png"
-        alt="Polímata"
-        style={{ height: 80, width: 'auto', objectFit: 'contain' }}
-      />
+    <a
+      href={href}
+      target={href?.startsWith('http') ? '_blank' : undefined}
+      rel={href?.startsWith('http') ? 'noopener noreferrer' : undefined}
+      style={{
+        display: 'flex', alignItems: 'center', gap: 14,
+        padding: '14px 18px',
+        background: 'rgba(0,32,62,0.45)',
+        backdropFilter: 'blur(6px)',
+        WebkitBackdropFilter: 'blur(6px)',
+        border: '1px solid rgba(204,145,94,0.14)',
+        borderRadius: 12,
+        textDecoration: 'none',
+        transition: 'all .2s ease',
+      }}
+      onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(204,145,94,0.45)'; e.currentTarget.style.transform = 'translateX(2px)' }}
+      onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(204,145,94,0.14)'; e.currentTarget.style.transform = 'none' }}
+    >
+      <div style={{
+        width: 38, height: 38, borderRadius: 10,
+        background: 'rgba(204,145,94,0.15)',
+        color: 'var(--copper-soft)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        flexShrink: 0,
+      }}>
+        {icon}
+      </div>
+      <div style={{ minWidth: 0 }}>
+        <div style={{ fontSize: 10, color: 'rgba(247,243,238,0.55)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 2 }}>{label}</div>
+        <div style={{ fontSize: 13, color: 'var(--cream)', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{value}</div>
+      </div>
+    </a>
+  )
+}
+
+function Hero() {
+  return (
+    <div>
+      <div style={{
+        fontSize: 11, color: 'var(--copper-soft)',
+        letterSpacing: '0.18em', fontWeight: 600, textTransform: 'uppercase',
+        marginBottom: 18,
+      }}>
+        Acesso ao Sistema
+      </div>
+      <h1 style={{
+        fontSize: 38, fontWeight: 200,
+        color: 'var(--cream)', fontFamily: "'Raleway', sans-serif",
+        lineHeight: 1.18, letterSpacing: '0.5px',
+        margin: '0 0 22px',
+      }}>
+        Sua área de governança e controles internos
+      </h1>
+      <p style={{
+        fontSize: 14, color: 'rgba(247,243,238,0.65)',
+        lineHeight: 1.75, margin: '0 0 36px', maxWidth: 460,
+      }}>
+        Acompanhe a maturidade dos seus processos, registre testes,
+        exporte relatórios e mantenha sua matriz de riscos sempre
+        atualizada — tudo num só lugar, em sintonia com a metodologia
+        Polímata.
+      </p>
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 32 }}>
+        <ContatoItem icon={ICONS.whatsapp} label="WhatsApp"  value="+55 (19) 99779-3378"        href="https://wa.me/5519997793378" />
+        <ContatoItem icon={ICONS.email}    label="Email"     value="contato@polimatagrc.com.br" href="mailto:contato@polimatagrc.com.br" />
+        <ContatoItem icon={ICONS.globe}    label="Site"      value="polimatagrc.com.br"         href="https://polimatagrc.com.br" />
+      </div>
+
+      <div style={{
+        padding: '16px 20px',
+        background: 'rgba(204,145,94,0.06)',
+        border: '1px dashed rgba(204,145,94,0.30)',
+        borderRadius: 12,
+        fontSize: 12, color: 'rgba(247,243,238,0.7)',
+        lineHeight: 1.65,
+      }}>
+        <strong style={{ color: 'var(--copper-soft)', fontWeight: 600 }}>Ainda não é cliente?</strong>{' '}
+        Conheça nossa metodologia de Governança, Riscos e Compliance no{' '}
+        <a href="https://polimatagrc.com.br" target="_blank" rel="noopener noreferrer"
+           style={{ color: 'var(--copper-soft)', textDecoration: 'underline', textUnderlineOffset: 2 }}>
+          site institucional
+        </a>{' '}— ou fale com a gente acima.
+      </div>
     </div>
   )
 }
 
+// ──────────────────────────────────────────────────────────────────────
+// Card de autenticação (login / esqueci / enviado)
+// ──────────────────────────────────────────────────────────────────────
+function AuthCard({ children }) {
+  return (
+    <div style={{
+      background: 'rgba(0,32,62,0.55)',
+      backdropFilter: 'blur(10px)',
+      WebkitBackdropFilter: 'blur(10px)',
+      border: '1px solid rgba(204,145,94,0.20)',
+      borderRadius: 16,
+      padding: '40px 36px 32px',
+      boxShadow: '0 16px 48px rgba(0,17,44,0.40)',
+      maxWidth: 460,
+      width: '100%',
+      margin: '0 auto',
+    }}>
+      <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 20 }}>
+        <img src="/icon.png" alt="Polímata" style={{ height: 56, width: 'auto', objectFit: 'contain' }} />
+      </div>
+      {children}
+      <div style={{
+        fontSize: 11, color: 'rgba(247,243,238,0.40)',
+        textAlign: 'center', marginTop: 28,
+        letterSpacing: '0.04em',
+      }}>
+        Polímata Consultoria em GRC · {new Date().getFullYear()}
+      </div>
+    </div>
+  )
+}
+
+// ──────────────────────────────────────────────────────────────────────
+// MAIN
+// ──────────────────────────────────────────────────────────────────────
 export default function Login() {
   const [tela, setTela] = useState('login')
 
   return (
-    <div className="login-bg">
-      <div className="login-card">
-        <Logo />
-        <div className="login-divider" />
-        {tela === 'login'   && <TelaLogin    onEsqueci={() => setTela('esqueci')} />}
-        {tela === 'esqueci' && <TelaEsqueci  onVoltar={() => setTela('login')} onEnviado={() => setTela('enviado')} />}
-        {tela === 'enviado' && <TelaEnviado  onVoltar={() => setTela('login')} />}
-        <div className="login-footer">Polímata Consultoria em GRC · {new Date().getFullYear()}</div>
+    <div style={{
+      minHeight: '100vh',
+      background: BG_GRADIENT,
+      position: 'relative',
+      overflow: 'hidden',
+      fontFamily: "'Montserrat', sans-serif",
+    }}>
+      {/* Accent radials — eco do site / ProjectSelector */}
+      <div style={{
+        position: 'absolute', top: '-20%', right: '-10%',
+        width: '60%', height: '140%',
+        background: 'radial-gradient(ellipse at center, rgba(204,145,94,0.10) 0%, transparent 55%)',
+        pointerEvents: 'none',
+      }} />
+      <div style={{
+        position: 'absolute', bottom: '-30%', left: '-10%',
+        width: '55%', height: '100%',
+        background: 'radial-gradient(ellipse at center, rgba(91,143,249,0.06) 0%, transparent 55%)',
+        pointerEvents: 'none',
+      }} />
+
+      <div className="login-grid" style={{
+        display: 'grid',
+        gridTemplateColumns: 'minmax(320px, 1fr) minmax(360px, 460px)',
+        gap: 80,
+        maxWidth: 1180,
+        margin: '0 auto',
+        padding: '60px 40px',
+        minHeight: '100vh',
+        alignItems: 'center',
+        position: 'relative',
+        zIndex: 1,
+      }}>
+        {/* Esquerda: hero + contatos */}
+        <Hero />
+
+        {/* Direita: card de auth */}
+        <AuthCard>
+          {tela === 'login'   && <TelaLogin    onEsqueci={() => setTela('esqueci')} />}
+          {tela === 'esqueci' && <TelaEsqueci  onVoltar={() => setTela('login')} onEnviado={() => setTela('enviado')} />}
+          {tela === 'enviado' && <TelaEnviado  onVoltar={() => setTela('login')} />}
+        </AuthCard>
       </div>
+
+      {/* Responsivo: mobile vira stack */}
+      <style>{`
+        @media (max-width: 880px) {
+          .login-grid {
+            grid-template-columns: 1fr !important;
+            gap: 32px !important;
+            padding: 40px 20px !important;
+          }
+          .login-grid > div:first-child h1 {
+            font-size: 26px !important;
+          }
+        }
+      `}</style>
     </div>
   )
+}
+
+// ══════════════════════════════════════════════════════════════════════
+// FORM LOGIN
+// ══════════════════════════════════════════════════════════════════════
+const fieldStyle = {
+  width: '100%',
+  padding: '11px 14px',
+  fontSize: 13,
+  fontFamily: 'inherit',
+  background: 'rgba(0,17,44,0.40)',
+  border: '1px solid rgba(204,145,94,0.20)',
+  borderRadius: 8,
+  color: 'var(--cream)',
+  outline: 'none',
+  transition: 'border-color .15s ease',
+  boxSizing: 'border-box',
+}
+const labelStyle = {
+  fontSize: 10, fontWeight: 600,
+  color: 'rgba(247,243,238,0.70)',
+  textTransform: 'uppercase',
+  letterSpacing: '0.10em',
+  marginBottom: 6,
+  display: 'block',
+}
+const submitBtnStyle = {
+  width: '100%',
+  padding: '12px 16px',
+  fontSize: 13, fontWeight: 600,
+  background: 'linear-gradient(135deg, #CC915E 0%, #A6512F 100%)',
+  border: 'none',
+  borderRadius: 8,
+  color: '#fff',
+  cursor: 'pointer',
+  letterSpacing: '0.04em',
+  fontFamily: 'inherit',
+  transition: 'transform .12s ease, box-shadow .12s ease',
+  boxShadow: '0 6px 20px rgba(166,81,47,0.30)',
 }
 
 function TelaLogin({ onEsqueci }) {
@@ -50,11 +269,26 @@ function TelaLogin({ onEsqueci }) {
 
   return (
     <>
-      <h1 className="login-title">Acesse sua conta</h1>
-      <p className="login-subtitle">Polímata Consultoria em Governança Corporativa</p>
-      <form onSubmit={handleSubmit} className="login-form">
-        <div className="login-field">
-          <label>Email</label>
+      <h2 style={{
+        fontSize: 22, fontWeight: 200,
+        color: 'var(--cream)',
+        fontFamily: "'Raleway', sans-serif",
+        letterSpacing: '0.4px',
+        margin: '0 0 6px', textAlign: 'center',
+      }}>
+        Acesse sua conta
+      </h2>
+      <p style={{
+        fontSize: 11, color: 'rgba(247,243,238,0.50)',
+        margin: '0 0 28px', textAlign: 'center',
+        letterSpacing: '0.04em',
+      }}>
+        Polímata Consultoria em Governança Corporativa
+      </p>
+
+      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+        <div>
+          <label style={labelStyle}>Email</label>
           <input
             type="email"
             value={email}
@@ -62,13 +296,17 @@ function TelaLogin({ onEsqueci }) {
             placeholder="seu@email.com"
             required
             autoFocus
+            style={fieldStyle}
+            onFocus={e => e.target.style.borderColor = 'rgba(204,145,94,0.60)'}
+            onBlur={e => e.target.style.borderColor = 'rgba(204,145,94,0.20)'}
           />
         </div>
-        <div className="login-field">
-          <div style={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
-            <label>Senha</label>
+
+        <div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+            <label style={{ ...labelStyle, marginBottom: 0 }}>Senha</label>
             <button type="button" onClick={() => setShowSenha(v => !v)}
-              style={{background:'none', border:'none', color:'var(--txt3)', fontSize:10, cursor:'pointer', letterSpacing:'.3px', padding:0}}>
+              style={{ background: 'none', border: 'none', color: 'rgba(247,243,238,0.55)', fontSize: 10, cursor: 'pointer', letterSpacing: '0.04em', padding: 0 }}>
               {showSenha ? 'Ocultar' : 'Mostrar'}
             </button>
           </div>
@@ -78,17 +316,33 @@ function TelaLogin({ onEsqueci }) {
             onChange={e => setSenha(e.target.value)}
             placeholder="••••••••"
             required
+            style={fieldStyle}
+            onFocus={e => e.target.style.borderColor = 'rgba(204,145,94,0.60)'}
+            onBlur={e => e.target.style.borderColor = 'rgba(204,145,94,0.20)'}
           />
-          <div style={{fontSize:10, color:'var(--txt3)', marginTop:4, lineHeight:1.6}}>
-            Mínimo 8 caracteres · letras maiúsculas e minúsculas · pelo menos um número e um caractere especial
+          <div style={{ fontSize: 10, color: 'rgba(247,243,238,0.45)', marginTop: 6, lineHeight: 1.6 }}>
+            Mínimo 8 caracteres · letras maiúsculas e minúsculas · um número e um caractere especial
           </div>
         </div>
-        {erro && <div className="login-erro">{erro}</div>}
-        <button type="submit" className="login-btn" disabled={loading}>
+
+        {erro && (
+          <div style={{
+            padding: '10px 14px', fontSize: 12,
+            background: 'rgba(239,68,68,0.10)',
+            border: '1px solid rgba(239,68,68,0.30)',
+            borderRadius: 8,
+            color: '#FCA5A5',
+          }}>{erro}</div>
+        )}
+
+        <button type="submit" disabled={loading} style={submitBtnStyle}
+          onMouseEnter={e => { if (!loading) { e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = '0 10px 28px rgba(166,81,47,0.42)' } }}
+          onMouseLeave={e => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '0 6px 20px rgba(166,81,47,0.30)' }}>
           {loading ? 'Entrando...' : 'Entrar'}
         </button>
+
         <button type="button" onClick={onEsqueci}
-          style={{background:'none', border:'none', color:'var(--gold)', fontSize:11, cursor:'pointer', textAlign:'center', padding:'4px 0', letterSpacing:'.3px', textDecoration:'underline', textUnderlineOffset:3}}>
+          style={{ background: 'none', border: 'none', color: 'var(--copper-soft)', fontSize: 11, cursor: 'pointer', textAlign: 'center', padding: '6px 0', letterSpacing: '0.04em', textDecoration: 'underline', textUnderlineOffset: 3 }}>
           Esqueci minha senha
         </button>
       </form>
@@ -106,7 +360,7 @@ function TelaEsqueci({ onVoltar, onEnviado }) {
     if (!email.trim()) { setErro('Informe seu email'); return }
     setErro(''); setLoading(true)
     const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
-      redirectTo: `${window.location.origin}/redefinir-senha`
+      redirectTo: `${window.location.origin}/redefinir-senha`,
     })
     if (error) { setErro('Não foi possível enviar o email. Verifique o endereço informado.'); setLoading(false) }
     else onEnviado()
@@ -115,18 +369,34 @@ function TelaEsqueci({ onVoltar, onEnviado }) {
   return (
     <>
       <button onClick={onVoltar}
-        style={{background:'none', border:'none', color:'var(--txt3)', fontSize:11, cursor:'pointer', display:'flex', alignItems:'center', gap:5, marginBottom:20, padding:0, letterSpacing:'.3px'}}>
+        style={{ background: 'none', border: 'none', color: 'rgba(247,243,238,0.55)', fontSize: 11, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5, marginBottom: 18, padding: 0, letterSpacing: '0.04em' }}>
         ← Voltar ao login
       </button>
-      <h1 className="login-title">Recuperar senha</h1>
-      <p className="login-subtitle" style={{marginBottom:24}}>Informe seu email e enviaremos um link para redefinir sua senha.</p>
-      <form onSubmit={handleSubmit} className="login-form">
-        <div className="login-field">
-          <label>Email cadastrado</label>
-          <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="seu@email.com" required autoFocus />
+      <h2 style={{ fontSize: 22, fontWeight: 200, color: 'var(--cream)', fontFamily: "'Raleway', sans-serif", letterSpacing: '0.4px', margin: '0 0 6px', textAlign: 'center' }}>
+        Recuperar senha
+      </h2>
+      <p style={{ fontSize: 12, color: 'rgba(247,243,238,0.55)', textAlign: 'center', margin: '0 0 24px', lineHeight: 1.6 }}>
+        Informe seu email e enviaremos um link para redefinir sua senha.
+      </p>
+
+      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+        <div>
+          <label style={labelStyle}>Email cadastrado</label>
+          <input
+            type="email" value={email} onChange={e => setEmail(e.target.value)}
+            placeholder="seu@email.com" required autoFocus style={fieldStyle}
+            onFocus={e => e.target.style.borderColor = 'rgba(204,145,94,0.60)'}
+            onBlur={e => e.target.style.borderColor = 'rgba(204,145,94,0.20)'}
+          />
         </div>
-        {erro && <div className="login-erro">{erro}</div>}
-        <button type="submit" className="login-btn" disabled={loading}>{loading ? 'Enviando...' : 'Enviar link de recuperação'}</button>
+
+        {erro && (
+          <div style={{ padding: '10px 14px', fontSize: 12, background: 'rgba(239,68,68,0.10)', border: '1px solid rgba(239,68,68,0.30)', borderRadius: 8, color: '#FCA5A5' }}>{erro}</div>
+        )}
+
+        <button type="submit" disabled={loading} style={submitBtnStyle}>
+          {loading ? 'Enviando...' : 'Enviar link de recuperação'}
+        </button>
       </form>
     </>
   )
@@ -135,17 +405,25 @@ function TelaEsqueci({ onVoltar, onEnviado }) {
 function TelaEnviado({ onVoltar }) {
   return (
     <>
-      <div style={{display:'flex', flexDirection:'column', alignItems:'center', gap:16, padding:'8px 0 24px', textAlign:'center'}}>
-        <div style={{width:56, height:56, borderRadius:'50%', background:'rgba(34,197,94,0.1)', border:'1px solid rgba(34,197,94,0.3)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:24, color:'#22C55E'}}>✓</div>
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14, padding: '8px 0 22px', textAlign: 'center' }}>
+        <div style={{
+          width: 56, height: 56, borderRadius: '50%',
+          background: 'rgba(34,197,94,0.12)',
+          border: '1px solid rgba(34,197,94,0.40)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          fontSize: 26, color: '#22C55E', fontWeight: 700,
+        }}>✓</div>
         <div>
-          <div style={{fontSize:16, fontWeight:600, color:'var(--txt1)', marginBottom:8}}>Email enviado!</div>
-          <div style={{fontSize:12, color:'var(--txt3)', lineHeight:1.7, maxWidth:300}}>Verifique sua caixa de entrada e clique no link para redefinir sua senha. O link expira em 1 hora.</div>
+          <div style={{ fontSize: 18, fontWeight: 200, color: 'var(--cream)', fontFamily: "'Raleway', sans-serif", marginBottom: 8 }}>Email enviado!</div>
+          <div style={{ fontSize: 12, color: 'rgba(247,243,238,0.65)', lineHeight: 1.7, maxWidth: 320 }}>
+            Verifique sua caixa de entrada e clique no link para redefinir sua senha. O link expira em 1 hora.
+          </div>
         </div>
-        <div style={{background:'rgba(204,145,94,0.06)', border:'1px solid var(--brd)', borderRadius:12, padding:'10px 16px', fontSize:11, color:'var(--txt3)', lineHeight:1.6}}>
+        <div style={{ background: 'rgba(204,145,94,0.06)', border: '1px solid rgba(204,145,94,0.20)', borderRadius: 10, padding: '10px 16px', fontSize: 11, color: 'rgba(247,243,238,0.60)', lineHeight: 1.6 }}>
           Não recebeu? Verifique a pasta de spam ou tente novamente.
         </div>
       </div>
-      <button onClick={onVoltar} className="login-btn">Voltar ao login</button>
+      <button onClick={onVoltar} style={submitBtnStyle}>Voltar ao login</button>
     </>
   )
 }
