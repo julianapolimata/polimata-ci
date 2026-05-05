@@ -7,7 +7,21 @@ import { useAuth } from '../contexts/AuthContext'
 // (seção "Fale com a gente" do polimatagrc.com.br)
 // ════════════════════════════════════════════════════════════════════════
 
-const BG_GRADIENT = 'linear-gradient(145deg, #00112C 0%, #00203E 60%, #1D3B5C 100%)'
+// Cores extraídas das variáveis CSS do polimatagrc.com.br (1:1)
+const SITE = {
+  copper:       '#C8895C',
+  copperSoft:   '#D89E74',
+  copperDeep:   '#A66F44',
+  navy:         '#0A2540',
+  navyDeep:     '#071A2E',
+  navySoft:     '#15365A',
+  cream:        '#F7F3EE',
+  radius:       12,
+  radiusLg:     24,
+  container:    1200,
+}
+
+const BG_GRADIENT = `linear-gradient(145deg, ${SITE.navyDeep} 0%, ${SITE.navy} 60%, ${SITE.navySoft} 100%)`
 
 const ICONS = {
   whatsapp: (
@@ -16,8 +30,8 @@ const ICONS = {
   email: (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
   ),
-  globe: (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+  linkedin: (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/></svg>
   ),
 }
 
@@ -28,31 +42,30 @@ function ContatoItem({ icon, label, value, href }) {
       target={href?.startsWith('http') ? '_blank' : undefined}
       rel={href?.startsWith('http') ? 'noopener noreferrer' : undefined}
       style={{
-        display: 'flex', alignItems: 'center', gap: 14,
-        padding: '14px 18px',
-        background: 'rgba(0,32,62,0.45)',
-        backdropFilter: 'blur(6px)',
-        WebkitBackdropFilter: 'blur(6px)',
-        border: '1px solid rgba(204,145,94,0.14)',
-        borderRadius: 12,
+        display: 'flex', alignItems: 'center', gap: 16,
+        padding: '16px 20px',
+        background: 'rgba(255,255,255,0.05)',
+        border: '1px solid rgba(255,255,255,0.10)',
+        borderRadius: SITE.radius,
         textDecoration: 'none',
+        color: '#fff',
         transition: 'all .2s ease',
       }}
-      onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(204,145,94,0.45)'; e.currentTarget.style.transform = 'translateX(2px)' }}
-      onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(204,145,94,0.14)'; e.currentTarget.style.transform = 'none' }}
+      onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.08)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.18)' }}
+      onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.10)' }}
     >
       <div style={{
-        width: 38, height: 38, borderRadius: 10,
-        background: 'rgba(204,145,94,0.15)',
-        color: 'var(--copper-soft)',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        width: 44, height: 44, borderRadius: '50%',
+        background: 'rgba(200,137,92,0.20)',
+        color: SITE.copperSoft,
+        display: 'grid', placeItems: 'center',
         flexShrink: 0,
       }}>
         {icon}
       </div>
       <div style={{ minWidth: 0 }}>
-        <div style={{ fontSize: 11, color: 'rgba(247,243,238,0.55)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 3 }}>{label}</div>
-        <div style={{ fontSize: 14, color: 'var(--cream)', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{value}</div>
+        <span style={{ display: 'block', fontSize: '0.8rem', color: 'rgba(255,255,255,0.6)', marginBottom: 2 }}>{label}</span>
+        <span style={{ display: 'block', fontSize: '1rem', color: '#fff', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{value}</span>
       </div>
     </a>
   )
@@ -62,9 +75,10 @@ function Hero() {
   return (
     <div>
       <div style={{
-        fontSize: 13, color: 'var(--copper-soft)',
-        letterSpacing: '0.18em', fontWeight: 600, textTransform: 'uppercase',
-        marginBottom: 18,
+        fontSize: '0.75rem', color: SITE.copper,
+        fontFamily: "'Montserrat', sans-serif",
+        letterSpacing: '0.2em', fontWeight: 600, textTransform: 'uppercase',
+        marginBottom: 16,
       }}>
         Acesso ao Sistema
       </div>
@@ -88,17 +102,17 @@ function Hero() {
 
       <div style={{
         padding: '18px 22px',
-        background: 'rgba(204,145,94,0.06)',
-        border: '1px dashed rgba(204,145,94,0.30)',
-        borderRadius: 12,
-        fontSize: 13, color: 'rgba(247,243,238,0.75)',
+        background: 'rgba(200,137,92,0.08)',
+        border: '1px dashed rgba(200,137,92,0.30)',
+        borderRadius: SITE.radius,
+        fontSize: 13, color: 'rgba(255,255,255,0.75)',
         lineHeight: 1.65,
         marginBottom: 18,
       }}>
-        <strong style={{ color: 'var(--copper-soft)', fontWeight: 600 }}>Ainda não é cliente?</strong>{' '}
+        <strong style={{ color: SITE.copper, fontWeight: 600 }}>Ainda não é cliente?</strong>{' '}
         Conheça nossa metodologia de Governança, Riscos e Compliance no{' '}
         <a href="https://polimatagrc.com.br" target="_blank" rel="noopener noreferrer"
-           style={{ color: 'var(--copper-soft)', textDecoration: 'underline', textUnderlineOffset: 2 }}>
+           style={{ color: SITE.copperSoft, textDecoration: 'underline', textUnderlineOffset: 2 }}>
           site institucional
         </a>{' '}— ou fale com a gente abaixo.
       </div>
@@ -106,7 +120,7 @@ function Hero() {
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
         <ContatoItem icon={ICONS.whatsapp} label="WhatsApp"  value="+55 (19) 99779-3378"        href="https://wa.me/5519997793378" />
         <ContatoItem icon={ICONS.email}    label="Email"     value="contato@polimatagrc.com.br" href="mailto:contato@polimatagrc.com.br" />
-        <ContatoItem icon={ICONS.globe}    label="Site"      value="polimatagrc.com.br"         href="https://polimatagrc.com.br" />
+        <ContatoItem icon={ICONS.linkedin} label="LinkedIn"  value="Polímata Consultoria em GRC" href="https://www.linkedin.com/company/pol%C3%ADmata-consultoria-em-grc" />
       </div>
     </div>
   )
@@ -118,13 +132,13 @@ function Hero() {
 function AuthCard({ children }) {
   return (
     <div style={{
-      background: 'rgba(0,32,62,0.55)',
-      backdropFilter: 'blur(10px)',
-      WebkitBackdropFilter: 'blur(10px)',
-      border: '1px solid rgba(204,145,94,0.20)',
-      borderRadius: 16,
-      padding: '40px 48px 36px',
-      boxShadow: '0 16px 48px rgba(0,17,44,0.40)',
+      background: 'rgba(255,255,255,0.04)',
+      backdropFilter: 'blur(8px)',
+      WebkitBackdropFilter: 'blur(8px)',
+      border: '1px solid rgba(255,255,255,0.12)',
+      borderRadius: SITE.radiusLg,
+      padding: 40,
+      boxShadow: '0 16px 48px rgba(7,26,46,0.35)',
       maxWidth: 540,
       width: '100%',
       margin: '0 auto',
@@ -166,7 +180,7 @@ export default function Login() {
         minHeight: 90,
       }}>
         <div style={{
-          maxWidth: 1280,
+          maxWidth: SITE.container,
           margin: '0 auto',
           padding: '18px 40px',
           display: 'flex',
@@ -186,14 +200,14 @@ export default function Login() {
             alignItems: 'center',
             gap: 8,
             padding: '10px 22px',
-            background: 'linear-gradient(135deg, #CC915E 0%, #B97744 100%)',
+            background: `linear-gradient(135deg, ${SITE.copper} 0%, ${SITE.copperDeep} 100%)`,
             color: '#fff',
             borderRadius: 999,
             fontSize: 14,
             fontWeight: 600,
             letterSpacing: '0.02em',
             fontFamily: "'Montserrat', sans-serif",
-            boxShadow: '0 4px 14px rgba(204,145,94,0.25)',
+            boxShadow: '0 4px 14px rgba(200,137,92,0.30)',
             whiteSpace: 'nowrap',
           }}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -223,7 +237,7 @@ export default function Login() {
         display: 'grid',
         gridTemplateColumns: 'minmax(320px, 1fr) minmax(420px, 560px)',
         gap: 64,
-        maxWidth: 1280,
+        maxWidth: SITE.container,
         margin: '0 auto',
         padding: '40px 40px 60px',
         
@@ -271,10 +285,10 @@ const fieldStyle = {
   padding: '13px 16px',
   fontSize: 14,
   fontFamily: 'inherit',
-  background: 'rgba(0,17,44,0.40)',
-  border: '1px solid rgba(204,145,94,0.20)',
+  background: 'rgba(255,255,255,0.06)',
+  border: '1px solid rgba(255,255,255,0.18)',
   borderRadius: 8,
-  color: 'var(--cream)',
+  color: '#fff',
   outline: 'none',
   transition: 'border-color .15s ease',
   boxSizing: 'border-box',
@@ -291,7 +305,7 @@ const submitBtnStyle = {
   width: '100%',
   padding: '14px 18px',
   fontSize: 14, fontWeight: 600,
-  background: 'linear-gradient(135deg, #CC915E 0%, #A6512F 100%)',
+  background: `linear-gradient(135deg, ${SITE.copper} 0%, ${SITE.copperDeep} 100%)`,
   border: 'none',
   borderRadius: 8,
   color: '#fff',
@@ -299,7 +313,7 @@ const submitBtnStyle = {
   letterSpacing: '0.04em',
   fontFamily: 'inherit',
   transition: 'transform .12s ease, box-shadow .12s ease',
-  boxShadow: '0 6px 20px rgba(166,81,47,0.30)',
+  boxShadow: '0 6px 20px rgba(166,111,68,0.30)',
 }
 
 function TelaLogin({ onEsqueci }) {
@@ -394,7 +408,7 @@ function TelaLogin({ onEsqueci }) {
         </button>
 
         <button type="button" onClick={onEsqueci}
-          style={{ background: 'none', border: 'none', color: 'var(--copper-soft)', fontSize: 11, cursor: 'pointer', textAlign: 'center', padding: '6px 0', letterSpacing: '0.04em', textDecoration: 'underline', textUnderlineOffset: 3 }}>
+          style={{ background: 'none', border: 'none', color: SITE.copperSoft, fontSize: 11, cursor: 'pointer', textAlign: 'center', padding: '6px 0', letterSpacing: '0.04em', textDecoration: 'underline', textUnderlineOffset: 3 }}>
           Esqueci minha senha
         </button>
       </form>
