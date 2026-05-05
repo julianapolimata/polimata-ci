@@ -129,53 +129,77 @@ function critToIdx(c) { return Math.max(0, Math.min(3, 4 - (c || 1))) }
 function ProjectSelector({ projetos, resumos, perfil, onSelect, signOut, onAdmin }) {
   const nome = perfil?.nome?.split(' ')[0] || ''
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--bg0)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '40px 20px' }}>
-      <div style={{ width: '100%', maxWidth: 640 }}>
-        <div style={{ textAlign: 'center', marginBottom: 32 }}>
-          <img src="/logotipo-2cores.png" alt="Polímata GRC" style={{ height: 40, marginBottom: 20, objectFit: 'contain' }} />
-          <h1 style={{ fontSize: 20, fontWeight: 300, color: 'var(--cream)', fontFamily: "'Raleway', sans-serif", letterSpacing: '.3px', margin: '0 0 6px' }}>
+    <div style={{ minHeight: '100vh', background: 'linear-gradient(145deg, #00112C 0%, #00203E 60%, #1D3B5C 100%)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '40px 20px', position: 'relative', overflow: 'hidden' }}>
+      {/* Accent radial sutil — eco do login */}
+      <div style={{ position: 'absolute', top: '-20%', right: '-10%', width: '60%', height: '140%', background: 'radial-gradient(ellipse at center, rgba(204,145,94,0.10) 0%, transparent 55%)', pointerEvents: 'none' }} />
+      <div style={{ position: 'absolute', bottom: '-30%', left: '-10%', width: '50%', height: '100%', background: 'radial-gradient(ellipse at center, rgba(91,143,249,0.06) 0%, transparent 55%)', pointerEvents: 'none' }} />
+
+      <div style={{ width: '100%', maxWidth: 720, position: 'relative', zIndex: 1 }}>
+        <div style={{ textAlign: 'center', marginBottom: 44 }}>
+          <img src="/logotipo-2cores.png" alt="Polímata GRC" style={{ height: 64, marginBottom: 28, objectFit: 'contain' }} />
+          <h1 style={{ fontSize: 26, fontWeight: 200, color: 'var(--cream)', fontFamily: "'Raleway', sans-serif", letterSpacing: '.5px', margin: '0 0 8px' }}>
             Selecione um projeto
           </h1>
-          <p style={{ fontSize: 13, color: 'rgba(247,243,238,0.5)', margin: 0 }}>
+          <p style={{ fontSize: 13, color: 'rgba(247,243,238,0.55)', margin: 0 }}>
             {nome ? `Bem-vindo(a), ${nome}` : 'Bem-vindo(a) ao Polímata GRC'}
           </p>
         </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
           {projetos.map(p => {
             const r = resumos[p.id] || {}
             const clienteNome = p.clientes?.nome || '—'
             const isAtivo = p.ativo !== false
+            const mat = r.maturidade
+            const matColor = mat ? (mat.nivel === 'N5' ? '#22D4A0' : mat.nivel === 'N4' ? '#5B8FF9' : mat.nivel === 'N3' ? '#D4A030' : mat.nivel === 'N2' ? '#F97316' : '#EF4444') : null
             return (
               <div
                 key={p.id}
                 onClick={() => onSelect(p)}
                 style={{
-                  background: 'var(--bg2)', border: '1px solid var(--brd)', borderRadius: 12,
-                  padding: '16px 20px', cursor: 'pointer', transition: 'border-color .15s, transform .1s',
-                  opacity: isAtivo ? 1 : 0.55,
+                  background: 'rgba(0,32,62,0.55)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)',
+                  border: '1px solid rgba(204,145,94,0.18)', borderRadius: 14,
+                  padding: '22px 26px', cursor: 'pointer', transition: 'all .2s ease',
+                  opacity: isAtivo ? 1 : 0.55, position: 'relative', overflow: 'hidden',
                 }}
-                onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--copper)'; e.currentTarget.style.transform = 'translateY(-1px)' }}
-                onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--brd)'; e.currentTarget.style.transform = 'none' }}
+                onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(204,145,94,0.5)'; e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 12px 32px rgba(0,17,44,0.45)' }}
+                onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(204,145,94,0.18)'; e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = 'none' }}
               >
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
-                  <div>
-                    <div style={{ fontSize: 10, color: 'var(--txt3)', textTransform: 'uppercase', letterSpacing: '.5px', marginBottom: 2 }}>{clienteNome}</div>
-                    <div style={{ fontSize: 15, fontWeight: 500, color: 'var(--cream)' }}>{p.nome}</div>
+                {/* Linha de cor da maturidade no topo */}
+                {matColor && <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3, background: `linear-gradient(90deg, ${matColor} 0%, ${matColor}88 60%, transparent 100%)` }} />}
+
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 16, marginBottom: 12 }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    {/* Eyebrow: nome do projeto */}
+                    <div style={{ fontSize: 10, color: 'var(--copper-soft)', textTransform: 'uppercase', letterSpacing: '2px', fontWeight: 600, marginBottom: 6 }}>{p.nome}</div>
+                    {/* Título: nome do cliente */}
+                    <div style={{ fontSize: 22, fontWeight: 200, color: 'var(--cream)', fontFamily: "'Raleway', sans-serif", letterSpacing: '.3px', lineHeight: 1.2 }}>{clienteNome}</div>
                   </div>
-                  <span style={{
-                    fontSize: 10, padding: '2px 10px', borderRadius: 6, fontWeight: 500,
-                    background: isAtivo ? 'rgba(34,197,94,0.12)' : 'rgba(255,255,255,0.06)',
-                    color: isAtivo ? '#22C55E' : 'var(--txt3)',
-                  }}>
-                    {isAtivo ? 'Ativo' : 'Concluído'}
-                  </span>
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6, flexShrink: 0 }}>
+                    <span style={{
+                      fontSize: 10, padding: '3px 12px', borderRadius: 999, fontWeight: 600, letterSpacing: 0.3,
+                      background: isAtivo ? 'rgba(34,197,94,0.15)' : 'rgba(255,255,255,0.08)',
+                      color: isAtivo ? '#4ADE80' : 'var(--txt3)',
+                      border: `1px solid ${isAtivo ? 'rgba(34,197,94,0.3)' : 'rgba(255,255,255,0.1)'}`,
+                    }}>
+                      {isAtivo ? 'Ativo' : 'Concluído'}
+                    </span>
+                    {mat && (
+                      <span style={{
+                        fontSize: 10, padding: '3px 12px', borderRadius: 999, fontWeight: 700, letterSpacing: 0.3,
+                        background: `${matColor}22`, color: matColor, border: `1px solid ${matColor}55`,
+                      }} title={mat.nome}>
+                        {mat.nivel}
+                      </span>
+                    )}
+                  </div>
                 </div>
-                <div style={{ display: 'flex', gap: 20, fontSize: 11, color: 'var(--txt3)', flexWrap: 'wrap' }}>
-                  <span>{r.totalControles ?? '—'} controles</span>
-                  <span>{r.totalAreas ?? '—'} áreas</span>
-                  {r.maturidade && <span>Maturidade: {r.maturidade.nivel} — {r.maturidade.nome}</span>}
-                  {r.ultimaAtividade && <span>Últ. atividade: {r.ultimaAtividade}</span>}
+
+                <div style={{ display: 'flex', gap: 22, fontSize: 11, color: 'rgba(247,243,238,0.55)', flexWrap: 'wrap', alignItems: 'center' }}>
+                  <span><strong style={{ color: 'var(--cream)', fontWeight: 500 }}>{r.totalControles ?? '—'}</strong> controles</span>
+                  <span><strong style={{ color: 'var(--cream)', fontWeight: 500 }}>{r.totalAreas ?? '—'}</strong> áreas</span>
+                  {mat && <span>Maturidade <strong style={{ color: matColor, fontWeight: 600 }}>{mat.nome}</strong></span>}
+                  {r.ultimaAtividade && <span>Últ. atividade: <strong style={{ color: 'var(--cream)', fontWeight: 500 }}>{r.ultimaAtividade}</strong></span>}
                 </div>
               </div>
             )
