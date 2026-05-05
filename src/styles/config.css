@@ -103,7 +103,8 @@
   flex-shrink: 0;
 }
 .cfg-card-info { flex: 1; }
-.cfg-card-nome { font-size: 13px; font-weight: 400; color: var(--txt1); }
+.cfg-card-nome { font-size: 13px; font-weight: 600; color: var(--txt1); letter-spacing: 0.01em; }
+.cfg-card-fantasia { font-size: 12px; font-weight: 400; color: var(--txt3); margin-top: 1px; }
 .cfg-card-meta { font-size: 11px; color: var(--txt3); margin-top: 2px; display: flex; align-items: center; gap: 8px; }
 .cfg-card-arrow { color: var(--txt3); font-size: 20px; }
 
@@ -135,6 +136,7 @@
 }
 .cfg-back:hover { border-color: var(--gold); color: var(--gold); }
 .cfg-form-title { font-size: 16px; font-weight: 600; color: var(--txt1); }
+.cfg-form-fantasia { font-size: 13px; font-weight: 400; color: var(--txt3); margin-top: 2px; font-style: italic; }
 .cfg-form-sub { font-size: 11px; color: var(--txt3); margin-top: 3px; }
 
 .cfg-group {

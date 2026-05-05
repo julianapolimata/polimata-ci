@@ -55,9 +55,12 @@ export default function ClientesConfig({ onAbrirProjeto }) {
           <div className="cfg-cards">
             {clientes.map(c => (
               <div key={c.id} className="cfg-card" onClick={() => setClienteSel(c)}>
-                <div className="cfg-card-avatar">{(c.nome_fantasia || c.nome || '?')[0]}</div>
+                <div className="cfg-card-avatar">{(c.nome || c.nome_fantasia || '?')[0]}</div>
                 <div className="cfg-card-info">
-                  <div className="cfg-card-nome">{c.nome_fantasia || c.nome}</div>
+                  <div className="cfg-card-nome">{c.nome}</div>
+                  {c.nome_fantasia && c.nome_fantasia.trim() && c.nome_fantasia !== c.nome && (
+                    <div className="cfg-card-fantasia">{c.nome_fantasia}</div>
+                  )}
                   <div className="cfg-card-meta">
                     {c.cnpj ? formatCNPJ(c.cnpj) : 'Sem CNPJ'}
                     <span style={{margin:'0 4px',opacity:0.3}}>·</span>
@@ -164,7 +167,10 @@ function DetalheCliente({ cliente, onBack, onAbrirProjeto }) {
       <div className="cfg-form-hdr">
         <button className="cfg-back" onClick={onBack}>← Voltar</button>
         <div style={{flex:1}}>
-          <div className="cfg-form-title">{dados.nome_fantasia || dados.nome}</div>
+          <div className="cfg-form-title">{dados.nome}</div>
+          {dados.nome_fantasia && dados.nome_fantasia.trim() && dados.nome_fantasia !== dados.nome && (
+            <div className="cfg-form-fantasia">{dados.nome_fantasia}</div>
+          )}
           <div className="cfg-form-sub" style={{display:'flex',gap:8,alignItems:'center'}}>
             {dados.cnpj && <span>{formatCNPJ(dados.cnpj)}</span>}
             {dados.ativo ? <span className="badge-ativo">Ativo</span> : <span className="badge-inativo">Inativo</span>}
