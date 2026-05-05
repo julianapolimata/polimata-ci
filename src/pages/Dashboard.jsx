@@ -110,7 +110,9 @@ function getUltimaAtualizacao(controles) {
 function fmtDate(v) {
   if (!v) return '—'
   const d = new Date(v)
-  if (isNaN(d)) return '—'
+  if (isNaN(d.getTime())) return '—'
+  // Rejeita datas claramente inválidas (Excel epoch 1899/1900, Unix epoch 1970)
+  if (d.getFullYear() < 2000) return '—'
   return d.toLocaleDateString('pt-BR')
 }
 

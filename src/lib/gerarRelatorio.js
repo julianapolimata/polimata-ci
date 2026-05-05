@@ -387,7 +387,7 @@ function getCellValue(row, col) {
   if (col.key === 'crit_label') return row.crit_label || CRIT_LABEL_MAP[row.crit] || '—'
   if (col.key === 'dt_ult') {
     const d = row[col.key]
-    if (d) { try { return new Date(d).toLocaleDateString('pt-BR') } catch { return d } }
+    if (d) { try { const dd = new Date(d); return (isNaN(dd.getTime()) || dd.getFullYear() < 2000) ? '—' : dd.toLocaleDateString('pt-BR') } catch { return '—' } }
     return '—'
   }
   const raw = row[col.key]

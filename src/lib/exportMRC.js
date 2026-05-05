@@ -494,7 +494,7 @@ function buildMRCSheet(wb, controles, tituloAba, iconId, clienteNome, projetoNom
         const ev = regs[regIdx]
         if (ev) {
           const fase = ev.fase_origem || '—'
-          const dt = ev.criado_em ? new Date(ev.criado_em).toLocaleDateString('pt-BR') : '—'
+          const dt = (() => { if (!ev.criado_em) return '—'; const dd = new Date(ev.criado_em); return (isNaN(dd.getTime()) || dd.getFullYear() < 2000) ? '—' : dd.toLocaleDateString('pt-BR') })()
           value = `${fase} — ${dt}`
         } else {
           value = '—'
@@ -531,7 +531,7 @@ function buildMRCSheet(wb, controles, tituloAba, iconId, clienteNome, projetoNom
         value = row.crit_label || CRIT_LABEL_MAP[row.crit] || '—'
       } else if (col.fmt === 'date') {
         const d = row[col.key]
-        if (d) { try { value = new Date(d).toLocaleDateString('pt-BR') } catch { value = d } }
+        if (d) { try { const dd = new Date(d); value = (isNaN(dd.getTime()) || dd.getFullYear() < 2000) ? '—' : dd.toLocaleDateString('pt-BR') } catch { value = '—' } }
         else { value = '—' }
       } else {
         const raw = row[col.key]

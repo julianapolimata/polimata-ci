@@ -23,7 +23,9 @@ const HM_PROBS  = ['Extrema', 'Alta', 'Média', 'Baixa']
 function fmtDate(v) {
   if (!v) return '—'
   const d = new Date(v)
-  if (isNaN(d)) return '—'
+  if (isNaN(d.getTime())) return '—'
+  // Rejeita datas claramente inválidas (Excel epoch 1899/1900, Unix epoch 1970)
+  if (d.getFullYear() < 2000) return '—'
   return d.toLocaleDateString('pt-BR')
 }
 // Cores do heatmap (mesmo padrão PorArea) — [imp][prob] com Extrema=col0
