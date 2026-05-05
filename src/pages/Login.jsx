@@ -60,15 +60,7 @@ function ContatoItem({ icon, label, value, href }) {
 
 function Hero() {
   return (
-    <div style={{
-      display: 'flex',
-      flexDirection: 'column',
-      justifyContent: 'space-between',
-      height: '100%',
-      minHeight: 600,
-    }}>
-      {/* Bloco 1: eyebrow + título + descrição (topo) */}
-      <div>
+    <div>
       <div style={{
         fontSize: 11, color: 'var(--copper-soft)',
         letterSpacing: '0.18em', fontWeight: 600, textTransform: 'uppercase',
@@ -86,17 +78,14 @@ function Hero() {
       </h1>
       <p style={{
         fontSize: 14, color: 'rgba(247,243,238,0.65)',
-        lineHeight: 1.75, margin: '0 0 36px', maxWidth: 460,
+        lineHeight: 1.75, margin: '0 0 44px', maxWidth: 460,
       }}>
         Acompanhe a evolução dos projetos, a maturidade dos seus
         processos, exporte relatórios e tenha sua matriz de riscos e
         controles atualizada em um clique. Tudo num só lugar, em
         sintonia com a metodologia Polímata.
       </p>
-      </div>
 
-      {/* Bloco 2: gancho + cards de contato (base) */}
-      <div>
       <div style={{
         padding: '16px 20px',
         background: 'rgba(204,145,94,0.06)',
@@ -104,7 +93,7 @@ function Hero() {
         borderRadius: 12,
         fontSize: 12, color: 'rgba(247,243,238,0.7)',
         lineHeight: 1.65,
-        marginBottom: 14,
+        marginBottom: 18,
       }}>
         <strong style={{ color: 'var(--copper-soft)', fontWeight: 600 }}>Ainda não é cliente?</strong>{' '}
         Conheça nossa metodologia de Governança, Riscos e Compliance no{' '}
@@ -118,7 +107,6 @@ function Hero() {
         <ContatoItem icon={ICONS.whatsapp} label="WhatsApp"  value="+55 (19) 99779-3378"        href="https://wa.me/5519997793378" />
         <ContatoItem icon={ICONS.email}    label="Email"     value="contato@polimatagrc.com.br" href="mailto:contato@polimatagrc.com.br" />
         <ContatoItem icon={ICONS.globe}    label="Site"      value="polimatagrc.com.br"         href="https://polimatagrc.com.br" />
-      </div>
       </div>
     </div>
   )
@@ -215,7 +203,7 @@ export default function Login() {
         margin: '0 auto',
         padding: '40px 40px 60px',
         minHeight: 'calc(100vh - 90px)',
-        alignItems: 'center',
+        alignItems: 'start',
         position: 'relative',
         zIndex: 1,
       }}>
