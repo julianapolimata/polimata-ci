@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
 import { gerarTemplateMRC } from '../lib/templateMRC'
 import ExcelJS from 'exceljs'
+import { formatNomeEmpresa } from '../lib/formatNome'
 
 // ══════════════════════════════════════════════════════════════════════════════
 // MAPEAMENTO: coluna Excel (0-indexed) → campo Supabase
@@ -370,7 +371,7 @@ export default function ImportarMRC({ projetoId, projeto, areas, onImported, all
           <div style={label}>Projeto</div>
           <select style={selectS} value={lbProjeto} onChange={e => { setLbProjeto(e.target.value); setLbResult(null) }}>
             <option value="">Selecione um projeto...</option>
-            {projetos.map(p => <option key={p.id} value={p.id}>{p.clientes?.nome ? `${p.clientes.nome} — ` : ''}{p.nome}</option>)}
+            {projetos.map(p => <option key={p.id} value={p.id}>{p.clientes?.nome ? `${formatNomeEmpresa(p.clientes.nome_fantasia || p.clientes.nome)} — ` : ''}{p.nome}</option>)}
           </select>
         </div>
 

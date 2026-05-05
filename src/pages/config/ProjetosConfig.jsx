@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../../lib/supabase'
+import { formatNomeEmpresa } from '../../lib/formatNome'
 
 export default function ProjetosConfig({ projetoIdInicial }) {
   const [clientes, setClientes] = useState([])
@@ -50,7 +51,7 @@ export default function ProjetosConfig({ projetoIdInicial }) {
                 <div className="cfg-card-info">
                   <div className="cfg-card-nome">{p.nome}</div>
                   <div className="cfg-card-meta">
-                    {p.clientes?.nome_fantasia || p.clientes?.nome || '—'}
+                    {formatNomeEmpresa(p.clientes?.nome_fantasia || p.clientes?.nome) || '—'}
                     <span style={{margin:'0 4px',opacity:0.3}}>·</span>
                     {p.num_fases ?? 5} fases · {(p.matriz_tamanho??4)}×{(p.matriz_tamanho??4)}
                     {p.ativo ? <span className="badge-ativo">Ativo</span> : <span className="badge-inativo">Inativo</span>}
@@ -118,7 +119,7 @@ function NovoProjetoForm({ clientes, onSave, onCancel }) {
           <div className="cfg-field"><label>Cliente <span className="req">*</span></label>
             <select className="input-light" value={form.cliente_id} onChange={e=>u('cliente_id',e.target.value)}>
               <option value="">Selecione...</option>
-              {clientes.map(c => <option key={c.id} value={c.id}>{c.nome_fantasia || c.nome}</option>)}
+              {clientes.map(c => <option key={c.id} value={c.id}>{formatNomeEmpresa(c.nome_fantasia || c.nome)}</option>)}
             </select>
           </div>
         </div>
@@ -199,7 +200,7 @@ function DetalheProjeto({ projeto, onBack }) {
         <div style={{flex:1}}>
           <div className="cfg-form-title">{dados.nome}</div>
           <div className="cfg-form-sub" style={{display:'flex',gap:8,alignItems:'center'}}>
-            {dados.clientes?.nome_fantasia || dados.clientes?.nome}
+            {formatNomeEmpresa(dados.clientes?.nome_fantasia || dados.clientes?.nome)}
             <span style={{opacity:0.3}}>·</span>
             {dados.ativo ? <span className="badge-ativo">Ativo</span> : <span className="badge-inativo">Inativo</span>}
           </div>

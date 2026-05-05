@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../contexts/AuthContext'
+import { formatNomeEmpresa } from '../../lib/formatNome'
 
 const PAPEIS = [
   { value: 'admin_polimata',     label: 'Admin Polímata',     desc: 'Acesso total a todos os clientes e configurações', cor: '#CC915E',
@@ -244,7 +245,7 @@ function ModalDetalhes({ usuario, meuperfil, projetos, areas, onEditar, onSuspen
           {usuario.clientes?.nome && (
             <div className="usr-info-cell">
               <div className="usr-info-label">Cliente</div>
-              <div className="usr-info-value">{usuario.clientes.nome}</div>
+              <div className="usr-info-value">{formatNomeEmpresa(usuario.clientes.nome_fantasia || usuario.clientes.nome)}</div>
             </div>
           )}
           {usuario.papel === 'admin_polimata' && (
@@ -404,7 +405,7 @@ function NovoUsuarioForm({ clientes, areas, projetos, onSave, onCancel }) {
                 <label key={p.id} className="area-check">
                   <input type="checkbox" checked={projetosSel.includes(p.id)}
                     onChange={() => setProjetosSel(prev => prev.includes(p.id) ? prev.filter(x => x !== p.id) : [...prev, p.id])} />
-                  <span>{p.clientes?.nome} · {p.nome}</span>
+                  <span>{formatNomeEmpresa(p.clientes?.nome_fantasia || p.clientes?.nome)} · {p.nome}</span>
                 </label>
               ))}
               {projetosDisponiveis.length === 0 && <div className="cfg-empty">Selecione um cliente primeiro.</div>}
@@ -587,7 +588,7 @@ function EditarUsuarioForm({ usuario, clientes, areas, projetos, onSave, onCance
                   <label key={p.id} className="area-check">
                     <input type="checkbox" checked={projetosSel.includes(p.id)}
                       onChange={() => setProjetosSel(prev => prev.includes(p.id) ? prev.filter(x => x !== p.id) : [...prev, p.id])} />
-                    <span>{p.clientes?.nome} · {p.nome}</span>
+                    <span>{formatNomeEmpresa(p.clientes?.nome_fantasia || p.clientes?.nome)} · {p.nome}</span>
                   </label>
                 ))}
               </div>

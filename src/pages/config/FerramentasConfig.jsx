@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../../lib/supabase'
+import { formatNomeEmpresa } from '../../lib/formatNome'
 
 export default function FerramentasConfig() {
   const [projetos, setProjetos] = useState([])
@@ -51,7 +52,7 @@ export default function FerramentasConfig() {
           <select className="input-light" value={projetoSel} onChange={e => { setProjetoSel(e.target.value); setResultado(null) }}>
             <option value="">Selecione um projeto...</option>
             {projetos.map(p => (
-              <option key={p.id} value={p.id}>{p.clientes?.nome ? `${p.clientes.nome} — ` : ''}{p.nome}</option>
+              <option key={p.id} value={p.id}>{p.clientes?.nome ? `${formatNomeEmpresa(p.clientes.nome_fantasia || p.clientes.nome)} — ` : ''}{p.nome}</option>
             ))}
           </select>
         </div>

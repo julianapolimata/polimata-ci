@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase'
 import ExcelJS from 'exceljs'
 import HistoricoTab from './HistoricoTab'
 import { logAtualizarControle, logBaixarFicha } from '../lib/auditLog'
+import { formatNomeEmpresa } from '../lib/formatNome'
 
 const ModalAtualizar = ({ row, onClose, onSaved, areas, projeto }) => {
   // ═══ STATE ═══
@@ -301,7 +302,7 @@ const ModalAtualizar = ({ row, onClose, onSaved, areas, projeto }) => {
 
     // ── Bloco 1: DADOS DO PROJETO (4-12) ──
     applySection(ws, 4, '1. DADOS DO PROJETO')
-    applyRow(ws, 5,  'CLIENTE',             projeto?.clientes?.nome || '—', false)
+    applyRow(ws, 5,  'CLIENTE',             formatNomeEmpresa(projeto?.clientes?.nome_fantasia || projeto?.clientes?.nome) || '—', false)
     applyRow(ws, 6,  'NATUREZA DO PROJETO', projeto?.nome || '—',           false)
     applyRow(ws, 7,  'FASE EM CURSO',       'F2-E1 — Teste de Desenho',   false, { valueBold: true, valueColor: COPPER })
     applyRow(ws, 8,  'EXECUTOR',            perfil?.nome || '—',            false)
