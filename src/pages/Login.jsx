@@ -74,16 +74,16 @@ function Hero() {
         lineHeight: 1.18, letterSpacing: '0.5px',
         margin: '0 0 22px',
       }}>
-        Sua área de governança e controles internos
+        Sua área de gestão de projetos
       </h1>
       <p style={{
         fontSize: 14, color: 'rgba(247,243,238,0.65)',
         lineHeight: 1.75, margin: '0 0 36px', maxWidth: 460,
       }}>
-        Acompanhe a maturidade dos seus processos, registre testes,
-        exporte relatórios e mantenha sua matriz de riscos sempre
-        atualizada — tudo num só lugar, em sintonia com a metodologia
-        Polímata.
+        Acompanhe a evolução dos projetos, a maturidade dos seus
+        processos, exporte relatórios e tenha sua matriz de riscos e
+        controles atualizada em um clique. Tudo num só lugar, em
+        sintonia com a metodologia Polímata.
       </p>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 32 }}>
@@ -122,14 +122,14 @@ function AuthCard({ children }) {
       WebkitBackdropFilter: 'blur(10px)',
       border: '1px solid rgba(204,145,94,0.20)',
       borderRadius: 16,
-      padding: '40px 36px 32px',
+      padding: '52px 48px 44px',
       boxShadow: '0 16px 48px rgba(0,17,44,0.40)',
-      maxWidth: 460,
+      maxWidth: 540,
       width: '100%',
       margin: '0 auto',
     }}>
       <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 20 }}>
-        <img src="/icon.png" alt="Polímata" style={{ height: 56, width: 'auto', objectFit: 'contain' }} />
+        <img src="/icon.png" alt="Polímata" style={{ height: 64, width: 'auto', objectFit: 'contain' }} />
       </div>
       {children}
       <div style={{
@@ -157,6 +157,27 @@ export default function Login() {
       overflow: 'hidden',
       fontFamily: "'Montserrat', sans-serif",
     }}>
+      {/* Header branco — espelho do site institucional */}
+      <header style={{
+        position: 'relative',
+        zIndex: 2,
+        background: 'rgba(255,255,255,0.96)',
+        backdropFilter: 'blur(8px)',
+        WebkitBackdropFilter: 'blur(8px)',
+        borderBottom: '1px solid rgba(0,32,62,0.08)',
+        padding: '14px 40px',
+        display: 'flex',
+        alignItems: 'center',
+      }}>
+        <a href="https://polimatagrc.com.br" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none' }}>
+          <img
+            src="/logotipo-2cores.png"
+            alt="Polímata Consultoria em GRC"
+            style={{ height: 38, width: 'auto', objectFit: 'contain' }}
+          />
+        </a>
+      </header>
+
       {/* Accent radials — eco do site / ProjectSelector */}
       <div style={{
         position: 'absolute', top: '-20%', right: '-10%',
@@ -173,12 +194,12 @@ export default function Login() {
 
       <div className="login-grid" style={{
         display: 'grid',
-        gridTemplateColumns: 'minmax(320px, 1fr) minmax(360px, 460px)',
-        gap: 80,
+        gridTemplateColumns: 'minmax(320px, 1fr) minmax(420px, 560px)',
+        gap: 64,
         maxWidth: 1180,
         margin: '0 auto',
-        padding: '60px 40px',
-        minHeight: '100vh',
+        padding: '40px 40px 60px',
+        minHeight: 'calc(100vh - 80px)',
         alignItems: 'center',
         position: 'relative',
         zIndex: 1,
@@ -197,10 +218,12 @@ export default function Login() {
       {/* Responsivo: mobile vira stack */}
       <style>{`
         @media (max-width: 880px) {
+          header { padding: 12px 20px !important; }
+          header img { height: 32px !important; }
           .login-grid {
             grid-template-columns: 1fr !important;
             gap: 32px !important;
-            padding: 40px 20px !important;
+            padding: 32px 20px 48px !important;
           }
           .login-grid > div:first-child h1 {
             font-size: 26px !important;
@@ -216,8 +239,8 @@ export default function Login() {
 // ══════════════════════════════════════════════════════════════════════
 const fieldStyle = {
   width: '100%',
-  padding: '11px 14px',
-  fontSize: 13,
+  padding: '13px 16px',
+  fontSize: 14,
   fontFamily: 'inherit',
   background: 'rgba(0,17,44,0.40)',
   border: '1px solid rgba(204,145,94,0.20)',
@@ -237,8 +260,8 @@ const labelStyle = {
 }
 const submitBtnStyle = {
   width: '100%',
-  padding: '12px 16px',
-  fontSize: 13, fontWeight: 600,
+  padding: '14px 18px',
+  fontSize: 14, fontWeight: 600,
   background: 'linear-gradient(135deg, #CC915E 0%, #A6512F 100%)',
   border: 'none',
   borderRadius: 8,
@@ -270,7 +293,7 @@ function TelaLogin({ onEsqueci }) {
   return (
     <>
       <h2 style={{
-        fontSize: 22, fontWeight: 200,
+        fontSize: 26, fontWeight: 200,
         color: 'var(--cream)',
         fontFamily: "'Raleway', sans-serif",
         letterSpacing: '0.4px',
