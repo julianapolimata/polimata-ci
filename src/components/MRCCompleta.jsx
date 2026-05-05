@@ -339,7 +339,7 @@ const MRC_FASE_HDR = [
 ]
 const FASE_W = 90
 const mrcFaseThS = { fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5, color: '#fff', padding: '6px 6px', textAlign: 'center', whiteSpace: 'pre-line', position: 'sticky', top: 0, zIndex: 2, width: FASE_W, minWidth: FASE_W, maxWidth: FASE_W, borderRight: '1px solid rgba(255,255,255,0.28)', borderBottom: 'none', borderRadius: '8px 8px 0 0' }
-const mrcThS = { fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5, color: 'var(--lt-text3)', background: '#F0F2F5', padding: '12px 10px', textAlign: 'left', whiteSpace: 'nowrap', position: 'sticky', top: 0, zIndex: 2, borderBottom: '1px solid var(--lt-border)', borderRight: '1px solid var(--lt-border)' }
+const mrcThS = { fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5, color: 'var(--lt-text3)', background: '#F0F2F5', padding: '12px 10px', textAlign: 'center', whiteSpace: 'nowrap', position: 'sticky', top: 0, zIndex: 2, borderBottom: '1px solid var(--lt-border)', borderRight: '1px solid var(--lt-border)' }
 const mrcTdS = { padding: '7px 10px', borderBottom: '1px solid var(--lt-border)', borderRight: '1px solid var(--lt-border)', fontSize: 12, color: 'var(--lt-text2)', whiteSpace: 'nowrap', verticalAlign: 'middle' }
 
 function badgeFaseMRC(val) {
@@ -419,7 +419,7 @@ function TabelaMRC({ rows, onOpenModal }) {
     <div ref={tableRef} style={{ flex: 1, overflowX: 'auto', overflowY: 'auto', minHeight: 0 }}>
       <table style={{ width: 'max-content', minWidth: '100%', borderCollapse: 'collapse' }}>
         <thead><tr>
-          {MRC_DATA_COLS.map((col, i) => <th key={i} style={{ ...mrcThS, width: col.w, minWidth: col.w, textAlign: col.align || 'left', ...thClick }} onClick={() => toggle(col.k)}>{col.h}{arrow(col.k)}</th>)}
+          {MRC_DATA_COLS.map((col, i) => <th key={i} style={{ ...mrcThS, width: col.w, minWidth: col.w, textAlign: 'center', ...thClick }} onClick={() => toggle(col.k)}>{col.h}{arrow(col.k)}</th>)}
           {MRC_FASE_HDR.map((f, i) => <th key={`f${i}`} style={{ ...mrcFaseThS, background: f.bg, ...thClick }} onClick={() => toggle(MRC_FASE_KEYS[i])}>{f.h}{arrow(MRC_FASE_KEYS[i])}</th>)}
         </tr></thead>
         <tbody>
