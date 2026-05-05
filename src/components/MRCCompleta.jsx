@@ -338,9 +338,9 @@ const MRC_FASE_HDR = [
   { h: 'Fase 5\nAuditoria Indep.', bg: '#A6512F' },
 ]
 const FASE_W = 90
-const mrcFaseThS = { fontSize: 9, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5, color: '#fff', padding: '4px 6px', textAlign: 'center', whiteSpace: 'pre-line', position: 'sticky', top: 0, zIndex: 2, width: FASE_W, minWidth: FASE_W, maxWidth: FASE_W, borderBottom: 'none', borderRadius: '8px 8px 0 0' }
-const mrcThS = { fontSize: 10, fontWeight: 500, textTransform: 'uppercase', letterSpacing: 0.5, color: 'var(--lt-text3)', background: '#F0F2F5', padding: '10px 10px', textAlign: 'left', whiteSpace: 'nowrap', position: 'sticky', top: 0, zIndex: 2, borderBottom: '1px solid var(--lt-border)' }
-const mrcTdS = { padding: '5px 8px', borderBottom: '1px solid var(--lt-border)', fontSize: 11, color: 'var(--lt-text2)', whiteSpace: 'nowrap', verticalAlign: 'middle' }
+const mrcFaseThS = { fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5, color: '#fff', padding: '6px 6px', textAlign: 'center', whiteSpace: 'pre-line', position: 'sticky', top: 0, zIndex: 2, width: FASE_W, minWidth: FASE_W, maxWidth: FASE_W, borderBottom: 'none', borderRadius: '8px 8px 0 0' }
+const mrcThS = { fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5, color: 'var(--lt-text3)', background: '#F0F2F5', padding: '12px 10px', textAlign: 'left', whiteSpace: 'nowrap', position: 'sticky', top: 0, zIndex: 2, borderBottom: '1px solid var(--lt-border)' }
+const mrcTdS = { padding: '7px 10px', borderBottom: '1px solid var(--lt-border)', fontSize: 12, color: 'var(--lt-text2)', whiteSpace: 'nowrap', verticalAlign: 'middle' }
 
 function badgeFaseMRC(val) {
   if (val === 'N/A') return <span style={{ fontSize: 10, fontStyle: 'italic', color: 'var(--lt-text3)' }}>N/A</span>
@@ -361,7 +361,7 @@ function RegressaoBadgeMRC({ n }) {
   return (
     <span title={`Regressão #${n} — controle retornou à F2-E1`} style={{
       display: 'inline-flex', alignItems: 'center', gap: 2,
-      fontSize: 8, fontWeight: 700, color: '#7A5700',
+      fontSize: 10, fontWeight: 700, color: '#7A5700',
       background: '#FFF3CD', border: '1px solid #F9A825',
       borderRadius: 3, padding: '1px 4px', marginLeft: 4,
       verticalAlign: 'middle', lineHeight: 1, whiteSpace: 'nowrap',
@@ -426,17 +426,17 @@ function TabelaMRC({ rows, onOpenModal }) {
           {sorted.length === 0 && <tr><td colSpan={18} style={{ textAlign: 'center', padding: 24, color: 'var(--lt-text3)', fontSize: 12 }}>Nenhum controle encontrado com os filtros aplicados.</td></tr>}
           {sorted.map(row => (
             <tr key={row.id} style={{ cursor: 'pointer', ...((row.status_risco === 'evitado' || row.status_risco === 'transferido') ? { opacity: 0.55, fontStyle: 'italic' } : {}) }} onClick={() => onOpenModal(row)} onMouseEnter={e => e.currentTarget.style.background='rgba(204,145,94,0.04)'} onMouseLeave={e => e.currentTarget.style.background=''}>
-              <td style={{ ...mrcTdS, width: 95, minWidth: 95, fontSize: 10, color: 'var(--lt-text3)' }}>{fmtDate(row.dt_ult || row.atualizado_em || row.criado_em)}</td>
+              <td style={{ ...mrcTdS, width: 95, minWidth: 95, fontSize: 11, color: 'var(--lt-text3)' }}>{fmtDate(row.dt_ult || row.atualizado_em || row.criado_em)}</td>
               <TdMRC w={120}>{row.area}</TdMRC>
               <TdMRC w={120}>{row.sub}</TdMRC>
-              <td style={{ ...mrcTdS, color: 'var(--copper)', fontWeight: 600, width: 80, minWidth: 80 }}>{row.rr}</td>
+              <td style={{ ...mrcTdS, color: 'var(--copper-text)', fontWeight: 700, width: 80, minWidth: 80 }}>{row.rr}</td>
               <TdMRC w={200}>{row.dr}</TdMRC>
-              <td style={{ ...mrcTdS, color: 'var(--copper)', fontWeight: 600, width: 90, minWidth: 90 }}>{row.rc}</td>
+              <td style={{ ...mrcTdS, color: 'var(--copper-text)', fontWeight: 700, width: 90, minWidth: 90 }}>{row.rc}</td>
               <TdMRC w={200}>{row.dc}</TdMRC>
               <td style={{ ...mrcTdS, width: 90, minWidth: 90 }}>{badgeResultado(getResultadoVitrine(row))}</td>
               <td style={{ ...mrcTdS, width: 110, minWidth: 110 }}>{critBadge(row.crit)}</td>
-              <td style={{ ...mrcTdS, width: 130, minWidth: 130, fontSize: 10 }}>{getFaseLabel(row)}{row.num_regressoes > 0 && <RegressaoBadgeMRC n={row.num_regressoes} />}</td>
-              <td style={{ ...mrcTdS, width: 110, minWidth: 110, textAlign: 'center' }}>{(() => { const st = getStatusComputado(row); const cfg = getStatusConfig(st); return <span style={{ fontSize: 8, fontWeight: 700, color: cfg.color, background: cfg.bg, padding: '2px 8px', borderRadius: 999, textTransform: 'uppercase', letterSpacing: 0.5 }}>{cfg.label}</span> })()}</td>
+              <td style={{ ...mrcTdS, width: 130, minWidth: 130, fontSize: 11, fontWeight: 500 }}>{getFaseLabel(row)}{row.num_regressoes > 0 && <RegressaoBadgeMRC n={row.num_regressoes} />}</td>
+              <td style={{ ...mrcTdS, width: 110, minWidth: 110, textAlign: 'center' }}>{(() => { const st = getStatusComputado(row); const cfg = getStatusConfig(st); return <span style={{ fontSize: 10, fontWeight: 700, color: cfg.color, background: cfg.bg, padding: '3px 10px', borderRadius: 999, textTransform: 'uppercase', letterSpacing: 0.4 }}>{cfg.label}</span> })()}</td>
               <td style={{ ...mrcTdS, width: FASE_W, minWidth: FASE_W, maxWidth: FASE_W, textAlign: 'center' }}>{badgeFaseMRC(faseValMRC(row, 'r1', row.r1))}</td>
               <td style={{ ...mrcTdS, width: FASE_W, minWidth: FASE_W, maxWidth: FASE_W, textAlign: 'center' }}>{badgeFaseMRC(faseValMRC(row, 'st_pa', row.st_pa))}</td>
               <td style={{ ...mrcTdS, width: FASE_W, minWidth: FASE_W, maxWidth: FASE_W, textAlign: 'center' }}>{badgeFaseMRC(faseValMRC(row, 'r_ader', row.r_ader))}</td>
@@ -568,7 +568,7 @@ export default function MRCCompleta({ projetoId, clienteNome, projetoNome, notif
           <div style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 1.2, color: 'var(--lt-text3)', marginBottom: 8 }}>Mapa de Calor — Impacto × Probabilidade</div>
           <div style={{ display: 'flex', flex: 1 }}>
             <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-around', paddingRight: 6, width: 55, flexShrink: 0 }}>
-              {HM_IMPS.map(l => <div key={l} style={{ fontSize: 9, fontWeight: 600, color: 'var(--lt-text3)', textAlign: 'right', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', flex: 1 }}>{l}</div>)}
+              {HM_IMPS.map(l => <div key={l} style={{ fontSize: 10, fontWeight: 600, color: 'var(--lt-text3)', textAlign: 'right', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', flex: 1 }}>{l}</div>)}
             </div>
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
               {heatGrid.map((row, ri) => (
@@ -584,12 +584,12 @@ export default function MRCCompleta({ projetoId, clienteNome, projetoNome, notif
             </div>
           </div>
           <div style={{ display: 'flex', paddingLeft: 61, paddingTop: 4, gap: 2 }}>
-            {HM_PROBS.map(l => <div key={l} style={{ flex: 1, textAlign: 'center', fontSize: 9, fontWeight: 600, color: 'var(--lt-text3)' }}>{l}</div>)}
+            {HM_PROBS.map(l => <div key={l} style={{ flex: 1, textAlign: 'center', fontSize: 10, fontWeight: 600, color: 'var(--lt-text3)' }}>{l}</div>)}
           </div>
-          <div style={{ textAlign: 'center', marginTop: 1, fontSize: 7, fontWeight: 600, letterSpacing: 1, textTransform: 'uppercase', color: 'var(--lt-text3)' }}>Probabilidade →</div>
+          <div style={{ textAlign: 'center', marginTop: 4, fontSize: 10, fontWeight: 600, letterSpacing: 1, textTransform: 'uppercase', color: 'var(--lt-text3)' }}>Probabilidade →</div>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, marginTop: 6, paddingTop: 6, borderTop: '1px solid var(--lt-border)' }}>
             {CRIT_LABELS_HM.map((l, i) => (
-              <div key={l} style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 9, color: 'var(--lt-text3)' }}>
+              <div key={l} style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 10, color: 'var(--lt-text3)' }}>
                 <div style={{ width: 8, height: 8, borderRadius: 2, background: CRIT_CORES_HM[i] }} />
                 {l}
               </div>

@@ -470,7 +470,7 @@ function papelLabel(p) { return { admin_polimata: 'Admin Polímata', consultor_p
 // ══════════════════════════════════════════════════════════════════════════════
 
 function NivelBadge({ pct, nivel }) {
-  return <div style={{ fontSize: 9, fontWeight: 700, color: '#fff', background: getCorNivel(pct), padding: '2px 8px', borderRadius: 999, marginTop: 3, textTransform: 'uppercase', display: 'inline-block' }}>{nivel.nivel} — {nivel.nome}</div>
+  return <div style={{ fontSize: 10, fontWeight: 700, color: '#fff', background: getCorNivel(pct), padding: '3px 10px', borderRadius: 999, marginTop: 3, textTransform: 'uppercase', display: 'inline-block' }}>{nivel.nivel} — {nivel.nome}</div>
 }
 
 function Spinner({ light }) { return <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: light ? 'var(--lt-bg)' : 'var(--bg0)' }}><div className="spinner" /></div> }
@@ -598,16 +598,16 @@ function HomeDash({ projeto, areasCalc, todosControles, loading, ultimaAtualizac
         <div style={{ display: 'flex', alignItems: 'baseline', gap: 10 }}>
           <div style={{ fontSize: 16, fontWeight: 300, fontFamily: "'Raleway', sans-serif", color: 'var(--cream)' }}>Maturidade do Ambiente de Controles Internos</div>
           <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: 1, textTransform: 'uppercase', color: 'var(--copper)' }}>{clienteNome} · {projeto.nome || 'Controles Internos'}</div>
-          <div style={{ fontSize: 9, color: 'rgba(247,243,238,0.35)' }}>{areasCalc.length} áreas · {todosControles.length} controles</div>
+          <div style={{ fontSize: 10, color: 'rgba(247,243,238,0.65)' }}>{areasCalc.length} áreas · {todosControles.length} controles</div>
         </div>
-        <div style={{ fontSize: 9, color: 'rgba(247,243,238,0.45)', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 6, padding: '4px 10px', whiteSpace: 'nowrap' }}>Última atualização: {ultimaAtualizacao}</div>
+        <div style={{ fontSize: 10, color: 'rgba(247,243,238,0.72)', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 6, padding: '5px 12px', whiteSpace: 'nowrap' }}>Última atualização: {ultimaAtualizacao}</div>
       </div>
 
       <div style={D.kpiRow}>
         <div style={{ ...D.kpiCard, borderTopColor: 'var(--copper)' }}>
           <div style={D.kpiLabel}>Índice de Maturidade Consolidado · {clienteNome}</div>
           <div style={{ ...D.kpiValor, color: 'var(--copper)' }}>{(empresa.indice * 100).toFixed(1)}%</div>
-          <div><span style={{ ...D.kpiBadge, background: getCorNivel(empresa.indice) }}>{nivelEmpresa.nivel}</span> <span style={{ fontSize: 9, color: 'rgba(247,243,238,0.35)' }}>{nivelEmpresa.nome}</span></div>
+          <div><span style={{ ...D.kpiBadge, background: getCorNivel(empresa.indice) }}>{nivelEmpresa.nivel}</span> <span style={{ fontSize: 10, color: 'rgba(247,243,238,0.65)' }}>{nivelEmpresa.nome}</span></div>
         </div>
         <div style={{ ...D.kpiCard, borderTopColor: 'var(--cream)' }}>
           <div style={D.kpiLabel}>Total de Controles</div>
@@ -688,7 +688,7 @@ function HomeDash({ projeto, areasCalc, todosControles, loading, ultimaAtualizac
             <div style={D.heatXLabels}>
               {PROB_LABELS.map(l => <div key={l} style={D.heatXLabel}>{l}</div>)}
             </div>
-            <div style={{ textAlign: 'center', marginTop: 2, fontSize: 8, fontWeight: 600, letterSpacing: 1, textTransform: 'uppercase', color: 'rgba(247,243,238,0.25)' }}>Probabilidade →</div>
+            <div style={{ textAlign: 'center', marginTop: 4, fontSize: 10, fontWeight: 600, letterSpacing: 1, textTransform: 'uppercase', color: 'rgba(247,243,238,0.55)' }}>Probabilidade →</div>
           </div>
           <div style={D.heatLegend}>
             {CRIT_LABELS.map((l, i) => (
@@ -969,7 +969,7 @@ function PorArea({ projeto, areasCalc, todosControles, loading, navigate, loadDa
     return (
       <span title={`Regressão #${n} — controle retornou à F2-E1`} style={{
         display: 'inline-flex', alignItems: 'center', gap: 2,
-        fontSize: 8, fontWeight: 700, color: '#7A5700',
+        fontSize: 10, fontWeight: 700, color: '#7A5700',
         background: '#FFF3CD', border: '1px solid #F9A825',
         borderRadius: 3, padding: '1px 4px', marginLeft: 4,
         verticalAlign: 'middle', lineHeight: 1, whiteSpace: 'nowrap',
@@ -987,10 +987,10 @@ function PorArea({ projeto, areasCalc, todosControles, loading, navigate, loadDa
     { h: 'Fase 5\nAuditoria Indep.', bg: '#A6512F' },
   ]
   const FASE_W = 90
-  const faseThS = { fontSize: 9, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5, color: '#fff', padding: '4px 6px', textAlign: 'center', whiteSpace: 'pre-line', position: 'sticky', top: 0, zIndex: 2, width: FASE_W, minWidth: FASE_W, maxWidth: FASE_W, borderBottom: 'none', borderRadius: '8px 8px 0 0' }
+  const faseThS = { fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5, color: '#fff', padding: '6px 6px', textAlign: 'center', whiteSpace: 'pre-line', position: 'sticky', top: 0, zIndex: 2, width: FASE_W, minWidth: FASE_W, maxWidth: FASE_W, borderBottom: 'none', borderRadius: '8px 8px 0 0' }
 
   const PA = paStyles
-  const tdS = { padding: '5px 8px', borderBottom: '1px solid var(--lt-border)', fontSize: 11, color: 'var(--lt-text2)', whiteSpace: 'nowrap', verticalAlign: 'middle' }
+  const tdS = { padding: '7px 10px', borderBottom: '1px solid var(--lt-border)', fontSize: 12, color: 'var(--lt-text2)', whiteSpace: 'nowrap', verticalAlign: 'middle' }
   function Td({ children, w = 150, wrap = false }) { return <td style={{ ...tdS, width: w, minWidth: w, maxWidth: w, overflow: 'hidden', textOverflow: wrap ? undefined : 'ellipsis', whiteSpace: wrap ? 'normal' : 'nowrap', lineHeight: wrap ? 1.4 : undefined }}>{children || '—'}</td> }
 
   return (
@@ -1044,7 +1044,7 @@ function PorArea({ projeto, areasCalc, todosControles, loading, navigate, loadDa
           <div style={PA.heatXLabels}>
             {PROB_LABELS.map(l => <div key={l} style={PA.heatXLabel}>{l}</div>)}
           </div>
-          <div style={{ textAlign: 'center', marginTop: 1, fontSize: 7, fontWeight: 600, letterSpacing: 1, textTransform: 'uppercase', color: 'var(--lt-text3)' }}>Probabilidade →</div>
+          <div style={{ textAlign: 'center', marginTop: 4, fontSize: 10, fontWeight: 600, letterSpacing: 1, textTransform: 'uppercase', color: 'var(--lt-text3)' }}>Probabilidade →</div>
           <div style={PA.heatLegend}>
             {CRIT_LABELS.map((l, i) => (
               <div key={l} style={PA.legendItem}>
@@ -1120,13 +1120,13 @@ function PorArea({ projeto, areasCalc, todosControles, loading, navigate, loadDa
           Excel
         </button>
         {isRealAdmin && (
-          <button onClick={() => setSimularPerfil(prev => prev ? null : 'gestor_cliente')} style={{ background: simularPerfil ? 'rgba(59,130,246,0.15)' : 'rgba(59,130,246,0.06)', border: '1px solid rgba(59,130,246,0.25)', borderRadius: 999, padding: '4px 10px', fontSize: 9, fontWeight: 600, color: '#2563EB', cursor: 'pointer', fontFamily: 'inherit' }} title="Simular visão do cliente">
+          <button onClick={() => setSimularPerfil(prev => prev ? null : 'gestor_cliente')} style={{ background: simularPerfil ? 'rgba(59,130,246,0.15)' : 'rgba(59,130,246,0.06)', border: '1px solid rgba(59,130,246,0.25)', borderRadius: 999, padding: '5px 12px', fontSize: 10, fontWeight: 600, color: '#1D4ED8', cursor: 'pointer', fontFamily: 'inherit' }} title="Simular visão do cliente">
             {simularPerfil ? '← Voltar visão Admin' : 'Visão Cliente'}
           </button>
         )}
       </div>
       {simularPerfil && (
-        <div style={{ fontSize: 9, color: '#2563EB', background: 'rgba(59,130,246,0.06)', border: '1px solid rgba(59,130,246,0.15)', borderRadius: 6, padding: '3px 10px', marginBottom: 4, flexShrink: 0, textAlign: 'center', fontWeight: 500 }}>
+        <div style={{ fontSize: 10, color: '#1D4ED8', background: 'rgba(59,130,246,0.08)', border: '1px solid rgba(59,130,246,0.20)', borderRadius: 6, padding: '4px 12px', marginBottom: 4, flexShrink: 0, textAlign: 'center', fontWeight: 500 }}>
           Simulando visão: Cliente
         </div>
       )}
@@ -1137,20 +1137,20 @@ function PorArea({ projeto, areasCalc, todosControles, loading, navigate, loadDa
           <table style={{ width: 'max-content', minWidth: '100%', borderCollapse: 'collapse' }}>
             <thead><tr>
               {PA_DATA_COLS.map((col, i) =>
-                <th key={i} style={{ fontSize: 10, fontWeight: 500, textTransform: 'uppercase', letterSpacing: 0.5, color: 'var(--lt-text3)', background: '#F0F2F5', padding: '12px 12px', textAlign: 'left', whiteSpace: 'nowrap', position: 'sticky', top: 0, zIndex: 2, width: col.w, minWidth: col.w, borderBottom: '1px solid var(--lt-border)', cursor: 'pointer', userSelect: 'none' }} onClick={() => toggleSort(col.k)}>{col.h}{sortArrow(col.k)}</th>)}
+                <th key={i} style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5, color: 'var(--lt-text3)', background: '#F0F2F5', padding: '12px 12px', textAlign: 'left', whiteSpace: 'nowrap', position: 'sticky', top: 0, zIndex: 2, width: col.w, minWidth: col.w, borderBottom: '1px solid var(--lt-border)', cursor: 'pointer', userSelect: 'none' }} onClick={() => toggleSort(col.k)}>{col.h}{sortArrow(col.k)}</th>)}
               {FASE_HDR.map((f, i) => <th key={`f${i}`} style={{ ...faseThS, background: f.bg, cursor: 'pointer', userSelect: 'none' }} onClick={() => toggleSort(PA_FASE_KEYS[i])}>{f.h}{sortArrow(PA_FASE_KEYS[i])}</th>)}
-              {!isCliente && <th style={{ fontSize: 10, fontWeight: 500, color: 'var(--lt-text3)', background: '#F0F2F5', padding: '12px 12px', position: 'sticky', top: 0, zIndex: 2, width: 120, minWidth: 120, borderBottom: '1px solid var(--lt-border)', textTransform: 'uppercase', letterSpacing: 0.5 }}>Ação</th>}
+              {!isCliente && <th style={{ fontSize: 11, fontWeight: 600, color: 'var(--lt-text3)', background: '#F0F2F5', padding: '12px 12px', position: 'sticky', top: 0, zIndex: 2, width: 120, minWidth: 120, borderBottom: '1px solid var(--lt-border)', textTransform: 'uppercase', letterSpacing: 0.5 }}>Ação</th>}
             </tr></thead>
             <tbody>{cfSorted.map((c, i) => (
               <tr key={c.id||i} onClick={() => setModalRow(c)} style={{ cursor: 'pointer', ...((c.status_risco === 'evitado' || c.status_risco === 'transferido') ? { opacity: 0.55, fontStyle: 'italic' } : {}) }} onMouseEnter={e => e.currentTarget.style.background='rgba(204,145,94,0.04)'} onMouseLeave={e => e.currentTarget.style.background=''}>
-                <td style={{ ...tdS, width: 95, minWidth: 95, fontSize: 10, color: 'var(--lt-text3)' }}>{fmtDate(c.dt_ult || c.atualizado_em || c.criado_em)}</td>
+                <td style={{ ...tdS, width: 95, minWidth: 95, fontSize: 11, color: 'var(--lt-text3)' }}>{fmtDate(c.dt_ult || c.atualizado_em || c.criado_em)}</td>
                 <Td w={120}>{c.sub}</Td>
-                <td style={{ ...tdS, color: 'var(--copper)', fontWeight: 600, width: 80, minWidth: 80 }}>{c.rr}</td><Td w={200}>{c.dr}</Td>
-                <td style={{ ...tdS, color: 'var(--copper)', fontWeight: 600, width: 90, minWidth: 90 }}>{c.rc}</td><Td w={200}>{c.dc}</Td>
+                <td style={{ ...tdS, color: 'var(--copper-text)', fontWeight: 700, width: 80, minWidth: 80 }}>{c.rr}</td><Td w={200}>{c.dr}</Td>
+                <td style={{ ...tdS, color: 'var(--copper-text)', fontWeight: 700, width: 90, minWidth: 90 }}>{c.rc}</td><Td w={200}>{c.dc}</Td>
                 <td style={{ ...tdS, width: 90, minWidth: 90 }}>{badgeR(getResultadoVitrine(c))}</td>
                 <td style={{ ...tdS, width: 110, minWidth: 110 }}>{badgeCrit(c.crit)}</td>
-                <td style={{ ...tdS, width: 130, minWidth: 130, fontSize: 10 }}>{getFaseLabel(c)}{c.num_regressoes > 0 && <RegressaoBadge n={c.num_regressoes} />}</td>
-                <td style={{ ...tdS, width: 110, minWidth: 110, textAlign: 'center' }}>{(() => { const st = getStatusComputado(c); const cfg = getStatusBadge(st); return <span style={{ fontSize: 8, fontWeight: 700, color: cfg.color, background: cfg.bg, padding: '2px 8px', borderRadius: 999, textTransform: 'uppercase', letterSpacing: 0.5 }}>{cfg.label}</span> })()}</td>
+                <td style={{ ...tdS, width: 130, minWidth: 130, fontSize: 11, fontWeight: 500 }}>{getFaseLabel(c)}{c.num_regressoes > 0 && <RegressaoBadge n={c.num_regressoes} />}</td>
+                <td style={{ ...tdS, width: 110, minWidth: 110, textAlign: 'center' }}>{(() => { const st = getStatusComputado(c); const cfg = getStatusBadge(st); return <span style={{ fontSize: 10, fontWeight: 700, color: cfg.color, background: cfg.bg, padding: '3px 10px', borderRadius: 999, textTransform: 'uppercase', letterSpacing: 0.4 }}>{cfg.label}</span> })()}</td>
                 {/* Colunas de fase */}
                 <td style={{ ...tdS, width: FASE_W, minWidth: FASE_W, maxWidth: FASE_W, textAlign: 'center' }}>{badgeFase(faseVal(c, 'r1', c.r1))}</td>
                 <td style={{ ...tdS, width: FASE_W, minWidth: FASE_W, maxWidth: FASE_W, textAlign: 'center' }}>{badgeFase(faseVal(c, 'st_pa', c.st_pa))}</td>
@@ -1161,10 +1161,10 @@ function PorArea({ projeto, areasCalc, todosControles, loading, navigate, loadDa
                 <td style={{ ...tdS, width: FASE_W, minWidth: FASE_W, maxWidth: FASE_W, textAlign: 'center' }}>{badgeFase(faseVal(c, 'r_f5', c.r_f5))}</td>
                 {!isCliente && <td style={{ ...tdS, textAlign: 'center', width: 120, minWidth: 120 }}>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 3, alignItems: 'center' }}>
-                      {canEdit && <button onClick={e => { e.stopPropagation(); setAtualizarRow(c) }} style={{ background: 'rgba(204,145,94,0.08)', border: '1px solid rgba(204,145,94,0.2)', borderRadius: 4, padding: '2px 10px', fontSize: 10, fontWeight: 600, color: 'var(--copper)', cursor: 'pointer', fontFamily: 'inherit', width: '100%' }}>Atualizar</button>}
-                      {canEdit && canRegisterResult(getStatusComputado(c)) && <button onClick={e => { e.stopPropagation(); setRowRegistrarResultado(c) }} style={{ background: 'rgba(22,163,74,0.08)', border: '1px solid rgba(22,163,74,0.25)', borderRadius: 4, padding: '2px 10px', fontSize: 10, fontWeight: 600, color: '#16A34A', cursor: 'pointer', fontFamily: 'inherit', width: '100%' }}>Registrar Resultado</button>}
-                      {isAdmin && isAguardandoRevisao(getStatusComputado(c)) && <button onClick={e => { e.stopPropagation(); setRowRevisar(c) }} style={{ background: 'rgba(59,130,246,0.08)', border: '1px solid rgba(59,130,246,0.2)', borderRadius: 4, padding: '2px 10px', fontSize: 9, fontWeight: 700, color: '#2563EB', cursor: 'pointer', fontFamily: 'inherit', width: '100%' }}>Revisar</button>}
-                      {getAlertas(c).map((a, idx) => <span key={idx} style={{ fontSize: 7, fontWeight: 600, color: a.color, background: a.bg, padding: '2px 6px', borderRadius: 999, textTransform: 'uppercase', letterSpacing: 0.3, whiteSpace: 'nowrap', lineHeight: 1.2 }}>{a.label}</span>)}
+                      {canEdit && <button onClick={e => { e.stopPropagation(); setAtualizarRow(c) }} style={{ background: 'rgba(204,145,94,0.10)', border: '1px solid rgba(204,145,94,0.25)', borderRadius: 6, padding: '5px 10px', fontSize: 11, fontWeight: 600, color: 'var(--copper-text)', cursor: 'pointer', fontFamily: 'inherit', width: '100%' }}>Atualizar</button>}
+                      {canEdit && canRegisterResult(getStatusComputado(c)) && <button onClick={e => { e.stopPropagation(); setRowRegistrarResultado(c) }} style={{ background: 'rgba(22,163,74,0.10)', border: '1px solid rgba(22,163,74,0.30)', borderRadius: 6, padding: '5px 10px', fontSize: 11, fontWeight: 600, color: '#15803D', cursor: 'pointer', fontFamily: 'inherit', width: '100%' }}>Registrar Resultado</button>}
+                      {isAdmin && isAguardandoRevisao(getStatusComputado(c)) && <button onClick={e => { e.stopPropagation(); setRowRevisar(c) }} style={{ background: 'rgba(59,130,246,0.10)', border: '1px solid rgba(59,130,246,0.25)', borderRadius: 6, padding: '5px 10px', fontSize: 11, fontWeight: 700, color: '#1D4ED8', cursor: 'pointer', fontFamily: 'inherit', width: '100%' }}>Revisar</button>}
+                      {getAlertas(c).map((a, idx) => <span key={idx} style={{ fontSize: 10, fontWeight: 700, color: a.color, background: a.bg, padding: '3px 8px', borderRadius: 999, textTransform: 'uppercase', letterSpacing: 0.4, whiteSpace: 'nowrap', lineHeight: 1.2 }}>{a.label}</span>)}
                     </div>
                 </td>}
               </tr>))}{cf.length === 0 && <tr><td colSpan={15} style={{ padding: 32, textAlign: 'center', color: 'var(--lt-text3)' }}>Nenhum controle encontrado.</td></tr>}</tbody>
@@ -1191,14 +1191,14 @@ const paStyles = {
   cardTitle: { fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 1.2, color: 'var(--lt-text3)', marginBottom: 8 },
   heatCard: { background: 'var(--lt-card)', border: '1px solid var(--lt-border)', borderRadius: 12, padding: '12px 14px', width: 320, flexShrink: 0, display: 'flex', flexDirection: 'column', boxShadow: '0 1px 3px rgba(10,37,64,0.06)' },
   heatYLabels: { display: 'flex', flexDirection: 'column', justifyContent: 'space-around', paddingRight: 6, width: 55, flexShrink: 0 },
-  heatYLabel: { fontSize: 9, fontWeight: 600, color: 'var(--lt-text3)', textAlign: 'right', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', flex: 1 },
+  heatYLabel: { fontSize: 10, fontWeight: 600, color: 'var(--lt-text3)', textAlign: 'right', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', flex: 1 },
   heatGrid: { flex: 1, display: 'flex', flexDirection: 'column', gap: 2 },
   heatRow: { display: 'flex', gap: 2, flex: 1 },
   heatCell: { flex: 1, borderRadius: 4, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 700, color: '#fff', minHeight: 36 },
   heatXLabels: { display: 'flex', paddingLeft: 61, paddingTop: 4, gap: 2 },
-  heatXLabel: { flex: 1, textAlign: 'center', fontSize: 9, fontWeight: 600, color: 'var(--lt-text3)' },
+  heatXLabel: { flex: 1, textAlign: 'center', fontSize: 10, fontWeight: 600, color: 'var(--lt-text3)' },
   heatLegend: { display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, marginTop: 6, paddingTop: 6, borderTop: '1px solid var(--lt-border)' },
-  legendItem: { display: 'flex', alignItems: 'center', gap: 4, fontSize: 9, color: 'var(--lt-text3)' },
+  legendItem: { display: 'flex', alignItems: 'center', gap: 4, fontSize: 10, color: 'var(--lt-text3)' },
   kpiGrid: { flex: 1, display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gridTemplateRows: '1fr 1fr', gap: 8 },
   kpiCard: { background: 'var(--lt-card)', border: '1px solid var(--lt-border)', borderRadius: 12, padding: '12px 14px', borderTop: '3px solid', display: 'flex', flexDirection: 'column', justifyContent: 'center', boxShadow: '0 1px 3px rgba(10,37,64,0.06)' },
   kpiLabel: { fontSize: 10, fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.12em', color: 'var(--lt-text3)', marginBottom: 4 },
@@ -1218,6 +1218,6 @@ const S = {
   page: { background: 'var(--lt-bg)', height: '100vh', padding: '8px 12px', fontFamily: "'Montserrat', sans-serif", color: 'var(--lt-text)', fontSize: 12, display: 'flex', flexDirection: 'column', gap: 6, overflow: 'hidden' },
   header: { background: 'var(--navy)', borderRadius: 12, padding: '8px 18px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 },
   headerText: { fontSize: 13, fontWeight: 400, color: 'var(--cream)', fontFamily: "'Raleway', sans-serif" },
-  th: { fontSize: 9, fontWeight: 700, textTransform: 'uppercase', color: 'var(--navy)', background: 'var(--sand)', padding: '5px 4px', textAlign: 'center', position: 'sticky', top: 0, zIndex: 2, borderBottom: '2px solid var(--lt-border)' },
+  th: { fontSize: 10, fontWeight: 700, textTransform: 'uppercase', color: 'var(--navy)', background: 'var(--sand)', padding: '7px 4px', textAlign: 'center', position: 'sticky', top: 0, zIndex: 2, borderBottom: '2px solid var(--lt-border)' },
   tdCenter: { padding: '4px 4px', textAlign: 'center', fontSize: 11, fontWeight: 700, color: 'var(--navy)' },
 }
