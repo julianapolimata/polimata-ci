@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../../lib/supabase'
+import { formatNomeEmpresa } from '../../lib/formatNome'
 
 // ════════════════════════════════════════════════════════════════════════
 // ClientesConfig — READ-ONLY (cadastro feito no Sistema Gerencial)
@@ -55,11 +56,11 @@ export default function ClientesConfig({ onAbrirProjeto }) {
           <div className="cfg-cards">
             {clientes.map(c => (
               <div key={c.id} className="cfg-card" onClick={() => setClienteSel(c)}>
-                <div className="cfg-card-avatar">{(c.nome || c.nome_fantasia || '?')[0]}</div>
+                <div className="cfg-card-avatar">{(formatNomeEmpresa(c.nome) || formatNomeEmpresa(c.nome_fantasia) || '?')[0]}</div>
                 <div className="cfg-card-info">
-                  <div className="cfg-card-nome">{c.nome}</div>
+                  <div className="cfg-card-nome">{formatNomeEmpresa(c.nome)}</div>
                   {c.nome_fantasia && c.nome_fantasia.trim() && c.nome_fantasia !== c.nome && (
-                    <div className="cfg-card-fantasia">{c.nome_fantasia}</div>
+                    <div className="cfg-card-fantasia">{formatNomeEmpresa(c.nome_fantasia)}</div>
                   )}
                   <div className="cfg-card-meta">
                     {c.cnpj ? formatCNPJ(c.cnpj) : 'Sem CNPJ'}
@@ -167,9 +168,9 @@ function DetalheCliente({ cliente, onBack, onAbrirProjeto }) {
       <div className="cfg-form-hdr">
         <button className="cfg-back" onClick={onBack}>← Voltar</button>
         <div style={{flex:1}}>
-          <div className="cfg-form-title">{dados.nome}</div>
+          <div className="cfg-form-title">{formatNomeEmpresa(dados.nome)}</div>
           {dados.nome_fantasia && dados.nome_fantasia.trim() && dados.nome_fantasia !== dados.nome && (
-            <div className="cfg-form-fantasia">{dados.nome_fantasia}</div>
+            <div className="cfg-form-fantasia">{formatNomeEmpresa(dados.nome_fantasia)}</div>
           )}
           <div className="cfg-form-sub" style={{display:'flex',gap:8,alignItems:'center'}}>
             {dados.cnpj && <span>{formatCNPJ(dados.cnpj)}</span>}
@@ -196,8 +197,8 @@ function DetalheCliente({ cliente, onBack, onAbrirProjeto }) {
           <div className="cfg-group">
             <div className="cfg-group-title">Dados da Empresa</div>
             <div className="usr-info-grid">
-              <InfoCell label="Razão Social" value={dados.nome} />
-              <InfoCell label="Nome Fantasia" value={dados.nome_fantasia} />
+              <InfoCell label="Razão Social" value={formatNomeEmpresa(dados.nome)} />
+              <InfoCell label="Nome Fantasia" value={formatNomeEmpresa(dados.nome_fantasia)} />
               <InfoCell label="CNPJ" value={dados.cnpj ? formatCNPJ(dados.cnpj) : null} />
               <InfoCell label="Segmento" value={dados.segmento} />
               <InfoCell label="Telefone" value={dados.telefone} />
