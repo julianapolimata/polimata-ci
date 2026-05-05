@@ -157,19 +157,30 @@
   margin-bottom: 28px;
 }
 
+.adm-page-eye {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--copper-text, #A6512F);
+  margin-bottom: 6px;
+}
+
 .adm-page-title {
   font-family: 'Raleway', sans-serif;
-  font-size: 22px;
+  font-size: 24px;
   font-weight: 300;
   color: var(--navy, #00203E);
   letter-spacing: .3px;
   margin: 0;
+  line-height: 1.2;
 }
 
 .adm-page-sub {
   font-size: 12px;
-  color: var(--txt2, #64748b);
-  margin-top: 4px;
+  color: var(--lt-text2, #3D5068);
+  margin-top: 6px;
 }
 
 .adm-body {

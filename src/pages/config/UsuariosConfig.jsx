@@ -375,7 +375,7 @@ function NovoUsuarioForm({ clientes, areas, projetos, onSave, onCancel }) {
             <div style={{ fontSize: 11, color: 'var(--txt2)', marginBottom: 4 }}>{papelSel.desc}</div>
             {papelSel.pode?.map((p, i) => (
               <div key={i} style={{ fontSize: 10, color: 'var(--txt3)', padding: '1px 0', display: 'flex', gap: 5, alignItems: 'center' }}>
-                <span style={{ color: papelSel.cor, fontSize: 8 }}>●</span> {p}
+                <span style={{ color: papelSel.cor, fontSize: 10 }}>●</span> {p}
               </div>
             ))}
           </div>
@@ -559,7 +559,7 @@ function EditarUsuarioForm({ usuario, clientes, areas, projetos, onSave, onCance
               <div style={{ fontSize: 11, color: 'var(--txt2)', marginBottom: 4 }}>{papelSel.desc}</div>
               {papelSel.pode?.map((p, i) => (
                 <div key={i} style={{ fontSize: 10, color: 'var(--txt3)', padding: '1px 0', display: 'flex', gap: 5, alignItems: 'center' }}>
-                  <span style={{ color: papelSel.cor, fontSize: 8 }}>●</span> {p}
+                  <span style={{ color: papelSel.cor, fontSize: 10 }}>●</span> {p}
                 </div>
               ))}
             </div>

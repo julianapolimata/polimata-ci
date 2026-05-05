@@ -507,7 +507,7 @@ function AbaEstrutura({ projetoId, areas, subprocessos, onReload }) {
                       <div style={{fontSize:13,color:'var(--txt1)'}}>{a.gerencia || '—'}</div>
                     </div>
                     <div>
-                      <div style={{fontSize:10,fontWeight:600,color:'var(--txt3)',textTransform:'uppercase',letterSpacing:'.4px',marginBottom:4}}>Email da Gerência {a.gerencia_recebe_email_mensal && <span style={{fontSize:9,color:'var(--copper)',marginLeft:4}} title="Recebe e-mail mensal">✉</span>}</div>
+                      <div style={{fontSize:10,fontWeight:600,color:'var(--txt3)',textTransform:'uppercase',letterSpacing:'.4px',marginBottom:4}}>Email da Gerência {a.gerencia_recebe_email_mensal && <span style={{fontSize:10,color:'var(--copper-text)',marginLeft:4,fontWeight:700}} title="Recebe e-mail mensal">✉</span>}</div>
                       <div style={{fontSize:13,color:'var(--txt1)'}}>{a.gerencia_email || '—'}</div>
                     </div>
                   </div>
@@ -519,7 +519,7 @@ function AbaEstrutura({ projetoId, areas, subprocessos, onReload }) {
                       <div style={{fontSize:13,color:'var(--txt1)'}}>{a.resp_area_nome || '—'}</div>
                     </div>
                     <div>
-                      <div style={{fontSize:10,fontWeight:600,color:'var(--txt3)',textTransform:'uppercase',letterSpacing:'.4px',marginBottom:4}}>Email do Responsável {a.resp_area_recebe_email_mensal && <span style={{fontSize:9,color:'var(--copper)',marginLeft:4}} title="Recebe e-mail mensal">✉</span>}</div>
+                      <div style={{fontSize:10,fontWeight:600,color:'var(--txt3)',textTransform:'uppercase',letterSpacing:'.4px',marginBottom:4}}>Email do Responsável {a.resp_area_recebe_email_mensal && <span style={{fontSize:10,color:'var(--copper-text)',marginLeft:4,fontWeight:700}} title="Recebe e-mail mensal">✉</span>}</div>
                       <div style={{fontSize:13,color:'var(--txt1)'}}>{a.resp_area_email || '—'}</div>
                     </div>
                   </div>

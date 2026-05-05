@@ -65,6 +65,7 @@ export default function AdminPanel() {
       <main className="adm-main">
         <div className="adm-content">
           <div className="adm-page-hdr">
+            <div className="adm-page-eye">POLÍMATA · ADMINISTRAÇÃO</div>
             <h1 className="adm-page-title">
               {MENU.find(m => m.id === secao)?.label || 'Admin'}
             </h1>

@@ -26,8 +26,8 @@ export default function Configuracoes() {
     <div className="cfg-wrap">
       <div className="cfg-hdr">
         <div>
-          <h1 className="page-title">Configurações</h1>
-          <p className="page-subtitle">Gestão de clientes, projetos e usuários</p>
+          <div className="dash-eye" style={{ marginBottom: 6 }}>POLÍMATA · CONFIGURAÇÕES</div>
+          <h1 className="page-title" style={{ fontSize: 22, fontWeight: 300, fontFamily: "'Raleway', sans-serif", color: 'var(--lt-text)', letterSpacing: 0.3, margin: 0 }}>Gestão de clientes, projetos e usuários</h1>
         </div>
       </div>
 
