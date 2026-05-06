@@ -35,7 +35,7 @@ const TEMPLATE_COLS = [
   { header: 'Categoria de Controle', width: 22, key: 'cat', hint: 'Mecanismo de controle (lista suspensa)' },
   { header: 'Frequência', width: 18, key: 'freq', hint: 'Frequência de execução (lista suspensa)' },
   { header: 'Natureza', width: 16, key: 'nat', hint: 'Preventivo / Detectivo / Corretivo' },
-  { header: 'Característica', width: 20, key: 'car', hint: 'Manual / Automatizado / Dependente de TI' },
+  { header: 'Característica', width: 20, key: 'car', hint: 'Manual / Automático / Semi-automatizado' },
   { header: 'Sistema', width: 16, key: 'sis', hint: 'Ex: SAP, TOTVS, Excel' },
   { header: 'Tipo de Controle', width: 22, key: 'chave', hint: 'Controle Chave / Controle Compensatório' },
   { header: 'Passos de Teste', width: 42, key: 'passos_f1', hint: 'Procedimentos para testar o controle' },
@@ -44,7 +44,7 @@ const TEMPLATE_COLS = [
   { header: 'Recomendação / Melhoria', width: 42, key: 'rec', hint: 'Sugestões de melhoria' },
   { header: 'Impacto', width: 14, key: 'imp', hint: 'Crítico / Alto / Moderado / Baixo' },
   { header: 'Probabilidade', width: 16, key: 'prob', hint: 'Extrema / Alta / Média / Baixa' },
-  { header: 'Criticidade', width: 18, key: 'crit', hint: '1. Baixo / 2. Moderado / 3. Significativo / 4. Crítico' },
+  { header: 'Criticidade', width: 22, key: 'crit', hint: '1. Baixo / 2. Moderado / 3. Significativo / 4. Crítico / Sem Avaliação' },
 ]
 
 export async function gerarTemplateMRC(clienteNome) {
@@ -178,7 +178,7 @@ export async function gerarTemplateMRC(clienteNome) {
     for (let r = 13; r <= 62; r++) {
       ws.getCell(r, critCol).dataValidation = {
         type: 'list', allowBlank: true,
-        formulae: ['"1. Baixo,2. Moderado,3. Significativo,4. Crítico"'],
+        formulae: ['"1. Baixo,2. Moderado,3. Significativo,4. Crítico,Sem Avaliação"'],
       }
     }
   }
@@ -200,7 +200,7 @@ export async function gerarTemplateMRC(clienteNome) {
     for (let r = 13; r <= 62; r++) {
       ws.getCell(r, carCol).dataValidation = {
         type: 'list', allowBlank: true,
-        formulae: ['"Manual,Automatizado,Dependente de TI"'],
+        formulae: ['"Manual,Automático,Semi-automatizado"'],
       }
     }
   }
@@ -233,7 +233,7 @@ export async function gerarTemplateMRC(clienteNome) {
     for (let r = 13; r <= 62; r++) {
       ws.getCell(r, catCol).dataValidation = {
         type: 'list', allowBlank: true,
-        formulae: ['"Revisão gerencial,Reconciliação,Autorização,Formalização,Configuração,Segregação de função,Relatório de exceção,Acesso ao sistema,Interface/conversão,Políticas/Procedimentos,Indicadores de Performance"'],
+        formulae: ['"Revisão gerencial,Reconciliação,Autorização,Formalização,Configuração,Segregação de função,Relatório de exceção,Acesso Sistêmico,Interface/conversão,Políticas/Procedimentos,Indicadores de Performance"'],
       }
     }
   }
