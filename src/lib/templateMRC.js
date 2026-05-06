@@ -32,12 +32,12 @@ const TEMPLATE_COLS = [
   { header: 'Descrição do Risco', width: 42, key: 'dr', hint: 'Descrição detalhada do risco identificado' },
   { header: 'Ref. Controle', width: 14, key: 'rc', hint: 'Ex: COM-C01' },
   { header: 'Descrição do Controle', width: 42, key: 'dc', hint: 'Descrição detalhada do controle interno' },
-  { header: 'Categoria de Controle', width: 20, key: 'cat', hint: 'Ex: Preventivo, Detectivo, Corretivo' },
-  { header: 'Frequência', width: 16, key: 'freq', hint: 'Ex: Diária, Semanal, Mensal, Anual' },
-  { header: 'Natureza', width: 14, key: 'nat', hint: 'Ex: Manual, Automático, Semi-automático' },
-  { header: 'Característica', width: 16, key: 'car', hint: 'Ex: Quantitativo, Qualitativo' },
+  { header: 'Categoria de Controle', width: 22, key: 'cat', hint: 'Mecanismo de controle (lista suspensa)' },
+  { header: 'Frequência', width: 18, key: 'freq', hint: 'Frequência de execução (lista suspensa)' },
+  { header: 'Natureza', width: 16, key: 'nat', hint: 'Preventivo / Detectivo / Corretivo' },
+  { header: 'Característica', width: 20, key: 'car', hint: 'Manual / Automatizado / Dependente de TI' },
   { header: 'Sistema', width: 16, key: 'sis', hint: 'Ex: SAP, TOTVS, Excel' },
-  { header: 'Controle Chave?', width: 16, key: 'chave', hint: 'Sim / Não' },
+  { header: 'Tipo de Controle', width: 22, key: 'chave', hint: 'Controle Chave / Controle Compensatório' },
   { header: 'Passos de Teste', width: 42, key: 'passos_f1', hint: 'Procedimentos para testar o controle' },
   { header: 'Resultado', width: 16, key: 'r1', hint: 'Efetivo / Inefetivo / GAP' },
   { header: 'Descrição da Inconsistência', width: 42, key: 'incons', hint: 'Descrever se houver inconsistência' },
@@ -183,13 +183,35 @@ export async function gerarTemplateMRC(clienteNome) {
     }
   }
 
-  // Controle Chave
+  // Tipo de Controle (Chave vs Compensatório)
   const chaveCol = TEMPLATE_COLS.findIndex(c => c.key === 'chave') + 1
   if (chaveCol) {
     for (let r = 13; r <= 62; r++) {
       ws.getCell(r, chaveCol).dataValidation = {
         type: 'list', allowBlank: true,
-        formulae: ['"Sim,Não"'],
+        formulae: ['"Controle Chave,Controle Compensatório"'],
+      }
+    }
+  }
+
+  // Característica (Manual / Automatizado / Dependente de TI)
+  const carCol = TEMPLATE_COLS.findIndex(c => c.key === 'car') + 1
+  if (carCol) {
+    for (let r = 13; r <= 62; r++) {
+      ws.getCell(r, carCol).dataValidation = {
+        type: 'list', allowBlank: true,
+        formulae: ['"Manual,Automatizado,Dependente de TI"'],
+      }
+    }
+  }
+
+  // Frequência
+  const freqCol = TEMPLATE_COLS.findIndex(c => c.key === 'freq') + 1
+  if (freqCol) {
+    for (let r = 13; r <= 62; r++) {
+      ws.getCell(r, freqCol).dataValidation = {
+        type: 'list', allowBlank: true,
+        formulae: ['"Sob demanda,Múltiplas vezes ao dia,Diária,Semanal,Quinzenal,Mensal,Trimestral,Semestral,Anual,Bienal"'],
       }
     }
   }
@@ -200,18 +222,18 @@ export async function gerarTemplateMRC(clienteNome) {
     for (let r = 13; r <= 62; r++) {
       ws.getCell(r, natCol).dataValidation = {
         type: 'list', allowBlank: true,
-        formulae: ['"Manual,Automático,Semi-automático"'],
+        formulae: ['"Preventivo,Detectivo,Corretivo"'],
       }
     }
   }
 
-  // Categoria
+  // Categoria de Controle (mecanismos)
   const catCol = TEMPLATE_COLS.findIndex(c => c.key === 'cat') + 1
   if (catCol) {
     for (let r = 13; r <= 62; r++) {
       ws.getCell(r, catCol).dataValidation = {
         type: 'list', allowBlank: true,
-        formulae: ['"Preventivo,Detectivo,Corretivo"'],
+        formulae: ['"Revisão gerencial,Reconciliação,Autorização,Formalização,Configuração,Segregação de função,Relatório de exceção,Acesso ao sistema,Interface/conversão,Políticas/Procedimentos,Indicadores de Performance"'],
       }
     }
   }
