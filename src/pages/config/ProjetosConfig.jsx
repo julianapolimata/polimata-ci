@@ -6,18 +6,18 @@ import { formatNomeEmpresa } from '../../lib/formatNome'
 // F1 Diagnóstico → F2 Implementação → F3 Revisão Integral
 //   → F4 Auditoria Contínua → F5 Auditoria Independente
 const FASES_LABEL = {
-  1: '1 fase · Diagnóstico Inicial',
-  2: '2 fases · Diagnóstico + Implementação',
-  3: '3 fases · + Revisão Integral',
-  4: '4 fases · + Auditoria Contínua',
-  5: '5 fases · Ciclo Completo',
+  1: 'Fase 1 - Diagnóstico Inicial',
+  2: 'Fase 2 - Implementação',
+  3: 'Fase 3 - Revisão Integral',
+  4: 'Fase 4 - Auditoria Contínua',
+  5: 'Fase 5 - Auditoria Independente',
 }
 const FASES_DETALHE = {
-  1: 'F1 — Diagnóstico Inicial. Mapeamento e avaliação dos controles.',
-  2: 'F1 + F2 — Diagnóstico e Implementação (Teste de Desenho e Aderência).',
-  3: 'F1 → F3 — adiciona a Revisão Integral dos controles.',
-  4: 'F1 → F4 — adiciona dois ciclos de Auditoria Contínua.',
-  5: 'F1 → F5 — ciclo completo com Auditoria Independente ao final.',
+  1: 'Projeto vai até a Fase 1. Pode ter apenas indagação (sem teste) ou incluir teste de efetividade — selecione no campo ao lado.',
+  2: 'Projeto vai até a Fase 2 (Implementação) — inclui Teste de Desenho (E1) e Teste de Aderência (E2).',
+  3: 'Projeto vai até a Fase 3 — adiciona a Revisão Integral dos controles após a Implementação.',
+  4: 'Projeto vai até a Fase 4 — adiciona dois ciclos de Auditoria Contínua (C1 e C2).',
+  5: 'Ciclo completo — Fase 5 fecha com a Auditoria Independente.',
 }
 
 export default function ProjetosConfig({ projetoIdInicial }) {
