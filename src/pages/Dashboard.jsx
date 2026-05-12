@@ -212,7 +212,11 @@ function ProjectSelector({ projetos, resumos, perfil, onSelect, signOut, onAdmin
                   <span><strong style={{ color: 'var(--cream)', fontWeight: 500 }}>{r.totalAreas ?? '—'}</strong> áreas</span>
                   {mat && !isDiagP && <span>Maturidade <strong style={{ color: matColor, fontWeight: 600 }}>{mat.nome}</strong></span>}
                   {isDiagP && r.diagnostico && (
-                    <span>Diagnóstico: <strong style={{ color: '#22C55E', fontWeight: 600 }}>{r.diagnostico.existentes}</strong> · <strong style={{ color: '#FACC15', fontWeight: 600 }}>{r.diagnostico.parciais}</strong> · <strong style={{ color: '#EF4444', fontWeight: 600 }}>{r.diagnostico.inexistentes}</strong></span>
+                    <>
+                      <span><strong style={{ color: '#22C55E', fontWeight: 600 }}>{r.diagnostico.existentes}</strong> Existentes</span>
+                      <span><strong style={{ color: '#FACC15', fontWeight: 600 }}>{r.diagnostico.parciais}</strong> Parciais</span>
+                      <span><strong style={{ color: '#EF4444', fontWeight: 600 }}>{r.diagnostico.inexistentes}</strong> Inexistentes</span>
+                    </>
                   )}
                   {r.ultimaAtividade && <span>Últ. atividade: <strong style={{ color: 'var(--cream)', fontWeight: 500 }}>{r.ultimaAtividade}</strong></span>}
                 </div>
