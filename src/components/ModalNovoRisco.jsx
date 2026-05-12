@@ -238,6 +238,71 @@ const ModalNovoRisco = ({ onClose, onSaved, areas, projeto, areaFixa }) => {
     }
   }
 
+  // ═══ SALVAR RASCUNHO (em qualquer passo) ═══
+  async function salvarRascunho() {
+    if (!canAdvanceStep1) {
+      alert('Preencha pelo menos Área, Subprocesso e Descrição do Risco antes de salvar como rascunho.')
+      return
+    }
+    setSaving(true)
+    try {
+      // Se ainda está no passo 1 (não rodou saveStep1), gera rr/rc primeiro
+      let baseData = novoRiscoData
+      if (!baseData?.rr) {
+        const areaObj = areas.find(a => a.id === area)
+        const prefixo = areaObj?.prefixo || 'UNKN'
+        const { data: existentes } = await supabase.from('mrc').select('rr').eq('projeto_id', projeto.id).like('rr', `${prefixo}.%`)
+        const numeros = existentes?.map(e => { const m = e.rr?.match(/\.(\d+)$/); return m ? parseInt(m[1]) : 0 }).filter(n => n > 0) || []
+        const nextNum = Math.max(...numeros, 0) + 1
+        const refRisco = `${prefixo}.${String(nextNum).padStart(2, '0')}`
+        const subObj = subprocessos.find(s => s.nome === subprocesso)
+        baseData = {
+          rr: refRisco, rc: `C.${refRisco}`, sub: subprocesso, subprocesso_id: subObj?.id || null,
+          ger: areaObj?.gerente || '', resp_sub: areaObj?.resp_processo || '',
+          dr: descRisco, area_id: area, projeto_id: projeto.id,
+        }
+      }
+      // Payload: tudo que tiver preenchido + status rascunho
+      const payload = {
+        ...baseData,
+        ...(descControle && { dc: descControle }),
+        ...(cat && { cat }), ...(freq && { freq }), ...(nat && { nat }),
+        ...(car && { car }), ...(sis && { sis }), ...(chave && { chave }),
+        ...(quem && !isAutomatic && { premissa_quem: quem }),
+        ...(quando && { premissa_quando: quando }),
+        ...(porque && { premissa_porque: porque }),
+        ...(como && { premissa_como: como }),
+        ...(onde && { premissa_onde: onde }),
+        ...(resultadoPremissa && { premissa_resultado: resultadoPremissa }),
+        ...(resultado && { r1: resultado }),
+        ...(resultado !== 'efetivo' && inconsistencia && { incons: inconsistencia }),
+        ...(impacto && { imp: parseInt(impacto) }),
+        ...(probabilidade && { prob: parseInt(probabilidade) }),
+        ...(criticidade && { crit: criticidade, crit_label: getCriticidadeLabel(criticidade).label }),
+        status_workflow: 'rascunho',
+        ativo: true,
+      }
+      let saved
+      if (baseData?.id) {
+        const { id, ...up } = payload
+        const { data, error } = await supabase.from('mrc').update(up).eq('id', baseData.id).select()
+        if (error) throw error
+        saved = data?.[0]
+      } else {
+        const { data, error } = await supabase.from('mrc').insert([payload]).select()
+        if (error) throw error
+        saved = data?.[0]
+      }
+      onSaved?.(saved)
+      onClose?.()
+    } catch (err) {
+      console.error('Erro ao salvar rascunho:', err)
+      alert('Erro ao salvar rascunho: ' + (err.message || err))
+    } finally {
+      setSaving(false)
+    }
+  }
+
   // ═══ GERAR FICHA / SALVAR (Passo 3) ═══
   async function gerarFicha(comDownload = true) {
     setSaving(true)
@@ -938,6 +1003,9 @@ const ModalNovoRisco = ({ onClose, onSaved, areas, projeto, areaFixa }) => {
         <div style={{ display: 'flex', gap: 8, padding: 24, borderTop: '1px solid #e5e7eb', background: '#fafbfc' }}>
           <button onClick={onClose} style={{ flex: 1, padding: '12px 16px', border: '1px solid #e5e7eb', borderRadius: 6, fontFamily: 'Montserrat, sans-serif', fontSize: 13, fontWeight: 700, cursor: 'pointer', background: 'white', color: '#00203E' }}>
             Cancelar
+          </button>
+          <button onClick={salvarRascunho} disabled={!canAdvanceStep1 || saving} title="Salva o que estiver preenchido e fecha. Você pode retomar depois pela Matriz." style={{ flex: 1, padding: '12px 16px', border: '1px solid #CC915E', borderRadius: 6, fontFamily: 'Montserrat, sans-serif', fontSize: 13, fontWeight: 700, cursor: 'pointer', background: 'rgba(204,145,94,0.08)', color: '#CC915E', opacity: !canAdvanceStep1 || saving ? 0.5 : 1 }}>
+            💾 Salvar rascunho
           </button>
           {step > 1 && (
             <button onClick={() => setStep(step - 1)} disabled={saving} style={{ flex: 1, padding: '12px 16px', border: '1px solid #e5e7eb', borderRadius: 6, fontFamily: 'Montserrat, sans-serif', fontSize: 13, fontWeight: 700, cursor: 'pointer', background: 'white', color: '#00203E', opacity: saving ? 0.5 : 1 }}>

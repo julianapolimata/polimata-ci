@@ -15,6 +15,7 @@
 
 // ── Constantes de status ──────────────────────────────────────────────────────
 export const STATUS = {
+  RASCUNHO: 'rascunho',
   NAO_INICIADO: 'nao_iniciado',
   EM_ANALISE: 'em_analise',
   TESTE_PENDENTE: 'teste_pendente',
@@ -25,6 +26,7 @@ export const STATUS = {
 
 // ── Configuração visual por status ────────────────────────────────────────────
 const CONFIG_PROFISSIONAL = {
+  rascunho:       { label: 'Rascunho',       color: '#92400E',           bg: 'rgba(234,179,8,0.18)' },
   nao_iniciado:   { label: 'Não Iniciado',   color: 'var(--lt-text3)',   bg: 'rgba(0,32,62,0.05)' },
   em_analise:     { label: 'Em Análise',     color: 'var(--copper)',     bg: 'rgba(204,145,94,0.1)' },
   teste_pendente: { label: 'Teste Pendente', color: '#CA8A04',          bg: 'rgba(234,179,8,0.1)' },
@@ -34,6 +36,7 @@ const CONFIG_PROFISSIONAL = {
 }
 
 const CONFIG_CLIENTE = {
+  rascunho:       { label: 'Rascunho',     color: '#92400E',           bg: 'rgba(234,179,8,0.18)' },
   nao_iniciado:   { label: 'Não Iniciado', color: 'var(--lt-text3)',   bg: 'rgba(0,32,62,0.05)' },
   em_analise:     { label: 'Em Análise',   color: 'var(--copper)',     bg: 'rgba(204,145,94,0.1)' },
   teste_pendente: { label: 'Em Análise',   color: 'var(--copper)',     bg: 'rgba(204,145,94,0.1)' },
