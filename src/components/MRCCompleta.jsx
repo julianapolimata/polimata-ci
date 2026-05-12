@@ -397,12 +397,35 @@ function sortVal(row, k) {
   return row[k] ?? ''
 }
 
-function TabelaMRC({ rows, onOpenModal }) {
+// Badge para coluna F1 quando projeto é Diagnóstico (Existente/Parcial/Inexistente)
+function badgeExistencia(val) {
+  if (!val) return <span style={{ fontSize: 10, color: 'var(--lt-text3)' }}>—</span>
+  const colors = {
+    'Existente': { bg: 'rgba(34,197,94,0.12)', color: '#15803D' },
+    'Parcial': { bg: 'rgba(250,204,21,0.18)', color: '#92400E' },
+    'Inexistente': { bg: 'rgba(239,68,68,0.12)', color: '#991B1B' },
+  }
+  const c = colors[val] || { bg: 'rgba(0,0,0,0.05)', color: 'var(--lt-text2)' }
+  return <span style={{ fontSize: 10, fontWeight: 700, padding: '3px 9px', borderRadius: 999, background: c.bg, color: c.color, textTransform: 'uppercase', letterSpacing: 0.3 }}>{val}</span>
+}
+
+function TabelaMRC({ rows, onOpenModal, isDiagnostico = false }) {
   const [sortCol, setSortCol] = useState(null)
   const [sortDir, setSortDir] = useState('asc')
   const toggle = (k) => { if (sortCol === k) { setSortDir(d => d === 'asc' ? 'desc' : 'asc') } else { setSortCol(k); setSortDir('asc') } }
   const arrow = (k) => sortCol === k ? (sortDir === 'asc' ? ' ▲' : ' ▼') : ''
   const tableRef = useRef(null)
+
+  // Em diagnóstico: esconde "Resultado" (não há teste) e "Fase Atual" (sempre F1)
+  const dataCols = isDiagnostico
+    ? MRC_DATA_COLS.filter(c => c.k !== '_resultado' && c.k !== '_fase_atual')
+    : MRC_DATA_COLS
+
+  // Em diagnóstico: só F1, renomeada "Existência"
+  const faseHdr = isDiagnostico
+    ? [{ h: 'Fase 1\nExistência', bg: '#00203E' }]
+    : MRC_FASE_HDR
+  const faseKeys = isDiagnostico ? ['existencia'] : MRC_FASE_KEYS
 
   const sorted = useMemo(() => {
     if (!sortCol) return rows
@@ -416,16 +439,15 @@ function TabelaMRC({ rows, onOpenModal }) {
   }, [rows, sortCol, sortDir])
 
   const thClick = { cursor: 'pointer', userSelect: 'none' }
-  const tW = MRC_DATA_COLS.reduce((s, c) => s + c.w, 0) + MRC_FASE_HDR.length * FASE_W + 40
   return (<>
     <div ref={tableRef} style={{ flex: 1, overflowX: 'auto', overflowY: 'auto', minHeight: 0 }}>
       <table style={{ width: 'max-content', minWidth: '100%', borderCollapse: 'collapse' }}>
         <thead><tr>
-          {MRC_DATA_COLS.map((col, i) => <th key={i} style={{ ...mrcThS, width: col.w, minWidth: col.w, textAlign: 'center', ...thClick }} onClick={() => toggle(col.k)}>{col.h}{arrow(col.k)}</th>)}
-          {MRC_FASE_HDR.map((f, i) => <th key={`f${i}`} style={{ ...mrcFaseThS, background: f.bg, ...thClick }} onClick={() => toggle(MRC_FASE_KEYS[i])}>{f.h}{arrow(MRC_FASE_KEYS[i])}</th>)}
+          {dataCols.map((col, i) => <th key={i} style={{ ...mrcThS, width: col.w, minWidth: col.w, textAlign: 'center', ...thClick }} onClick={() => toggle(col.k)}>{col.h}{arrow(col.k)}</th>)}
+          {faseHdr.map((f, i) => <th key={`f${i}`} style={{ ...mrcFaseThS, background: f.bg, ...thClick }} onClick={() => toggle(faseKeys[i])}>{f.h}{arrow(faseKeys[i])}</th>)}
         </tr></thead>
         <tbody>
-          {sorted.length === 0 && <tr><td colSpan={18} style={{ textAlign: 'center', padding: 24, color: 'var(--lt-text3)', fontSize: 12 }}>Nenhum controle encontrado com os filtros aplicados.</td></tr>}
+          {sorted.length === 0 && <tr><td colSpan={dataCols.length + faseHdr.length} style={{ textAlign: 'center', padding: 24, color: 'var(--lt-text3)', fontSize: 12 }}>Nenhum controle encontrado com os filtros aplicados.</td></tr>}
           {sorted.map(row => (
             <tr key={row.id} style={{ cursor: 'pointer', ...((row.status_risco === 'evitado' || row.status_risco === 'transferido') ? { opacity: 0.55, fontStyle: 'italic' } : {}) }} onClick={() => onOpenModal(row)} onMouseEnter={e => e.currentTarget.style.background='rgba(204,145,94,0.04)'} onMouseLeave={e => e.currentTarget.style.background=''}>
               <td style={{ ...mrcTdS, width: 95, minWidth: 95, fontSize: 11, color: 'var(--lt-text3)', textAlign: 'center' }}>{fmtDate(row.dt_ult || row.atualizado_em || row.criado_em)}</td>
@@ -435,17 +457,23 @@ function TabelaMRC({ rows, onOpenModal }) {
               <TdMRC w={200}>{row.dr}</TdMRC>
               <td style={{ ...mrcTdS, color: 'var(--copper-text)', fontWeight: 700, width: 90, minWidth: 90, textAlign: 'center' }}>{row.rc}</td>
               <TdMRC w={200}>{row.dc}</TdMRC>
-              <td style={{ ...mrcTdS, width: 90, minWidth: 90, textAlign: 'center' }}>{badgeResultado(getResultadoVitrine(row))}</td>
+              {!isDiagnostico && <td style={{ ...mrcTdS, width: 90, minWidth: 90, textAlign: 'center' }}>{badgeResultado(getResultadoVitrine(row))}</td>}
               <td style={{ ...mrcTdS, width: 110, minWidth: 110, textAlign: 'center' }}>{critBadge(row.crit)}</td>
-              <td style={{ ...mrcTdS, width: 130, minWidth: 130, fontSize: 11, fontWeight: 500, textAlign: 'center' }}>{getFaseLabel(row)}{row.num_regressoes > 0 && <RegressaoBadgeMRC n={row.num_regressoes} />}</td>
+              {!isDiagnostico && <td style={{ ...mrcTdS, width: 130, minWidth: 130, fontSize: 11, fontWeight: 500, textAlign: 'center' }}>{getFaseLabel(row)}{row.num_regressoes > 0 && <RegressaoBadgeMRC n={row.num_regressoes} />}</td>}
               <td style={{ ...mrcTdS, width: 110, minWidth: 110, textAlign: 'center' }}>{(() => { const st = getStatusComputado(row); const cfg = getStatusConfig(st); return <span style={{ fontSize: 10, fontWeight: 700, color: cfg.color, background: cfg.bg, padding: '3px 10px', borderRadius: 999, textTransform: 'uppercase', letterSpacing: 0.4 }}>{cfg.label}</span> })()}</td>
-              <td style={{ ...mrcTdS, width: FASE_W, minWidth: FASE_W, maxWidth: FASE_W, textAlign: 'center' }}>{badgeFaseMRC(faseValMRC(row, 'r1', row.r1))}</td>
-              <td style={{ ...mrcTdS, width: FASE_W, minWidth: FASE_W, maxWidth: FASE_W, textAlign: 'center' }}>{badgeFaseMRC(faseValMRC(row, 'st_pa', row.st_pa))}</td>
-              <td style={{ ...mrcTdS, width: FASE_W, minWidth: FASE_W, maxWidth: FASE_W, textAlign: 'center' }}>{badgeFaseMRC(faseValMRC(row, 'r_ader', row.r_ader))}</td>
-              <td style={{ ...mrcTdS, width: FASE_W, minWidth: FASE_W, maxWidth: FASE_W, textAlign: 'center' }}>{badgeFaseMRC(faseValMRC(row, 'r3', row.r3))}</td>
-              <td style={{ ...mrcTdS, width: FASE_W, minWidth: FASE_W, maxWidth: FASE_W, textAlign: 'center' }}>{badgeFaseMRC(faseValMRC(row, 'r_f4c1', row.r_f4c1))}</td>
-              <td style={{ ...mrcTdS, width: FASE_W, minWidth: FASE_W, maxWidth: FASE_W, textAlign: 'center' }}>{badgeFaseMRC(faseValMRC(row, 'r_f4c2', row.r_f4c2))}</td>
-              <td style={{ ...mrcTdS, width: FASE_W, minWidth: FASE_W, maxWidth: FASE_W, textAlign: 'center' }}>{badgeFaseMRC(faseValMRC(row, 'r_f5', row.r_f5))}</td>
+              {isDiagnostico ? (
+                <td style={{ ...mrcTdS, width: FASE_W, minWidth: FASE_W, maxWidth: FASE_W, textAlign: 'center' }}>{badgeExistencia(row.existencia)}</td>
+              ) : (
+                <>
+                  <td style={{ ...mrcTdS, width: FASE_W, minWidth: FASE_W, maxWidth: FASE_W, textAlign: 'center' }}>{badgeFaseMRC(faseValMRC(row, 'r1', row.r1))}</td>
+                  <td style={{ ...mrcTdS, width: FASE_W, minWidth: FASE_W, maxWidth: FASE_W, textAlign: 'center' }}>{badgeFaseMRC(faseValMRC(row, 'st_pa', row.st_pa))}</td>
+                  <td style={{ ...mrcTdS, width: FASE_W, minWidth: FASE_W, maxWidth: FASE_W, textAlign: 'center' }}>{badgeFaseMRC(faseValMRC(row, 'r_ader', row.r_ader))}</td>
+                  <td style={{ ...mrcTdS, width: FASE_W, minWidth: FASE_W, maxWidth: FASE_W, textAlign: 'center' }}>{badgeFaseMRC(faseValMRC(row, 'r3', row.r3))}</td>
+                  <td style={{ ...mrcTdS, width: FASE_W, minWidth: FASE_W, maxWidth: FASE_W, textAlign: 'center' }}>{badgeFaseMRC(faseValMRC(row, 'r_f4c1', row.r_f4c1))}</td>
+                  <td style={{ ...mrcTdS, width: FASE_W, minWidth: FASE_W, maxWidth: FASE_W, textAlign: 'center' }}>{badgeFaseMRC(faseValMRC(row, 'r_f4c2', row.r_f4c2))}</td>
+                  <td style={{ ...mrcTdS, width: FASE_W, minWidth: FASE_W, maxWidth: FASE_W, textAlign: 'center' }}>{badgeFaseMRC(faseValMRC(row, 'r_f5', row.r_f5))}</td>
+                </>
+              )}
             </tr>
           ))}
         </tbody>
@@ -456,8 +484,9 @@ function TabelaMRC({ rows, onOpenModal }) {
 
 // ─── COMPONENTE PRINCIPAL ────────────────────────────────────────────────────
 
-export default function MRCCompleta({ projetoId, clienteNome, projetoNome, notificacoes, papel }) {
+export default function MRCCompleta({ projetoId, projeto, clienteNome, projetoNome, notificacoes, papel }) {
   const isClienteMRC = papel === 'gestor_cliente' || papel === 'usuario_cliente'
+  const isDiagnostico = projeto?.f1_tem_teste === false
   const [mrc, setMrc] = useState([]); const [areas, setAreas] = useState([]); const [loading, setLoading] = useState(true); const [erro, setErro] = useState(null)
   const [busca, setBusca] = useState(''); const [filtroArea, setFiltroArea] = useState(''); const [filtroCrit, setFiltroCrit] = useState('')
   const [filtroImp, setFiltroImp] = useState(''); const [filtroProb, setFiltroProb] = useState(''); const [filtroR1, setFiltroR1] = useState(''); const [filtroNivel, setFiltroNivel] = useState('')
@@ -487,6 +516,7 @@ export default function MRCCompleta({ projetoId, clienteNome, projetoNome, notif
   // KPIs — iguala padrão PorArea
   const kpis = useMemo(() => {
     let ef = 0, inf = 0, gap = 0, pa = 0
+    let ex = 0, pc = 0, ix = 0, crit = 0
     mrc.forEach(c => {
       const r = (getResultadoVitrine(c) || '').toLowerCase()
       if (r === 'efetivo') ef++
@@ -497,8 +527,13 @@ export default function MRCCompleta({ projetoId, clienteNome, projetoNome, notif
       )
       const paDone = ['efetivo','concluído','concluido','ok'].includes((c.st_pa||'').toLowerCase())
       if (needsPA && !paDone) pa++
+      // Existência (diagnóstico)
+      if (c.existencia === 'Existente') ex++
+      else if (c.existencia === 'Parcial') pc++
+      else if (c.existencia === 'Inexistente') ix++
+      if (c.crit === 4) crit++
     })
-    return { ef, inf, gap, pa }
+    return { ef, inf, gap, pa, ex, pc, ix, crit }
   }, [mrc])
 
   const heatGrid = useMemo(() => {
@@ -522,7 +557,10 @@ export default function MRCCompleta({ projetoId, clienteNome, projetoNome, notif
     if (filtroCrit && r.crit !== parseInt(filtroCrit)) return false
     if (filtroImp && r.imp !== filtroImp) return false
     if (filtroProb && r.prob !== filtroProb) return false
-    if (filtroR1 && getResultadoVitrine(r) !== filtroR1) return false
+    if (filtroR1) {
+      if (isDiagnostico) { if ((r.existencia || '') !== filtroR1) return false }
+      else if (getResultadoVitrine(r) !== filtroR1) return false
+    }
     if (filtroNivel) { const nivel = NIVEIS.find(n => n.id === filtroNivel); if (nivel && getResultadoVitrine(r) !== nivel.resultado) return false }
     if (filtroFase) { const fi = getFaseInfo(r); if (fi.label !== filtroFase) return false }
     if (!isClienteMRC && filtroStatus) { if (getStatusComputado(r) !== filtroStatus) return false }
@@ -609,27 +647,50 @@ export default function MRCCompleta({ projetoId, clienteNome, projetoNome, notif
             <div style={{ ...kpiValorS, color: 'var(--copper)' }}>{areas.length}</div>
             <div style={kpiSubS}>{clienteNome} · {projetoNome}</div>
           </div>
-          <div style={{ background: 'var(--lt-card)', border: '1px solid var(--lt-border)', borderRadius: 12, padding: '12px 14px', borderTop: '3px solid #22C55E', display: 'flex', flexDirection: 'column', justifyContent: 'center', boxShadow: '0 1px 3px rgba(10,37,64,0.06)' }}>
-            <div style={kpiLabelS}>Efetivos</div>
-            <div style={{ ...kpiValorS, color: '#22C55E' }}>{kpis.ef}</div>
-            <div style={kpiSubS}>{mrc.length > 0 ? Math.round(kpis.ef / mrc.length * 100) : 0}% do total</div>
-          </div>
-          <div style={{ background: 'var(--lt-card)', border: '1px solid var(--lt-border)', borderRadius: 12, padding: '12px 14px', borderTop: '3px solid #FACC15', display: 'flex', flexDirection: 'column', justifyContent: 'center', boxShadow: '0 1px 3px rgba(10,37,64,0.06)' }}>
-            <div style={kpiLabelS}>Inefetivos</div>
-            <div style={{ ...kpiValorS, color: '#FACC15' }}>{kpis.inf}</div>
-            <div style={kpiSubS}>Aguardam ação corretiva</div>
-          </div>
-          <div style={{ background: 'var(--lt-card)', border: '1px solid var(--lt-border)', borderRadius: 12, padding: '12px 14px', borderTop: '3px solid #EF4444', display: 'flex', flexDirection: 'column', justifyContent: 'center', boxShadow: '0 1px 3px rgba(10,37,64,0.06)' }}>
-            <div style={kpiLabelS}>GAP</div>
-            <div style={{ ...kpiValorS, color: '#EF4444' }}>{kpis.gap}</div>
-            <div style={kpiSubS}>Riscos sem controle</div>
-          </div>
-          <div style={{ background: 'var(--lt-card)', border: '1px solid var(--lt-border)', borderRadius: 12, padding: '12px 14px', borderTop: 'none', position: 'relative', overflow: 'hidden', display: 'flex', flexDirection: 'column', justifyContent: 'center', boxShadow: '0 1px 3px rgba(10,37,64,0.06)' }}>
-            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3, background: 'linear-gradient(90deg, #CC915E, #A6512F)' }} />
-            <div style={kpiLabelS}>Planos de Ação</div>
-            <div style={{ ...kpiValorS, color: 'var(--copper)' }}>{kpis.pa}</div>
-            <div style={kpiSubS}>Em desenvolvimento</div>
-          </div>
+          {isDiagnostico ? (<>
+            <div style={{ background: 'var(--lt-card)', border: '1px solid var(--lt-border)', borderRadius: 12, padding: '12px 14px', borderTop: '3px solid #22C55E', display: 'flex', flexDirection: 'column', justifyContent: 'center', boxShadow: '0 1px 3px rgba(10,37,64,0.06)' }}>
+              <div style={kpiLabelS}>Existentes</div>
+              <div style={{ ...kpiValorS, color: '#22C55E' }}>{kpis.ex}</div>
+              <div style={kpiSubS}>{mrc.length > 0 ? Math.round(kpis.ex / mrc.length * 100) : 0}% do total</div>
+            </div>
+            <div style={{ background: 'var(--lt-card)', border: '1px solid var(--lt-border)', borderRadius: 12, padding: '12px 14px', borderTop: '3px solid #FACC15', display: 'flex', flexDirection: 'column', justifyContent: 'center', boxShadow: '0 1px 3px rgba(10,37,64,0.06)' }}>
+              <div style={kpiLabelS}>Parciais</div>
+              <div style={{ ...kpiValorS, color: '#FACC15' }}>{kpis.pc}</div>
+              <div style={kpiSubS}>{mrc.length > 0 ? Math.round(kpis.pc / mrc.length * 100) : 0}% do total</div>
+            </div>
+            <div style={{ background: 'var(--lt-card)', border: '1px solid var(--lt-border)', borderRadius: 12, padding: '12px 14px', borderTop: '3px solid #EF4444', display: 'flex', flexDirection: 'column', justifyContent: 'center', boxShadow: '0 1px 3px rgba(10,37,64,0.06)' }}>
+              <div style={kpiLabelS}>Inexistentes</div>
+              <div style={{ ...kpiValorS, color: '#EF4444' }}>{kpis.ix}</div>
+              <div style={kpiSubS}>{mrc.length > 0 ? Math.round(kpis.ix / mrc.length * 100) : 0}% do total</div>
+            </div>
+            <div style={{ background: 'var(--lt-card)', border: '1px solid var(--lt-border)', borderRadius: 12, padding: '12px 14px', borderTop: '3px solid var(--copper)', display: 'flex', flexDirection: 'column', justifyContent: 'center', boxShadow: '0 1px 3px rgba(10,37,64,0.06)' }}>
+              <div style={kpiLabelS}>Riscos Críticos</div>
+              <div style={{ ...kpiValorS, color: 'var(--copper)' }}>{kpis.crit}</div>
+              <div style={kpiSubS}>atenção prioritária</div>
+            </div>
+          </>) : (<>
+            <div style={{ background: 'var(--lt-card)', border: '1px solid var(--lt-border)', borderRadius: 12, padding: '12px 14px', borderTop: '3px solid #22C55E', display: 'flex', flexDirection: 'column', justifyContent: 'center', boxShadow: '0 1px 3px rgba(10,37,64,0.06)' }}>
+              <div style={kpiLabelS}>Efetivos</div>
+              <div style={{ ...kpiValorS, color: '#22C55E' }}>{kpis.ef}</div>
+              <div style={kpiSubS}>{mrc.length > 0 ? Math.round(kpis.ef / mrc.length * 100) : 0}% do total</div>
+            </div>
+            <div style={{ background: 'var(--lt-card)', border: '1px solid var(--lt-border)', borderRadius: 12, padding: '12px 14px', borderTop: '3px solid #FACC15', display: 'flex', flexDirection: 'column', justifyContent: 'center', boxShadow: '0 1px 3px rgba(10,37,64,0.06)' }}>
+              <div style={kpiLabelS}>Inefetivos</div>
+              <div style={{ ...kpiValorS, color: '#FACC15' }}>{kpis.inf}</div>
+              <div style={kpiSubS}>Aguardam ação corretiva</div>
+            </div>
+            <div style={{ background: 'var(--lt-card)', border: '1px solid var(--lt-border)', borderRadius: 12, padding: '12px 14px', borderTop: '3px solid #EF4444', display: 'flex', flexDirection: 'column', justifyContent: 'center', boxShadow: '0 1px 3px rgba(10,37,64,0.06)' }}>
+              <div style={kpiLabelS}>GAP</div>
+              <div style={{ ...kpiValorS, color: '#EF4444' }}>{kpis.gap}</div>
+              <div style={kpiSubS}>Riscos sem controle</div>
+            </div>
+            <div style={{ background: 'var(--lt-card)', border: '1px solid var(--lt-border)', borderRadius: 12, padding: '12px 14px', borderTop: 'none', position: 'relative', overflow: 'hidden', display: 'flex', flexDirection: 'column', justifyContent: 'center', boxShadow: '0 1px 3px rgba(10,37,64,0.06)' }}>
+              <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3, background: 'linear-gradient(90deg, #CC915E, #A6512F)' }} />
+              <div style={kpiLabelS}>Planos de Ação</div>
+              <div style={{ ...kpiValorS, color: 'var(--copper)' }}>{kpis.pa}</div>
+              <div style={kpiSubS}>Em desenvolvimento</div>
+            </div>
+          </>)}
         </div>
       </div>}
 
@@ -638,7 +699,11 @@ export default function MRCCompleta({ projetoId, clienteNome, projetoNome, notif
         <input value={busca} onChange={e => setBusca(e.target.value)} placeholder="Buscar ref., área, risco, controle, inconsistência…" style={{ flex: 1, minWidth: 200, background: 'var(--lt-card)', border: '1px solid var(--lt-border)', borderRadius: 8, padding: '6px 10px', fontFamily: 'inherit', fontSize: 11, outline: 'none', color: 'var(--lt-text)' }} />
         <select value={filtroCrit} onChange={e => setFiltroCrit(e.target.value)} style={{ background: 'var(--lt-card)', border: '1px solid var(--lt-border)', borderRadius: 8, padding: '5px 8px', fontFamily: 'inherit', fontSize: 11, color: 'var(--lt-text2)', cursor: 'pointer', outline: 'none' }}><option value="">Todas criticidades</option><option value="4">Crítico</option><option value="3">Significativo</option><option value="2">Moderado</option><option value="1">Baixo</option></select>
         <select value={filtroFase} onChange={e => setFiltroFase(e.target.value)} style={{ background: 'var(--lt-card)', border: '1px solid var(--lt-border)', borderRadius: 8, padding: '5px 8px', fontFamily: 'inherit', fontSize: 11, color: 'var(--lt-text2)', cursor: 'pointer', outline: 'none' }}><option value="">Todas as fases</option>{fasesDisponiveis.map(f => <option key={f} value={f}>{f}</option>)}</select>
-        <select value={filtroR1} onChange={e => setFiltroR1(e.target.value)} style={{ background: 'var(--lt-card)', border: '1px solid var(--lt-border)', borderRadius: 8, padding: '5px 8px', fontFamily: 'inherit', fontSize: 11, color: 'var(--lt-text2)', cursor: 'pointer', outline: 'none' }}><option value="">Todos resultados</option><option>Efetivo</option><option>Inefetivo</option><option>GAP</option><option>Teste Não Realizado</option></select>
+        {isDiagnostico ? (
+          <select value={filtroR1} onChange={e => setFiltroR1(e.target.value)} style={{ background: 'var(--lt-card)', border: '1px solid var(--lt-border)', borderRadius: 8, padding: '5px 8px', fontFamily: 'inherit', fontSize: 11, color: 'var(--lt-text2)', cursor: 'pointer', outline: 'none' }}><option value="">Todas existências</option><option value="Existente">Existente</option><option value="Parcial">Parcial</option><option value="Inexistente">Inexistente</option></select>
+        ) : (
+          <select value={filtroR1} onChange={e => setFiltroR1(e.target.value)} style={{ background: 'var(--lt-card)', border: '1px solid var(--lt-border)', borderRadius: 8, padding: '5px 8px', fontFamily: 'inherit', fontSize: 11, color: 'var(--lt-text2)', cursor: 'pointer', outline: 'none' }}><option value="">Todos resultados</option><option>Efetivo</option><option>Inefetivo</option><option>GAP</option><option>Teste Não Realizado</option></select>
+        )}
         <select value={filtroSit} onChange={e => setFiltroSit(e.target.value)} style={{ background: 'var(--lt-card)', border: '1px solid var(--lt-border)', borderRadius: 8, padding: '5px 8px', fontFamily: 'inherit', fontSize: 11, color: 'var(--lt-text2)', cursor: 'pointer', outline: 'none' }}><option value="existente">Existentes</option><option value="evitado">Evitados</option><option value="transferido">Transferidos</option><option value="todos">Todos</option></select>
         {!isClienteMRC && <select value={filtroStatus} onChange={e => setFiltroStatus(e.target.value)} style={{ background: 'var(--lt-card)', border: '1px solid var(--copper)', borderRadius: 8, padding: '5px 8px', fontFamily: 'inherit', fontSize: 11, color: 'var(--lt-text2)', cursor: 'pointer', outline: 'none' }} title="Filtro interno Polímata"><option value="">Todos status</option><option value="nao_iniciado">Não Iniciado</option><option value="em_analise">Em Análise</option><option value="teste_pendente">Teste Pendente</option><option value="em_revisao">Em Revisão</option><option value="aprovado">Aprovado</option><option value="reprovado">Devolvido</option></select>}
         {!isClienteMRC && <select value={filtroAcao} onChange={e => setFiltroAcao(e.target.value)} style={{ background: 'var(--lt-card)', border: '1px solid var(--copper)', borderRadius: 8, padding: '5px 8px', fontFamily: 'inherit', fontSize: 11, color: 'var(--lt-text2)', cursor: 'pointer', outline: 'none' }} title="Filtro interno Polímata"><option value="">Todas ações</option>{PROXIMA_ACAO_OPCOES.map(a => <option key={a} value={a}>{a}</option>)}</select>}
