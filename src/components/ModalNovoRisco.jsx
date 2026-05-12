@@ -497,12 +497,12 @@ const ModalNovoRisco = ({ onClose, onSaved, areas, projeto, areaFixa }) => {
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1.5rem' }}>
                   {[
-                    { label: 'Categoria', state: [cat, setCat], options: ['Preventivo', 'Detectivo', 'Corretivo'] },
-                    { label: 'Frequência', state: [freq, setFreq], options: ['Diária', 'Semanal', 'Mensal', 'Trimestral', 'Anual'] },
-                    { label: 'Natureza', state: [nat, setNat], options: ['Preventivo', 'Detectivo', 'N/A'] },
-                    { label: 'Característica', state: [car, setCar], options: ['Manual', 'Semi-automatizado', 'Automatizado', 'N/A'] },
+                    { label: 'Categoria', state: [cat, setCat], options: ['Revisão gerencial', 'Reconciliação', 'Autorização', 'Formalização', 'Configuração', 'Segregação de função', 'Relatório de exceção', 'Acesso Sistêmico', 'Interface/conversão', 'Políticas/Procedimentos', 'Indicadores de Performance'] },
+                    { label: 'Frequência', state: [freq, setFreq], options: ['Sob demanda', 'Múltiplas vezes ao dia', 'Diária', 'Semanal', 'Quinzenal', 'Mensal', 'Trimestral', 'Semestral', 'Anual', 'Bienal'] },
+                    { label: 'Natureza', state: [nat, setNat], options: ['Preventivo', 'Detectivo', 'Corretivo'] },
+                    { label: 'Característica', state: [car, setCar], options: ['Manual', 'Automático', 'Semi-automatizado'] },
                     { label: 'Sistema', state: [sis, setSis], options: sistemas.map(s => s.nome) },
-                    { label: 'Controle Chave', state: [chave, setChave], options: ['Controle Chave', 'Controle Compensatório', 'N/A'] }
+                    { label: 'Controle Chave', state: [chave, setChave], options: ['Controle Chave', 'Controle Compensatório'] }
                   ].map((field, idx) => (
                     <div key={idx}>
                       <label style={{
