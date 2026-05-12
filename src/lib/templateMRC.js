@@ -47,17 +47,47 @@ const TEMPLATE_COLS = [
   { header: 'Criticidade', width: 22, key: 'crit', hint: '1. Baixo / 2. Moderado / 3. Significativo / 4. Crítico / Sem Avaliação' },
 ]
 
-export async function gerarTemplateMRC(clienteNome) {
+// Template para projetos com f1_tem_teste=false (Diagnóstico Apenas)
+// Substitui colunas de teste (Passos, Resultado, Inconsistência, Recomendação)
+// por uma única coluna Existência (Existente/Parcial/Inexistente)
+const TEMPLATE_COLS_DIAG = [
+  { header: 'Data Última Atualização', width: 20, key: 'dt_ult', hint: 'DD/MM/AAAA' },
+  { header: 'Gerência', width: 20, key: 'ger', hint: 'Nome do gerente responsável' },
+  { header: 'Responsável Processo', width: 22, key: 'resp_sub', hint: 'Nome do responsável pelo processo' },
+  { header: 'Processo', width: 22, key: 'area', hint: 'Ex: Compras, Financeiro, RH' },
+  { header: 'Subprocesso', width: 22, key: 'sub', hint: 'Ex: Contas a Pagar' },
+  { header: 'Ref. Risco', width: 14, key: 'rr', hint: 'Ex: R.COM.01' },
+  { header: 'Descrição do Risco', width: 42, key: 'dr', hint: 'Descrição detalhada do risco identificado' },
+  { header: 'Ref. Controle', width: 14, key: 'rc', hint: 'Ex: C.COM.01' },
+  { header: 'Descrição do Controle', width: 42, key: 'dc', hint: 'Descrição detalhada do controle interno' },
+  { header: 'Categoria de Controle', width: 22, key: 'cat', hint: 'Mecanismo de controle (lista suspensa)' },
+  { header: 'Frequência', width: 18, key: 'freq', hint: 'Frequência de execução (lista suspensa)' },
+  { header: 'Natureza', width: 16, key: 'nat', hint: 'Preventivo / Detectivo / Corretivo' },
+  { header: 'Característica', width: 20, key: 'car', hint: 'Manual / Automático / Semi-automatizado' },
+  { header: 'Sistema', width: 16, key: 'sis', hint: 'Ex: SAP, TOTVS, Excel' },
+  { header: 'Tipo de Controle', width: 22, key: 'chave', hint: 'Controle Chave / Controle Compensatório' },
+  { header: 'Existência', width: 18, key: 'existencia', hint: 'Existente / Parcial / Inexistente — declarada na Indagação' },
+  { header: 'Inconsistência (opcional)', width: 36, key: 'incons', hint: 'Observação sobre lacunas, se houver' },
+  { header: 'Recomendação (opcional)', width: 36, key: 'rec', hint: 'Recomendação específica adicional' },
+  { header: 'Impacto', width: 14, key: 'imp', hint: 'Crítico / Alto / Moderado / Baixo' },
+  { header: 'Probabilidade', width: 16, key: 'prob', hint: 'Extrema / Alta / Média / Baixa' },
+  { header: 'Criticidade', width: 22, key: 'crit', hint: '1. Baixo / 2. Moderado / 3. Significativo / 4. Crítico / Sem Avaliação' },
+]
+
+export async function gerarTemplateMRC(clienteNome, projeto) {
   const wb = new ExcelJS.Workbook()
   wb.creator = 'Polímata GRC'
   wb.created = new Date()
 
-  const ws = wb.addWorksheet('MRC Template', {
+  const isDiag = projeto?.f1_tem_teste === false
+  const COLS = isDiag ? TEMPLATE_COLS_DIAG : TEMPLATE_COLS
+
+  const ws = wb.addWorksheet(isDiag ? 'MRC Diagnóstico' : 'MRC Template', {
     views: [{ state: 'frozen', ySplit: 12 }],
   })
 
   // ── Banner Polímata (linhas 1-10) ──
-  const totalCols = TEMPLATE_COLS.length
+  const totalCols = COLS.length
   ws.mergeCells(1, 1, 2, totalCols)
   const titleCell = ws.getCell('A1')
   titleCell.value = 'POLÍMATA GRC'
@@ -104,7 +134,7 @@ export async function gerarTemplateMRC(clienteNome) {
 
   // ── Headers (linha 11) ──
   const headerRow = ws.getRow(11)
-  TEMPLATE_COLS.forEach((col, i) => {
+  COLS.forEach((col, i) => {
     const cell = headerRow.getCell(i + 1)
     cell.value = col.header
     cell.font = HEADER_FONT
@@ -116,7 +146,7 @@ export async function gerarTemplateMRC(clienteNome) {
 
   // ── Hints (linha 12 — cinza claro com dicas) ──
   const hintRow = ws.getRow(12)
-  TEMPLATE_COLS.forEach((col, i) => {
+  COLS.forEach((col, i) => {
     const cell = hintRow.getCell(i + 1)
     cell.value = col.hint
     cell.font = { name: 'Montserrat', size: 8, italic: true, color: { argb: 'FF999999' } }
@@ -129,7 +159,7 @@ export async function gerarTemplateMRC(clienteNome) {
   for (let r = 13; r <= 62; r++) {
     const row = ws.getRow(r)
     const isAlt = (r - 13) % 2 === 1
-    TEMPLATE_COLS.forEach((_, i) => {
+    COLS.forEach((_, i) => {
       const cell = row.getCell(i + 1)
       cell.border = THIN_BORDER
       cell.font = BODY_FONT
@@ -139,8 +169,8 @@ export async function gerarTemplateMRC(clienteNome) {
   }
 
   // ── Data Validation (dropdowns) ──
-  // Resultado
-  const resCol = TEMPLATE_COLS.findIndex(c => c.key === 'r1') + 1
+  // Resultado (só quando há teste)
+  const resCol = COLS.findIndex(c => c.key === 'r1') + 1
   if (resCol) {
     for (let r = 13; r <= 62; r++) {
       ws.getCell(r, resCol).dataValidation = {
@@ -150,8 +180,19 @@ export async function gerarTemplateMRC(clienteNome) {
     }
   }
 
+  // Existência (só em projeto diagnóstico)
+  const exCol = COLS.findIndex(c => c.key === 'existencia') + 1
+  if (exCol) {
+    for (let r = 13; r <= 62; r++) {
+      ws.getCell(r, exCol).dataValidation = {
+        type: 'list', allowBlank: true,
+        formulae: ['"Existente,Parcial,Inexistente"'],
+      }
+    }
+  }
+
   // Impacto
-  const impCol = TEMPLATE_COLS.findIndex(c => c.key === 'imp') + 1
+  const impCol = COLS.findIndex(c => c.key === 'imp') + 1
   if (impCol) {
     for (let r = 13; r <= 62; r++) {
       ws.getCell(r, impCol).dataValidation = {
@@ -162,7 +203,7 @@ export async function gerarTemplateMRC(clienteNome) {
   }
 
   // Probabilidade
-  const probCol = TEMPLATE_COLS.findIndex(c => c.key === 'prob') + 1
+  const probCol = COLS.findIndex(c => c.key === 'prob') + 1
   if (probCol) {
     for (let r = 13; r <= 62; r++) {
       ws.getCell(r, probCol).dataValidation = {
@@ -173,7 +214,7 @@ export async function gerarTemplateMRC(clienteNome) {
   }
 
   // Criticidade
-  const critCol = TEMPLATE_COLS.findIndex(c => c.key === 'crit') + 1
+  const critCol = COLS.findIndex(c => c.key === 'crit') + 1
   if (critCol) {
     for (let r = 13; r <= 62; r++) {
       ws.getCell(r, critCol).dataValidation = {
@@ -184,7 +225,7 @@ export async function gerarTemplateMRC(clienteNome) {
   }
 
   // Tipo de Controle (Chave vs Compensatório)
-  const chaveCol = TEMPLATE_COLS.findIndex(c => c.key === 'chave') + 1
+  const chaveCol = COLS.findIndex(c => c.key === 'chave') + 1
   if (chaveCol) {
     for (let r = 13; r <= 62; r++) {
       ws.getCell(r, chaveCol).dataValidation = {
@@ -195,7 +236,7 @@ export async function gerarTemplateMRC(clienteNome) {
   }
 
   // Característica (Manual / Automatizado / Dependente de TI)
-  const carCol = TEMPLATE_COLS.findIndex(c => c.key === 'car') + 1
+  const carCol = COLS.findIndex(c => c.key === 'car') + 1
   if (carCol) {
     for (let r = 13; r <= 62; r++) {
       ws.getCell(r, carCol).dataValidation = {
@@ -206,7 +247,7 @@ export async function gerarTemplateMRC(clienteNome) {
   }
 
   // Frequência
-  const freqCol = TEMPLATE_COLS.findIndex(c => c.key === 'freq') + 1
+  const freqCol = COLS.findIndex(c => c.key === 'freq') + 1
   if (freqCol) {
     for (let r = 13; r <= 62; r++) {
       ws.getCell(r, freqCol).dataValidation = {
@@ -217,7 +258,7 @@ export async function gerarTemplateMRC(clienteNome) {
   }
 
   // Natureza
-  const natCol = TEMPLATE_COLS.findIndex(c => c.key === 'nat') + 1
+  const natCol = COLS.findIndex(c => c.key === 'nat') + 1
   if (natCol) {
     for (let r = 13; r <= 62; r++) {
       ws.getCell(r, natCol).dataValidation = {
@@ -228,7 +269,7 @@ export async function gerarTemplateMRC(clienteNome) {
   }
 
   // Categoria de Controle (mecanismos)
-  const catCol = TEMPLATE_COLS.findIndex(c => c.key === 'cat') + 1
+  const catCol = COLS.findIndex(c => c.key === 'cat') + 1
   if (catCol) {
     for (let r = 13; r <= 62; r++) {
       ws.getCell(r, catCol).dataValidation = {

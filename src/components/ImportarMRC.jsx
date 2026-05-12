@@ -25,6 +25,16 @@ const COL_MAP = {
   59: 'r_f4c1', 60: 'r_f4c2', 61: 'r_f5',
 }
 
+// Mapeamento para template diagnóstico (TEMPLATE_COLS_DIAG em templateMRC.js)
+// Substitui colunas 17-20 de teste (passos_f1, r1, incons, rec) pela coluna
+// única Existência. Imp/Prob/Crit ficam nas colunas 20-22 (deslocadas).
+const COL_MAP_DIAG = {
+  1:  'dt_ult', 3: 'ger', 4: 'resp_sub', 6: 'sub', 7: 'rr', 8: 'dr',
+  9:  'rc', 10: 'dc', 11: 'cat', 12: 'freq', 13: 'nat', 14: 'car',
+  15: 'sis', 16: 'chave', 17: 'existencia', 18: 'incons', 19: 'rec',
+  20: 'imp', 21: 'prob', 22: 'crit_label',
+}
+
 function parseCrit(val) {
   if (!val) return null
   const s = String(val).trim().toLowerCase()
@@ -152,6 +162,8 @@ export default function ImportarMRC({ projetoId, projeto, areas, onImported, all
     setShowConfirm(false)
     if (!preview || !areaSelecionada || !faseSelecionada || !projetoId) return
     setImporting(true); setResultado(null); setErro(null)
+    const isDiag = projeto?.f1_tem_teste === false
+    const colMap = isDiag ? COL_MAP_DIAG : COL_MAP
     try {
       if (isTodasAreas) {
         // Importar para todas as áreas — apaga TUDO do projeto e insere sem area_id específico
@@ -165,7 +177,7 @@ export default function ImportarMRC({ projetoId, projeto, areas, onImported, all
             const areaMatch = (areas || []).find(a => a.nome.toLowerCase() === areaNomeExcel.toLowerCase())
             if (areaMatch) reg.area_id = areaMatch.id
           }
-          Object.entries(COL_MAP).forEach(([colIdx, field]) => {
+          Object.entries(colMap).forEach(([colIdx, field]) => {
             const val = row[parseInt(colIdx)]; const cleaned = cleanVal(val)
             if (field === 'crit_label') { reg.crit_label = cleaned; reg.crit = parseCrit(cleaned) }
             else if (field === 'imp') reg.imp = normImp(cleaned)
@@ -194,7 +206,7 @@ export default function ImportarMRC({ projetoId, projeto, areas, onImported, all
         if (delError) throw new Error(`Erro ao limpar área: ${delError.message}`)
         const registros = preview.rows.map(row => {
           const reg = { projeto_id: projetoId, area_id: areaObj.id, ativo: true, status_workflow: 'nao_iniciado', criado_por: perfil?.id || null, atualizado_por: perfil?.id || null }
-          Object.entries(COL_MAP).forEach(([colIdx, field]) => {
+          Object.entries(colMap).forEach(([colIdx, field]) => {
             const val = row[parseInt(colIdx)]; const cleaned = cleanVal(val)
             if (field === 'crit_label') { reg.crit_label = cleaned; reg.crit = parseCrit(cleaned) }
             else if (field === 'imp') reg.imp = normImp(cleaned)
@@ -280,7 +292,7 @@ export default function ImportarMRC({ projetoId, projeto, areas, onImported, all
           <div style={{ fontSize: 11, color: 'var(--lt-text3)', lineHeight: 1.5 }}>Planilha vazia com todos os campos e validações de dados (dropdowns). Use como base para o mapeamento de processos antes de importar no sistema.</div>
         </div>
         <button
-          onClick={() => gerarTemplateMRC()}
+          onClick={() => gerarTemplateMRC(undefined, projeto)}
           style={{ background: 'var(--copper)', color: '#fff', border: 'none', borderRadius: 8, padding: '10px 20px', fontSize: 12, fontWeight: 700, fontFamily: 'inherit', cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0 }}
         >
           Baixar Template
