@@ -6,16 +6,16 @@ import { formatNomeEmpresa } from '../../lib/formatNome'
 // F1 Diagnóstico → F2 Implementação → F3 Revisão Integral
 //   → F4 Auditoria Contínua → F5 Auditoria Independente
 const FASES_LABEL = {
-  1: 'Fase 1 - Diagnóstico Inicial',
-  2: 'Fase 2 - Implementação',
-  3: 'Fase 3 - Revisão Integral',
-  4: 'Fase 4 - Auditoria Contínua',
-  5: 'Fase 5 - Auditoria Independente',
+  1: 'Até Fase 1 - Diagnóstico Inicial',
+  2: 'Até Fase 2 - TOD e TOE',
+  3: 'Até Fase 3 - Revisão Integral',
+  4: 'Até Fase 4 - Auditoria Contínua',
+  5: 'Até Fase 5 - Auditoria Independente',
 }
 const FASES_DETALHE = {
   1: 'Projeto vai até a Fase 1. Pode ter apenas indagação (sem teste) ou incluir teste de efetividade — selecione no campo ao lado.',
-  2: 'Projeto vai até a Fase 2 (Implementação) — inclui Teste de Desenho (E1) e Teste de Aderência (E2).',
-  3: 'Projeto vai até a Fase 3 — adiciona a Revisão Integral dos controles após a Implementação.',
+  2: 'Projeto vai até a Fase 2 — Teste Operacional de Desenho (TOD) e Teste Operacional de Efetividade (TOE).',
+  3: 'Projeto vai até a Fase 3 — Revisão Integral dos controles que avançaram (Efetivos na F1 ou na F2).',
   4: 'Projeto vai até a Fase 4 — adiciona dois ciclos de Auditoria Contínua (C1 e C2).',
   5: 'Ciclo completo — Fase 5 fecha com a Auditoria Independente.',
 }
@@ -170,7 +170,7 @@ function NovoProjetoForm({ clientes, perfisPolimata, onSave, onCancel }) {
         <div className="cfg-group-title">Metodologia</div>
         <div className="cfg-form-sub" style={{marginTop:-6,marginBottom:4}}>Configurações que definem o escopo metodológico do projeto</div>
         <div className="cfg-row3">
-          <div className="cfg-field"><label>Fases</label>
+          <div className="cfg-field"><label>Até qual fase o projeto vai?</label>
             <select className="input-light" value={form.num_fases} onChange={e=>u('num_fases',parseInt(e.target.value))}>
               {[1,2,3,4,5].map(n => <option key={n} value={n}>{FASES_LABEL[n]}</option>)}
             </select>
@@ -417,7 +417,7 @@ function AbaCaracteristicas({ dados, perfisPolimata = [], onUpdate, editando, se
         <div className="cfg-group">
           <div className="cfg-group-title">Metodologia</div>
           <div className="usr-info-grid">
-            <InfoCell label="Fases" value={FASES_LABEL[dados.num_fases ?? 5]} />
+            <InfoCell label="Escopo" value={FASES_LABEL[dados.num_fases ?? 5]} />
             <InfoCell label="Inclui teste de efetividade?" value={dados.f1_tem_teste === false ? 'Não — diagnóstico apenas' : 'Sim — F1 inclui teste'} />
             <InfoCell label="Matriz de Calor" value={`${dados.matriz_tamanho??4}×${dados.matriz_tamanho??4}`} />
           </div>
@@ -471,7 +471,7 @@ function AbaCaracteristicas({ dados, perfisPolimata = [], onUpdate, editando, se
       <div className="cfg-group">
         <div className="cfg-group-title">Metodologia</div>
         <div className="cfg-row3">
-          <div className="cfg-field"><label>Fases</label>
+          <div className="cfg-field"><label>Até qual fase o projeto vai?</label>
             <select className="input-light" value={form.num_fases} onChange={e=>u('num_fases',parseInt(e.target.value))}>
               {[1,2,3,4,5].map(n => <option key={n} value={n} disabled={n<faseMinima}>{FASES_LABEL[n]}{n<faseMinima?' (há dados)':''}</option>)}
             </select>
