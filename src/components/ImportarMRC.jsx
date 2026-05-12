@@ -291,10 +291,12 @@ export default function ImportarMRC({ projetoId, projeto, areas, onImported, all
       <div style={{ ...card, marginBottom: 16 }}>
         <div style={secTitle}>Importar MRC por Área</div>
 
-        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, padding: '10px 14px', borderRadius: 8, background: 'rgba(251,191,36,0.12)', border: '1px solid rgba(245,158,11,0.3)', marginBottom: 16 }}>
-          <span style={{ fontSize: 16, lineHeight: 1, flexShrink: 0 }}>⚠</span>
-          <div style={{ fontSize: 11, color: 'var(--lt-text2)', lineHeight: 1.5 }}>
-            <strong>ATENÇÃO:</strong> Esta ação apaga TODOS os controles existentes da área selecionada e insere os do arquivo. Essa operação não pode ser desfeita.
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '12px 16px', borderRadius: 8, background: 'rgba(239,68,68,0.10)', border: '1.5px solid rgba(239,68,68,0.45)', marginBottom: 16 }}>
+          <span style={{ fontSize: 20, lineHeight: 1, flexShrink: 0, color: '#DC2626' }}>⚠</span>
+          <div style={{ fontSize: 11.5, color: 'var(--lt-text2)', lineHeight: 1.55 }}>
+            <strong style={{ color: '#DC2626', fontSize: 12 }}>ATENÇÃO — Importação substitui o conteúdo existente.</strong>
+            <div style={{ marginTop: 4 }}>Esta ação <strong>apaga TODOS os controles atuais da área selecionada</strong> e os substitui pelos do arquivo Excel enviado. Tudo que estiver na área hoje (risco, controle, testes, resultados, recomendações) será <strong>sobreposto</strong>.</div>
+            <div style={{ marginTop: 4, color: '#DC2626', fontWeight: 600 }}>Esta operação é irreversível.</div>
           </div>
         </div>
 
