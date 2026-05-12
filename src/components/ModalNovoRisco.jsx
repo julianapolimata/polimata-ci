@@ -157,7 +157,7 @@ const ModalNovoRisco = ({ onClose, onSaved, areas, projeto, areaFixa }) => {
         .from('mrc')
         .select('rr')
         .eq('projeto_id', projeto.id)
-        .like('rr', `${prefixo}.%`)
+        .like('rr', `R.${prefixo}.%`)
 
       const numeros = existentes
         ?.map(e => {
@@ -167,8 +167,8 @@ const ModalNovoRisco = ({ onClose, onSaved, areas, projeto, areaFixa }) => {
         .filter(n => n > 0) || []
 
       const nextNum = Math.max(...numeros, 0) + 1
-      const refRisco = `${prefixo}.${String(nextNum).padStart(2, '0')}`
-      const refControle = `C.${refRisco}`
+      const refRisco = `R.${prefixo}.${String(nextNum).padStart(2, '0')}`
+      const refControle = `C.${prefixo}.${String(nextNum).padStart(2, '0')}`
 
       const subObj = subprocessos.find(s => s.nome === subprocesso)
       const tempData = {
@@ -251,36 +251,43 @@ const ModalNovoRisco = ({ onClose, onSaved, areas, projeto, areaFixa }) => {
       if (!baseData?.rr) {
         const areaObj = areas.find(a => a.id === area)
         const prefixo = areaObj?.prefixo || 'UNKN'
-        const { data: existentes } = await supabase.from('mrc').select('rr').eq('projeto_id', projeto.id).like('rr', `${prefixo}.%`)
+        const { data: existentes } = await supabase.from('mrc').select('rr').eq('projeto_id', projeto.id).like('rr', `R.${prefixo}.%`)
         const numeros = existentes?.map(e => { const m = e.rr?.match(/\.(\d+)$/); return m ? parseInt(m[1]) : 0 }).filter(n => n > 0) || []
         const nextNum = Math.max(...numeros, 0) + 1
-        const refRisco = `${prefixo}.${String(nextNum).padStart(2, '0')}`
+        const refRisco = `R.${prefixo}.${String(nextNum).padStart(2, '0')}`
+        const refControle = `C.${prefixo}.${String(nextNum).padStart(2, '0')}`
         const subObj = subprocessos.find(s => s.nome === subprocesso)
         baseData = {
-          rr: refRisco, rc: `C.${refRisco}`, sub: subprocesso, subprocesso_id: subObj?.id || null,
+          rr: refRisco, rc: refControle, sub: subprocesso, subprocesso_id: subObj?.id || null,
           ger: areaObj?.gerente || '', resp_sub: areaObj?.resp_processo || '',
           dr: descRisco, area_id: area, projeto_id: projeto.id,
         }
       }
-      // Payload: tudo que tiver preenchido + status rascunho
-      const payload = {
-        ...baseData,
-        ...(descControle && { dc: descControle }),
-        ...(cat && { cat }), ...(freq && { freq }), ...(nat && { nat }),
-        ...(car && { car }), ...(sis && { sis }), ...(chave && { chave }),
-        ...(quem && !isAutomatic && { premissa_quem: quem }),
-        ...(quando && { premissa_quando: quando }),
-        ...(porque && { premissa_porque: porque }),
-        ...(como && { premissa_como: como }),
-        ...(onde && { premissa_onde: onde }),
-        ...(resultadoPremissa && { premissa_resultado: resultadoPremissa }),
-        ...(resultado && { r1: resultado }),
-        ...(resultado !== 'efetivo' && inconsistencia && { incons: inconsistencia }),
-        ...(impacto && { imp: parseInt(impacto) }),
-        ...(probabilidade && { prob: parseInt(probabilidade) }),
-        ...(criticidade && { crit: criticidade, crit_label: getCriticidadeLabel(criticidade).label }),
-        status_workflow: 'rascunho',
-        ativo: true,
+      // Payload: salva só os campos dos steps já visitados pelo usuário.
+      // Campos têm defaults (ex: resultado='inefetivo') que não devem
+      // contaminar um rascunho de passo 1 que nunca viu o passo 3.
+      const payload = { ...baseData, status_workflow: 'rascunho', ativo: true }
+      if (step >= 2) {
+        if (descControle) payload.dc = descControle
+        if (cat) payload.cat = cat
+        if (freq) payload.freq = freq
+        if (nat) payload.nat = nat
+        if (car) payload.car = car
+        if (sis) payload.sis = sis
+        if (chave) payload.chave = chave
+        if (quem && !isAutomatic) payload.premissa_quem = quem
+        if (quando) payload.premissa_quando = quando
+        if (porque) payload.premissa_porque = porque
+        if (como) payload.premissa_como = como
+        if (onde) payload.premissa_onde = onde
+        if (resultadoPremissa) payload.premissa_resultado = resultadoPremissa
+      }
+      if (step >= 3) {
+        if (resultado) payload.r1 = resultado
+        if (resultado !== 'efetivo' && inconsistencia) payload.incons = inconsistencia
+        if (impacto) payload.imp = parseInt(impacto)
+        if (probabilidade) payload.prob = parseInt(probabilidade)
+        if (criticidade) { payload.crit = criticidade; payload.crit_label = getCriticidadeLabel(criticidade).label }
       }
       let saved
       if (baseData?.id) {

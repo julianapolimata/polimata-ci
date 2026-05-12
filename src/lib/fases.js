@@ -203,7 +203,7 @@ export function getStatusComputado(c) {
 
   // Estados explícitos do workflow têm prioridade
   const sw = c.status_workflow
-  if (sw === 'em_revisao' || sw === 'aprovado' || sw === 'reprovado' || sw === 'em_analise' || sw === 'teste_pendente') return sw
+  if (sw === 'rascunho' || sw === 'em_revisao' || sw === 'aprovado' || sw === 'reprovado' || sw === 'em_analise' || sw === 'teste_pendente') return sw
 
   const info = getFaseInfo(c)
 
