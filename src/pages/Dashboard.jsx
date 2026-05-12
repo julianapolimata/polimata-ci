@@ -1248,7 +1248,9 @@ function PorArea({ projeto, areasCalc, todosControles, loading, navigate, loadDa
                       const st = getStatusComputado(c)
                       // Define UMA ação primária por contexto (a "próxima ação" do workflow)
                       let primary = null, secondary = null
-                      if (canEdit && st === 'em_analise') {
+                      if (canEdit && st === 'rascunho') {
+                        primary = { label: '▶ Continuar', color: '#92400E', bg: 'rgba(234,179,8,0.15)', border: 'rgba(234,179,8,0.40)', onClick: () => setAtualizarRow(c) }
+                      } else if (canEdit && st === 'em_analise') {
                         primary = { label: 'Registrar Resultado', color: '#15803D', bg: 'rgba(22,163,74,0.12)', border: 'rgba(22,163,74,0.35)', onClick: () => setRowRegistrarResultado(c) }
                         secondary = { label: '✏ Editar premissas', onClick: () => setAtualizarRow(c) }
                       } else if (isAdmin && st === 'em_revisao') {
