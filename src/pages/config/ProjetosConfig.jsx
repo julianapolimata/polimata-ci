@@ -2,6 +2,24 @@ import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../../lib/supabase'
 import { formatNomeEmpresa } from '../../lib/formatNome'
 
+// ─── Nomenclatura oficial das fases da metodologia Polímata ────────────────
+// F1 Diagnóstico → F2 Implementação → F3 Revisão Integral
+//   → F4 Auditoria Contínua → F5 Auditoria Independente
+const FASES_LABEL = {
+  1: '1 fase · Diagnóstico Inicial',
+  2: '2 fases · Diagnóstico + Implementação',
+  3: '3 fases · + Revisão Integral',
+  4: '4 fases · + Auditoria Contínua',
+  5: '5 fases · Ciclo Completo',
+}
+const FASES_DETALHE = {
+  1: 'F1 — Diagnóstico Inicial. Mapeamento e avaliação dos controles.',
+  2: 'F1 + F2 — Diagnóstico e Implementação (Teste de Desenho e Aderência).',
+  3: 'F1 → F3 — adiciona a Revisão Integral dos controles.',
+  4: 'F1 → F4 — adiciona dois ciclos de Auditoria Contínua.',
+  5: 'F1 → F5 — ciclo completo com Auditoria Independente ao final.',
+}
+
 export default function ProjetosConfig({ projetoIdInicial }) {
   const [clientes, setClientes] = useState([])
   const [perfisPolimata, setPerfisPolimata] = useState([])
@@ -56,7 +74,7 @@ export default function ProjetosConfig({ projetoIdInicial }) {
                   <div className="cfg-card-meta">
                     {formatNomeEmpresa(p.clientes?.nome_fantasia || p.clientes?.nome) || '—'}
                     <span style={{margin:'0 4px',opacity:0.3}}>·</span>
-                    {p.num_fases ?? 5} fases · {(p.matriz_tamanho??4)}×{(p.matriz_tamanho??4)}
+                    {FASES_LABEL[p.num_fases ?? 5]} · {(p.matriz_tamanho??4)}×{(p.matriz_tamanho??4)}
                     {p.ativo ? <span className="badge-ativo">Ativo</span> : <span className="badge-inativo">Inativo</span>}
                   </div>
                 </div>
@@ -154,8 +172,9 @@ function NovoProjetoForm({ clientes, perfisPolimata, onSave, onCancel }) {
         <div className="cfg-row3">
           <div className="cfg-field"><label>Fases</label>
             <select className="input-light" value={form.num_fases} onChange={e=>u('num_fases',parseInt(e.target.value))}>
-              {[1,2,3,4,5].map(n => <option key={n} value={n}>{n} {n===1?'fase':'fases'}</option>)}
+              {[1,2,3,4,5].map(n => <option key={n} value={n}>{FASES_LABEL[n]}</option>)}
             </select>
+            <span style={{fontSize:11,color:'var(--lt-text3)',marginTop:4,display:'block'}}>{FASES_DETALHE[form.num_fases]}</span>
           </div>
           <div className="cfg-field"><label>Inclui teste de efetividade?</label>
             <select className="input-light" value={form.f1_tem_teste?'sim':'nao'} onChange={e=>u('f1_tem_teste',e.target.value==='sim')}>
@@ -398,7 +417,7 @@ function AbaCaracteristicas({ dados, perfisPolimata = [], onUpdate, editando, se
         <div className="cfg-group">
           <div className="cfg-group-title">Metodologia</div>
           <div className="usr-info-grid">
-            <InfoCell label="Fases" value={`${dados.num_fases ?? 5} fases`} />
+            <InfoCell label="Fases" value={FASES_LABEL[dados.num_fases ?? 5]} />
             <InfoCell label="Inclui teste de efetividade?" value={dados.f1_tem_teste === false ? 'Não — diagnóstico apenas' : 'Sim — F1 inclui teste'} />
             <InfoCell label="Matriz de Calor" value={`${dados.matriz_tamanho??4}×${dados.matriz_tamanho??4}`} />
           </div>
@@ -454,8 +473,9 @@ function AbaCaracteristicas({ dados, perfisPolimata = [], onUpdate, editando, se
         <div className="cfg-row3">
           <div className="cfg-field"><label>Fases</label>
             <select className="input-light" value={form.num_fases} onChange={e=>u('num_fases',parseInt(e.target.value))}>
-              {[1,2,3,4,5].map(n => <option key={n} value={n} disabled={n<faseMinima}>{n} {n===1?'fase':'fases'}{n<faseMinima?' (há dados)':''}</option>)}
+              {[1,2,3,4,5].map(n => <option key={n} value={n} disabled={n<faseMinima}>{FASES_LABEL[n]}{n<faseMinima?' (há dados)':''}</option>)}
             </select>
+            <span style={{fontSize:11,color:'var(--lt-text3)',marginTop:4,display:'block'}}>{FASES_DETALHE[form.num_fases]}</span>
             {faseMinima > 1 && <span style={{fontSize:11,color:'var(--copper)',marginTop:4,display:'block'}}>Fase mínima: F{faseMinima}</span>}
           </div>
           <div className="cfg-field"><label>Inclui teste de efetividade?</label>
