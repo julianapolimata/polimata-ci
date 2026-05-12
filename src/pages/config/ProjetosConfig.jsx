@@ -4,6 +4,7 @@ import { formatNomeEmpresa } from '../../lib/formatNome'
 
 export default function ProjetosConfig({ projetoIdInicial }) {
   const [clientes, setClientes] = useState([])
+  const [perfisPolimata, setPerfisPolimata] = useState([])
   const [projetos, setProjetos] = useState([])
   const [projetoSel, setProjetoSel] = useState(null)
   const [modo, setModo] = useState(projetoIdInicial ? 'detalhe' : null)
@@ -13,12 +14,14 @@ export default function ProjetosConfig({ projetoIdInicial }) {
 
   async function loadProjetos() {
     setLoading(true)
-    const [{ data: projs }, { data: cls }] = await Promise.all([
+    const [{ data: projs }, { data: cls }, { data: pfs }] = await Promise.all([
       supabase.from('projetos').select('*, clientes(id, nome, nome_fantasia)').order('nome'),
       supabase.from('clientes').select('id, nome, nome_fantasia').order('nome'),
+      supabase.from('perfis').select('id, nome, papel').in('papel', ['admin_polimata','consultor_polimata']).eq('ativo', true).order('nome'),
     ])
     setProjetos(projs || [])
     setClientes(cls || [])
+    setPerfisPolimata(pfs || [])
     if (projetoIdInicial && !projetoSel) {
       const p = (projs || []).find(x => x.id === projetoIdInicial)
       if (p) { setProjetoSel(p); setModo('detalhe') }
@@ -64,8 +67,8 @@ export default function ProjetosConfig({ projetoIdInicial }) {
           </div>
         </>
       )}
-      {modo === 'novo' && <NovoProjetoForm clientes={clientes} onSave={fechar} onCancel={fechar} />}
-      {modo === 'detalhe' && projetoSel && <DetalheProjeto projeto={projetoSel} onBack={fechar} />}
+      {modo === 'novo' && <NovoProjetoForm clientes={clientes} perfisPolimata={perfisPolimata} onSave={fechar} onCancel={fechar} />}
+      {modo === 'detalhe' && projetoSel && <DetalheProjeto projeto={projetoSel} perfisPolimata={perfisPolimata} onBack={fechar} />}
     </div>
   )
 }
@@ -73,10 +76,12 @@ export default function ProjetosConfig({ projetoIdInicial }) {
 // ══════════════════════════════════════════════════════
 // NOVO PROJETO
 // ══════════════════════════════════════════════════════
-function NovoProjetoForm({ clientes, onSave, onCancel }) {
+function NovoProjetoForm({ clientes, perfisPolimata, onSave, onCancel }) {
   const [form, setForm] = useState({
-    nome: '', cliente_id: '', ativo: true,
-    num_fases: 5, matriz_tamanho: 4,
+    nome: '', cliente_id: '', descricao: '', ativo: true,
+    num_fases: 5, matriz_tamanho: 4, f1_tem_teste: true,
+    data_inicio: '', data_previsao_conclusao: '',
+    consultor_responsavel_id: '',
     sponsor_nome: '', sponsor_sobrenome: '', sponsor_cargo: '', sponsor_email: '',
   })
   const [saving, setSaving] = useState(false)
@@ -86,14 +91,22 @@ function NovoProjetoForm({ clientes, onSave, onCancel }) {
   async function salvar() {
     if (!form.nome.trim()) { setErro('Nome do projeto é obrigatório'); return }
     if (!form.cliente_id) { setErro('Selecione o cliente'); return }
+    if (form.data_inicio && form.data_previsao_conclusao && form.data_previsao_conclusao < form.data_inicio) {
+      setErro('Previsão de conclusão não pode ser anterior à data de início'); return
+    }
     setSaving(true); setErro('')
     try {
       const { error } = await supabase.from('projetos').insert({
         nome: form.nome.trim(),
         cliente_id: form.cliente_id,
+        descricao: form.descricao.trim() || null,
         ativo: form.ativo,
         num_fases: form.num_fases,
         matriz_tamanho: form.matriz_tamanho,
+        f1_tem_teste: form.f1_tem_teste,
+        data_inicio: form.data_inicio || null,
+        data_previsao_conclusao: form.data_previsao_conclusao || null,
+        consultor_responsavel_id: form.consultor_responsavel_id || null,
         sponsor_nome: form.sponsor_nome.trim() || null,
         sponsor_sobrenome: form.sponsor_sobrenome.trim() || null,
         sponsor_cargo: form.sponsor_cargo.trim() || null,
@@ -112,6 +125,7 @@ function NovoProjetoForm({ clientes, onSave, onCancel }) {
       </div>
       {erro && <div className="cfg-erro">{erro}</div>}
 
+      {/* ── Dados do Projeto ── */}
       <div className="cfg-group">
         <div className="cfg-group-title">Dados do Projeto</div>
         <div className="cfg-row2">
@@ -123,28 +137,70 @@ function NovoProjetoForm({ clientes, onSave, onCancel }) {
             </select>
           </div>
         </div>
+        <div className="cfg-field"><label>Descrição</label>
+          <textarea className="input-light" rows={2} value={form.descricao} onChange={e=>u('descricao',e.target.value)} placeholder="Escopo, objetivo ou contexto do projeto (opcional)" style={{resize:'vertical',fontFamily:'inherit'}} />
+        </div>
+        <div className="cfg-field" style={{maxWidth:200}}><label>Status</label>
+          <select className="input-light" value={form.ativo?'ativo':'inativo'} onChange={e=>u('ativo',e.target.value==='ativo')}>
+            <option value="ativo">Ativo</option><option value="inativo">Inativo</option>
+          </select>
+        </div>
+      </div>
+
+      {/* ── Metodologia ── */}
+      <div className="cfg-group">
+        <div className="cfg-group-title">Metodologia</div>
+        <div className="cfg-form-sub" style={{marginTop:-6,marginBottom:4}}>Configurações que definem o escopo metodológico do projeto</div>
         <div className="cfg-row3">
           <div className="cfg-field"><label>Fases</label>
             <select className="input-light" value={form.num_fases} onChange={e=>u('num_fases',parseInt(e.target.value))}>
               {[1,2,3,4,5].map(n => <option key={n} value={n}>{n} {n===1?'fase':'fases'}</option>)}
             </select>
           </div>
+          <div className="cfg-field"><label>Inclui teste de efetividade?</label>
+            <select className="input-light" value={form.f1_tem_teste?'sim':'nao'} onChange={e=>u('f1_tem_teste',e.target.value==='sim')}>
+              <option value="sim">Sim — F1 inclui teste</option>
+              <option value="nao">Não — diagnóstico apenas</option>
+            </select>
+            {!form.f1_tem_teste && <span style={{fontSize:11,color:'var(--copper)',marginTop:4,display:'block'}}>Sem régua de maturidade — entrega = mapa + criticidade + existência</span>}
+          </div>
           <div className="cfg-field"><label>Matriz de Calor</label>
             <select className="input-light" value={form.matriz_tamanho} onChange={e=>u('matriz_tamanho',parseInt(e.target.value))}>
               <option value={4}>4 × 4</option><option value={5}>5 × 5</option>
             </select>
           </div>
-          <div className="cfg-field"><label>Status</label>
-            <select className="input-light" value={form.ativo?'ativo':'inativo'} onChange={e=>u('ativo',e.target.value==='ativo')}>
-              <option value="ativo">Ativo</option><option value="inativo">Inativo</option>
-            </select>
+        </div>
+      </div>
+
+      {/* ── Datas ── */}
+      <div className="cfg-group">
+        <div className="cfg-group-title">Datas</div>
+        <div className="cfg-row2">
+          <div className="cfg-field"><label>Data de Início</label>
+            <input className="input-light" type="date" value={form.data_inicio} onChange={e=>u('data_inicio',e.target.value)} />
+          </div>
+          <div className="cfg-field"><label>Previsão de Conclusão</label>
+            <input className="input-light" type="date" value={form.data_previsao_conclusao} onChange={e=>u('data_previsao_conclusao',e.target.value)} />
           </div>
         </div>
       </div>
 
+      {/* ── Equipe Polímata ── */}
+      <div className="cfg-group">
+        <div className="cfg-group-title">Equipe Polímata</div>
+        <div className="cfg-form-sub" style={{marginTop:-6,marginBottom:4}}>Consultor responsável pela condução do projeto</div>
+        <div className="cfg-field"><label>Consultor Responsável</label>
+          <select className="input-light" value={form.consultor_responsavel_id} onChange={e=>u('consultor_responsavel_id',e.target.value)}>
+            <option value="">— Não atribuído —</option>
+            {perfisPolimata.map(p => <option key={p.id} value={p.id}>{p.nome}{p.papel==='admin_polimata' ? ' (Admin)' : ''}</option>)}
+          </select>
+        </div>
+      </div>
+
+      {/* ── Sponsor ── */}
       <div className="cfg-group">
         <div className="cfg-group-title">Sponsor do Projeto</div>
-        <div className="cfg-form-sub" style={{marginTop:-6,marginBottom:4}}>Responsável executivo que receberá o relatório geral do projeto</div>
+        <div className="cfg-form-sub" style={{marginTop:-6,marginBottom:4}}>Responsável executivo do cliente que receberá o relatório geral</div>
         <div className="cfg-row2">
           <div className="cfg-field"><label>Nome</label><input className="input-light" value={form.sponsor_nome} onChange={e=>u('sponsor_nome',e.target.value)} placeholder="Nome" /></div>
           <div className="cfg-field"><label>Sobrenome</label><input className="input-light" value={form.sponsor_sobrenome} onChange={e=>u('sponsor_sobrenome',e.target.value)} placeholder="Sobrenome" /></div>
@@ -166,7 +222,7 @@ function NovoProjetoForm({ clientes, onSave, onCancel }) {
 // ══════════════════════════════════════════════════════
 // DETALHE PROJETO (abas: Características, Estrutura, Responsáveis)
 // ══════════════════════════════════════════════════════
-function DetalheProjeto({ projeto, onBack }) {
+function DetalheProjeto({ projeto, perfisPolimata = [], onBack }) {
   const [dados, setDados] = useState(null)
   const [areas, setAreas] = useState([])
   const [subprocessos, setSubprocessos] = useState([])
@@ -219,7 +275,7 @@ function DetalheProjeto({ projeto, onBack }) {
       </div>
 
       {aba === 'caract' && (
-        <AbaCaracteristicas dados={dados} onUpdate={loadDados} editando={editandoCaract} setEditando={setEditandoCaract} />
+        <AbaCaracteristicas dados={dados} perfisPolimata={perfisPolimata} onUpdate={loadDados} editando={editandoCaract} setEditando={setEditandoCaract} />
       )}
       {aba === 'estrutura' && (
         <AbaEstrutura projetoId={projeto.id} areas={areas} subprocessos={subprocessos} onReload={loadDados} />
@@ -229,19 +285,25 @@ function DetalheProjeto({ projeto, onBack }) {
 }
 
 // ── Aba Características ──
-function AbaCaracteristicas({ dados, onUpdate, editando, setEditando }) {
+function AbaCaracteristicas({ dados, perfisPolimata = [], onUpdate, editando, setEditando }) {
   const [form, setForm] = useState({})
   const [saving, setSaving] = useState(false)
   const [erro, setErro] = useState('')
   const [temControles, setTemControles] = useState(false)
+  const [temResultadoTeste, setTemResultadoTeste] = useState(false)
   const [faseMinima, setFaseMinima] = useState(1)
 
   useEffect(() => {
     setForm({
       nome: dados.nome || '',
+      descricao: dados.descricao || '',
       ativo: dados.ativo !== false,
       num_fases: dados.num_fases ?? 5,
       matriz_tamanho: dados.matriz_tamanho ?? 4,
+      f1_tem_teste: dados.f1_tem_teste !== false,
+      data_inicio: dados.data_inicio || '',
+      data_previsao_conclusao: dados.data_previsao_conclusao || '',
+      consultor_responsavel_id: dados.consultor_responsavel_id || '',
       sponsor_nome: dados.sponsor_nome || '',
       sponsor_sobrenome: dados.sponsor_sobrenome || '',
       sponsor_cargo: dados.sponsor_cargo || '',
@@ -252,39 +314,72 @@ function AbaCaracteristicas({ dados, onUpdate, editando, setEditando }) {
       const { count } = await supabase.from('mrc').select('id', { count:'exact', head:true }).eq('projeto_id', dados.id)
       const tem = (count || 0) > 0
       setTemControles(tem)
-      if (!tem) return
+      if (!tem) { setFaseMinima(1); setTemResultadoTeste(false); return }
       const { data: rows } = await supabase.from('mrc').select('r1, r_ader, r3, r_f4c1, r_f4c2, r_f5').eq('projeto_id', dados.id)
       let max = 1
+      let temR1 = false
       for (const r of (rows||[])) {
+        if (r.r1 && String(r.r1).trim() !== '') temR1 = true
         if (r.r_f5) { max = 5; break }
         if (r.r_f4c1 || r.r_f4c2) max = Math.max(max, 4)
         if (r.r3) max = Math.max(max, 3)
         if (r.r_ader) max = Math.max(max, 2)
       }
       setFaseMinima(max)
+      setTemResultadoTeste(temR1)
     })()
   }, [dados])
 
   const u = (f, v) => setForm(p => ({ ...p, [f]: v }))
 
+  // Trava: f1_tem_teste true→false só se NÃO há nenhum r1 preenchido
+  const f1TestePodeMudarParaFalse = !temResultadoTeste
+
   async function salvar() {
     if (!form.nome.trim()) { setErro('Nome é obrigatório'); return }
+    if (form.data_inicio && form.data_previsao_conclusao && form.data_previsao_conclusao < form.data_inicio) {
+      setErro('Previsão de conclusão não pode ser anterior à data de início'); return
+    }
     setSaving(true); setErro('')
     try {
       const payload = {
-        nome: form.nome.trim(), ativo: form.ativo,
+        nome: form.nome.trim(),
+        descricao: form.descricao.trim() || null,
+        ativo: form.ativo,
         num_fases: form.num_fases,
+        data_inicio: form.data_inicio || null,
+        data_previsao_conclusao: form.data_previsao_conclusao || null,
+        consultor_responsavel_id: form.consultor_responsavel_id || null,
         sponsor_nome: form.sponsor_nome.trim() || null,
         sponsor_sobrenome: form.sponsor_sobrenome.trim() || null,
         sponsor_cargo: form.sponsor_cargo.trim() || null,
         sponsor_email: form.sponsor_email.trim() || null,
       }
       if (!temControles) payload.matriz_tamanho = form.matriz_tamanho
+      // f1_tem_teste só atualiza se a mudança é permitida
+      if (dados.f1_tem_teste !== form.f1_tem_teste) {
+        if (form.f1_tem_teste === false && !f1TestePodeMudarParaFalse) {
+          throw new Error('Não é possível desativar testes: já existem resultados de teste registrados')
+        }
+        payload.f1_tem_teste = form.f1_tem_teste
+      }
       const { error } = await supabase.from('projetos').update(payload).eq('id', dados.id)
       if (error) throw new Error(error.message)
       setEditando(false); onUpdate()
     } catch(e) { setErro(e.message); setSaving(false) }
   }
+
+  // ── Helpers de visualização ──
+  const fmtDate = (d) => {
+    if (!d) return null
+    const [y,m,day] = String(d).split('-')
+    return `${day}/${m}/${y}`
+  }
+  const consultorNome = (() => {
+    if (!dados.consultor_responsavel_id) return null
+    const p = perfisPolimata.find(x => x.id === dados.consultor_responsavel_id)
+    return p ? `${p.nome}${p.papel==='admin_polimata' ? ' (Admin)' : ''}` : '—'
+  })()
 
   if (!editando) {
     return (
@@ -297,8 +392,28 @@ function AbaCaracteristicas({ dados, onUpdate, editando, setEditando }) {
           <div className="usr-info-grid">
             <InfoCell label="Nome" value={dados.nome} />
             <InfoCell label="Status" value={dados.ativo ? 'Ativo' : 'Inativo'} />
+            <InfoCell label="Descrição" value={dados.descricao} />
+          </div>
+        </div>
+        <div className="cfg-group">
+          <div className="cfg-group-title">Metodologia</div>
+          <div className="usr-info-grid">
             <InfoCell label="Fases" value={`${dados.num_fases ?? 5} fases`} />
+            <InfoCell label="Inclui teste de efetividade?" value={dados.f1_tem_teste === false ? 'Não — diagnóstico apenas' : 'Sim — F1 inclui teste'} />
             <InfoCell label="Matriz de Calor" value={`${dados.matriz_tamanho??4}×${dados.matriz_tamanho??4}`} />
+          </div>
+        </div>
+        <div className="cfg-group">
+          <div className="cfg-group-title">Datas</div>
+          <div className="usr-info-grid">
+            <InfoCell label="Data de Início" value={fmtDate(dados.data_inicio)} />
+            <InfoCell label="Previsão de Conclusão" value={fmtDate(dados.data_previsao_conclusao)} />
+          </div>
+        </div>
+        <div className="cfg-group">
+          <div className="cfg-group-title">Equipe Polímata</div>
+          <div className="usr-info-grid">
+            <InfoCell label="Consultor Responsável" value={consultorNome} />
           </div>
         </div>
         <div className="cfg-group">
@@ -316,6 +431,8 @@ function AbaCaracteristicas({ dados, onUpdate, editando, setEditando }) {
   return (
     <div className="cfg-form" style={{gap:16}}>
       {erro && <div className="cfg-erro">{erro}</div>}
+
+      {/* ── Dados do Projeto ── */}
       <div className="cfg-group">
         <div className="cfg-group-title">Dados do Projeto</div>
         <div className="cfg-row2">
@@ -326,12 +443,30 @@ function AbaCaracteristicas({ dados, onUpdate, editando, setEditando }) {
             </select>
           </div>
         </div>
-        <div className="cfg-row2">
+        <div className="cfg-field"><label>Descrição</label>
+          <textarea className="input-light" rows={2} value={form.descricao} onChange={e=>u('descricao',e.target.value)} placeholder="Escopo, objetivo ou contexto do projeto (opcional)" style={{resize:'vertical',fontFamily:'inherit'}} />
+        </div>
+      </div>
+
+      {/* ── Metodologia ── */}
+      <div className="cfg-group">
+        <div className="cfg-group-title">Metodologia</div>
+        <div className="cfg-row3">
           <div className="cfg-field"><label>Fases</label>
             <select className="input-light" value={form.num_fases} onChange={e=>u('num_fases',parseInt(e.target.value))}>
               {[1,2,3,4,5].map(n => <option key={n} value={n} disabled={n<faseMinima}>{n} {n===1?'fase':'fases'}{n<faseMinima?' (há dados)':''}</option>)}
             </select>
             {faseMinima > 1 && <span style={{fontSize:11,color:'var(--copper)',marginTop:4,display:'block'}}>Fase mínima: F{faseMinima}</span>}
+          </div>
+          <div className="cfg-field"><label>Inclui teste de efetividade?</label>
+            <select className="input-light" value={form.f1_tem_teste?'sim':'nao'} onChange={e=>u('f1_tem_teste',e.target.value==='sim')}>
+              <option value="sim">Sim — F1 inclui teste</option>
+              <option value="nao" disabled={!f1TestePodeMudarParaFalse}>
+                Não — diagnóstico apenas{!f1TestePodeMudarParaFalse?' (já há resultados)':''}
+              </option>
+            </select>
+            {!form.f1_tem_teste && <span style={{fontSize:11,color:'var(--copper)',marginTop:4,display:'block'}}>Sem régua de maturidade — entrega = mapa + criticidade + existência</span>}
+            {!f1TestePodeMudarParaFalse && form.f1_tem_teste && <span style={{fontSize:11,color:'var(--copper)',marginTop:4,display:'block'}}>Travado — já há resultados de teste registrados</span>}
           </div>
           <div className="cfg-field"><label>Matriz de Calor</label>
             {temControles ? (
@@ -345,6 +480,32 @@ function AbaCaracteristicas({ dados, onUpdate, editando, setEditando }) {
           </div>
         </div>
       </div>
+
+      {/* ── Datas ── */}
+      <div className="cfg-group">
+        <div className="cfg-group-title">Datas</div>
+        <div className="cfg-row2">
+          <div className="cfg-field"><label>Data de Início</label>
+            <input className="input-light" type="date" value={form.data_inicio} onChange={e=>u('data_inicio',e.target.value)} />
+          </div>
+          <div className="cfg-field"><label>Previsão de Conclusão</label>
+            <input className="input-light" type="date" value={form.data_previsao_conclusao} onChange={e=>u('data_previsao_conclusao',e.target.value)} />
+          </div>
+        </div>
+      </div>
+
+      {/* ── Equipe Polímata ── */}
+      <div className="cfg-group">
+        <div className="cfg-group-title">Equipe Polímata</div>
+        <div className="cfg-field"><label>Consultor Responsável</label>
+          <select className="input-light" value={form.consultor_responsavel_id} onChange={e=>u('consultor_responsavel_id',e.target.value)}>
+            <option value="">— Não atribuído —</option>
+            {perfisPolimata.map(p => <option key={p.id} value={p.id}>{p.nome}{p.papel==='admin_polimata' ? ' (Admin)' : ''}</option>)}
+          </select>
+        </div>
+      </div>
+
+      {/* ── Sponsor ── */}
       <div className="cfg-group">
         <div className="cfg-group-title">Sponsor do Projeto</div>
         <div className="cfg-row2">
@@ -356,6 +517,7 @@ function AbaCaracteristicas({ dados, onUpdate, editando, setEditando }) {
           <div className="cfg-field"><label>Email</label><input className="input-light" type="email" value={form.sponsor_email} onChange={e=>u('sponsor_email',e.target.value)} /></div>
         </div>
       </div>
+
       <div className="cfg-form-footer">
         <button className="btn-cfg-cancel" onClick={()=>setEditando(false)}>Cancelar</button>
         <button className="btn-cfg-save" onClick={salvar} disabled={saving}>{saving?'Salvando...':'✓ Salvar'}</button>
