@@ -100,6 +100,12 @@ export default function ImportarMRC({ projetoId, projeto, areas, onImported, all
   const [lbLoading, setLbLoading] = useState(false)
   const [lbResult, setLbResult] = useState(null)
 
+  // Apagar TUDO state
+  const [atProjeto, setAtProjeto] = useState('')
+  const [atConfirm, setAtConfirm] = useState('')
+  const [atLoading, setAtLoading] = useState(false)
+  const [atResult, setAtResult] = useState(null)
+
   const isAdmin = perfil?.papel === 'admin_polimata'
   if (!isAdmin && !allowNonAdmin) return null
 
@@ -234,6 +240,21 @@ export default function ImportarMRC({ projetoId, projeto, areas, onImported, all
     setLbLoading(false)
   }
 
+  // ── Apagar TUDO ──
+  const atProjetoNome = projetos.find(p => p.id === atProjeto)?.nome || ''
+  const canApagarTudo = atProjeto && atConfirm === 'APAGAR TUDO'
+  async function handleApagarTudo() {
+    if (!canApagarTudo) return
+    if (!confirm(`ATENÇÃO MÁXIMA: apagar TUDO do projeto "${atProjetoNome}"?\n\nVai remover todos os controles MRC (risco, controle, identificação, resultados). O projeto e as áreas continuam, mas começa do zero.\n\nIRREVERSÍVEL.`)) return
+    setAtLoading(true); setAtResult(null)
+    try {
+      const { data, error } = await supabase.rpc('apagar_mrc_projeto', { p_projeto_id: atProjeto })
+      if (error) throw error
+      setAtResult({ ok: true, dados: data }); setAtConfirm('')
+    } catch (err) { setAtResult({ ok: false, erro: err.message }) }
+    setAtLoading(false)
+  }
+
   const previewCount = preview?.rows?.length || 0
 
   // ── Estilos (variáveis CSS — tema claro) ──
@@ -363,7 +384,7 @@ export default function ImportarMRC({ projetoId, projeto, areas, onImported, all
       {isAdmin && <div style={card}>
         <div style={secTitle}>Limpar Base de Testes</div>
         <div style={{ fontSize: 12, color: 'var(--lt-text2)', lineHeight: 1.5, marginBottom: 14 }}>
-          Remove todos os resultados de testes (F1 a F5), revisões e notificações de um projeto. A identificação dos controles (risco, controle, área) é mantida.
+          Remove todos os resultados de testes (F1 a F5), revisões e notificações de um projeto. A identificação dos controles (risco, controle, área) é <strong>mantida</strong>.
           <br /><strong style={{ color: '#DC2626' }}>Esta ação é irreversível.</strong>
         </div>
 
@@ -392,6 +413,40 @@ export default function ImportarMRC({ projetoId, projeto, areas, onImported, all
               <div><strong style={{ color: '#16A34A' }}>Base limpa com sucesso!</strong><div style={{ marginTop: 4, color: 'var(--lt-text2)' }}>{lbResult.dados?.controles_resetados} controles resetados, {lbResult.dados?.revisoes_removidas} revisões removidas, {lbResult.dados?.notificacoes_removidas} notificações removidas.</div></div>
             ) : (
               <div><strong style={{ color: '#DC2626' }}>Erro:</strong> {lbResult.erro}</div>
+            )}
+          </div>
+        )}
+      </div>}
+
+      {/* ══════ 4. APAGAR TUDO (admin only) ══════ */}
+      {isAdmin && <div style={{ ...card, marginTop: 16, borderColor: '#DC2626', borderWidth: 2 }}>
+        <div style={{ ...secTitle, color: '#DC2626' }}>⚠ Apagar Tudo do Projeto</div>
+        <div style={{ fontSize: 12, color: 'var(--lt-text2)', lineHeight: 1.5, marginBottom: 14 }}>
+          Apaga <strong>TODOS os controles MRC</strong> do projeto — risco, controle, identificação, testes, resultados, recomendações, tudo. Áreas e subprocessos são mantidos. Como se o projeto começasse do zero, pronto pra nova importação.
+          <br /><strong style={{ color: '#DC2626' }}>Esta ação é totalmente irreversível e não pode ser desfeita.</strong>
+        </div>
+        <div style={{ marginBottom: 12 }}>
+          <div style={label}>Projeto</div>
+          <select style={selectS} value={atProjeto} onChange={e => { setAtProjeto(e.target.value); setAtResult(null) }}>
+            <option value="">Selecione um projeto...</option>
+            {projetos.map(p => <option key={p.id} value={p.id}>{p.clientes?.nome ? `${formatNomeEmpresa(p.clientes.nome_fantasia || p.clientes.nome)} — ` : ''}{p.nome}</option>)}
+          </select>
+        </div>
+        {atProjeto && (
+          <div style={{ marginBottom: 14 }}>
+            <div style={label}>Digite <strong>APAGAR TUDO</strong> para confirmar</div>
+            <input style={inputS} value={atConfirm} onChange={e => setAtConfirm(e.target.value)} placeholder="APAGAR TUDO" />
+          </div>
+        )}
+        <button onClick={handleApagarTudo} disabled={!canApagarTudo || atLoading} style={{ background: canApagarTudo ? '#991B1B' : 'var(--lt-border)', color: canApagarTudo ? '#fff' : 'var(--lt-text3)', border: 'none', borderRadius: 6, padding: '10px 24px', fontSize: 12, fontWeight: 700, cursor: canApagarTudo ? 'pointer' : 'not-allowed', opacity: atLoading ? 0.6 : 1, fontFamily: 'inherit' }}>
+          {atLoading ? 'Apagando tudo...' : 'Apagar Tudo'}
+        </button>
+        {atResult && (
+          <div style={{ marginTop: 14, padding: '10px 14px', borderRadius: 6, border: '1px solid', fontSize: 12, background: atResult.ok ? 'rgba(34,197,94,0.08)' : 'rgba(239,68,68,0.08)', borderColor: atResult.ok ? 'rgba(34,197,94,0.2)' : 'rgba(239,68,68,0.2)' }}>
+            {atResult.ok ? (
+              <div><strong style={{ color: '#16A34A' }}>Projeto zerado!</strong><div style={{ marginTop: 4, color: 'var(--lt-text2)' }}>{atResult.dados?.controles_apagados} controles apagados, {atResult.dados?.revisoes_removidas} revisões, {atResult.dados?.notificacoes_removidas} notificações, {atResult.dados?.audit_removido} entradas de auditoria.</div></div>
+            ) : (
+              <div><strong style={{ color: '#DC2626' }}>Erro:</strong> {atResult.erro}</div>
             )}
           </div>
         )}
