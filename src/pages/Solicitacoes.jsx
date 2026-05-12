@@ -1,6 +1,8 @@
 import { useState, useEffect, useMemo } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
+import { exportarSolicitacoesExcel } from '../lib/exportSolicitacoes'
+import { formatNomeEmpresa } from '../lib/formatNome'
 
 // ─── CONSTANTES ───────────────────────────────────────────────────────────
 const STATUS_CFG = {
@@ -104,7 +106,10 @@ export default function Solicitacoes({ projeto }) {
           <div style={S.title}>Solicitações de Evidência</div>
           <div style={S.sub}>{solicitacoes.length} solicita{solicitacoes.length === 1 ? 'ção' : 'ções'} · {projeto?.nome}</div>
         </div>
-        <button onClick={() => setModalNova(true)} style={S.btnPrimary}>+ Nova Solicitação</button>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button onClick={async () => { await exportarSolicitacoesExcel({ solicitacoes: filtradas, controles, areas, clienteNome: formatNomeEmpresa(projeto?.clientes?.nome_fantasia || projeto?.clientes?.nome) || '', projetoNome: projeto?.nome || '' }) }} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'rgba(34,197,94,0.1)', border: '1px solid rgba(34,197,94,0.3)', borderRadius: 8, padding: '8px 14px', fontSize: 12, fontWeight: 700, color: '#16A34A', cursor: 'pointer', fontFamily: 'inherit' }}>📥 Excel</button>
+          <button onClick={() => setModalNova(true)} style={S.btnPrimary}>+ Nova Solicitação</button>
+        </div>
       </div>
 
       {/* KPIs */}
