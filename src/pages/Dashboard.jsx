@@ -1193,6 +1193,7 @@ function PorArea({ projeto, areasCalc, todosControles, loading, navigate, loadDa
                 <select value={filtRes} onChange={e => setFiltRes(e.target.value)} style={PA.filtroSel}><option value="">Todos resultados</option>{ress.map(c => <option key={c} value={c}>{c}</option>)}</select>
                 {!isCliente && <select value={filtStatus} onChange={e => setFiltStatus(e.target.value)} style={{ ...PA.filtroSel, borderColor: 'var(--copper-text)' }} title="Filtro interno Polímata">
                   <option value="">Todos status</option>
+                  <option value="rascunho">Rascunho</option>
                   <option value="nao_iniciado">Não Iniciado</option>
                   <option value="em_analise">Em Análise</option>
                   <option value="teste_pendente">Teste Pendente</option>
