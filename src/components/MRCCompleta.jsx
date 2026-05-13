@@ -534,7 +534,7 @@ function TabelaMRC({ rows, onOpenModal, isDiagnostico = false, projeto }) {
 
   // Em diagnóstico: só F1, renomeada "Existência"
   const faseHdr = isDiagnostico
-    ? [{ h: 'Fase 1\nExistência', bg: '#00203E' }]
+    ? [{ h: 'Fase 1\nDiagnóstico', bg: '#00203E' }]
     : MRC_FASE_HDR
   const faseKeys = isDiagnostico ? ['existencia'] : MRC_FASE_KEYS
 
@@ -555,7 +555,7 @@ function TabelaMRC({ rows, onOpenModal, isDiagnostico = false, projeto }) {
       <table style={{ width: 'max-content', minWidth: '100%', borderCollapse: 'collapse' }}>
         <thead><tr>
           {dataCols.map((col, i) => <th key={i} style={{ ...mrcThS, width: col.w, minWidth: col.w, textAlign: 'center', ...thClick }} onClick={() => toggle(col.k)}>{col.h}{arrow(col.k)}</th>)}
-          {faseHdr.map((f, i) => <th key={`f${i}`} style={{ ...mrcFaseThS, background: f.bg, ...thClick }} onClick={() => toggle(faseKeys[i])}>{f.h}{arrow(faseKeys[i])}</th>)}
+          {faseHdr.map((f, i) => <th key={`f${i}`} style={{ ...mrcFaseThS, background: f.bg, ...(isDiagnostico ? { width: 130, minWidth: 130, maxWidth: 130 } : {}), ...thClick }} onClick={() => toggle(faseKeys[i])}>{f.h}{arrow(faseKeys[i])}</th>)}
         </tr></thead>
         <tbody>
           {sorted.length === 0 && <tr><td colSpan={dataCols.length + faseHdr.length} style={{ textAlign: 'center', padding: 24, color: 'var(--lt-text3)', fontSize: 12 }}>Nenhum controle encontrado com os filtros aplicados.</td></tr>}
@@ -573,7 +573,7 @@ function TabelaMRC({ rows, onOpenModal, isDiagnostico = false, projeto }) {
               {!isDiagnostico && <td style={{ ...mrcTdS, width: 130, minWidth: 130, fontSize: 11, fontWeight: 500, textAlign: 'center' }}>{getFaseLabel(row)}{row.num_regressoes > 0 && <RegressaoBadgeMRC n={row.num_regressoes} />}</td>}
               <td style={{ ...mrcTdS, width: 110, minWidth: 110, textAlign: 'center' }}>{(() => { const st = getStatusComputado(row); const cfg = getStatusConfig(st); return <span style={{ fontSize: 10, fontWeight: 700, color: cfg.color, background: cfg.bg, padding: '3px 10px', borderRadius: 999, textTransform: 'uppercase', letterSpacing: 0.4 }}>{cfg.label}</span> })()}</td>
               {isDiagnostico ? (
-                <td style={{ ...mrcTdS, width: FASE_W, minWidth: FASE_W, maxWidth: FASE_W, textAlign: 'center' }}>{badgeExistencia(row.existencia)}</td>
+                <td style={{ ...mrcTdS, width: 130, minWidth: 130, maxWidth: 130, textAlign: 'center' }}>{badgeExistencia(row.existencia)}</td>
               ) : (
                 <>
                   <td style={{ ...mrcTdS, width: FASE_W, minWidth: FASE_W, maxWidth: FASE_W, textAlign: 'center' }}>{badgeFaseMRC(faseValMRC(row, 'r1', row.r1))}</td>

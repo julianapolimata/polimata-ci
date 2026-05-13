@@ -224,8 +224,30 @@ export default function PorArea({ projeto, areasCalc, todosControles, loading, n
       }}>&#9888;{n}</span>
     )
   }
+  // Badge para diagnóstico (Existente/Parcial/Inexistente)
+  function badgeExistencia(val) {
+    if (!val) return <span style={{ fontSize: 10, fontStyle: 'italic', color: 'var(--lt-text3)' }}>Não iniciado</span>
+    const cores = {
+      'Existente':   { bg: 'rgba(34,197,94,0.12)', color: '#15803D' },
+      'Parcial':     { bg: 'rgba(250,204,21,0.18)', color: '#92400E' },
+      'Inexistente': { bg: 'rgba(239,68,68,0.12)',  color: '#991B1B' },
+    }
+    const c = cores[val] || { bg: 'rgba(0,0,0,0.05)', color: 'var(--lt-text2)' }
+    return <span style={{ fontSize: 10, fontWeight: 700, padding: '3px 9px', borderRadius: 999, background: c.bg, color: c.color, textTransform: 'uppercase', letterSpacing: 0.3 }}>{val}</span>
+  }
+
+  // Quais colunas de fase mostrar conforme o escopo do projeto (num_fases)
+  const numFases = projeto?.num_fases ?? 5
+  const idxFases =
+    numFases >= 5 ? [0, 1, 2, 3, 4, 5, 6] :
+    numFases === 4 ? [0, 1, 2, 3, 4, 5] :
+    numFases === 3 ? [0, 1, 2, 3] :
+    numFases === 2 ? [0, 1, 2] :
+    numFases === 1 ? [0] :
+    [0, 1, 2, 3, 4, 5, 6]
+
   // Headers de fase coloridos
-  const FASE_HDR = [
+  const FASE_HDR_FULL = [
     { h: 'Fase 1\nDiagnóstico', bg: '#00203E' },
     { h: 'Fase 2\nE1 - Desenho', bg: '#1D3B5C' },
     { h: 'Fase 2\nE2 - Efetividade', bg: '#1D3B5C' },
@@ -234,6 +256,18 @@ export default function PorArea({ projeto, areasCalc, todosControles, loading, n
     { h: 'Fase 4\nAI - Ciclo 2', bg: '#660066' },
     { h: 'Fase 5\nAuditoria Indep.', bg: '#A6512F' },
   ]
+  // F1 vira "Diagnóstico" em projeto sem teste de efetividade
+  const F1_HDR = isDiagnostico ? { h: 'Fase 1\nDiagnóstico', bg: '#00203E' } : FASE_HDR_FULL[0]
+  const FASE_HDR = idxFases.map(i => i === 0 ? F1_HDR : FASE_HDR_FULL[i])
+  const FASE_KEYS_VISIVEIS = idxFases.map(i => (isDiagnostico && i === 0) ? 'existencia' : PA_FASE_KEYS[i])
+  // Width por fase: largura padrão 90; em diagnóstico, F1 fica 130 (cabe "INEXISTENTE")
+  const FASE_W_PARA = (idx) => (isDiagnostico && idx === 0) ? 130 : 90
+  // Render de cada fase para uma linha
+  function renderFaseCell(c, idx) {
+    if (isDiagnostico && idx === 0) return badgeExistencia(c.existencia)
+    const key = PA_FASE_KEYS[idx]
+    return badgeFase(faseVal(c, key, c[key]))
+  }
   const FASE_W = 90
   const faseThS = { fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5, color: '#fff', padding: '6px 6px', textAlign: 'center', whiteSpace: 'pre-line', position: 'sticky', top: 0, zIndex: 2, width: FASE_W, minWidth: FASE_W, maxWidth: FASE_W, borderBottom: 'none', borderRadius: '8px 8px 0 0' }
 
@@ -438,7 +472,7 @@ export default function PorArea({ projeto, areasCalc, todosControles, loading, n
             <thead><tr>
               {PA_DATA_COLS.map((col, i) =>
                 <th key={i} style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5, color: 'var(--lt-text3)', background: '#F0F2F5', padding: '12px 12px', textAlign: 'center', whiteSpace: 'nowrap', position: 'sticky', top: 0, zIndex: 2, width: col.w, minWidth: col.w, borderBottom: '1px solid var(--lt-border)', borderRight: '1px solid var(--lt-border)', cursor: 'pointer', userSelect: 'none' }} onClick={() => toggleSort(col.k)}>{col.h}{sortArrow(col.k)}</th>)}
-              {FASE_HDR.map((f, i) => <th key={`f${i}`} style={{ ...faseThS, background: f.bg, borderRight: '1px solid rgba(255,255,255,0.28)', cursor: 'pointer', userSelect: 'none' }} onClick={() => toggleSort(PA_FASE_KEYS[i])}>{f.h}{sortArrow(PA_FASE_KEYS[i])}</th>)}
+              {FASE_HDR.map((f, i) => { const w = FASE_W_PARA(idxFases[i]); return (<th key={`f${i}`} style={{ ...faseThS, width: w, minWidth: w, maxWidth: w, background: f.bg, borderRight: '1px solid rgba(255,255,255,0.28)', cursor: 'pointer', userSelect: 'none' }} onClick={() => toggleSort(FASE_KEYS_VISIVEIS[i])}>{f.h}{sortArrow(FASE_KEYS_VISIVEIS[i])}</th>) })}
               {!isCliente && <th style={{ fontSize: 11, fontWeight: 600, color: 'var(--lt-text3)', background: '#F0F2F5', padding: '12px 12px', position: 'sticky', top: 0, zIndex: 2, width: 120, minWidth: 120, borderBottom: '1px solid var(--lt-border)', textTransform: 'uppercase', letterSpacing: 0.5, textAlign: 'center' }}>Ação</th>}
             </tr></thead>
             <tbody>{cfSorted.map((c, i) => (
@@ -452,13 +486,7 @@ export default function PorArea({ projeto, areasCalc, todosControles, loading, n
                 <td style={{ ...tdS, width: 130, minWidth: 130, fontSize: 11, fontWeight: 500, textAlign: 'center' }}>{getFaseLabel(c)}{c.num_regressoes > 0 && <RegressaoBadge n={c.num_regressoes} />}</td>
                 <td style={{ ...tdS, width: 110, minWidth: 110, textAlign: 'center' }}>{(() => { const st = getStatusComputado(c); const cfg = getStatusBadge(st); return <span style={{ fontSize: 10, fontWeight: 700, color: cfg.color, background: cfg.bg, padding: '3px 10px', borderRadius: 999, textTransform: 'uppercase', letterSpacing: 0.4 }}>{cfg.label}</span> })()}</td>
                 {/* Colunas de fase */}
-                <td style={{ ...tdS, width: FASE_W, minWidth: FASE_W, maxWidth: FASE_W, textAlign: 'center' }}>{badgeFase(faseVal(c, 'r1', c.r1))}</td>
-                <td style={{ ...tdS, width: FASE_W, minWidth: FASE_W, maxWidth: FASE_W, textAlign: 'center' }}>{badgeFase(faseVal(c, 'st_pa', c.st_pa))}</td>
-                <td style={{ ...tdS, width: FASE_W, minWidth: FASE_W, maxWidth: FASE_W, textAlign: 'center' }}>{badgeFase(faseVal(c, 'r_ader', c.r_ader))}</td>
-                <td style={{ ...tdS, width: FASE_W, minWidth: FASE_W, maxWidth: FASE_W, textAlign: 'center' }}>{badgeFase(faseVal(c, 'r3', c.r3))}</td>
-                <td style={{ ...tdS, width: FASE_W, minWidth: FASE_W, maxWidth: FASE_W, textAlign: 'center' }}>{badgeFase(faseVal(c, 'r_f4c1', c.r_f4c1))}</td>
-                <td style={{ ...tdS, width: FASE_W, minWidth: FASE_W, maxWidth: FASE_W, textAlign: 'center' }}>{badgeFase(faseVal(c, 'r_f4c2', c.r_f4c2))}</td>
-                <td style={{ ...tdS, width: FASE_W, minWidth: FASE_W, maxWidth: FASE_W, textAlign: 'center' }}>{badgeFase(faseVal(c, 'r_f5', c.r_f5))}</td>
+                {idxFases.map(idx => { const w = FASE_W_PARA(idx); return (<td key={`fc${idx}`} style={{ ...tdS, width: w, minWidth: w, maxWidth: w, textAlign: 'center' }}>{renderFaseCell(c, idx)}</td>) })}
                 {!isCliente && <td style={{ ...tdS, textAlign: 'center', width: 120, minWidth: 120 }}>
                     {(() => {
                       const st = getStatusComputado(c)
