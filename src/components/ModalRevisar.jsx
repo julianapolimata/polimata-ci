@@ -19,6 +19,7 @@ const ModalRevisar = ({ row, onClose, onAction }) => {
   const [processing, setProcessing] = useState(false)
   const [historico, setHistorico] = useState([])
   const [loadingHist, setLoadingHist] = useState(false)
+  const [submetidoPorNome, setSubmetidoPorNome] = useState(null)
 
   // Bloqueio de auto-revisão — consultor não revisa o que ele mesmo importou/submeteu.
   // Admin sempre pode revisar.
@@ -33,6 +34,12 @@ const ModalRevisar = ({ row, onClose, onAction }) => {
   useEffect(() => {
     if (row?.id) loadHistorico()
   }, [row?.id])
+
+  useEffect(() => {
+    if (!row?.submetido_por) { setSubmetidoPorNome(null); return }
+    supabase.from('perfis').select('nome').eq('id', row.submetido_por).maybeSingle()
+      .then(({ data }) => setSubmetidoPorNome(data?.nome || null))
+  }, [row?.submetido_por])
 
   async function loadHistorico() {
     setLoadingHist(true)
@@ -310,8 +317,46 @@ const ModalRevisar = ({ row, onClose, onAction }) => {
           <div style={S.section}>
             <div style={S.sectionTitle}>Submissão</div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-              <div><div style={S.label}>Submetido por</div><div style={S.value}>{row?.submetido_por || '—'}</div></div>
+              <div><div style={S.label}>Submetido por</div><div style={S.value}>{submetidoPorNome || (row?.submetido_por ? '—' : '—')}</div></div>
               <div><div style={S.label}>Submetido em</div><div style={S.value}>{row?.submetido_em ? new Date(row.submetido_em).toLocaleString('pt-BR') : '—'}</div></div>
+            </div>
+          </div>
+
+          {/* Identificação */}
+          <div style={S.section}>
+            <div style={S.sectionTitle}>Identificação</div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+              <div><div style={S.label}>Ref. Risco</div><div style={S.value}>{row?.rr || '—'}</div></div>
+              <div><div style={S.label}>Ref. Controle</div><div style={S.value}>{row?.rc || '—'}</div></div>
+              <div><div style={S.label}>Área</div><div style={S.value}>{row?.area || '—'}</div></div>
+              <div><div style={S.label}>Subprocesso</div><div style={S.value}>{row?.sub || '—'}</div></div>
+              <div><div style={S.label}>Gerência</div><div style={S.value}>{row?.ger || '—'}</div></div>
+              <div><div style={S.label}>Responsável Processo</div><div style={S.value}>{row?.resp_sub || '—'}</div></div>
+            </div>
+          </div>
+
+          {/* Descrição do Risco */}
+          <div style={S.section}>
+            <div style={S.sectionTitle}>Descrição do Risco</div>
+            <div style={{ ...S.value, whiteSpace: 'pre-wrap' }}>{row?.dr || '—'}</div>
+          </div>
+
+          {/* Descrição do Controle */}
+          <div style={S.section}>
+            <div style={S.sectionTitle}>Descrição do Controle</div>
+            <div style={{ ...S.value, whiteSpace: 'pre-wrap' }}>{row?.dc || '—'}</div>
+          </div>
+
+          {/* Atributos do Controle */}
+          <div style={S.section}>
+            <div style={S.sectionTitle}>Atributos do Controle</div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
+              <div><div style={S.label}>Categoria</div><div style={S.value}>{row?.cat || '—'}</div></div>
+              <div><div style={S.label}>Frequência</div><div style={S.value}>{row?.freq || '—'}</div></div>
+              <div><div style={S.label}>Natureza</div><div style={S.value}>{row?.nat || '—'}</div></div>
+              <div><div style={S.label}>Característica</div><div style={S.value}>{row?.car || '—'}</div></div>
+              <div><div style={S.label}>Sistema</div><div style={S.value}>{row?.sis || '—'}</div></div>
+              <div><div style={S.label}>Controle Chave?</div><div style={S.value}>{row?.chave || '—'}</div></div>
             </div>
           </div>
 
