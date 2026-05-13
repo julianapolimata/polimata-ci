@@ -411,7 +411,7 @@ function AbaCaracteristicas({ dados, perfisPolimata = [], onUpdate, editando, se
           <div className="usr-info-grid">
             <InfoCell label="Nome" value={dados.nome} />
             <InfoCell label="Status" value={dados.ativo ? 'Ativo' : 'Inativo'} />
-            <InfoCell label="Descrição" value={dados.descricao} />
+            <InfoCell label="Descrição" value={dados.descricao} wide />
           </div>
         </div>
         <div className="cfg-group">
@@ -712,8 +712,10 @@ function AbaEstrutura({ projetoId, areas, subprocessos, onReload }) {
                     <div style={{fontSize:10,fontWeight:600,color:'var(--txt3)',textTransform:'uppercase',letterSpacing:'.4px',marginBottom:6}}>Subprocessos</div>
                     {(subsMap[a.id]||[]).length > 0 ? (
                       <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'4px 20px'}}>
-                        {(subsMap[a.id]||[]).map(s => (
-                          <div key={s.id} style={{fontSize:12,color:'var(--txt2)',padding:'4px 0'}}>• {s.nome}</div>
+                        {(subsMap[a.id]||[]).map((s, idx) => (
+                          <div key={s.id} style={{fontSize:12,color:'var(--txt2)',padding:'4px 0'}}>
+                            <span style={{display:'inline-block',minWidth:22,color:'var(--txt3)',fontWeight:600}}>{idx + 1}.</span>{s.nome}
+                          </div>
                         ))}
                       </div>
                     ) : (
@@ -820,11 +822,11 @@ function AreaFormV2({ area, onSave, onCancel, saving, subprocessosExistentes }) 
   )
 }
 
-function InfoCell({ label, value }) {
+function InfoCell({ label, value, wide }) {
   return (
-    <div className="usr-info-cell">
+    <div className="usr-info-cell" style={wide ? { gridColumn: '1 / -1' } : undefined}>
       <div className="usr-info-label">{label}</div>
-      <div className="usr-info-value">{value || <span style={{color:'var(--txt3)',fontStyle:'italic'}}>—</span>}</div>
+      <div className="usr-info-value" style={wide ? { whiteSpace: 'pre-wrap', lineHeight: 1.55 } : undefined}>{value || <span style={{color:'var(--txt3)',fontStyle:'italic'}}>—</span>}</div>
     </div>
   )
 }

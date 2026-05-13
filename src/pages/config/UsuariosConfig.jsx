@@ -138,7 +138,6 @@ export default function UsuariosConfig() {
                 areas={areas}
                 onEditar={() => setEditando(true)}
                 onSuspender={() => suspenderUsuario(selecionado)}
-                onExcluir={() => excluirUsuario(selecionado)}
                 onFechar={fecharModal}
               />
             )}
@@ -152,7 +151,7 @@ export default function UsuariosConfig() {
 // ══════════════════════════════════════════════════════
 // MODAL DE DETALHES (visualização)
 // ══════════════════════════════════════════════════════
-function ModalDetalhes({ usuario, meuperfil, projetos, areas, onEditar, onSuspender, onExcluir, onFechar }) {
+function ModalDetalhes({ usuario, meuperfil, projetos, areas, onEditar, onSuspender, onFechar }) {
   const papel = PAPEIS.find(p => p.value === usuario.papel)
   const suspenso = usuario.ativo === false
   const criadoEm = usuario.criado_em ? new Date(usuario.criado_em).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '—'
@@ -284,7 +283,6 @@ function ModalDetalhes({ usuario, meuperfil, projetos, areas, onEditar, onSuspen
           <button className="usr-btn warning" onClick={onSuspender}>
             {suspenso ? '↺ Reativar' : '⊘ Suspender'}
           </button>
-          <button className="usr-btn danger" onClick={onExcluir}>✕ Excluir</button>
         </div>
       )}
     </>

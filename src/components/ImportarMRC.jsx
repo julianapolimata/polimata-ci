@@ -10,29 +10,24 @@ import { formatNomeEmpresa } from '../lib/formatNome'
 // ══════════════════════════════════════════════════════════════════════════════
 
 const HEADER_ROW = 11
-const DATA_START_ROW = 12
-const PREVIEW_COL_PROCESSO = 5
+const DATA_START_ROW = 13
+const PREVIEW_COL_PROCESSO = 3
 
 const COL_MAP = {
-  1:  'dt_ult', 3: 'ger', 4: 'resp_sub', 6: 'sub', 7: 'rr', 8: 'dr',
-  9:  'rc', 10: 'dc', 11: 'cat', 12: 'freq', 13: 'nat', 14: 'car',
-  15: 'sis', 16: 'chave', 17: 'passos_f1', 18: 'r1', 19: 'incons',
-  20: 'rec', 21: 'imp', 22: 'prob', 23: 'crit_label',
-  29: 'dem_pa', 30: 'resp_pa', 31: 'dt_pa', 33: 'st_pa', 34: 'coment_pa',
-  35: 'dt_teste', 36: 'dc_novo', 44: 'r_ader', 45: 'melhoria',
-  46: 'incons_ader', 47: 'coment_ader', 50: 'status_risco',
-  56: 'r3', 57: 'incons_f3', 58: 'rec_f3',
-  59: 'r_f4c1', 60: 'r_f4c2', 61: 'r_f5',
+  0: 'dt_ult', 1: 'ger', 2: 'resp_sub', 4: 'sub', 5: 'rr', 6: 'dr',
+  7: 'rc', 8: 'dc', 9: 'cat', 10: 'freq', 11: 'nat', 12: 'car',
+  13: 'sis', 14: 'chave', 15: 'passos_f1', 16: 'r1', 17: 'incons',
+  18: 'rec', 19: 'imp', 20: 'prob', 21: 'crit_label',
 }
 
 // Mapeamento para template diagnóstico (TEMPLATE_COLS_DIAG em templateMRC.js)
 // Substitui colunas 17-20 de teste (passos_f1, r1, incons, rec) pela coluna
 // única Existência. Imp/Prob/Crit ficam nas colunas 20-22 (deslocadas).
 const COL_MAP_DIAG = {
-  1:  'dt_ult', 3: 'ger', 4: 'resp_sub', 6: 'sub', 7: 'rr', 8: 'dr',
-  9:  'rc', 10: 'dc', 11: 'cat', 12: 'freq', 13: 'nat', 14: 'car',
-  15: 'sis', 16: 'chave', 17: 'existencia', 18: 'incons', 19: 'rec',
-  20: 'imp', 21: 'prob', 22: 'crit_label',
+  0: 'dt_ult', 1: 'ger', 2: 'resp_sub', 4: 'sub', 5: 'rr', 6: 'dr',
+  7: 'rc', 8: 'dc', 9: 'cat', 10: 'freq', 11: 'nat', 12: 'car',
+  13: 'sis', 14: 'chave', 15: 'existencia', 16: 'incons', 17: 'rec',
+  18: 'imp', 19: 'prob', 20: 'crit_label',
 }
 
 function parseCrit(val) {
@@ -150,7 +145,7 @@ export default function ImportarMRC({ projetoId, projeto, areas, onImported, all
           vals[colNumber - 1] = v
           if (v !== null && v !== undefined && String(v).trim() !== '') hasData = true
         })
-        if (hasData && vals[7]) rows.push(vals)
+        if (hasData && vals[5]) rows.push(vals)
       }
       setPreview({ rows })
     } catch (err) { setErro(`Erro ao ler arquivo: ${err.message}`) }
@@ -172,7 +167,7 @@ export default function ImportarMRC({ projetoId, projeto, areas, onImported, all
         const registros = preview.rows.map(row => {
           const reg = { projeto_id: projetoId, ativo: true, status_workflow: 'nao_iniciado', criado_por: perfil?.id || null, atualizado_por: perfil?.id || null }
           // Tentar vincular à área pelo nome do processo (coluna 2 = área)
-          const areaNomeExcel = cleanVal(row[2])
+          const areaNomeExcel = cleanVal(row[3])
           if (areaNomeExcel) {
             const areaMatch = (areas || []).find(a => a.nome.toLowerCase() === areaNomeExcel.toLowerCase())
             if (areaMatch) reg.area_id = areaMatch.id
@@ -357,13 +352,13 @@ export default function ImportarMRC({ projetoId, projeto, areas, onImported, all
                   {preview.rows.slice(0, 20).map((row, i) => (
                     <tr key={i} style={{ background: i % 2 ? 'rgba(0,32,62,0.02)' : 'transparent' }}>
                       <td style={{ padding: '6px 10px', borderBottom: '1px solid var(--lt-border)', color: 'var(--lt-text3)', fontSize: 11 }}>{i + 1}</td>
+                      <td style={{ padding: '6px 10px', borderBottom: '1px solid var(--lt-border)', color: 'var(--copper)', fontWeight: 600, fontSize: 11 }}>{row[5] || '—'}</td>
                       <td style={{ padding: '6px 10px', borderBottom: '1px solid var(--lt-border)', color: 'var(--copper)', fontWeight: 600, fontSize: 11 }}>{row[7] || '—'}</td>
-                      <td style={{ padding: '6px 10px', borderBottom: '1px solid var(--lt-border)', color: 'var(--copper)', fontWeight: 600, fontSize: 11 }}>{row[9] || '—'}</td>
                       <td style={{ padding: '6px 10px', borderBottom: '1px solid var(--lt-border)', color: 'var(--lt-text2)', fontSize: 11 }}>{row[PREVIEW_COL_PROCESSO] || '—'}</td>
-                      <td style={{ padding: '6px 10px', borderBottom: '1px solid var(--lt-border)', color: 'var(--lt-text2)', fontSize: 11 }}>{row[6] || '—'}</td>
-                      <td style={{ padding: '6px 10px', borderBottom: '1px solid var(--lt-border)', color: 'var(--lt-text2)', fontSize: 11 }}>{row[18] || '—'}</td>
-                      <td style={{ padding: '6px 10px', borderBottom: '1px solid var(--lt-border)', color: 'var(--lt-text2)', fontSize: 11 }}>{row[21] || '—'}</td>
-                      <td style={{ padding: '6px 10px', borderBottom: '1px solid var(--lt-border)', color: 'var(--lt-text2)', fontSize: 11 }}>{row[23] || '—'}</td>
+                      <td style={{ padding: '6px 10px', borderBottom: '1px solid var(--lt-border)', color: 'var(--lt-text2)', fontSize: 11 }}>{row[4] || '—'}</td>
+                      <td style={{ padding: '6px 10px', borderBottom: '1px solid var(--lt-border)', color: 'var(--lt-text2)', fontSize: 11 }}>{row[16] || row[15] || '—'}</td>
+                      <td style={{ padding: '6px 10px', borderBottom: '1px solid var(--lt-border)', color: 'var(--lt-text2)', fontSize: 11 }}>{row[19] || row[18] || '—'}</td>
+                      <td style={{ padding: '6px 10px', borderBottom: '1px solid var(--lt-border)', color: 'var(--lt-text2)', fontSize: 11 }}>{row[21] || row[20] || '—'}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -379,7 +374,7 @@ export default function ImportarMRC({ projetoId, projeto, areas, onImported, all
             <div style={{ fontSize: 12, color: 'var(--lt-text2)', lineHeight: 1.5 }}>
               Importar <strong>{previewCount} controles</strong> para <strong>"{areaNome}"</strong> na fase <strong>{faseLabel}</strong>?
               <br />{isTodasAreas ? 'Todos os controles do projeto serão removidos.' : 'Todos os controles existentes dessa área serão removidos.'}
-              {!isTodasAreas && preview.rows[0]?.[3] && <><br />Gerente será atualizado para: <strong>{preview.rows[0][3]}</strong></>}
+              {!isTodasAreas && preview.rows[0]?.[1] && <><br />Gerente será atualizado para: <strong>{preview.rows[0][1]}</strong></>}
             </div>
             <button onClick={() => setShowConfirm(true)} disabled={importing} style={{ background: 'var(--copper)', color: '#fff', border: 'none', borderRadius: 6, padding: '10px 24px', fontSize: 12, fontWeight: 700, fontFamily: 'inherit', cursor: 'pointer', whiteSpace: 'nowrap', opacity: importing ? 0.5 : 1 }}>
               {importing ? 'Importando...' : `Importar ${previewCount} controles`}
@@ -474,15 +469,15 @@ export default function ImportarMRC({ projetoId, projeto, areas, onImported, all
             <div style={{ fontSize: 16, fontWeight: 700, color: '#D97706', marginBottom: 12 }}>Confirmar importação</div>
             <div style={{ fontSize: 13, color: 'var(--lt-text2)', lineHeight: 1.6, marginBottom: 24, textAlign: 'left' }}>
               {isTodasAreas
-                ? <>Todos os controles do projeto serão <span style={{ color: 'var(--res-gp)', fontWeight: 700 }}>permanentemente apagados</span> e substituídos pelos <strong>{previewCount} controles</strong> do arquivo.</>
-                : <>Todos os controles existentes da área <strong>"{areaNome}"</strong> serão <span style={{ color: 'var(--res-gp)', fontWeight: 700 }}>permanentemente apagados</span> e substituídos pelos <strong>{previewCount} controles</strong> do arquivo.</>
+                ? <>Todos os controles do projeto serão <span style={{ color: '#DC2626', fontWeight: 700 }}>permanentemente apagados</span> e substituídos pelos <strong>{previewCount} controles</strong> do arquivo.</>
+                : <>Todos os controles existentes da área <strong>"{areaNome}"</strong> serão <span style={{ color: '#DC2626', fontWeight: 700 }}>permanentemente apagados</span> e substituídos pelos <strong>{previewCount} controles</strong> do arquivo.</>
               }
               <br /><br />Fase: <strong>{faseLabel}</strong>
               <br /><br /><strong>Essa ação não pode ser desfeita.</strong>
             </div>
             <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
               <button onClick={() => setShowConfirm(false)} style={{ background: 'transparent', color: 'var(--lt-text2)', border: '1px solid var(--lt-border)', borderRadius: 6, padding: '10px 24px', fontSize: 12, fontWeight: 600, fontFamily: 'inherit', cursor: 'pointer' }}>Cancelar</button>
-              <button onClick={handleImportar} style={{ background: 'var(--res-gp)', color: '#fff', border: 'none', borderRadius: 6, padding: '10px 24px', fontSize: 12, fontWeight: 700, fontFamily: 'inherit', cursor: 'pointer' }}>Sim, apagar e importar</button>
+              <button onClick={handleImportar} style={{ background: '#DC2626', color: '#fff', border: 'none', borderRadius: 6, padding: '10px 24px', fontSize: 12, fontWeight: 700, fontFamily: 'inherit', cursor: 'pointer' }}>Sim, apagar e importar</button>
             </div>
           </div>
         </div>
