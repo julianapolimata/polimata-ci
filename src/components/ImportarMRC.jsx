@@ -165,7 +165,7 @@ export default function ImportarMRC({ projetoId, projeto, areas, onImported, all
         const { error: delError } = await supabase.from('mrc').delete().eq('projeto_id', projetoId)
         if (delError) throw new Error(`Erro ao limpar projeto: ${delError.message}`)
         const registros = preview.rows.map(row => {
-          const reg = { projeto_id: projetoId, ativo: true, status_workflow: 'nao_iniciado', criado_por: perfil?.id || null, atualizado_por: perfil?.id || null }
+          const reg = { projeto_id: projetoId, ativo: true, status_workflow: 'em_revisao', criado_por: perfil?.id || null, atualizado_por: perfil?.id || null, submetido_por: perfil?.id || null, submetido_em: new Date().toISOString() }
           // Tentar vincular à área pelo nome do processo (coluna 2 = área)
           const areaNomeExcel = cleanVal(row[3])
           if (areaNomeExcel) {
@@ -192,7 +192,7 @@ export default function ImportarMRC({ projetoId, projeto, areas, onImported, all
           if (insError) throw new Error(`Erro ao inserir batch ${i}: ${insError.message}`)
           inserted += batch.length
         }
-        setResultado({ ok: true, msg: `${inserted} controles importados com sucesso para todas as áreas (${faseLabel}).` })
+        setResultado({ ok: true, msg: `${inserted} controles importados para todas as áreas (${faseLabel}) e já entraram na fila de revisão.` })
       } else {
         // Importar para área específica
         const areaObj = areas.find(a => a.id === areaSelecionada)
@@ -200,7 +200,7 @@ export default function ImportarMRC({ projetoId, projeto, areas, onImported, all
         const { error: delError } = await supabase.from('mrc').delete().eq('projeto_id', projetoId).eq('area_id', areaObj.id)
         if (delError) throw new Error(`Erro ao limpar área: ${delError.message}`)
         const registros = preview.rows.map(row => {
-          const reg = { projeto_id: projetoId, area_id: areaObj.id, ativo: true, status_workflow: 'nao_iniciado', criado_por: perfil?.id || null, atualizado_por: perfil?.id || null }
+          const reg = { projeto_id: projetoId, area_id: areaObj.id, ativo: true, status_workflow: 'em_revisao', criado_por: perfil?.id || null, atualizado_por: perfil?.id || null, submetido_por: perfil?.id || null, submetido_em: new Date().toISOString() }
           Object.entries(colMap).forEach(([colIdx, field]) => {
             const val = row[parseInt(colIdx)]; const cleaned = cleanVal(val)
             if (field === 'crit_label') { reg.crit_label = cleaned; reg.crit = parseCrit(cleaned) }
@@ -223,7 +223,7 @@ export default function ImportarMRC({ projetoId, projeto, areas, onImported, all
         }
         const gerente = registros.find(r => r.ger)?.ger || null
         if (gerente) await supabase.from('areas').update({ gerente }).eq('id', areaObj.id)
-        setResultado({ ok: true, msg: `${inserted} controles importados com sucesso para "${areaObj.nome}" (${faseLabel}).${gerente ? ` Gerente atualizado: ${gerente}.` : ''}` })
+        setResultado({ ok: true, msg: `${inserted} controles importados para "${areaObj.nome}" (${faseLabel}) e já entraram na fila de revisão.${gerente ? ` Gerente atualizado: ${gerente}.` : ''}` })
       }
       setFile(null); setPreview(null)
       if (onImported) onImported()

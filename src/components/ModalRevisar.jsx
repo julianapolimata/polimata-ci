@@ -12,13 +12,19 @@ const CRIT_MAP = {
 }
 
 const ModalRevisar = ({ row, onClose, onAction }) => {
-  const { user } = useAuth()
+  const { user, perfil } = useAuth()
   const [view, setView] = useState('review') // review | approve | reject | history
   const [nota, setNota] = useState('')
   const [notaAprovar, setNotaAprovar] = useState('')
   const [processing, setProcessing] = useState(false)
   const [historico, setHistorico] = useState([])
   const [loadingHist, setLoadingHist] = useState(false)
+
+  // Bloqueio de auto-revisão — consultor não revisa o que ele mesmo importou/submeteu.
+  // Admin sempre pode revisar.
+  const isAdmin = perfil?.papel === 'admin_polimata'
+  const isAutoRevisao = !!(row?.submetido_por && user?.id && row.submetido_por === user.id)
+  const bloqueado = isAutoRevisao && !isAdmin
 
   const faseAtual = getFaseAtual(row || {})
   const crit = CRIT_MAP[row?.crit] || { label: '—', bg: '#EEE', color: '#7A8B9C' }
@@ -363,11 +369,22 @@ const ModalRevisar = ({ row, onClose, onAction }) => {
           </button>
         </div>
 
+        {/* Aviso de auto-revisão */}
+        {bloqueado && (
+          <div style={{ background: '#FFF8E1', border: '1px solid #F0C419', borderRadius: 6, padding: '10px 14px', margin: '0 24px 8px', fontSize: 12, color: '#7A5C00', lineHeight: 1.5 }}>
+            ⚠ Você importou ou submeteu este controle. Para garantir segregação de função, apenas um <strong>admin Polímata</strong> pode aprovar ou devolver controles que você mesmo subiu.
+          </div>
+        )}
+
         {/* Footer com ações */}
         <div style={S.footer}>
           <button onClick={onClose} style={{ ...S.btn, border: '1px solid #D0D0D0', background: 'white', color: '#7A8B9C' }}>Fechar</button>
-          <button onClick={() => setView('reject')} style={{ ...S.btn, border: '1px solid #EF4444', background: 'white', color: '#EF4444' }}>↩ Reprovar</button>
-          <button onClick={() => setView('approve')} style={{ ...S.btn, border: '1px solid #22C55E', background: '#22C55E', color: 'white' }}>✅ Aprovar</button>
+          {!bloqueado && (
+            <>
+              <button onClick={() => setView('reject')} style={{ ...S.btn, border: '1px solid #EF4444', background: 'white', color: '#EF4444' }}>↩ Reprovar</button>
+              <button onClick={() => setView('approve')} style={{ ...S.btn, border: '1px solid #22C55E', background: '#22C55E', color: 'white' }}>✅ Aprovar</button>
+            </>
+          )}
         </div>
       </div>
     </div>
