@@ -118,6 +118,35 @@ function ReadOnlyBanner() {
   )
 }
 
+
+function SistemasBanner() {
+  return (
+    <div style={{
+      background: 'rgba(204, 145, 94, 0.08)',
+      border: '1px solid rgba(204, 145, 94, 0.3)',
+      borderRadius: 8,
+      padding: '12px 16px',
+      marginBottom: 16,
+      display: 'flex',
+      alignItems: 'flex-start',
+      gap: 10,
+      fontSize: 12,
+      lineHeight: 1.5,
+      color: 'var(--lt-text2)',
+    }}>
+      <span style={{ fontSize: 14, marginTop: -1 }}>ℹ</span>
+      <div>
+        <strong style={{ color: 'var(--copper-text)', fontWeight: 600 }}>
+          Sistemas usados pelo cliente.
+        </strong>{' '}
+        Liste aqui os sistemas que aparecerão na lista suspensa do cadastro de controle
+        (ex.: TOTVS Protheus, SAP, Excel, e-mail). São compartilhados entre todos os
+        projetos deste cliente.
+      </div>
+    </div>
+  )
+}
+
 function formatCNPJ(v) {
   const n = (v||'').replace(/\D/g,'')
   if (n.length !== 14) return v
@@ -164,7 +193,8 @@ function DetalheCliente({ cliente, onBack, onAbrirProjeto }) {
 
   return (
     <div className="cfg-detalhe">
-      <ReadOnlyBanner />
+      {aba === 'info' && <ReadOnlyBanner />}
+      {aba === 'sistemas' && <SistemasBanner />}
       <div className="cfg-form-hdr">
         <button className="cfg-back" onClick={onBack}>← Voltar</button>
         <div style={{flex:1}}>

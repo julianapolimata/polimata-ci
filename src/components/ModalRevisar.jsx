@@ -292,11 +292,17 @@ const ModalRevisar = ({ row, onClose, onAction }) => {
             <div style={S.section}>
               <div style={S.label}>Resultado</div>
               <div style={{ marginTop: 4 }}>
-                <span style={{
-                  display: 'inline-block', padding: '3px 10px', borderRadius: 3, fontSize: 11, fontWeight: 700, textTransform: 'uppercase',
-                  background: row?.r1 === 'efetivo' ? '#E8F5E9' : row?.r1 === 'gap' ? '#FFEBEE' : '#FFF3E0',
-                  color: row?.r1 === 'efetivo' ? '#1B5E20' : row?.r1 === 'gap' ? '#C62828' : '#E65100'
-                }}>{row?.r1 || '—'}</span>
+                {(() => {
+                  // Suporta projeto com teste (r1: efetivo/inefetivo/gap) e diagnóstico (existencia: Existente/Parcial/Inexistente)
+                  const valor = row?.r1 || row?.existencia
+                  if (!valor) return <span style={{ display: 'inline-block', padding: '3px 10px', borderRadius: 3, fontSize: 11, fontWeight: 700, color: '#7A8B9C' }}>—</span>
+                  const v = String(valor).toLowerCase()
+                  let bg = '#FFF3E0', color = '#E65100'
+                  if (v === 'efetivo' || v === 'existente') { bg = '#E8F5E9'; color = '#1B5E20' }
+                  else if (v === 'gap' || v === 'inexistente') { bg = '#FFEBEE'; color = '#C62828' }
+                  // 'inefetivo' e 'parcial' caem no laranja (default)
+                  return <span style={{ display: 'inline-block', padding: '3px 10px', borderRadius: 3, fontSize: 11, fontWeight: 700, textTransform: 'uppercase', background: bg, color }}>{valor}</span>
+                })()}
               </div>
             </div>
             <div style={S.section}>
