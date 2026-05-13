@@ -626,13 +626,14 @@ tr:hover td { background: rgba(204,145,94,0.03); }
 .modal-body-lt { flex: 1; overflow-y: auto; padding: 24px; }
 .tp            { display: none; }
 .tp.active     { display: block; }
-.ms            { margin-bottom: 20px; }
-.ms-t          { font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--copper-text); font-weight: 600; padding-bottom: 8px; border-bottom: 1px solid var(--lt-border); margin-bottom: 14px; }
+/* Cards de seção dentro do body do modal — padrão visual unificado */
+.ms            { background: #F9F7F3; border: 1px solid #E8E2D8; border-radius: 6px; padding: 14px 18px; margin-bottom: 14px; }
+.ms-t          { font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--copper-text); font-weight: 700; padding-bottom: 8px; border-bottom: 1px solid #E0D5C7; margin-bottom: 12px; }
 .mr            { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 12px; }
 .mr3           { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; margin-bottom: 12px; }
 .ml            { font-size: 11px; color: var(--lt-text3); margin-bottom: 4px; font-weight: 600; letter-spacing: 0.3px; text-transform: uppercase; }
 .mv            { font-size: 13px; color: var(--lt-text); font-weight: 400; }
-.mv-t          { font-size: 13px; color: var(--lt-text2); line-height: 1.7; max-height: 120px; overflow-y: auto; white-space: pre-line; background: var(--lt-bg); border: 1px solid var(--lt-border); border-radius: var(--radius-sm); padding: 12px 14px; }
+.mv-t          { font-size: 13px; color: var(--lt-text2); line-height: 1.7; max-height: 200px; overflow-y: auto; white-space: pre-line; background: #FFFFFF; border: 1px solid var(--lt-border); border-radius: var(--radius-sm); padding: 12px 14px; }
 .tag           { display: inline-block; padding: 3px 10px; background: rgba(204,145,94,0.06); border: 1px solid var(--lt-border); border-radius: var(--radius-pill); font-size: 11px; color: var(--lt-text2); margin-right: 4px; }
 .modal-ftr     { padding: 16px 24px; border-top: 1px solid var(--lt-border); display: flex; justify-content: flex-end; flex-shrink: 0; gap: 10px; background: var(--lt-bg); }
 
