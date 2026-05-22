@@ -1,14 +1,23 @@
-import React, { useState, useEffect, useCallback } from 'react'
+// ModalAtualizar — shell de coordenação.
+// Fatiamento Etapa 3 (22/mai/2026): geração Excel virou lib, cada step virou componente próprio.
+// Comportamento idêntico ao anterior. Para os blocos extraídos, ver:
+//   - src/lib/gerarFichaRiscoExcel.js
+//   - src/components/modalAtualizar/Step{Risco,Controle,Passos,Ficha}.jsx
+
+import React, { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
-import ExcelJS from 'exceljs'
 import HistoricoTab from './HistoricoTab'
 import { logAtualizarControle, logBaixarFicha } from '../lib/auditLog'
-import { formatNomeEmpresa } from '../lib/formatNome'
 
 import ModalComentario from './ModalComentario'
-import PassosTesteList from './PassosTesteList'
 import { syncPassosESolicitacoes, loadPassosTeste, criarPassoVazio } from '../lib/passosTeste'
 import { useAuth } from '../contexts/AuthContext'
+import { gerarFichaRiscoExcel } from '../lib/gerarFichaRiscoExcel'
+
+import StepRisco from './modalAtualizar/StepRisco'
+import StepControle from './modalAtualizar/StepControle'
+import StepPassos from './modalAtualizar/StepPassos'
+import StepFicha from './modalAtualizar/StepFicha'
 
 const ModalAtualizar = ({ row, onClose, onSaved, areas, projeto }) => {
   const { perfil: perfilAuth } = useAuth()
@@ -229,7 +238,22 @@ const ModalAtualizar = ({ row, onClose, onSaved, areas, projeto }) => {
       } catch (e) {
         console.error('syncPassosESolicitacoes (ficha):', e)
       }
-      await gerarFichaExcel()
+      await gerarFichaRiscoExcel({
+        row,
+        projeto,
+        perfil,
+        novaDescRisco,
+        novaDescControle,
+        editCat,
+        editFreq,
+        editNat,
+        editCar,
+        editSis,
+        editChave,
+        premissas: { pq, quando, onde, quem, como, resultado },
+        passos,
+        isAutomatic,
+      })
       logAtualizarControle(row, row.projeto_id)
       logBaixarFicha(row, row.projeto_id)
       setComentarioFor({ controleId: row?.id, acao: 'Controle atualizado' })
@@ -239,363 +263,6 @@ const ModalAtualizar = ({ row, onClose, onSaved, areas, projeto }) => {
     } finally {
       setSaving(false)
     }
-  }
-
-  async function gerarFichaExcel() {
-    const workbook = new ExcelJS.Workbook()
-    workbook.creator = 'Polímata GRC'
-    workbook.created = new Date()
-
-    const NAVY   = 'FF00203E'
-    const GOLD   = 'FFCC915E'
-    const COPPER = 'FFA6512F'
-    const CREAM  = 'FFF3EEE4'
-    const F8     = 'FFF8F6F2'
-    const WHITE  = 'FFFFFFFF'
-    const GRAY33 = 'FF333333'
-    const GRAY99 = 'FF999999'
-    const GRAYBB = 'FFBBBBBB'
-    const HAIR   = 'FFF0EDE8'
-    const BGRAY  = 'FFD5CFC6'
-
-    const fontBase = (opts = {}) => ({ name: 'Montserrat', size: 10, ...opts })
-    const hairBorder = { style: 'hair', color: { argb: HAIR } }
-    const allHair = { top: hairBorder, bottom: hairBorder, left: hairBorder, right: hairBorder }
-    const fillSolid = (argb) => ({ type: 'pattern', pattern: 'solid', fgColor: { argb } })
-    const alignVC = { vertical: 'middle' }
-    const alignVCWrap = { vertical: 'middle', wrapText: true }
-
-    function applySection(ws, r, text) {
-      ws.mergeCells(r, 2, r, 9)
-      const c = ws.getCell(r, 2)
-      c.value = text
-      c.font = fontBase({ bold: true, color: { argb: GOLD } })
-      c.fill = fillSolid(NAVY)
-      c.alignment = { horizontal: 'left', vertical: 'middle' }
-      c.border = allHair
-      ws.getRow(r).height = 15
-    }
-
-    function applyRow(ws, r, labelText, valueText, editable = false, opts = {}) {
-      // Label
-      const lc = ws.getCell(r, 2)
-      lc.value = labelText
-      lc.font = fontBase({ bold: true, color: { argb: NAVY } })
-      lc.fill = fillSolid(opts.labelFill || WHITE)
-      lc.alignment = alignVC
-      lc.border = allHair
-      // Value
-      ws.mergeCells(r, 3, r, 9)
-      const vc = ws.getCell(r, 3)
-      vc.value = valueText || ''
-      vc.font = fontBase({ bold: !!opts.valueBold, color: { argb: opts.valueColor || GRAY33 } })
-      vc.fill = fillSolid(editable ? WHITE : F8)
-      vc.alignment = alignVCWrap
-      vc.border = {
-        ...allHair,
-        left: { style: editable ? 'thin' : 'medium', color: { argb: editable ? BGRAY : GOLD } }
-      }
-      ws.getRow(r).height = 15
-    }
-
-    // ── ABA PRINCIPAL ──
-    const ws = workbook.addWorksheet('📋 Ficha de Risco', {
-      pageSetup: { orientation: 'landscape', fitToPage: true, fitToWidth: 1, fitToHeight: 0 },
-      views: [{ showGridLines: false }],
-    })
-
-    // Larguras — col A = 2.36 (medida Excel), B-I conforme modelo
-    ws.columns = [
-      { width: 2.36 }, { width: 34 }, { width: 20 }, { width: 22 },
-      { width: 20 }, { width: 22 }, { width: 20 }, { width: 10 }, { width: 28 },
-    ]
-
-    const now = new Date()
-    const dtStr = now.toLocaleDateString('pt-BR') + ' · ' + now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
-
-    // ── Linhas 1-2: Header ──
-    ws.mergeCells(1, 2, 1, 9)
-    const h1 = ws.getCell(1, 2)
-    h1.value = '          Polímata · Consultoria em GRC'
-    h1.font = fontBase({ bold: true, color: { argb: CREAM } })
-    h1.fill = fillSolid(NAVY)
-    h1.alignment = { horizontal: 'left', vertical: 'middle' }
-    h1.border = allHair
-    ws.getRow(1).height = 15
-
-    ws.mergeCells(2, 2, 2, 9)
-    const h2 = ws.getCell(2, 2)
-    h2.value = '          FICHA DE RISCO — EXECUÇÃO DO TESTE'
-    h2.font = fontBase({ bold: true, color: { argb: GOLD } })
-    h2.fill = fillSolid(NAVY)
-    h2.alignment = { horizontal: 'left', vertical: 'middle' }
-    h2.border = allHair
-    ws.getRow(2).height = 15
-
-    ws.getRow(3).height = 5
-
-    // ── Bloco 1: DADOS DO PROJETO (4-12) ──
-    applySection(ws, 4, '1. DADOS DO PROJETO')
-    applyRow(ws, 5,  'CLIENTE',             formatNomeEmpresa(projeto?.clientes?.nome_fantasia || projeto?.clientes?.nome) || '—', false)
-    applyRow(ws, 6,  'NATUREZA DO PROJETO', projeto?.nome || '—',           false)
-    applyRow(ws, 7,  'FASE EM CURSO',       'F2-E1 — Teste de Desenho',   false, { valueBold: true, valueColor: COPPER })
-    applyRow(ws, 8,  'EXECUTOR',            perfil?.nome || '—',            false)
-    applyRow(ws, 9,  'DATA E HORÁRIO',      dtStr,                          false)
-    applyRow(ws, 10, 'DOWNLOAD POR',        perfil?.email || '—',           false)
-    applyRow(ws, 11, 'REVISOR',             '',                             true)
-    applyRow(ws, 12, 'DATA DA REVISÃO',     '',                             true)
-    ws.getRow(13).height = 5
-
-    // ── Bloco 2: IDENTIFICAÇÃO (14-22) ──
-    applySection(ws, 14, '2. IDENTIFICAÇÃO DO RISCO E CONTROLE')
-    applyRow(ws, 15, 'ÁREA / PROCESSO',      row.area || '—',                          false)
-    applyRow(ws, 16, 'SUBPROCESSO',          row.sub  || '—',                          false)
-    applyRow(ws, 17, 'REF. RISCO',           row.rr   || '—',                          false, { valueBold: true, valueColor: COPPER })
-    applyRow(ws, 18, 'REF. CONTROLE',        row.rc   || '—',                          false, { valueBold: true, valueColor: COPPER })
-    applyRow(ws, 19, 'GERÊNCIA',             row.ger  || '—',                          false)
-    applyRow(ws, 20, 'RESP. PROCESSO',    row.resp_sub || '—',                      false)
-    applyRow(ws, 21, 'DESCRIÇÃO DO RISCO',   novaDescRisco || row.dr || '—',           false)
-    applyRow(ws, 22, 'DESCRIÇÃO DO CONTROLE',novaDescControle || row.dc || '—',        false)
-    ws.getRow(23).height = 5
-
-    // ── Bloco 3: ATRIBUTOS (24-30) ──
-    applySection(ws, 24, '3. ATRIBUTOS DO CONTROLE')
-    applyRow(ws, 25, 'CATEGORIA',       editCat   || row.cat   || '—', false)
-    applyRow(ws, 26, 'FREQUÊNCIA',      editFreq  || row.freq  || '—', false)
-    applyRow(ws, 27, 'NATUREZA',        editNat   || row.nat   || '—', false)
-    applyRow(ws, 28, 'CARACTERÍSTICA',  editCar   || row.car   || '—', false)
-    applyRow(ws, 29, 'SISTEMA',         editSis   || row.sis   || '—', false)
-    applyRow(ws, 30, 'CONTROLE CHAVE?', editChave || row.chave || '—', false)
-    ws.getRow(31).height = 5
-
-    // ── Bloco 4: PREMISSAS (32-38) ──
-    applySection(ws, 32, '4. AS 6 PREMISSAS DO CONTROLE — VALIDAÇÃO METODOLÓGICA')
-    applyRow(ws, 33, '1. QUEM FAZ',         isAutomatic ? 'N/A (Controle Automatizado)' : (quem || row.premissa_quem || ''),  true)
-    applyRow(ws, 34, '2. QUANDO FAZ',       quando    || row.premissa_quando    || '', true)
-    applyRow(ws, 35, '3. POR QUÊ FAZ',      pq        || row.premissa_porque    || '', true)
-    applyRow(ws, 36, '4. COMO FAZ',         como      || row.premissa_como      || '', true)
-    applyRow(ws, 37, '5. ONDE FAZ',         onde      || row.premissa_onde      || '', true)
-    applyRow(ws, 38, '6. QUAL O RESULTADO', resultado || row.premissa_resultado || '', true)
-    ws.getRow(39).height = 5
-
-    // ── Bloco 5: PASSOS DE TESTE (40-52) ──
-    applySection(ws, 40, '5. PASSOS DE TESTE')
-
-    // Header linha 41
-    ws.mergeCells(41, 2, 41, 7)
-    const ph1 = ws.getCell(41, 2)
-    ph1.value = 'Atividade / Passo'
-    ph1.font = fontBase({ bold: true, color: { argb: CREAM } })
-    ph1.fill = fillSolid(NAVY)
-    ph1.alignment = { horizontal: 'left', vertical: 'middle' }
-    ph1.border = allHair
-
-    const ph2 = ws.getCell(41, 8)
-    ph2.value = '✓ / ✗'
-    ph2.font = fontBase({ bold: true, color: { argb: CREAM } })
-    ph2.fill = fillSolid(NAVY)
-    ph2.alignment = { horizontal: 'center', vertical: 'middle' }
-    ph2.border = allHair
-
-    const ph3 = ws.getCell(41, 9)
-    ph3.value = 'Observação'
-    ph3.font = fontBase({ bold: true, color: { argb: CREAM } })
-    ph3.fill = fillSolid(NAVY)
-    ph3.alignment = { horizontal: 'left', vertical: 'middle' }
-    ph3.border = allHair
-    ws.getRow(41).height = 15
-
-    // Legenda linha 42
-    ws.mergeCells(42, 2, 42, 9)
-    const leg = ws.getCell(42, 2)
-    leg.value = '✓ = Teste realizado com sucesso · ✗ = Não foi possível realizar o teste'
-    leg.font = fontBase({ color: { argb: GRAY99 } })
-    leg.fill = fillSolid(WHITE)
-    leg.alignment = { horizontal: 'left', vertical: 'middle' }
-    leg.border = allHair
-    ws.getRow(42).height = 15
-
-    // 10 passos (43-52)
-    for (let i = 0; i < 10; i++) {
-      const r = 43 + i
-      ws.mergeCells(r, 2, r, 7)
-      const pc = ws.getCell(r, 2)
-      pc.value = `Passo ${i + 1}`
-      pc.font = fontBase({ color: { argb: GRAYBB } })
-      pc.fill = fillSolid(WHITE)
-      pc.alignment = alignVCWrap
-      pc.border = allHair
-
-      const hc = ws.getCell(r, 8)
-      hc.value = ''
-      hc.fill = fillSolid(WHITE)
-      hc.alignment = { horizontal: 'center', vertical: 'middle' }
-      hc.border = allHair
-
-      const oc = ws.getCell(r, 9)
-      oc.value = ''
-      oc.fill = fillSolid(WHITE)
-      oc.alignment = alignVCWrap
-      oc.border = allHair
-      ws.getRow(r).height = 15
-    }
-
-    // Validação lista ✓/✗ em H43:H52
-    ws.dataValidations.add('H43:H52', {
-      type: 'list',
-      allowBlank: true,
-      formulae: ['"✓,✗"'],
-      showDropDown: false,
-    })
-
-    ws.getRow(53).height = 5
-    ws.getRow(54).height = 5
-
-    // ── Bloco 6: RESULTADO (55-60) ──
-    applySection(ws, 55, '6. RESULTADO')
-    applyRow(ws, 56, 'RESULTADO',                  '', true, { labelFill: CREAM })
-    applyRow(ws, 57, 'INCONSISTÊNCIA IDENTIFICADA','', true, { labelFill: CREAM })
-    applyRow(ws, 58, 'MELHORIA IDENTIFICADA?',     '', true, { labelFill: CREAM })
-    applyRow(ws, 59, 'DESCRIÇÃO DA MELHORIA',      '', true, { labelFill: CREAM })
-
-    // Validação Resultado C56:I56
-    ws.dataValidations.add('C56:I56', {
-      type: 'list',
-      allowBlank: true,
-      formulae: ['"Efetivo,Inefetivo,GAP"'],
-      showDropDown: false,
-    })
-
-    // Validação Melhoria C58:I58
-    ws.dataValidations.add('C58:I58', {
-      type: 'list',
-      allowBlank: true,
-      formulae: ['"Sim,Não"'],
-      showDropDown: false,
-    })
-
-    // Nota linha 60
-    ws.mergeCells(60, 2, 60, 9)
-    const nota = ws.getCell(60, 2)
-    nota.value = '↑ Preencher apenas quando "Melhoria Identificada?" = Sim'
-    nota.font = fontBase({ color: { argb: GRAY99 } })
-    nota.fill = fillSolid(WHITE)
-    nota.alignment = { horizontal: 'left', vertical: 'middle' }
-    nota.border = allHair
-    ws.getRow(60).height = 15
-
-    // ── Linha 61: Footer ──
-    ws.mergeCells(61, 2, 61, 5)
-    const ft1 = ws.getCell(61, 2)
-    ft1.value = 'Polímata Consultoria em GRC · Ficha de Risco'
-    ft1.font = fontBase({ size: 7, color: { argb: NAVY } })
-    ft1.fill = fillSolid(CREAM)
-    ft1.alignment = alignVC
-    ft1.border = allHair
-
-    ws.mergeCells(61, 6, 61, 9)
-    const ft2 = ws.getCell(61, 6)
-    ft2.value = `Gerado em: ${dtStr} · Por: ${perfil?.email || ''}`
-    ft2.font = fontBase({ size: 7, color: { argb: NAVY } })
-    ft2.fill = fillSolid(CREAM)
-    ft2.alignment = { horizontal: 'right', vertical: 'middle' }
-    ft2.border = allHair
-    ws.getRow(61).height = 15
-
-
-    // ── Aba Teste ──
-    // Passos vêm da nova tabela controle_passos_teste (Solicitações v2). A ficha
-    // expande conforme o número de passos cadastrados — sem limite fixo.
-    const passosFicha = (passos || []).filter(pp => (pp.descricao || '').trim() !== '')
-    const ws2 = workbook.addWorksheet('Teste', { views: [{ showGridLines: false }] })
-    ws2.columns = [
-      { width: 2.36 }, { width: 5 }, { width: 50 }, { width: 50 }, { width: 50 }, { width: 16 },
-    ]
-    ws2.mergeCells(2, 2, 2, 6)
-    const t1 = ws2.getCell(2, 2)
-    t1.value = '7. EXECUÇÃO DO TESTE E EVIDÊNCIAS'
-    t1.font = fontBase({ bold: true, color: { argb: GOLD } })
-    t1.fill = fillSolid(NAVY)
-    t1.alignment = { horizontal: 'left', vertical: 'middle' }
-    ws2.getRow(2).height = 15
-
-    // Cabeçalho da tabela de passos (linha 4)
-    const hdr = ['#', 'Passo do Teste', 'Documentação Solicitada', 'Evidência / Observação', 'Solicitação?']
-    hdr.forEach((h, idx) => {
-      const cell = ws2.getCell(4, 2 + idx)
-      cell.value = h
-      cell.font = fontBase({ bold: true, color: { argb: CREAM } })
-      cell.fill = fillSolid(NAVY)
-      cell.alignment = { horizontal: idx === 0 ? 'center' : 'left', vertical: 'middle', wrapText: true }
-      cell.border = allHair
-    })
-    ws2.getRow(4).height = 18
-
-    if (passosFicha.length === 0) {
-      // Mensagem se o controle não tem passos cadastrados
-      ws2.mergeCells(5, 2, 5, 6)
-      const v = ws2.getCell(5, 2)
-      v.value = 'Nenhum passo de teste cadastrado para este controle.'
-      v.font = fontBase({ color: { argb: GRAY99 }, italic: true })
-      v.alignment = { vertical: 'middle' }
-      v.border = allHair
-      ws2.getRow(5).height = 22
-    } else {
-      passosFicha.forEach((pp, idx) => {
-        const r = 5 + idx
-        const cellNum = ws2.getCell(r, 2)
-        cellNum.value = idx + 1
-        cellNum.font = fontBase({ bold: true, color: { argb: NAVY } })
-        cellNum.alignment = { horizontal: 'center', vertical: 'middle' }
-        cellNum.border = allHair
-        cellNum.fill = fillSolid(F8)
-
-        const cellDesc = ws2.getCell(r, 3)
-        cellDesc.value = pp.descricao || ''
-        cellDesc.font = fontBase({ color: { argb: GRAY33 } })
-        cellDesc.alignment = alignVCWrap
-        cellDesc.border = allHair
-        cellDesc.fill = fillSolid(F8)
-
-        const cellDoc = ws2.getCell(r, 4)
-        cellDoc.value = pp.documentacao_solicitada || ''
-        cellDoc.font = fontBase({ color: { argb: GRAY33 } })
-        cellDoc.alignment = alignVCWrap
-        cellDoc.border = allHair
-        cellDoc.fill = fillSolid(F8)
-
-        const cellEv = ws2.getCell(r, 5)
-        cellEv.value = ''
-        cellEv.font = fontBase({ color: { argb: GRAY33 } })
-        cellEv.alignment = alignVCWrap
-        cellEv.border = { ...allHair, left: { style: 'thin', color: { argb: BGRAY } } }
-        cellEv.fill = fillSolid(WHITE)
-
-        const cellSol = ws2.getCell(r, 6)
-        cellSol.value = pp.gerar_solicitacao ? 'Sim' : 'Não'
-        cellSol.font = fontBase({ bold: !!pp.gerar_solicitacao, color: { argb: pp.gerar_solicitacao ? COPPER : GRAY99 } })
-        cellSol.alignment = { horizontal: 'center', vertical: 'middle' }
-        cellSol.border = allHair
-        cellSol.fill = fillSolid(F8)
-
-        // Altura proporcional ao maior texto entre descrição e documentação (mínimo 38)
-        const maiorTexto = Math.max((pp.descricao || '').length, (pp.documentacao_solicitada || '').length)
-        const linhas = Math.max(2, Math.ceil(maiorTexto / 60))
-        ws2.getRow(r).height = Math.max(38, linhas * 16)
-      })
-    }
-
-    // ── Download ──
-    const buffer = await workbook.xlsx.writeBuffer()
-    const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `Ficha_de_Risco_${row.rc || 'controle'}_${new Date().toISOString().slice(0, 10)}.xlsx`
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-    URL.revokeObjectURL(url)
   }
 
   async function handleSaveSemFicha() {
@@ -636,603 +303,6 @@ const ModalAtualizar = ({ row, onClose, onSaved, areas, projeto }) => {
       setSaving(false)
     }
   }
-
-  // ═══ RENDER STEP 1 ═══
-  const renderStep1 = () => (
-    <div>
-      {/* Context Card */}
-      <div style={{ background: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: 8, padding: 12, marginBottom: 24 }}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 10 }}>
-          <div style={{ borderRight: '1px solid #e5e7eb', paddingRight: 12 }}>
-            <div style={{ fontSize: 10, fontWeight: 700, color: '#7A8B9C', textTransform: 'uppercase', marginBottom: 4 }}>Ref. Risco</div>
-            <div style={{ fontSize: 12, color: '#00203E', fontWeight: 500 }}>{row.rr}</div>
-          </div>
-          <div style={{ borderRight: '1px solid #e5e7eb', paddingRight: 12 }}>
-            <div style={{ fontSize: 10, fontWeight: 700, color: '#7A8B9C', textTransform: 'uppercase', marginBottom: 4 }}>Ref. Controle</div>
-            <div style={{ fontSize: 12, color: '#00203E', fontWeight: 500 }}>{row.rc}</div>
-          </div>
-          <div style={{ borderRight: '1px solid #e5e7eb', paddingRight: 12 }}>
-            <div style={{ fontSize: 10, fontWeight: 700, color: '#7A8B9C', textTransform: 'uppercase', marginBottom: 4 }}>Fase Atual</div>
-            <div style={{ fontSize: 12, color: '#00203E', fontWeight: 500 }}>F1 · Diagnóstico</div>
-          </div>
-          <div>
-            <div style={{ fontSize: 10, fontWeight: 700, color: '#7A8B9C', textTransform: 'uppercase', marginBottom: 4 }}>Resultado</div>
-            <div style={{ fontSize: 12, color: '#00203E', fontWeight: 500 }}>Efetivo</div>
-          </div>
-        </div>
-        <div>
-          <div style={{ fontSize: 10, fontWeight: 700, color: '#7A8B9C', textTransform: 'uppercase', marginBottom: 4 }}>Descrição do Risco</div>
-          <div style={{ fontSize: 12, color: '#00203E', marginTop: 6, lineHeight: 1.6 }}>{row.dr}</div>
-        </div>
-      </div>
-
-      {/* Q1: Situação do Risco */}
-      <div style={{ marginBottom: 20 }}>
-        <div style={{ fontSize: 13, fontWeight: 600, color: '#00203E', marginBottom: 2 }}>Houve alteração na situação do risco?</div>
-        <div style={{ fontSize: 11, color: '#6b7280', marginBottom: 12 }}>A situação pode ser: existente, evitado ou transferido.</div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 20 }}>
-          <button
-            style={{
-              padding: 12,
-              border: statusChoice === 'nao' ? '2px solid #00203E' : '1px solid #d1d5db',
-              borderRadius: 6,
-              background: statusChoice === 'nao' ? '#00203E' : '#fafbfc',
-              color: statusChoice === 'nao' ? 'white' : '#00203E',
-              cursor: 'pointer',
-              textAlign: 'center',
-              transition: 'all 0.2s',
-              fontFamily: 'Montserrat, sans-serif',
-            }}
-            onClick={() => setStatusChoice('nao')}
-          >
-            <div style={{ fontSize: 18, marginBottom: 4 }}>✓</div>
-            <div style={{ fontSize: 13, fontWeight: 700 }}>Não</div>
-            <div style={{ fontSize: 11, marginTop: 4, opacity: statusChoice === 'nao' ? 0.9 : 0.6, fontWeight: 500 }}>mantém existente</div>
-          </button>
-          <button
-            style={{
-              padding: 12,
-              border: statusChoice === 'sim' ? '2px solid #00203E' : '1px solid #d1d5db',
-              borderRadius: 6,
-              background: statusChoice === 'sim' ? '#00203E' : '#fafbfc',
-              color: statusChoice === 'sim' ? 'white' : '#00203E',
-              cursor: 'pointer',
-              textAlign: 'center',
-              transition: 'all 0.2s',
-              fontFamily: 'Montserrat, sans-serif',
-            }}
-            onClick={() => setStatusChoice('sim')}
-          >
-            <div style={{ fontSize: 18, marginBottom: 4 }}>⚡</div>
-            <div style={{ fontSize: 13, fontWeight: 700 }}>Sim</div>
-            <div style={{ fontSize: 11, marginTop: 4, opacity: statusChoice === 'sim' ? 0.9 : 0.6, fontWeight: 500 }}>alterou status</div>
-          </button>
-        </div>
-      </div>
-
-      {/* Sub: Nova Status */}
-      {statusChoice === 'sim' && (
-        <div>
-          <div style={{ height: 1, background: '#e5e7eb', margin: '20px 0' }} />
-          <div style={{ marginBottom: 20 }}>
-            <div style={{ fontSize: 13, fontWeight: 600, color: '#00203E', marginBottom: 12 }}>Qual a nova situação do risco?</div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-              <button
-                style={{
-                  padding: 12,
-                  border: newStatus === 'evitado' ? '2px solid #EF4444' : '1px solid #d1d5db',
-                  borderRadius: 6,
-                  background: newStatus === 'evitado' ? '#EF4444' : '#fafbfc',
-                  color: newStatus === 'evitado' ? 'white' : '#00203E',
-                  cursor: 'pointer',
-                  textAlign: 'center',
-                  transition: 'all 0.2s',
-                  fontFamily: 'Montserrat, sans-serif',
-                }}
-                onClick={() => setNewStatus('evitado')}
-              >
-                <div style={{ fontSize: 18, marginBottom: 4 }}>🚫</div>
-                <div style={{ fontSize: 13, fontWeight: 700 }}>Evitado</div>
-                <div style={{ fontSize: 11, marginTop: 4, opacity: newStatus === 'evitado' ? 0.9 : 0.6, fontWeight: 500 }}>descontinuar</div>
-              </button>
-              <button
-                style={{
-                  padding: 12,
-                  border: newStatus === 'transferido' ? '2px solid #F59E0B' : '1px solid #d1d5db',
-                  borderRadius: 6,
-                  background: newStatus === 'transferido' ? '#F59E0B' : '#fafbfc',
-                  color: newStatus === 'transferido' ? 'white' : '#00203E',
-                  cursor: 'pointer',
-                  textAlign: 'center',
-                  transition: 'all 0.2s',
-                  fontFamily: 'Montserrat, sans-serif',
-                }}
-                onClick={() => setNewStatus('transferido')}
-              >
-                <div style={{ fontSize: 18, marginBottom: 4 }}>↗</div>
-                <div style={{ fontSize: 13, fontWeight: 700 }}>Transferido</div>
-                <div style={{ fontSize: 11, marginTop: 4, opacity: newStatus === 'transferido' ? 0.9 : 0.6, fontWeight: 500 }}>mover para outra área</div>
-              </button>
-            </div>
-          </div>
-
-          {/* Evitado */}
-          {newStatus === 'evitado' && (
-            <div style={{ animation: 'fadeIn 0.3s ease-in' }}>
-              <div style={{ background: '#FEE2E2', borderLeft: '3px solid #EF4444', padding: 12, borderRadius: 6, marginBottom: 16, fontSize: 12, color: '#991B1B' }}>
-                <strong>⚠️ Atenção:</strong> Ao marcar como evitado, a linha será <strong>inativada</strong> e a referência {row.rr} ficará disponível para reutilização. O controle {row.rc} também será inativado.
-              </div>
-              <div style={{ marginBottom: 16 }}>
-                <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#00203E', marginBottom: 6 }}>Justificativa da descontinuação *</label>
-                <textarea
-                  value={motivoInativacao}
-                  onChange={(e) => setMotivoInativacao(e.target.value)}
-                  placeholder="Explique por que o risco foi evitado..."
-                  style={{
-                    width: '100%',
-                    minHeight: 80,
-                    padding: 10,
-                    border: '1px solid #e5e7eb',
-                    borderRadius: 6,
-                    fontFamily: 'Montserrat, sans-serif',
-                    fontSize: 12,
-                    marginBottom: 16,
-                  }}
-                />
-              </div>
-            </div>
-          )}
-
-          {/* Transferido */}
-          {newStatus === 'transferido' && (
-            <div style={{ animation: 'fadeIn 0.3s ease-in' }}>
-              <div style={{ background: '#DBEAFE', borderLeft: '3px solid #3B82F6', padding: 12, borderRadius: 6, marginBottom: 16, fontSize: 12, color: '#1E40AF' }}>
-                <strong>ℹ️ Informação:</strong> O risco e seu controle serão copiados para a área de destino com nova referência. A linha original será inativada.
-              </div>
-              <div style={{ marginBottom: 20 }}>
-                <div style={{ fontSize: 13, fontWeight: 700, color: '#00203E', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <span style={{ width: 3, height: 16, background: '#CC915E', borderRadius: 2 }}></span>
-                  Destino da transferência
-                </div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                  <div>
-                    <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#00203E', marginBottom: 6 }}>Área de destino *</label>
-                    <select
-                      value={areaDestino}
-                      onChange={(e) => {
-                        setAreaDestino(e.target.value)
-                        loadSubprocessosDestino(e.target.value)
-                        setSubDestino('')
-                      }}
-                      style={{ width: '100%', padding: 10, border: '1px solid #e5e7eb', borderRadius: 6, fontFamily: 'Montserrat, sans-serif', fontSize: 12 }}
-                    >
-                      <option value="">Selecione a área...</option>
-                      {areas && areas.map((a) => (
-                        <option key={a.id} value={a.id}>{a.nome}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div>
-                    <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#00203E', marginBottom: 6 }}>Subprocesso *</label>
-                    <select
-                      value={subDestino}
-                      onChange={(e) => setSubDestino(e.target.value)}
-                      disabled={!areaDestino}
-                      style={{ width: '100%', padding: 10, border: '1px solid #e5e7eb', borderRadius: 6, fontFamily: 'Montserrat, sans-serif', fontSize: 12, opacity: !areaDestino ? 0.5 : 1 }}
-                    >
-                      <option value="">Selecione o subprocesso...</option>
-                      {subprocessosDestino && subprocessosDestino.map((sub, idx) => (
-                        <option key={idx} value={sub}>{sub}</option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Q2: Descritivo (se status = nao) */}
-      {statusChoice === 'nao' && (
-        <div>
-          <div style={{ height: 1, background: '#e5e7eb', margin: '20px 0' }} />
-          <div style={{ marginBottom: 20 }}>
-            <div style={{ fontSize: 13, fontWeight: 600, color: '#00203E', marginBottom: 12 }}>Houve alteração no descritivo do risco?</div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-              <button
-                style={{
-                  padding: 12,
-                  border: descChoice === 'nao' ? '2px solid #00203E' : '1px solid #d1d5db',
-                  borderRadius: 6,
-                  background: descChoice === 'nao' ? '#00203E' : '#fafbfc',
-                  color: descChoice === 'nao' ? 'white' : '#00203E',
-                  cursor: 'pointer',
-                  textAlign: 'center',
-                  transition: 'all 0.2s',
-                  fontFamily: 'Montserrat, sans-serif',
-                }}
-                onClick={() => setDescChoice('nao')}
-              >
-                <div style={{ fontSize: 18, marginBottom: 4 }}>✓</div>
-                <div style={{ fontSize: 13, fontWeight: 700 }}>Não</div>
-                <div style={{ fontSize: 11, marginTop: 4, opacity: descChoice === 'nao' ? 0.9 : 0.6, fontWeight: 500 }}>manter como está</div>
-              </button>
-              <button
-                style={{
-                  padding: 12,
-                  border: descChoice === 'sim' ? '2px solid #00203E' : '1px solid #d1d5db',
-                  borderRadius: 6,
-                  background: descChoice === 'sim' ? '#00203E' : '#fafbfc',
-                  color: descChoice === 'sim' ? 'white' : '#00203E',
-                  cursor: 'pointer',
-                  textAlign: 'center',
-                  transition: 'all 0.2s',
-                  fontFamily: 'Montserrat, sans-serif',
-                }}
-                onClick={() => setDescChoice('sim')}
-              >
-                <div style={{ fontSize: 18, marginBottom: 4 }}>✎</div>
-                <div style={{ fontSize: 13, fontWeight: 700 }}>Sim</div>
-                <div style={{ fontSize: 11, marginTop: 4, opacity: descChoice === 'sim' ? 0.9 : 0.6, fontWeight: 500 }}>houve alteração</div>
-              </button>
-            </div>
-          </div>
-
-          {descChoice === 'sim' && (
-            <div>
-              <div style={{ fontSize: 13, fontWeight: 700, color: '#00203E', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
-                <span style={{ width: 3, height: 16, background: '#CC915E', borderRadius: 2 }}></span>
-                Editar descritivo do risco
-              </div>
-              <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#00203E', marginBottom: 6 }}>Nova descrição do risco</label>
-              <textarea
-                value={novaDescRisco}
-                onChange={(e) => setNovaDescRisco(e.target.value)}
-                placeholder="Descreva o novo risco..."
-                style={{
-                  width: '100%',
-                  minHeight: 80,
-                  padding: 10,
-                  border: '1px solid #e5e7eb',
-                  borderRadius: 6,
-                  fontFamily: 'Montserrat, sans-serif',
-                  fontSize: 12,
-                  marginBottom: 16,
-                }}
-              />
-            </div>
-          )}
-        </div>
-      )}
-    </div>
-  )
-
-  // ═══ RENDER STEP 2 ═══
-  const renderStep2 = () => (
-    <div>
-      {/* Context Card */}
-      <div style={{ background: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: 8, padding: 12, marginBottom: 24 }}>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 10 }}>
-          <div style={{ borderRight: '1px solid #e5e7eb', paddingRight: 12 }}>
-            <div style={{ fontSize: 10, fontWeight: 700, color: '#7A8B9C', textTransform: 'uppercase', marginBottom: 4 }}>Ref. Controle</div>
-            <div style={{ fontSize: 12, color: '#00203E', fontWeight: 500 }}>{row.rc}</div>
-          </div>
-          <div>
-            <div style={{ fontSize: 10, fontWeight: 700, color: '#7A8B9C', textTransform: 'uppercase', marginBottom: 4 }}>Área</div>
-            <div style={{ fontSize: 12, color: '#00203E', fontWeight: 500 }}>{row.area}</div>
-          </div>
-        </div>
-        <div>
-          <div style={{ fontSize: 10, fontWeight: 700, color: '#7A8B9C', textTransform: 'uppercase', marginBottom: 4 }}>Descrição do Controle</div>
-          <div style={{ fontSize: 12, color: '#00203E', marginTop: 6, lineHeight: 1.6 }}>{row.dc}</div>
-        </div>
-      </div>
-
-      {/* Q: Descritivo */}
-      <div style={{ marginBottom: 20 }}>
-        <div style={{ fontSize: 13, fontWeight: 600, color: '#00203E', marginBottom: 12 }}>Houve alteração no descritivo do controle?</div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-          <button
-            style={{
-              padding: 12,
-              border: ctrlDescChoice === 'nao' ? '2px solid #00203E' : '1px solid #d1d5db',
-              borderRadius: 6,
-              background: ctrlDescChoice === 'nao' ? '#00203E' : '#fafbfc',
-              color: ctrlDescChoice === 'nao' ? 'white' : '#00203E',
-              cursor: 'pointer',
-              textAlign: 'center',
-              transition: 'all 0.2s',
-              fontFamily: 'Montserrat, sans-serif',
-            }}
-            onClick={() => setCtrlDescChoice('nao')}
-          >
-            <div style={{ fontSize: 18, marginBottom: 4 }}>✓</div>
-            <div style={{ fontSize: 13, fontWeight: 700 }}>Não</div>
-            <div style={{ fontSize: 11, marginTop: 4, opacity: ctrlDescChoice === 'nao' ? 0.9 : 0.6, fontWeight: 500 }}>manter como está</div>
-          </button>
-          <button
-            style={{
-              padding: 12,
-              border: ctrlDescChoice === 'sim' ? '2px solid #00203E' : '1px solid #d1d5db',
-              borderRadius: 6,
-              background: ctrlDescChoice === 'sim' ? '#00203E' : '#fafbfc',
-              color: ctrlDescChoice === 'sim' ? 'white' : '#00203E',
-              cursor: 'pointer',
-              textAlign: 'center',
-              transition: 'all 0.2s',
-              fontFamily: 'Montserrat, sans-serif',
-            }}
-            onClick={() => setCtrlDescChoice('sim')}
-          >
-            <div style={{ fontSize: 18, marginBottom: 4 }}>✎</div>
-            <div style={{ fontSize: 13, fontWeight: 700 }}>Sim</div>
-            <div style={{ fontSize: 11, marginTop: 4, opacity: ctrlDescChoice === 'sim' ? 0.9 : 0.6, fontWeight: 500 }}>houve alteração</div>
-          </button>
-        </div>
-      </div>
-
-      {/* Se sim: Edit e Características e Premissas */}
-      {ctrlDescChoice === 'sim' && (
-        <div style={{ animation: 'fadeIn 0.3s ease-in' }}>
-          <div style={{ height: 1, background: '#e5e7eb', margin: '20px 0' }} />
-          <div style={{ fontSize: 13, fontWeight: 700, color: '#00203E', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span style={{ width: 3, height: 16, background: '#CC915E', borderRadius: 2 }}></span>
-            Editar descritivo do controle
-          </div>
-          <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#00203E', marginBottom: 6 }}>Nova descrição do controle</label>
-          <textarea
-            value={novaDescControle}
-            onChange={(e) => setNovaDescControle(e.target.value)}
-            placeholder="Descreva o novo controle..."
-            style={{
-              width: '100%',
-              minHeight: 80,
-              padding: 10,
-              border: '1px solid #e5e7eb',
-              borderRadius: 6,
-              fontFamily: 'Montserrat, sans-serif',
-              fontSize: 12,
-              marginBottom: 16,
-            }}
-          />
-
-          {/* CARACTERÍSTICAS */}
-          <div style={{ marginBottom: 20 }}>
-            <div style={{ fontSize: 13, fontWeight: 700, color: '#00203E', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span style={{ width: 3, height: 16, background: '#CC915E', borderRadius: 2 }}></span>
-              Características do Controle
-            </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-              <div>
-                <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#00203E', marginBottom: 6 }}>Categoria *</label>
-                <select value={editCat} onChange={(e) => setEditCat(e.target.value)} style={{ width: '100%', padding: 10, border: '1px solid #e5e7eb', borderRadius: 6, fontFamily: 'Montserrat, sans-serif', fontSize: 12 }}>
-                  <option value="">Selecione...</option>
-                  <option>Autorização</option>
-                  <option>Relatórios de Exceção</option>
-                  <option>Indicadores de Performance</option>
-                  <option>Interface/Conversão</option>
-                  <option>Revisão Gerencial</option>
-                  <option>Reconciliação</option>
-                  <option>Acesso</option>
-                  <option>Segregação de Funções</option>
-                  <option>Configuração</option>
-                  <option>N/A</option>
-                </select>
-              </div>
-              <div>
-                <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#00203E', marginBottom: 6 }}>Frequência *</label>
-                <select value={editFreq} onChange={(e) => setEditFreq(e.target.value)} style={{ width: '100%', padding: 10, border: '1px solid #e5e7eb', borderRadius: 6, fontFamily: 'Montserrat, sans-serif', fontSize: 12 }}>
-                  <option value="">Selecione...</option>
-                  <option>Sob demanda</option>
-                  <option>Diário</option>
-                  <option>Múltiplas vezes ao dia</option>
-                  <option>Semanal</option>
-                  <option>Quinzenal</option>
-                  <option>Mensal</option>
-                  <option>Trimestral</option>
-                  <option>Semestral</option>
-                  <option>Anual</option>
-                  <option>N/A</option>
-                </select>
-              </div>
-              <div>
-                <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#00203E', marginBottom: 6 }}>Natureza *</label>
-                <select value={editNat} onChange={(e) => setEditNat(e.target.value)} style={{ width: '100%', padding: 10, border: '1px solid #e5e7eb', borderRadius: 6, fontFamily: 'Montserrat, sans-serif', fontSize: 12 }}>
-                  <option value="">Selecione...</option>
-                  <option>Preventivo</option>
-                  <option>Detectivo</option>
-                  <option>N/A</option>
-                </select>
-              </div>
-              <div>
-                <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#00203E', marginBottom: 6 }}>Característica *</label>
-                <select value={editCar} onChange={(e) => setEditCar(e.target.value)} style={{ width: '100%', padding: 10, border: '1px solid #e5e7eb', borderRadius: 6, fontFamily: 'Montserrat, sans-serif', fontSize: 12 }}>
-                  <option value="">Selecione...</option>
-                  <option>Manual</option>
-                  <option>Semi-Automatizado</option>
-                  <option>Automatizado</option>
-                  <option>N/A</option>
-                </select>
-              </div>
-              <div>
-                <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#00203E', marginBottom: 6 }}>Sistema *</label>
-                <select value={editSis} onChange={(e) => setEditSis(e.target.value)} style={{ width: '100%', padding: 10, border: '1px solid #e5e7eb', borderRadius: 6, fontFamily: 'Montserrat, sans-serif', fontSize: 12 }}>
-                  <option value="">Selecione...</option>
-                  <option>IBID</option>
-                  <option>Fluig</option>
-                  <option>Totvs Data Sul</option>
-                  <option>N/A</option>
-                </select>
-              </div>
-              <div>
-                <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#00203E', marginBottom: 6 }}>Controle Chave *</label>
-                <select value={editChave} onChange={(e) => setEditChave(e.target.value)} style={{ width: '100%', padding: 10, border: '1px solid #e5e7eb', borderRadius: 6, fontFamily: 'Montserrat, sans-serif', fontSize: 12 }}>
-                  <option value="">Selecione...</option>
-                  <option>Controle Chave</option>
-                  <option>Controle Compensatório</option>
-                  <option>N/A</option>
-                </select>
-              </div>
-            </div>
-          </div>
-
-          {/* 6 PREMISSAS */}
-          <div style={{ marginBottom: 20 }}>
-            <div style={{ fontSize: 13, fontWeight: 700, color: '#00203E', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span style={{ width: 3, height: 16, background: '#CC915E', borderRadius: 2 }}></span>
-              6 Premissas do Controle
-            </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-              <div>
-                <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#00203E', marginBottom: 6 }}>1. Quem faz? *</label>
-                <textarea
-                  value={quem}
-                  onChange={(e) => setQuem(e.target.value)}
-                  disabled={isAutomatic}
-                  placeholder={isAutomatic ? 'N/A (Controle Automatizado)' : 'Responsável...'}
-                  style={{
-                    width: '100%',
-                    minHeight: 60,
-                    padding: 10,
-                    border: '1px solid #e5e7eb',
-                    borderRadius: 6,
-                    fontFamily: 'Montserrat, sans-serif',
-                    fontSize: 12,
-                    opacity: isAutomatic ? 0.5 : 1,
-                  }}
-                />
-              </div>
-              <div>
-                <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#00203E', marginBottom: 6 }}>2. Quando faz? *</label>
-                <textarea
-                  value={quando}
-                  onChange={(e) => setQuando(e.target.value)}
-                  placeholder="Periodicidade..."
-                  style={{ width: '100%', minHeight: 60, padding: 10, border: '1px solid #e5e7eb', borderRadius: 6, fontFamily: 'Montserrat, sans-serif', fontSize: 12 }}
-                />
-              </div>
-              <div>
-                <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#00203E', marginBottom: 6 }}>3. Por quê faz? *</label>
-                <textarea
-                  value={pq}
-                  onChange={(e) => setPq(e.target.value)}
-                  placeholder="Justificativa..."
-                  style={{ width: '100%', minHeight: 60, padding: 10, border: '1px solid #e5e7eb', borderRadius: 6, fontFamily: 'Montserrat, sans-serif', fontSize: 12 }}
-                />
-              </div>
-              <div>
-                <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#00203E', marginBottom: 6 }}>4. Como faz? *</label>
-                <textarea
-                  value={como}
-                  onChange={(e) => setComo(e.target.value)}
-                  placeholder="Procedimento..."
-                  style={{ width: '100%', minHeight: 60, padding: 10, border: '1px solid #e5e7eb', borderRadius: 6, fontFamily: 'Montserrat, sans-serif', fontSize: 12 }}
-                />
-              </div>
-              <div>
-                <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#00203E', marginBottom: 6 }}>5. Onde faz? *</label>
-                <textarea
-                  value={onde}
-                  onChange={(e) => setOnde(e.target.value)}
-                  placeholder="Local..."
-                  style={{ width: '100%', minHeight: 60, padding: 10, border: '1px solid #e5e7eb', borderRadius: 6, fontFamily: 'Montserrat, sans-serif', fontSize: 12 }}
-                />
-              </div>
-              <div>
-                <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#00203E', marginBottom: 6 }}>6. Qual o resultado? *</label>
-                <textarea
-                  value={resultado}
-                  onChange={(e) => setResultado(e.target.value)}
-                  placeholder="Resultado esperado..."
-                  style={{ width: '100%', minHeight: 60, padding: 10, border: '1px solid #e5e7eb', borderRadius: 6, fontFamily: 'Montserrat, sans-serif', fontSize: 12 }}
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  )
-
-  // ═══ RENDER STEP PASSOS (Solicitações v2) ═══
-  const renderStepPassos = () => (
-    <div>
-      <div style={{ background: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: 8, padding: 12, marginBottom: 20 }}>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-          <div style={{ borderRight: '1px solid #e5e7eb', paddingRight: 12 }}>
-            <div style={{ fontSize: 10, fontWeight: 700, color: '#7A8B9C', textTransform: 'uppercase', marginBottom: 4 }}>Ref. Controle</div>
-            <div style={{ fontSize: 12, color: '#00203E', fontWeight: 500 }}>{row.rc}</div>
-          </div>
-          <div>
-            <div style={{ fontSize: 10, fontWeight: 700, color: '#7A8B9C', textTransform: 'uppercase', marginBottom: 4 }}>Área</div>
-            <div style={{ fontSize: 12, color: '#00203E', fontWeight: 500 }}>{row.area}</div>
-          </div>
-        </div>
-      </div>
-      <PassosTesteList passos={passos} onChange={setPassos} disabled={saving} />
-    </div>
-  )
-
-  // ═══ RENDER STEP 3 ═══
-  const renderStep3 = () => (
-    <div>
-      <h3 style={{ fontSize: 14, fontWeight: 600, color: '#00203E', marginBottom: 16 }}>Dados que serão incluídos na ficha</h3>
-
-      <div style={{ background: '#f9fafb', padding: 16, borderRadius: 8, marginBottom: 20 }}>
-        <div style={{ display: 'grid', gridTemplateColumns: '200px 1fr', gap: 12, fontSize: 12, paddingBottom: 8, borderBottom: '1px solid #e5e7eb' }}>
-          <div style={{ fontWeight: 600, color: '#00203E' }}>Descrição do Risco</div>
-          <div style={{ color: '#7A8B9C' }}>{novaDescRisco || row.dr}</div>
-        </div>
-        <div style={{ display: 'grid', gridTemplateColumns: '200px 1fr', gap: 12, fontSize: 12, paddingTop: 8, paddingBottom: 8, borderBottom: '1px solid #e5e7eb' }}>
-          <div style={{ fontWeight: 600, color: '#00203E' }}>Descrição do Controle</div>
-          <div style={{ color: '#7A8B9C' }}>{novaDescControle || row.dc}</div>
-        </div>
-        <div style={{ display: 'grid', gridTemplateColumns: '200px 1fr', gap: 12, fontSize: 12, paddingTop: 8, paddingBottom: 8, borderBottom: '1px solid #e5e7eb' }}>
-          <div style={{ fontWeight: 600, color: '#00203E' }}>Categoria</div>
-          <div style={{ color: '#7A8B9C' }}>{editCat || '—'}</div>
-        </div>
-        <div style={{ display: 'grid', gridTemplateColumns: '200px 1fr', gap: 12, fontSize: 12, paddingTop: 8, paddingBottom: 8, borderBottom: '1px solid #e5e7eb' }}>
-          <div style={{ fontWeight: 600, color: '#00203E' }}>Frequência</div>
-          <div style={{ color: '#7A8B9C' }}>{editFreq || '—'}</div>
-        </div>
-        <div style={{ display: 'grid', gridTemplateColumns: '200px 1fr', gap: 12, fontSize: 12, paddingTop: 8, paddingBottom: 8, borderBottom: '1px solid #e5e7eb' }}>
-          <div style={{ fontWeight: 600, color: '#00203E' }}>Natureza</div>
-          <div style={{ color: '#7A8B9C' }}>{editNat || '—'}</div>
-        </div>
-        <div style={{ display: 'grid', gridTemplateColumns: '200px 1fr', gap: 12, fontSize: 12, paddingTop: 8, paddingBottom: 8, borderBottom: '1px solid #e5e7eb' }}>
-          <div style={{ fontWeight: 600, color: '#00203E' }}>Característica</div>
-          <div style={{ color: '#7A8B9C' }}>{editCar || '—'}</div>
-        </div>
-      </div>
-
-      <div
-        onClick={!saving ? handleSaveFicha : undefined}
-        style={{ background: '#00203E', color: 'white', padding: 16, borderRadius: 8, marginBottom: 12, display: 'flex', alignItems: 'center', gap: 14, cursor: saving ? 'wait' : 'pointer', transition: 'opacity .15s', opacity: saving ? 0.6 : 1 }}
-      >
-        <div style={{ background: '#CC915E', color: '#fff', padding: '6px 10px', borderRadius: 6, fontSize: 11, fontWeight: 700, letterSpacing: 0.5, flexShrink: 0 }}>.XLSX</div>
-        <div style={{ flex: 1 }}>
-          <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 2 }}>Salvar e Baixar Ficha de Risco</div>
-          <div style={{ fontSize: 11, opacity: 0.75 }}>Ficha_de_Risco_{row.rc}.xlsx — pré-preenchida com os dados acima. Salva as alterações e baixa a ficha automaticamente.</div>
-        </div>
-      </div>
-
-      <div
-        onClick={!saving ? handleSaveSemFicha : undefined}
-        style={{ background: '#f3f4f6', border: '1px solid #d1d5db', padding: 16, borderRadius: 8, marginBottom: 16, display: 'flex', alignItems: 'center', gap: 14, cursor: saving ? 'wait' : 'pointer', transition: 'opacity .15s', opacity: saving ? 0.6 : 1 }}
-      >
-        <div style={{ background: '#6b7280', color: '#fff', padding: '6px 10px', borderRadius: 6, fontSize: 11, fontWeight: 700, letterSpacing: 0.5, flexShrink: 0 }}>💾</div>
-        <div style={{ flex: 1 }}>
-          <div style={{ fontSize: 13, fontWeight: 600, color: '#00203E', marginBottom: 2 }}>Salvar sem gerar ficha</div>
-          <div style={{ fontSize: 11, color: '#6b7280' }}>Salva as alterações, mas o teste ficará marcado como pendente.</div>
-        </div>
-      </div>
-
-      <div style={{ background: '#FEF3C7', borderLeft: '3px solid #F59E0B', padding: 12, borderRadius: 6, fontSize: 12, color: '#92400E' }}>
-        <strong>📌 Importante:</strong> Ao salvar com ficha, o controle receberá o status <strong>EM ANÁLISE</strong> até que o resultado do teste seja registrado. Ao salvar sem ficha, o controle será marcado como <strong>TESTE PENDENTE</strong>.
-      </div>
-    </div>
-  )
 
   // ═══ MAIN RENDER ═══
   return (
@@ -1298,10 +368,58 @@ const ModalAtualizar = ({ row, onClose, onSaved, areas, projeto }) => {
             <HistoricoTab registroId={row.id} />
           ) : (
             <>
-              {step === 1 && renderStep1()}
-              {step === 2 && renderStep2()}
-              {step === 3 && renderStepPassos()}
-              {step === 4 && renderStep3()}
+              {step === 1 && (
+                <StepRisco
+                  row={row}
+                  areas={areas}
+                  statusChoice={statusChoice} setStatusChoice={setStatusChoice}
+                  newStatus={newStatus} setNewStatus={setNewStatus}
+                  descChoice={descChoice} setDescChoice={setDescChoice}
+                  motivoInativacao={motivoInativacao} setMotivoInativacao={setMotivoInativacao}
+                  novaDescRisco={novaDescRisco} setNovaDescRisco={setNovaDescRisco}
+                  areaDestino={areaDestino} setAreaDestino={setAreaDestino}
+                  subDestino={subDestino} setSubDestino={setSubDestino}
+                  subprocessosDestino={subprocessosDestino}
+                  loadSubprocessosDestino={loadSubprocessosDestino}
+                />
+              )}
+              {step === 2 && (
+                <StepControle
+                  row={row}
+                  ctrlDescChoice={ctrlDescChoice} setCtrlDescChoice={setCtrlDescChoice}
+                  novaDescControle={novaDescControle} setNovaDescControle={setNovaDescControle}
+                  editCat={editCat} setEditCat={setEditCat}
+                  editFreq={editFreq} setEditFreq={setEditFreq}
+                  editNat={editNat} setEditNat={setEditNat}
+                  editCar={editCar} setEditCar={setEditCar}
+                  editSis={editSis} setEditSis={setEditSis}
+                  editChave={editChave} setEditChave={setEditChave}
+                  pq={pq} setPq={setPq}
+                  quando={quando} setQuando={setQuando}
+                  onde={onde} setOnde={setOnde}
+                  quem={quem} setQuem={setQuem}
+                  como={como} setComo={setComo}
+                  resultado={resultado} setResultado={setResultado}
+                  isAutomatic={isAutomatic}
+                />
+              )}
+              {step === 3 && (
+                <StepPassos row={row} passos={passos} setPassos={setPassos} saving={saving} />
+              )}
+              {step === 4 && (
+                <StepFicha
+                  row={row}
+                  novaDescRisco={novaDescRisco}
+                  novaDescControle={novaDescControle}
+                  editCat={editCat}
+                  editFreq={editFreq}
+                  editNat={editNat}
+                  editCar={editCar}
+                  saving={saving}
+                  handleSaveFicha={handleSaveFicha}
+                  handleSaveSemFicha={handleSaveSemFicha}
+                />
+              )}
             </>
           )}
         </div>
