@@ -24,6 +24,9 @@ import {
   NivelBadge, Spinner, NoProjeto,
 } from './_shared'
 import { paStyles } from './porArea/styles'
+import PorAreaTopo from './porArea/PorAreaTopo'
+import PorAreaFiltros from './porArea/PorAreaFiltros'
+import PorAreaTabela from './porArea/PorAreaTabela'
 
 // ══════════════════════════════════════════════════════════════════════════════
 // TELA 2 — POR ÁREA (REDESIGN v2 — TEMA ESCURO + HEATMAP + KPI GRID)
@@ -321,282 +324,36 @@ export default function PorArea({ projeto, areasCalc, todosControles, loading, n
   const tdS = { padding: '7px 10px', borderBottom: '1px solid var(--lt-border)', borderRight: '1px solid var(--lt-border)', fontSize: 12, color: 'var(--lt-text2)', whiteSpace: 'nowrap', verticalAlign: 'middle' }
   function Td({ children, w = 150, wrap = false }) { return <td style={{ ...tdS, width: w, minWidth: w, maxWidth: w, overflow: 'hidden', textOverflow: wrap ? undefined : 'ellipsis', whiteSpace: wrap ? 'normal' : 'nowrap', lineHeight: wrap ? 1.4 : undefined }}>{children || '—'}</td> }
 
+
+  // ctx — state, refs, computed e helpers para os 3 blocos extraídos
+  const ctx = {
+    CRT_C, F1_HDR, FASE_HDR, FASE_HDR_FULL, FASE_KEYS_VISIVEIS, FASE_W,
+    FASE_W_PARA, IMP_C, PA, PA_DATA_COLS, PA_FASE_KEYS, PRB_C,
+    RegressaoBadge, Td, area, areaHeatmap, areasCalc, atualizarRow,
+    badgeCrit, badgeExistencia, badgeFase, badgeImp, badgeProb, badgeR,
+    baseStyle, bdgS, busca, canEdit, controles, controlesVisiveis,
+    dashCollapsed, efetivos, excelMenuAberto, excelMenuRef, expandirFiltros, exportarMRCExcel,
+    exportarSolicitacoesExcel, faseLabel, faseThS, faseVal, fasesDisponiveis, filtAcao,
+    filtCrit, filtFase, filtImp, filtRes, filtSit, filtStatus,
+    gaps, gerarRelatorioExcel, gerarTemplateMRC, getAlertas, getFaseCodigo, getResultadoGeral,
+    getStatusBadge, idxFases, inefetivos, isAdmin, isCliente, isDiagnostico,
+    isRealAdmin, loadDados, loading, modalNovoRisco, modalRow, navigate,
+    nome, numFases, paSortVal, pa_crit, pa_ex, pa_ix,
+    pa_pc, pa_pct, pa_total, papelAtivo, pesoEmpresa, planosAcao,
+    projeto, renderFaseCell, rowCriticidade, rowRegistrarResultado, rowRevisar, setAtualizarRow,
+    setBusca, setDashCollapsed, setExcelMenuAberto, setExpandirFiltros, setFiltAcao, setFiltCrit,
+    setFiltFase, setFiltImp, setFiltRes, setFiltSit, setFiltStatus, setModalNovoRisco,
+    setModalRow, setRowCriticidade, setRowRegistrarResultado, setRowRevisar, setSimularPerfil, setSortCol,
+    setSortDir, simularPerfil, somaPesos, sortArrow, sortCol, sortDir,
+    tableScrollRef, tdS, todosControles, toggleSort, ultAtualArea,
+  }
+
   return (
     <div style={PA.page}>
-      {/* HEADER — padrão MRC Completa */}
-      <div className="mrc-header-bar">
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <button onClick={() => navigate('/')} style={PA.btnVoltar}>← VOLTAR</button>
-          <div>
-            <div className="dash-eye">Matriz de Riscos e Controles</div>
-            <div className="dash-ttl" style={{ marginBottom: 0, fontSize: 18 }}>{nome}</div>
-          </div>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
-          <div className="mrc-header-stats">
-            <div className="mrc-stat"><span className="mrc-stat-n">{area.controles.length}</span><span className="mrc-stat-l">controles</span></div>
-            <div className="mrc-stat"><span className="mrc-stat-n">{pesoEmpresa}%</span><span className="mrc-stat-l">peso empresa</span></div>
-          </div>
-          <NotificacoesPanel />
-        </div>
-      </div>
+      <PorAreaTopo ctx={ctx} />
 
-      {/* TOGGLE COLAPSAR DASH */}
-      <div style={{ display: 'flex', justifyContent: 'center', margin: '2px 0' }}>
-        <button onClick={() => setDashCollapsed(c => !c)} style={{ background: 'var(--lt-card)', border: '1px solid var(--lt-border)', borderRadius: 999, padding: '2px 18px', cursor: 'pointer', fontSize: 10, color: 'var(--lt-text3)', fontFamily: 'inherit', display: 'flex', alignItems: 'center', gap: 4 }}>
-          {dashCollapsed ? '▼ Expandir painel' : '▲ Recolher painel'}
-        </button>
-      </div>
-
-      {/* ZONA SUPERIOR — HEATMAP + KPI GRID */}
-      {!dashCollapsed && <div style={PA.zonaSuperior}>
-        {/* HEATMAP */}
-        <div style={PA.heatCard}>
-          <div style={PA.cardTitle}>Mapa de Calor — Impacto × Probabilidade</div>
-          <div style={{ display: 'flex', flex: 1 }}>
-            <div style={PA.heatYLabels}>
-              {IMP_LABELS.map(l => <div key={l} style={PA.heatYLabel}>{l}</div>)}
-            </div>
-            <div style={PA.heatGrid}>
-              {areaHeatmap.map((row, ri) => (
-                <div key={ri} style={PA.heatRow}>
-                  {row.map((val, ci) => (
-                    <div key={ci} style={{ ...PA.heatCell, background: val === 0 ? 'rgba(10,37,64,0.04)' : HEAT_CORES[ri][ci] }}>
-                      {val}
-                    </div>
-                  ))}
-                </div>
-              ))}
-            </div>
-          </div>
-          <div style={PA.heatXLabels}>
-            {PROB_LABELS.map(l => <div key={l} style={PA.heatXLabel}>{l}</div>)}
-          </div>
-          <div style={{ textAlign: 'center', marginTop: 4, fontSize: 10, fontWeight: 600, letterSpacing: 1, textTransform: 'uppercase', color: 'var(--lt-text3)' }}>Probabilidade →</div>
-          <div style={PA.heatLegend}>
-            {CRIT_LABELS.map((l, i) => (
-              <div key={l} style={PA.legendItem}>
-                <div style={{ width: 8, height: 8, borderRadius: 2, background: CRIT_CORES[i] }} />
-                {l}
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* KPI GRID — versão diagnóstico ou maturidade */}
-        {isDiagnostico ? (
-          <div style={PA.kpiGrid}>
-            <div style={{ ...PA.kpiCard, borderTopColor: 'var(--navy)' }}>
-              <div style={PA.kpiLabel}>Total de Controles</div>
-              <div style={{ ...PA.kpiValor, color: 'var(--navy)' }}>{pa_total}</div>
-              <div style={PA.kpiSub}>Peso empresa: {pesoEmpresa}%</div>
-            </div>
-            <div style={{ ...PA.kpiCard, borderTopColor: '#22C55E' }}>
-              <div style={PA.kpiLabel}>Existentes</div>
-              <div style={{ ...PA.kpiValor, color: '#22C55E' }}>{pa_ex}</div>
-              <div style={PA.kpiSub}>{pa_pct(pa_ex)}% do total</div>
-            </div>
-            <div style={{ ...PA.kpiCard, borderTopColor: '#FACC15' }}>
-              <div style={PA.kpiLabel}>Parciais</div>
-              <div style={{ ...PA.kpiValor, color: '#FACC15' }}>{pa_pc}</div>
-              <div style={PA.kpiSub}>{pa_pct(pa_pc)}% do total</div>
-            </div>
-            <div style={{ ...PA.kpiCard, borderTopColor: '#EF4444' }}>
-              <div style={PA.kpiLabel}>Inexistentes</div>
-              <div style={{ ...PA.kpiValor, color: '#EF4444' }}>{pa_ix}</div>
-              <div style={PA.kpiSub}>{pa_pct(pa_ix)}% do total</div>
-            </div>
-            <div style={{ ...PA.kpiCard, borderTopColor: 'var(--copper)' }}>
-              <div style={PA.kpiLabel}>Riscos Críticos</div>
-              <div style={{ ...PA.kpiValor, color: 'var(--copper)' }}>{pa_crit}</div>
-              <div style={PA.kpiSub}>atenção prioritária</div>
-            </div>
-          </div>
-        ) : (
-        <div style={PA.kpiGrid}>
-          <div style={{ ...PA.kpiCard, borderTopColor: 'var(--copper)' }}>
-            <div style={PA.kpiLabel}>Maturidade</div>
-            <div style={{ ...PA.kpiValor, color: 'var(--copper)' }}>{(p*100).toFixed(1)}%</div>
-            <NivelBadge pct={p} nivel={nv} />
-          </div>
-          <div style={{ ...PA.kpiCard, borderTopColor: 'var(--navy)' }}>
-            <div style={PA.kpiLabel}>Total de Controles</div>
-            <div style={{ ...PA.kpiValor, color: 'var(--navy)' }}>{area.controles.length}</div>
-            <div style={PA.kpiSub}>Peso empresa: {pesoEmpresa}%</div>
-          </div>
-          <div style={{ ...PA.kpiCard, borderTopColor: '#22C55E' }}>
-            <div style={PA.kpiLabel}>Efetivos</div>
-            <div style={{ ...PA.kpiValor, color: '#22C55E' }}>{efetivos}</div>
-            <div style={PA.kpiSub}>{area.controles.length > 0 ? Math.round(efetivos / area.controles.length * 100) : 0}% do total</div>
-          </div>
-          <div style={{ ...PA.kpiCard, borderTopColor: '#FACC15' }}>
-            <div style={PA.kpiLabel}>Inefetivos</div>
-            <div style={{ ...PA.kpiValor, color: '#FACC15' }}>{inefetivos}</div>
-            <div style={PA.kpiSub}>Aguardam ação corretiva</div>
-          </div>
-          <div style={{ ...PA.kpiCard, borderTopColor: '#EF4444' }}>
-            <div style={PA.kpiLabel}>GAP</div>
-            <div style={{ ...PA.kpiValor, color: '#EF4444' }}>{gaps}</div>
-            <div style={PA.kpiSub}>Riscos sem controle</div>
-          </div>
-          <div style={{ ...PA.kpiCard, borderTop: 'none', position: 'relative', overflow: 'hidden' }}>
-            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3, background: 'linear-gradient(90deg, #CC915E, #A6512F)' }} />
-            <div style={PA.kpiLabel}>Planos de Ação</div>
-            <div style={{ ...PA.kpiValor, color: 'var(--copper)' }}>{planosAcao}</div>
-            <div style={PA.kpiSub}>Em desenvolvimento</div>
-          </div>
-        </div>)}
-      </div>}
-
-      {/* FILTROS — duas linhas: essenciais (sempre) + drawer "Mais filtros" (colapsável) */}
-      {(() => {
-        const drawerFiltrosAtivos = (filtCrit ? 1 : 0) + (filtFase ? 1 : 0) + (filtRes ? 1 : 0) + (filtStatus ? 1 : 0) + (filtAcao ? 1 : 0)
-        const drawerAberto = expandirFiltros || drawerFiltrosAtivos > 0
-        const temAlgumFiltro = busca || filtCrit || filtImp || filtRes || filtFase || filtSit !== 'existente' || filtStatus || filtAcao
-        return (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 6, flexShrink: 0, marginBottom: 6 }}>
-            {/* Linha 1: busca + situação + toggle + contagem + limpar | toolbar de ações */}
-            <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-              <input value={busca} onChange={e => setBusca(e.target.value)} placeholder="Buscar risco, controle, inconsistência..." style={{ ...PA.filtroInput, flex: 1, minWidth: 220 }} />
-              <select value={filtSit} onChange={e => setFiltSit(e.target.value)} style={PA.filtroSel}><option value="existente">Existentes</option><option value="evitado">Evitados</option><option value="transferido">Transferidos</option><option value="todos">Todos</option></select>
-              <button onClick={() => setExpandirFiltros(v => !v)} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: drawerAberto ? 'rgba(204,145,94,0.10)' : 'var(--lt-card)', border: `1px solid ${drawerAberto ? 'rgba(204,145,94,0.35)' : 'var(--lt-border)'}`, borderRadius: 8, padding: '5px 12px', fontSize: 11, fontWeight: 500, color: drawerAberto ? 'var(--copper-text)' : 'var(--lt-text2)', cursor: 'pointer', fontFamily: 'inherit' }} title="Mostrar/ocultar filtros adicionais">
-                {drawerAberto ? '▾' : '▸'} Mais filtros
-                {drawerFiltrosAtivos > 0 && <span style={{ background: 'var(--copper-text)', color: '#fff', borderRadius: 999, padding: '0 6px', fontSize: 9, fontWeight: 700, lineHeight: '14px', minWidth: 14, textAlign: 'center' }}>{drawerFiltrosAtivos}</span>}
-              </button>
-              <div style={{ fontSize: 11, color: 'var(--lt-text3)', background: 'var(--lt-card)', border: '1px solid var(--lt-border)', borderRadius: 8, padding: '5px 12px', fontWeight: 500 }}>{cf.length} controles</div>
-              {temAlgumFiltro && <button onClick={() => { setBusca(''); setFiltCrit(''); setFiltImp(''); setFiltRes(''); setFiltFase(''); setFiltSit('existente'); setFiltStatus(''); setFiltAcao('') }} style={{ background: 'none', border: 'none', fontSize: 11, color: 'var(--copper-text)', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 600 }}>✕ Limpar</button>}
-              <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginLeft: 'auto' }}>
-                {canEdit && <button onClick={() => setModalNovoRisco(true)} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, background: '#00203E', border: '1px solid #00203E', borderRadius: 999, padding: '6px 14px', fontSize: 11, fontWeight: 600, color: 'white', cursor: 'pointer', fontFamily: 'inherit' }} title="Criar novo risco"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Novo Risco</button>}
-                <button onClick={() => gerarTemplateMRC()} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, background: 'transparent', border: '1px solid var(--copper-text)', borderRadius: 999, padding: '6px 14px', fontSize: 11, fontWeight: 600, color: 'var(--copper-text)', cursor: 'pointer', fontFamily: 'inherit' }} title="Baixar template MRC em branco"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Template</button>
-                <div ref={excelMenuRef} style={{ position: 'relative', display: 'inline-block' }}>
-                  <button onClick={() => setExcelMenuAberto(o => !o)} style={PA.btnExport} title="Exportar Excel da área">
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/></svg>
-                    Excel
-                    <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" style={{ marginLeft: 2 }}><polyline points="6 9 12 15 18 9"/></svg>
-                  </button>
-                  {excelMenuAberto && (
-                    <div style={{ position: 'absolute', right: 0, top: 'calc(100% + 6px)', background: 'white', border: '1px solid var(--lt-border)', borderRadius: 8, boxShadow: '0 8px 24px rgba(0,0,0,0.08)', minWidth: 220, zIndex: 100, overflow: 'hidden' }}>
-                      <button
-                        onClick={() => { setExcelMenuAberto(false); exportarMRCExcel(cf, `MRC_${nome.replace(/\s+/g, '_')}_${new Date().toISOString().slice(0,10)}`, nome, formatNomeEmpresa(projeto?.clientes?.nome_fantasia || projeto?.clientes?.nome) || '', projeto?.nome || '') }}
-                        style={{ display: 'block', width: '100%', textAlign: 'left', padding: '10px 14px', border: 'none', background: 'transparent', fontFamily: 'inherit', fontSize: 12, fontWeight: 600, color: 'var(--lt-text)', cursor: 'pointer' }}
-                        onMouseEnter={e => e.currentTarget.style.background = 'var(--lt-bg)'}
-                        onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-                      >
-                        MRC
-                        <div style={{ fontSize: 10, fontWeight: 500, color: 'var(--lt-text3)', marginTop: 2 }}>Relatório executivo da área</div>
-                      </button>
-                      <div style={{ height: 1, background: 'var(--lt-border)' }} />
-                      <button
-                        onClick={() => { setExcelMenuAberto(false); exportarSolicitacoesDaArea() }}
-                        style={{ display: 'block', width: '100%', textAlign: 'left', padding: '10px 14px', border: 'none', background: 'transparent', fontFamily: 'inherit', fontSize: 12, fontWeight: 600, color: 'var(--lt-text)', cursor: 'pointer' }}
-                        onMouseEnter={e => e.currentTarget.style.background = 'var(--lt-bg)'}
-                        onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-                      >
-                        Lista de Solicitações
-                        <div style={{ fontSize: 10, fontWeight: 500, color: 'var(--lt-text3)', marginTop: 2 }}>Solicitações dessa área (1 aba)</div>
-                      </button>
-                    </div>
-                  )}
-                </div>
-                {isRealAdmin && (
-                  <button onClick={() => setSimularPerfil(prev => prev ? null : 'gestor_cliente')} style={{ background: simularPerfil ? 'rgba(59,130,246,0.15)' : 'rgba(59,130,246,0.06)', border: '1px solid rgba(59,130,246,0.25)', borderRadius: 999, padding: '6px 14px', fontSize: 11, fontWeight: 600, color: '#1D4ED8', cursor: 'pointer', fontFamily: 'inherit' }} title="Simular visão do cliente">
-                    {simularPerfil ? '← Voltar Admin' : 'Visão Cliente'}
-                  </button>
-                )}
-              </div>
-            </div>
-            {/* Linha 2: drawer com filtros adicionais — visível quando aberto OU quando há filtros ativos */}
-            {drawerAberto && (
-              <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', padding: '8px 12px', background: 'var(--lt-card)', border: '1px solid var(--lt-border)', borderRadius: 8 }}>
-                <span style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5, color: 'var(--lt-text3)', marginRight: 4 }}>Filtros adicionais:</span>
-                <select value={filtCrit} onChange={e => setFiltCrit(e.target.value)} style={PA.filtroSel}><option value="">Todas criticidades</option>{crits.map(c => <option key={c} value={c}>{c}</option>)}</select>
-                <select value={filtFase} onChange={e => setFiltFase(e.target.value)} style={PA.filtroSel}><option value="">Todas as fases</option>{fasesDisponiveis.map(f => <option key={f} value={f}>{f}</option>)}</select>
-                <select value={filtRes} onChange={e => setFiltRes(e.target.value)} style={PA.filtroSel}><option value="">Todos resultados</option>{ress.map(c => <option key={c} value={c}>{c}</option>)}</select>
-                {!isCliente && <select value={filtStatus} onChange={e => setFiltStatus(e.target.value)} style={{ ...PA.filtroSel, borderColor: 'var(--copper-text)' }} title="Filtro interno Polímata">
-                  <option value="">Todos status</option>
-                  <option value="rascunho">Rascunho</option>
-                  <option value="nao_iniciado">Não Iniciado</option>
-                  <option value="em_analise">Em Análise</option>
-                  <option value="teste_pendente">Teste Pendente</option>
-                  <option value="em_revisao">Em Revisão</option>
-                  <option value="aprovado">Aprovado</option>
-                  <option value="reprovado">Devolvido</option>
-                </select>}
-                {!isCliente && <select value={filtAcao} onChange={e => setFiltAcao(e.target.value)} style={{ ...PA.filtroSel, borderColor: 'var(--copper-text)' }} title="Filtro interno Polímata">
-                  <option value="">Todas ações</option>
-                  {PROXIMA_ACAO_OPCOES.map(a => <option key={a} value={a}>{a}</option>)}
-                </select>}
-              </div>
-            )}
-          </div>
-        )
-      })()}
-      {simularPerfil && (
-        <div style={{ fontSize: 10, color: '#1D4ED8', background: 'rgba(59,130,246,0.08)', border: '1px solid rgba(59,130,246,0.20)', borderRadius: 6, padding: '4px 12px', marginBottom: 4, flexShrink: 0, textAlign: 'center', fontWeight: 500 }}>
-          Simulando visão: Cliente
-        </div>
-      )}
-
-      {/* TABELA MRC */}
-      <div style={PA.tabelaWrap}>
-        <div ref={tableScrollRef} style={{ flex: 1, overflowX: 'auto', overflowY: 'auto', minHeight: 0 }}>
-          <table style={{ width: 'max-content', minWidth: '100%', borderCollapse: 'collapse' }}>
-            <thead><tr>
-              {PA_DATA_COLS.map((col, i) =>
-                <th key={i} style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5, color: 'var(--lt-text3)', background: '#F0F2F5', padding: '12px 12px', textAlign: 'center', whiteSpace: 'nowrap', position: 'sticky', top: 0, zIndex: 2, width: col.w, minWidth: col.w, borderBottom: '1px solid var(--lt-border)', borderRight: '1px solid var(--lt-border)', cursor: 'pointer', userSelect: 'none' }} onClick={() => toggleSort(col.k)}>{col.h}{sortArrow(col.k)}</th>)}
-              {FASE_HDR.map((f, i) => { const w = FASE_W_PARA(idxFases[i]); return (<th key={`f${i}`} style={{ ...faseThS, width: w, minWidth: w, maxWidth: w, background: f.bg, borderRight: '1px solid rgba(255,255,255,0.28)', cursor: 'pointer', userSelect: 'none' }} onClick={() => toggleSort(FASE_KEYS_VISIVEIS[i])}>{f.h}{sortArrow(FASE_KEYS_VISIVEIS[i])}</th>) })}
-              {!isCliente && <th style={{ fontSize: 11, fontWeight: 600, color: 'var(--lt-text3)', background: '#F0F2F5', padding: '12px 12px', position: 'sticky', top: 0, zIndex: 2, width: 120, minWidth: 120, borderBottom: '1px solid var(--lt-border)', textTransform: 'uppercase', letterSpacing: 0.5, textAlign: 'center' }}>Ação</th>}
-            </tr></thead>
-            <tbody>{cfSorted.map((c, i) => (
-              <tr key={c.id||i} onClick={() => setModalRow(c)} style={{ cursor: 'pointer', ...((c.status_risco === 'evitado' || c.status_risco === 'transferido') ? { opacity: 0.55, fontStyle: 'italic' } : {}) }} onMouseEnter={e => e.currentTarget.style.background='rgba(204,145,94,0.04)'} onMouseLeave={e => e.currentTarget.style.background=''}>
-                <td style={{ ...tdS, width: 95, minWidth: 95, fontSize: 11, color: 'var(--lt-text3)', textAlign: 'center' }}>{fmtDate(c.dt_ult || c.atualizado_em || c.criado_em)}</td>
-                <Td w={120}>{c.sub}</Td>
-                <td style={{ ...tdS, color: 'var(--copper-text)', fontWeight: 700, width: 80, minWidth: 80, textAlign: 'center' }}>{c.rr}</td><Td w={200}>{c.dr}</Td>
-                <td style={{ ...tdS, color: 'var(--copper-text)', fontWeight: 700, width: 90, minWidth: 90, textAlign: 'center' }}>{c.rc}</td><Td w={200}>{c.dc}</Td>
-                <td style={{ ...tdS, width: 90, minWidth: 90, textAlign: 'center' }}>{badgeR(getResultadoVitrine(c, projeto))}</td>
-                <td style={{ ...tdS, width: 110, minWidth: 110, textAlign: 'center' }}>{badgeCrit(c.crit)}</td>
-                <td style={{ ...tdS, width: 130, minWidth: 130, fontSize: 11, fontWeight: 500, textAlign: 'center' }}>{getFaseLabel(c)}{c.num_regressoes > 0 && <RegressaoBadge n={c.num_regressoes} />}</td>
-                <td style={{ ...tdS, width: 110, minWidth: 110, textAlign: 'center' }}>{(() => { const st = getStatusComputado(c); const cfg = getStatusBadge(st); return <span style={{ fontSize: 10, fontWeight: 700, color: cfg.color, background: cfg.bg, padding: '3px 10px', borderRadius: 999, textTransform: 'uppercase', letterSpacing: 0.4 }}>{cfg.label}</span> })()}</td>
-                {/* Colunas de fase */}
-                {idxFases.map(idx => { const w = FASE_W_PARA(idx); return (<td key={`fc${idx}`} style={{ ...tdS, width: w, minWidth: w, maxWidth: w, textAlign: 'center' }}>{renderFaseCell(c, idx)}</td>) })}
-                {!isCliente && <td style={{ ...tdS, textAlign: 'center', width: 120, minWidth: 120 }}>
-                    {(() => {
-                      const st = getStatusComputado(c)
-                      // Define UMA ação primária por contexto (a "próxima ação" do workflow)
-                      let primary = null, secondary = null
-                      // Em projeto diagnóstico (sem teste de efetividade), workflow simplificado:
-                      // sempre permite editar o controle (existência, criticidade, etc.)
-                      if (isDiagnostico && canEdit) {
-                        primary = { label: '✏ Editar', color: 'var(--copper-text)', bg: 'rgba(204,145,94,0.12)', border: 'rgba(204,145,94,0.30)', onClick: () => setAtualizarRow(c) }
-                      } else if (canEdit && st === 'rascunho') {
-                        primary = { label: '▶ Continuar', color: '#92400E', bg: 'rgba(234,179,8,0.15)', border: 'rgba(234,179,8,0.40)', onClick: () => setAtualizarRow(c) }
-                      } else if (canEdit && st === 'em_analise') {
-                        primary = { label: 'Registrar Resultado', color: '#15803D', bg: 'rgba(22,163,74,0.12)', border: 'rgba(22,163,74,0.35)', onClick: () => setRowRegistrarResultado(c) }
-                        secondary = { label: '✏ Editar premissas', onClick: () => setAtualizarRow(c) }
-                      } else if (isAdmin && st === 'em_revisao') {
-                        primary = { label: 'Revisar', color: '#1D4ED8', bg: 'rgba(59,130,246,0.12)', border: 'rgba(59,130,246,0.30)', onClick: () => setRowRevisar(c) }
-                      } else if (canEdit && (st === 'nao_iniciado' || st === 'teste_pendente' || st === 'reprovado')) {
-                        primary = { label: 'Atualizar', color: 'var(--copper-text)', bg: 'rgba(204,145,94,0.12)', border: 'rgba(204,145,94,0.30)', onClick: () => setAtualizarRow(c) }
-                      }
-                      return (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: 4, alignItems: 'center' }}>
-                          {primary && <button onClick={e => { e.stopPropagation(); primary.onClick() }} style={{ background: primary.bg, border: `1px solid ${primary.border}`, borderRadius: 6, padding: '6px 10px', fontSize: 11, fontWeight: 700, color: primary.color, cursor: 'pointer', fontFamily: 'inherit', width: '100%' }}>{primary.label}</button>}
-                          {secondary && <button onClick={e => { e.stopPropagation(); secondary.onClick() }} style={{ background: 'transparent', border: 'none', padding: '2px 4px', fontSize: 10, fontWeight: 500, color: 'var(--copper-text)', cursor: 'pointer', fontFamily: 'inherit', textDecoration: 'underline', textUnderlineOffset: 2 }}>{secondary.label}</button>}
-                          {getAlertas(c).filter(a => a.label !== 'Resultado Pendente' || !primary).map((a, idx) => {
-                            const baseStyle = { fontSize: 10, fontWeight: 700, color: a.color, background: a.bg, padding: '3px 8px', borderRadius: 999, textTransform: 'uppercase', letterSpacing: 0.4, whiteSpace: 'nowrap', lineHeight: 1.2 }
-                            if (a.onClick) {
-                              return <button key={idx} onClick={e => { e.stopPropagation(); a.onClick() }} style={{ ...baseStyle, border: `1px solid ${a.color}33`, cursor: 'pointer', fontFamily: 'inherit' }} title="Clique para abrir">{a.label}</button>
-                            }
-                            return <span key={idx} style={baseStyle}>{a.label}</span>
-                          })}
-                        </div>
-                      )
-                    })()}
-                </td>}
-              </tr>))}{cf.length === 0 && <tr><td colSpan={15} style={{ padding: 32, textAlign: 'center', color: 'var(--lt-text3)' }}>Nenhum controle encontrado.</td></tr>}</tbody>
-          </table>
-        </div>
-      </div>
+      <PorAreaFiltros ctx={ctx} />
+      <PorAreaTabela ctx={ctx} />
       {modalRow && <ModalDetalhe row={modalRow} projeto={projeto} onClose={() => setModalRow(null)} onEditar={canEdit ? () => { setAtualizarRow(modalRow); setModalRow(null) } : undefined} />}
       {atualizarRow && <ModalAtualizar row={atualizarRow} onClose={() => setAtualizarRow(null)} onSaved={() => { setAtualizarRow(null); if (projeto?.id) loadDados(projeto.id) }} areas={areasCalc} projeto={projeto} />}
       {modalNovoRisco && <ModalNovoRisco onClose={() => setModalNovoRisco(false)} onSaved={() => { setModalNovoRisco(false); if (projeto?.id) loadDados(projeto.id) }} areas={areasCalc} projeto={projeto} areaFixa={area} />}
