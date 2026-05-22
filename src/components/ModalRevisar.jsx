@@ -16,6 +16,7 @@ const ModalRevisar = ({ row, onClose, onAction }) => {
   const [historico, setHistorico] = useState([])
   const [loadingHist, setLoadingHist] = useState(false)
   const [submetidoPorNome, setSubmetidoPorNome] = useState(null)
+  const [consultorResponsavelNome, setConsultorResponsavelNome] = useState(null)
 
   // Bloqueio de auto-revisão — consultor não revisa o que ele mesmo importou/submeteu.
   // Admin sempre pode revisar.
@@ -36,6 +37,12 @@ const ModalRevisar = ({ row, onClose, onAction }) => {
     supabase.from('perfis').select('nome').eq('id', row.submetido_por).maybeSingle()
       .then(({ data }) => setSubmetidoPorNome(data?.nome || null))
   }, [row?.submetido_por])
+
+  useEffect(() => {
+    if (!row?.consultor_id) { setConsultorResponsavelNome(null); return }
+    supabase.from('perfis').select('nome').eq('id', row.consultor_id).maybeSingle()
+      .then(({ data }) => setConsultorResponsavelNome(data?.nome || null))
+  }, [row?.consultor_id])
 
   async function loadHistorico() {
     setLoadingHist(true)
@@ -77,10 +84,11 @@ const ModalRevisar = ({ row, onClose, onAction }) => {
       // 3. Status fica 'aprovado' — o cálculo de maturidade conta a contribuição.
       // O reset para 'nao_iniciado' acontecerá ao avançar de fase.
 
-      // 4. Notificar consultor que submeteu
-      if (row.submetido_por) {
+      // 4. Notificar consultor RESPONSÁVEL (fallback: quem submeteu)
+      const destinatarioId = row.consultor_id || row.submetido_por
+      if (destinatarioId) {
         await supabase.from('notificacoes').insert({
-          para_id: row.submetido_por,
+          para_id: destinatarioId,
           de_id: user?.id,
           tipo: 'aprovacao',
           titulo: `Análise aprovada — ${row.rc || row.rr}`,
@@ -90,7 +98,7 @@ const ModalRevisar = ({ row, onClose, onAction }) => {
         })
         // Enviar email de aprovação
         supabase.functions.invoke('send-email', {
-          body: { type: 'review_completed', data: { autor_id: row.submetido_por, revisor_id: user?.id, ref: row.rc || row.rr, resultado: 'aprovado', nota: notaAprovar || '', area_id: row.area_id } }
+          body: { type: 'review_completed', data: { autor_id: destinatarioId, revisor_id: user?.id, ref: row.rc || row.rr, resultado: 'aprovado', nota: notaAprovar || '', area_id: row.area_id } }
         }).catch(err => console.error('Erro ao enviar email:', err))
       }
 
@@ -130,10 +138,12 @@ const ModalRevisar = ({ row, onClose, onAction }) => {
         fase: faseAtual,
       })
 
-      // 3. Notificar consultor
-      if (row.submetido_por) {
+      // 3. Notificar consultor RESPONSÁVEL (fallback: quem submeteu)
+      //    consultor_id é gravado na importação e direciona o ciclo de devolução.
+      const destinatarioId = row.consultor_id || row.submetido_por
+      if (destinatarioId) {
         await supabase.from('notificacoes').insert({
-          para_id: row.submetido_por,
+          para_id: destinatarioId,
           de_id: user?.id,
           tipo: 'reprovacao',
           titulo: `Análise reprovada — ${row.rc || row.rr}`,
@@ -141,9 +151,9 @@ const ModalRevisar = ({ row, onClose, onAction }) => {
           lida: false,
           mrc_id: row.id,
         })
-        // Enviar email de reprovação
+        // Enviar email IMEDIATO de devolução pro consultor responsável
         supabase.functions.invoke('send-email', {
-          body: { type: 'review_completed', data: { autor_id: row.submetido_por, revisor_id: user?.id, ref: row.rc || row.rr, resultado: 'reprovado', nota: nota, area_id: row.area_id } }
+          body: { type: 'review_completed', data: { autor_id: destinatarioId, revisor_id: user?.id, ref: row.rc || row.rr, resultado: 'reprovado', nota: nota, area_id: row.area_id } }
         }).catch(err => console.error('Erro ao enviar email:', err))
       }
 
@@ -306,9 +316,10 @@ const ModalRevisar = ({ row, onClose, onAction }) => {
           {/* Submissão */}
           <div style={S.section}>
             <div style={S.sectionTitle}>Submissão</div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
               <div><div style={S.label}>Submetido por</div><div style={S.value}>{submetidoPorNome || (row?.submetido_por ? '—' : '—')}</div></div>
               <div><div style={S.label}>Submetido em</div><div style={S.value}>{row?.submetido_em ? new Date(row.submetido_em).toLocaleString('pt-BR') : '—'}</div></div>
+              <div><div style={S.label}>Consultor responsável</div><div style={S.value}>{consultorResponsavelNome || '—'}</div></div>
             </div>
           </div>
 

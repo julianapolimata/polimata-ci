@@ -97,6 +97,11 @@ export default function ImportarMRC({ projetoId, projeto, areas, onImported, all
   const [resultado, setResultado] = useState(null)
   const [erro, setErro] = useState(null)
   const [showConfirm, setShowConfirm] = useState(false)
+  // ── Consultor responsável (recebe os controles devolvidos na revisão) ──
+  const [consultores, setConsultores] = useState([])
+  const [modoConsultor, setModoConsultor] = useState('unico') // 'unico' | 'por_area'
+  const [consultorUnico, setConsultorUnico] = useState('')
+  const [consultoresPorArea, setConsultoresPorArea] = useState({}) // { areaId: consultorId }
 
   // Limpar Base state
   const [projetos, setProjetos] = useState([])
@@ -122,6 +127,16 @@ export default function ImportarMRC({ projetoId, projeto, areas, onImported, all
   useEffect(() => {
     supabase.from('projetos').select('id, nome, clientes(nome)').order('nome')
       .then(({ data }) => { if (data) setProjetos(data) })
+  }, [])
+
+  // Carregar consultores ativos (admin e consultor Polímata podem ser responsáveis)
+  useEffect(() => {
+    supabase.from('perfis')
+      .select('id, nome, email, papel')
+      .in('papel', ['consultor_polimata', 'admin_polimata'])
+      .eq('ativo', true)
+      .order('nome')
+      .then(({ data }) => { if (data) setConsultores(data) })
   }, [])
 
   // ── Ler Excel e preview ──
@@ -156,6 +171,12 @@ export default function ImportarMRC({ projetoId, projeto, areas, onImported, all
   async function handleImportar() {
     setShowConfirm(false)
     if (!preview || !areaSelecionada || !faseSelecionada || !projetoId) return
+    // Garantir que o consultor responsável foi escolhido (regra: sempre obrigatório)
+    if (modoConsultor === 'unico' && !consultorUnico) { setErro('Selecione o consultor responsável.'); return }
+    if (modoConsultor === 'por_area' && isTodasAreas) {
+      const faltantes = (areas || []).filter(a => !consultoresPorArea[a.id])
+      if (faltantes.length > 0) { setErro(`Falta consultor responsável em ${faltantes.length} área(s): ${faltantes.slice(0,3).map(a=>a.nome).join(', ')}${faltantes.length>3 ? '…' : ''}`); return }
+    }
     setImporting(true); setResultado(null); setErro(null)
     const isDiag = projeto?.f1_tem_teste === false
     const colMap = isDiag ? COL_MAP_DIAG : COL_MAP
@@ -171,6 +192,13 @@ export default function ImportarMRC({ projetoId, projeto, areas, onImported, all
           if (areaNomeExcel) {
             const areaMatch = (areas || []).find(a => a.nome.toLowerCase() === areaNomeExcel.toLowerCase())
             if (areaMatch) reg.area_id = areaMatch.id
+          }
+          // Consultor responsável
+          if (modoConsultor === 'unico') {
+            if (consultorUnico) reg.consultor_id = consultorUnico
+          } else if (modoConsultor === 'por_area' && reg.area_id) {
+            const c = consultoresPorArea[reg.area_id]
+            if (c) reg.consultor_id = c
           }
           Object.entries(colMap).forEach(([colIdx, field]) => {
             const val = row[parseInt(colIdx)]; const cleaned = cleanVal(val)
@@ -201,6 +229,8 @@ export default function ImportarMRC({ projetoId, projeto, areas, onImported, all
         if (delError) throw new Error(`Erro ao limpar área: ${delError.message}`)
         const registros = preview.rows.map(row => {
           const reg = { projeto_id: projetoId, area_id: areaObj.id, ativo: true, status_workflow: 'em_revisao', criado_por: perfil?.id || null, atualizado_por: perfil?.id || null, submetido_por: perfil?.id || null, submetido_em: new Date().toISOString() }
+          // Consultor responsável (sempre 'único' quando importa para uma área específica)
+          if (consultorUnico) reg.consultor_id = consultorUnico
           Object.entries(colMap).forEach(([colIdx, field]) => {
             const val = row[parseInt(colIdx)]; const cleaned = cleanVal(val)
             if (field === 'crit_label') { reg.crit_label = cleaned; reg.crit = parseCrit(cleaned) }
@@ -328,9 +358,54 @@ export default function ImportarMRC({ projetoId, projeto, areas, onImported, all
           {!areaSelecionada && <div style={{ fontSize: 10, color: 'var(--lt-text3)', marginTop: 4 }}>Selecione a área primeiro.</div>}
         </div>
 
+        {/* Step 2.5 — Consultor responsável */}
+        <div style={{ marginBottom: 14 }}>
+          <div style={label}>3. Consultor responsável <span style={{ fontWeight: 400, color: 'var(--lt-text3)', textTransform: 'none', letterSpacing: 0 }}>— receberá os controles devolvidos na revisão</span></div>
+
+          {/* Modo: único / por área */}
+          <div style={{ display: 'flex', gap: 18, marginBottom: 10 }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--lt-text2)', cursor: 'pointer' }}>
+              <input type="radio" name="modoConsultor" checked={modoConsultor === 'unico'} onChange={() => setModoConsultor('unico')} />
+              Mesmo consultor para tudo
+            </label>
+            <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: isTodasAreas ? 'var(--lt-text2)' : 'var(--lt-text3)', cursor: isTodasAreas ? 'pointer' : 'not-allowed' }}>
+              <input type="radio" name="modoConsultor" checked={modoConsultor === 'por_area'} onChange={() => setModoConsultor('por_area')} disabled={!isTodasAreas} />
+              Um consultor por área {!isTodasAreas && <span style={{ fontSize: 10, color: 'var(--lt-text3)' }}>(só p/ "Todas as áreas")</span>}
+            </label>
+          </div>
+
+          {/* Dropdown único */}
+          {modoConsultor === 'unico' && (
+            <select value={consultorUnico} onChange={e => setConsultorUnico(e.target.value)} style={selectS}>
+              <option value="">— Selecione o consultor —</option>
+              {consultores.map(c => <option key={c.id} value={c.id}>{c.nome} {c.papel === 'admin_polimata' ? '(Admin)' : ''}</option>)}
+            </select>
+          )}
+
+          {/* Dropdowns por área */}
+          {modoConsultor === 'por_area' && isTodasAreas && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, maxHeight: 260, overflow: 'auto', padding: 12, border: '1px solid var(--lt-border)', borderRadius: 6, background: 'var(--lt-bg)' }}>
+              {(areas || []).length === 0 && <div style={{ fontSize: 11, color: 'var(--lt-text3)' }}>Nenhuma área cadastrada no projeto.</div>}
+              {(areas || []).map(a => (
+                <div key={a.id} style={{ display: 'grid', gridTemplateColumns: '180px 1fr', alignItems: 'center', gap: 10 }}>
+                  <div style={{ fontSize: 11.5, color: 'var(--lt-text2)', fontWeight: 500 }}>{a.nome}</div>
+                  <select value={consultoresPorArea[a.id] || ''} onChange={e => setConsultoresPorArea(prev => ({ ...prev, [a.id]: e.target.value }))} style={{ ...selectS, maxWidth: '100%' }}>
+                    <option value="">— Selecione —</option>
+                    {consultores.map(c => <option key={c.id} value={c.id}>{c.nome} {c.papel === 'admin_polimata' ? '(Admin)' : ''}</option>)}
+                  </select>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <div style={{ fontSize: 10, color: 'var(--lt-text3)', marginTop: 6 }}>
+            Quando você devolver um controle na revisão, o consultor responsável recebe um e-mail imediato para corrigir e reenviar.
+          </div>
+        </div>
+
         {/* Step 3 — Arquivo */}
         <div style={{ marginBottom: 14 }}>
-          <div style={label}>3. Selecione o arquivo Excel (.xlsx)</div>
+          <div style={label}>4. Selecione o arquivo Excel (.xlsx)</div>
           <input type="file" accept=".xlsx,.xls" onChange={handleFileChange} disabled={!areaSelecionada || !faseSelecionada} style={{ fontFamily: 'inherit', fontSize: 12, color: 'var(--lt-text2)' }} />
           {(!areaSelecionada || !faseSelecionada) && <div style={{ fontSize: 10, color: 'var(--lt-text3)', marginTop: 4 }}>Selecione a área e a fase primeiro.</div>}
           {loading && <div style={{ fontSize: 11, color: 'var(--copper)', marginTop: 6 }}>Lendo arquivo...</div>}
@@ -340,7 +415,7 @@ export default function ImportarMRC({ projetoId, projeto, areas, onImported, all
         {/* Step 4 — Preview */}
         {preview && (
           <div style={{ marginBottom: 14 }}>
-            <div style={label}>4. Preview — {previewCount} controles encontrados</div>
+            <div style={label}>5. Preview — {previewCount} controles encontrados</div>
             <div style={{ maxHeight: 360, overflow: 'auto', border: '1px solid var(--lt-border)', borderRadius: 6 }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 11 }}>
                 <thead>
@@ -368,7 +443,7 @@ export default function ImportarMRC({ projetoId, projeto, areas, onImported, all
           </div>
         )}
 
-        {/* Step 5 — Confirmar */}
+        {/* Step 6 — Confirmar */}
         {preview && areaSelecionada && faseSelecionada && (
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(204,145,94,0.06)', border: '1px solid rgba(204,145,94,0.2)', borderRadius: 8, padding: '12px 16px', gap: 16 }}>
             <div style={{ fontSize: 12, color: 'var(--lt-text2)', lineHeight: 1.5 }}>
