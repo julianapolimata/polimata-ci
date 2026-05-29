@@ -52,6 +52,7 @@ const NotificacoesPanel = () => {
   }, [open])
 
   async function loadNotifs() {
+    setLoading(true)
     const { data } = await supabase
       .from('notificacoes')
       .select('*, de:perfis!de_id(nome)')
@@ -59,6 +60,7 @@ const NotificacoesPanel = () => {
       .order('criado_em', { ascending: false })
       .limit(50)
     setNotifs(data || [])
+    setLoading(false)
   }
 
   async function markAllRead() {
@@ -112,6 +114,7 @@ const NotificacoesPanel = () => {
         )}
       </button>
 
+      <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
       {/* Painel */}
       {open && (
         <div style={{
@@ -140,7 +143,18 @@ const NotificacoesPanel = () => {
 
           {/* Body */}
           <div style={{ flex: 1, overflowY: 'auto', maxHeight: 400 }}>
-            {notifs.length === 0 ? (
+            {loading && notifs.length === 0 ? (
+              <div style={{ padding: 32, textAlign: 'center', color: 'rgba(243,238,228,0.4)', fontSize: 12 }}>
+                <div style={{
+                  width: 20, height: 20, margin: '0 auto 12px',
+                  border: '2px solid rgba(204,145,94,0.2)',
+                  borderTopColor: 'var(--copper)',
+                  borderRadius: '50%',
+                  animation: 'spin 0.8s linear infinite',
+                }} />
+                Carregando notificações...
+              </div>
+            ) : notifs.length === 0 ? (
               <div style={{ padding: 32, textAlign: 'center', color: 'rgba(243,238,228,0.3)', fontSize: 12 }}>
                 Nenhuma notificação
               </div>
