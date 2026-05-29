@@ -1,5 +1,5 @@
 // NovoUsuarioForm — extraído de UsuariosConfig.jsx em 22/mai/2026 (fatiamento Etapa 8).
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { supabase } from '../../../lib/supabase'
 import { formatNomeEmpresa } from '../../../lib/formatNome'
 import { PAPEIS } from './_consts'

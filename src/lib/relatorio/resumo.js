@@ -1,7 +1,6 @@
 // buildResumoSheet — aba Resumo Executivo do relatório.
 // Extraído em 22/mai/2026 (fatiamento Etapa 4).
-import { getFaseLabel, getStatusComputado, normalizeFaseValue } from '../fases'
-import { getStatusConfig } from '../statusWorkflow'
+import { getFaseLabel } from '../fases'
 import * as S from './_shared'
 
 const {

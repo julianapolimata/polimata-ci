@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../contexts/AuthContext'
-import { formatNomeEmpresa } from '../../lib/formatNome'
 import { PAPEIS } from './usuarios/_consts'
 import ModalDetalhes from './usuarios/ModalDetalhes'
 import NovoUsuarioForm from './usuarios/NovoUsuarioForm'

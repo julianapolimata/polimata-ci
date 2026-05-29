@@ -1,6 +1,6 @@
 // buildAreaSheet — uma aba por área no relatório (detalhamento).
 // Extraído em 22/mai/2026 (fatiamento Etapa 4).
-import { getFaseLabel, getStatusComputado, normalizeFaseValue } from '../fases'
+import { getFaseLabel, getStatusComputado } from '../fases'
 import { getStatusConfig } from '../statusWorkflow'
 import * as S from './_shared'
 

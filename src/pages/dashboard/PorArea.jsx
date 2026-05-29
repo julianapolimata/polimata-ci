@@ -4,7 +4,7 @@ import { useAuth } from '../../contexts/AuthContext'
 import { getResultadoVitrine, getFaseLabel, getStatusComputado, getFaseDisplayOverride, normalizeFaseValue } from '../../lib/fases'
 import { formatNomeEmpresa } from '../../lib/formatNome'
 import { getNivelMaturidade } from '../../lib/calculoMaturidade'
-import { getStatusConfig, getProximaAcao, PROXIMA_ACAO_OPCOES } from '../../lib/statusWorkflow'
+import { getStatusConfig, getProximaAcao } from '../../lib/statusWorkflow'
 import { exportarMRCExcel } from '../../lib/exportMRC'
 import { exportarSolicitacoesExcel } from '../../lib/exportSolicitacoes'
 import { supabase } from '../../lib/supabase'
@@ -16,13 +16,9 @@ import ModalNovoRisco from '../../components/ModalNovoRisco'
 import ModalRegistrarResultado from '../../components/ModalRegistrarResultado'
 import ModalRegistrarCriticidade from '../../components/ModalRegistrarCriticidade'
 import ModalRevisar from '../../components/ModalRevisar'
-import NotificacoesPanel from '../../components/NotificacoesPanel'
 import {
-  CRIT_CORES, CRIT_LABELS, IMP_LABELS, PROB_LABELS, HEAT_CORES,
   isEfetivo, isInefetivo, isGap, precisaPlanoAcao, planoAcaoConcluido,
-  impToIdx, probToIdx,
-  fmtDate, getUltimaAtualizacao,
-  NivelBadge, Spinner, NoProjeto,
+  impToIdx, probToIdx, getUltimaAtualizacao, Spinner, NoProjeto,
 } from './_shared'
 import { paStyles } from './porArea/styles'
 import PorAreaTopo from './porArea/PorAreaTopo'

@@ -1,6 +1,6 @@
 // buildMRCSheet — aba Matriz de Riscos e Controles do MRC Excel.
 // Extraído em 22/mai/2026 (fatiamento Etapa 9).
-import { getFaseLabel as getFaseLabelUtil, getFaseInfo, getStatusComputado, normalizeFaseValue } from '../fases'
+import { getStatusComputado, normalizeFaseValue } from '../fases'
 import { getStatusConfig } from '../statusWorkflow'
 import * as S from './_shared'
 
