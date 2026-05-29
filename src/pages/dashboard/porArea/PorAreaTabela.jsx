@@ -3,7 +3,7 @@
 import React from 'react'
 
 export default function PorAreaTabela({ ctx }) {
-  const { FASE_HDR, FASE_KEYS_VISIVEIS, FASE_W_PARA, PA, PA_DATA_COLS, RegressaoBadge, Td, badgeCrit, badgeR, canEdit, faseThS, getAlertas, getStatusBadge, idxFases, isAdmin, isCliente, isDiagnostico, projeto, renderFaseCell, setAtualizarRow, setModalRow, setRowRegistrarResultado, setRowRevisar, sortArrow, tableScrollRef, tdS, toggleSort } = ctx
+  const { FASE_HDR, FASE_KEYS_VISIVEIS, FASE_W_PARA, PA, PA_DATA_COLS, RegressaoBadge, Td, badgeCrit, badgeR, canEdit, cf, cfSorted, faseThS, getAlertas, getStatusBadge, idxFases, isAdmin, isCliente, isDiagnostico, projeto, renderFaseCell, setAtualizarRow, setModalRow, setRowRegistrarResultado, setRowRevisar, sortArrow, tableScrollRef, tdS, toggleSort } = ctx
   return (
     <>
       {/* TABELA MRC */}

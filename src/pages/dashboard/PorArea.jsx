@@ -328,7 +328,7 @@ export default function PorArea({ projeto, areasCalc, todosControles, loading, n
 
   // ctx — state, refs, computed e helpers para os 3 blocos extraídos
   const ctx = {
-    CRT_C, F1_HDR, FASE_HDR, FASE_HDR_FULL, FASE_KEYS_VISIVEIS, FASE_W,
+    CRT_C, F1_HDR, FASE_HDR, FASE_HDR_FULL, FASE_KEYS_VISIVEIS, FASE_W, cf, cfSorted, crits, exportarSolicitacoesDaArea, ress,
     FASE_W_PARA, IMP_C, PA, PA_DATA_COLS, PA_FASE_KEYS, PRB_C,
     RegressaoBadge, Td, area, areaHeatmap, areasCalc, atualizarRow,
     badgeCrit, badgeExistencia, badgeFase, badgeImp, badgeProb, badgeR,

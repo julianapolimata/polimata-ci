@@ -3,7 +3,7 @@
 import React from 'react'
 
 export default function PorAreaFiltros({ ctx }) {
-  const { PA, busca, canEdit, controles, excelMenuAberto, excelMenuRef, expandirFiltros, exportarMRCExcel, fasesDisponiveis, filtAcao, filtCrit, filtFase, filtImp, filtRes, filtSit, filtStatus, gerarTemplateMRC, isCliente, isRealAdmin, nome, projeto, setBusca, setExcelMenuAberto, setExpandirFiltros, setFiltAcao, setFiltCrit, setFiltFase, setFiltImp, setFiltRes, setFiltSit, setFiltStatus, setModalNovoRisco, setSimularPerfil, simularPerfil } = ctx
+  const { PA, busca, canEdit, cf, controles, crits, exportarSolicitacoesDaArea, ress, excelMenuAberto, excelMenuRef, expandirFiltros, exportarMRCExcel, fasesDisponiveis, filtAcao, filtCrit, filtFase, filtImp, filtRes, filtSit, filtStatus, gerarTemplateMRC, isCliente, isRealAdmin, nome, projeto, setBusca, setExcelMenuAberto, setExpandirFiltros, setFiltAcao, setFiltCrit, setFiltFase, setFiltImp, setFiltRes, setFiltSit, setFiltStatus, setModalNovoRisco, setSimularPerfil, simularPerfil } = ctx
   return (
     <>
       {/* FILTROS — duas linhas: essenciais (sempre) + drawer "Mais filtros" (colapsável) */}
