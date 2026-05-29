@@ -68,9 +68,14 @@ export default function PorArea({ projeto, areasCalc, todosControles, loading, n
   const tableScrollRef = useRef(null)
   // syncScroll removido
   const papelAtivo = simularPerfil || perfil?.papel
-  const canEdit = papelAtivo === 'admin_polimata' || papelAtivo === 'consultor_polimata'
   const isAdmin = papelAtivo === 'admin_polimata'
+  const isGerente = papelAtivo === 'gerente_polimata'
+  const isConsultor = papelAtivo === 'consultor_polimata'
   const isCliente = papelAtivo === 'gestor_cliente' || papelAtivo === 'usuario_cliente'
+  const canRevisar = isAdmin || isGerente
+  const canEdit = isAdmin || isGerente || isConsultor
+  // SoD: admin/gerente só editam controles SEM consultor alocado; consultor sempre pode
+  const canEditControle = (c) => isConsultor || ((isAdmin || isGerente) && !c?.consultor_id)
   const isRealAdmin = perfil?.papel === 'admin_polimata'
 
   // HOOKS devem ficar ANTES de qualquer early return (React rules of hooks)
@@ -350,13 +355,26 @@ export default function PorArea({ projeto, areasCalc, todosControles, loading, n
     tableScrollRef, tdS, todosControles, toggleSort, ultAtualArea,
   }
 
+  // Calcula primary/secondary action pra o modal aberto (mesma lógica da coluna Ação)
+  function getModalActions(c) {
+    if (!c) return {}
+    const st = c.status_workflow
+    const podeEditarEste = canEditControle(c)
+    if (canRevisar && st === 'em_revisao') return { primary: { label: 'Revisar', color: '#1D4ED8', bg: 'rgba(59,130,246,0.12)', border: 'rgba(59,130,246,0.30)', onClick: () => { setRowRevisar(c); setModalRow(null) } } }
+    if (isDiagnostico && podeEditarEste) return { primary: { label: '✏ Editar', color: 'var(--copper-text)', bg: 'rgba(204,145,94,0.12)', border: 'rgba(204,145,94,0.30)', onClick: () => { setAtualizarRow(c); setModalRow(null) } } }
+    if (podeEditarEste && st === 'rascunho') return { primary: { label: '▶ Continuar', color: '#92400E', bg: 'rgba(234,179,8,0.15)', border: 'rgba(234,179,8,0.40)', onClick: () => { setAtualizarRow(c); setModalRow(null) } } }
+    if (podeEditarEste && st === 'em_analise') return { primary: { label: 'Registrar Resultado', color: '#15803D', bg: 'rgba(22,163,74,0.12)', border: 'rgba(22,163,74,0.35)', onClick: () => { setRowRegistrarResultado(c); setModalRow(null) } }, secondary: { label: '✏ Editar premissas', onClick: () => { setAtualizarRow(c); setModalRow(null) } } }
+    if (podeEditarEste && (st === 'nao_iniciado' || st === 'teste_pendente' || st === 'reprovado')) return { primary: { label: 'Atualizar', color: 'var(--copper-text)', bg: 'rgba(204,145,94,0.12)', border: 'rgba(204,145,94,0.30)', onClick: () => { setAtualizarRow(c); setModalRow(null) } } }
+    return {}
+  }
+
   return (
     <div style={PA.page}>
       <PorAreaTopo ctx={ctx} />
 
       <PorAreaFiltros ctx={ctx} />
       <PorAreaTabela ctx={ctx} />
-      {modalRow && <ModalDetalhe row={modalRow} projeto={projeto} onClose={() => setModalRow(null)} onEditar={canEdit ? () => { setAtualizarRow(modalRow); setModalRow(null) } : undefined} />}
+      {modalRow && (() => { const acts = getModalActions(modalRow); return <ModalDetalhe row={modalRow} projeto={projeto} onClose={() => setModalRow(null)} onEditar={canEdit && !acts.primary ? () => { setAtualizarRow(modalRow); setModalRow(null) } : undefined} primaryAction={acts.primary} secondaryAction={acts.secondary} /> })()}
       {atualizarRow && <ModalAtualizar row={atualizarRow} onClose={() => setAtualizarRow(null)} onSaved={() => { setAtualizarRow(null); if (projeto?.id) loadDados(projeto.id) }} areas={areasCalc} projeto={projeto} />}
       {modalNovoRisco && <ModalNovoRisco onClose={() => setModalNovoRisco(false)} onSaved={() => { setModalNovoRisco(false); if (projeto?.id) loadDados(projeto.id) }} areas={areasCalc} projeto={projeto} areaFixa={area} />}
       {rowRegistrarResultado && <ModalRegistrarResultado row={rowRegistrarResultado} onClose={() => setRowRegistrarResultado(null)} onSaved={() => { setRowRegistrarResultado(null); if (projeto?.id) loadDados(projeto.id) }} responsaveis={[]} />}
