@@ -2,6 +2,7 @@
 // Extraído em 22/mai/2026 (fatiamento Etapa 7).
 import { calcularPesosControles, calcularContribuicaoControle } from './contribuicao'
 import { getNivelMaturidade } from './nivelMaturidade'
+import { getPesoFaseNormalizado, isEfetivo } from './_shared'
 
 // ─── PERCENTUAL DA ÁREA (seção 5) ───────────────────────────────────────────
 

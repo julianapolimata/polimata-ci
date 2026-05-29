@@ -1,6 +1,7 @@
 // buildMatrizSheet — aba Matriz de Calor.
 // Extraído em 22/mai/2026 (fatiamento Etapa 4).
 import * as S from './_shared'
+import { vitrineResultado, vitrineIncons } from './_shared'
 
 const {
   NAVY, GOLD, CREME, NAVY_FILL, CREME_FILL, WHITE_FILL,

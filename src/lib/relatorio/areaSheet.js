@@ -43,7 +43,7 @@ const DETAIL_COLUMNS = [
 
 const RESULTADO_KEYS = new Set(['_vitrine_resultado', '_hist_f1', '_hist_f2d', '_hist_f2e', '_hist_f3', '_hist_f4c1', '_hist_f4c2', '_hist_f5'])
 
-function getCellValue(row, col) {
+export function getCellValue(row, col) {
   if (col.key === '_vitrine_resultado') return vitrineResultado(row)
   if (col.key === '_vitrine_incons') return vitrineIncons(row)
   if (col.key === '_vitrine_rec') return vitrineRec(row)

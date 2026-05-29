@@ -4,6 +4,7 @@ import ExcelJS from 'exceljs'
 import { supabase } from '../supabase'
 import { buildHeatmapSheet } from './heatmapSheet'
 import { buildMRCSheet } from './mrcSheet'
+import { fetchIconBase64 } from './_shared'
 
 export async function exportarMRCExcel(controles, nomeArquivo, tituloAba = 'MRC', clienteNome = '', projetoNome = '') {
   const wb = new ExcelJS.Workbook()

@@ -117,17 +117,11 @@ export default function ImportarMRC({ projetoId, projeto, areas, onImported, all
   const [atResult, setAtResult] = useState(null)
 
   const isAdmin = perfil?.papel === 'admin_polimata'
-  if (!isAdmin && !allowNonAdmin) return null
-
-  const isTodasAreas = areaSelecionada === '__todas__'
-  const areaNome = isTodasAreas ? 'Todas as áreas' : (areas?.find(a => a.id === areaSelecionada)?.nome || '')
-  const faseLabel = TODAS_FASES.find(f => f.codigo === faseSelecionada)?.label || ''
-  const fasesDisponiveis = getFasesDisponiveis(projeto?.num_fases)
-
   useEffect(() => {
     supabase.from('projetos').select('id, nome, clientes(nome)').order('nome')
       .then(({ data }) => { if (data) setProjetos(data) })
   }, [])
+
 
   // Carregar consultores ativos (admin e consultor Polímata podem ser responsáveis)
   useEffect(() => {
@@ -138,6 +132,14 @@ export default function ImportarMRC({ projetoId, projeto, areas, onImported, all
       .order('nome')
       .then(({ data }) => { if (data) setConsultores(data) })
   }, [])
+
+  if (!isAdmin && !allowNonAdmin) return null
+
+  const isTodasAreas = areaSelecionada === '__todas__'
+  const areaNome = isTodasAreas ? 'Todas as áreas' : (areas?.find(a => a.id === areaSelecionada)?.nome || '')
+  const faseLabel = TODAS_FASES.find(f => f.codigo === faseSelecionada)?.label || ''
+  const fasesDisponiveis = getFasesDisponiveis(projeto?.num_fases)
+
 
   // ── Ler Excel e preview ──
   async function handleFileChange(e) {

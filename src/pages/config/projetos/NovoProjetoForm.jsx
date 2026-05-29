@@ -1,6 +1,7 @@
 // NovoProjetoForm extraído de ProjetosConfig.jsx em 22/mai/2026 (fatiamento Etapa 4).
 import { useState } from 'react'
 import { supabase } from '../../../lib/supabase'
+import { formatNomeEmpresa } from '../../../lib/formatNome'
 import { FASES_LABEL, FASES_DETALHE } from './_consts'
 
 function NovoProjetoForm({ clientes, perfisPolimata, onSave, onCancel }) {

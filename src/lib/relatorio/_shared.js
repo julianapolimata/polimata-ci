@@ -50,7 +50,7 @@ function infoLine(clienteNome, projetoNome, count) {
   return parts.join('  ·  ')
 }
 
-async function fetchIconBase64() {
+export async function fetchIconBase64() {
   try {
     const resp = await fetch('/icon.png')
     if (!resp.ok) return null

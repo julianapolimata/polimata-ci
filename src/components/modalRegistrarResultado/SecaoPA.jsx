@@ -1,7 +1,7 @@
 // SecaoPA — bloco JSX extraído de ModalRegistrarResultado.jsx em 22/mai/2026 (fatiamento Etapa 4).
 import React from 'react'
 
-export default function SecaoPA({ temPA, setTemPA, paDesc, setPaDesc, paResp, setPaResp, paPrazo, setPaPrazo, paStatus, setPaStatus, justificativaPA, setJustificativaPA, responsaveis, resultado }) {
+export default function SecaoPA({ showPA, temPA, setTemPA, paDesc, setPaDesc, paResp, setPaResp, paPrazo, setPaPrazo, paStatus, setPaStatus, justificativaPA, setJustificativaPA, responsaveis, resultado }) {
   return (
     <>
           {/* Teste de Desenho (se Inefetivo/GAP) */}

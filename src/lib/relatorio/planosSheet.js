@@ -1,6 +1,8 @@
 // buildPlanosSheet — aba Planos de Ação.
 // Extraído em 22/mai/2026 (fatiamento Etapa 4).
 import * as S from './_shared'
+import { vitrineResultado, vitrineIncons, getResultadoColor, getCritColor } from './_shared'
+import { getCellValue } from './areaSheet'
 
 const {
   NAVY, GOLD, CREME, NAVY_FILL, CREME_FILL, WHITE_FILL, COL_HEADER_FILL,

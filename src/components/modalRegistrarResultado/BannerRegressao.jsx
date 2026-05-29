@@ -1,7 +1,7 @@
 // BannerRegressao — bloco JSX extraído de ModalRegistrarResultado.jsx em 22/mai/2026 (fatiamento Etapa 4).
 import React from 'react'
 
-export default function BannerRegressao({ isRegressao, resultado, faseAtual }) {
+export default function BannerRegressao({ isRegressao, resultado, faseAtual, row }) {
   return (
     <>
           {/* Banner de regressão (se resultado Inefetivo/GAP em F3+) */}

@@ -5,6 +5,7 @@ import { buildResumoSheet } from './resumo'
 import { buildAreaSheet } from './areaSheet'
 import { buildMatrizSheet } from './matrizSheet'
 import { buildPlanosSheet } from './planosSheet'
+import { fetchIconBase64 } from './_shared'
 
 export async function gerarRelatorioExcel({ controles, areas, secoes, clienteNome, projetoNome, projeto }) {
   const wb = new ExcelJS.Workbook()

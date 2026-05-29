@@ -1,7 +1,7 @@
 // SecaoInconsistencia — bloco JSX extraído de ModalRegistrarResultado.jsx em 22/mai/2026 (fatiamento Etapa 4).
 import React from 'react'
 
-export default function SecaoInconsistencia({ showInconsistenciaAlert, inconsistencia, setInconsistencia, resultado }) {
+export default function SecaoInconsistencia({ showInconsistencia, showInconsistenciaAlert, inconsistencia, setInconsistencia, resultado }) {
   return (
     <>
           {/* Alerta Inconsistência */}

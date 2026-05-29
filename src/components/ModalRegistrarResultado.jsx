@@ -245,11 +245,11 @@ const ModalRegistrarResultado = ({ row, onClose, onSaved, responsaveis }) => {
           fontFamily: 'Montserrat, sans-serif'
         }}>
           <BannerReprovacao isReprovado={isReprovado} notaReprovacao={notaReprovacao} faseAtual={faseAtual} />
-          <BannerRegressao isRegressao={isRegressao} resultado={resultado} faseAtual={faseAtual} />
+          <BannerRegressao isRegressao={isRegressao} resultado={resultado} faseAtual={faseAtual} row={row} />
           <SecaoResultado resultado={resultado} handleResultadoChange={handleResultadoChange} />
-          <SecaoInconsistencia showInconsistenciaAlert={showInconsistenciaAlert} inconsistencia={inconsistencia} setInconsistencia={setInconsistencia} resultado={resultado} />
-          <SecaoMelhoria melhoria={melhoria} setMelhoria={setMelhoria} descMelhoria={descMelhoria} setDescMelhoria={setDescMelhoria} />
-          <SecaoPA temPA={temPA} setTemPA={setTemPA} paDesc={paDesc} setPaDesc={setPaDesc} paResp={paResp} setPaResp={setPaResp} paPrazo={paPrazo} setPaPrazo={setPaPrazo} paStatus={paStatus} setPaStatus={setPaStatus} justificativaPA={justificativaPA} setJustificativaPA={setJustificativaPA} responsaveis={responsaveis} resultado={resultado} />
+          <SecaoInconsistencia showInconsistencia={showInconsistencia} showInconsistenciaAlert={showInconsistenciaAlert} inconsistencia={inconsistencia} setInconsistencia={setInconsistencia} resultado={resultado} />
+          <SecaoMelhoria showDescMelhoria={showDescMelhoria} melhoria={melhoria} setMelhoria={setMelhoria} descMelhoria={descMelhoria} setDescMelhoria={setDescMelhoria} />
+          <SecaoPA showPA={showPA} temPA={temPA} setTemPA={setTemPA} paDesc={paDesc} setPaDesc={setPaDesc} paResp={paResp} setPaResp={setPaResp} paPrazo={paPrazo} setPaPrazo={setPaPrazo} paStatus={paStatus} setPaStatus={setPaStatus} justificativaPA={justificativaPA} setJustificativaPA={setJustificativaPA} responsaveis={responsaveis} resultado={resultado} />
         </div>
 
         {/* FASE ATUAL */}

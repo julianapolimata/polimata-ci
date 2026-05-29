@@ -2,7 +2,7 @@
 import React from 'react'
 import PassosTesteList from '../PassosTesteList'
 
-export default function StepPassos({ step, passos, setPassos, saving }) {
+export default function StepPassos({ step, passos, setPassos, saving, novoRiscoData, subprocesso }) {
   return (
     <>
           {/* ─────────── PASSO 3: Passos de Teste (Solicitações v2) ─────────── */}

@@ -1,7 +1,7 @@
 // StepCaracteristicas — bloco JSX extraído de ModalNovoRisco.jsx em 22/mai/2026 (fatiamento Etapa 5).
 import React from 'react'
 
-export default function StepCaracteristicas({ step, descControle, setDescControle, cat, setCat, freq, setFreq, nat, setNat, car, setCar, sis, setSis, chave, setChave, quem, setQuem, quando, setQuando, porque, setPorque, como, setComo, onde, setOnde, resultadoPremissa, setResultadoPremissa, sistemas }) {
+export default function StepCaracteristicas({ isAutomatic, step, descControle, setDescControle, cat, setCat, freq, setFreq, nat, setNat, car, setCar, sis, setSis, chave, setChave, quem, setQuem, quando, setQuando, porque, setPorque, como, setComo, onde, setOnde, resultadoPremissa, setResultadoPremissa, sistemas }) {
   return (
     <>
           {/* ─────────── PASSO 2 ─────────── */}

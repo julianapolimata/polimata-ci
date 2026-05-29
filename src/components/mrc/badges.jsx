@@ -124,7 +124,7 @@ function getFaseInfo(row) {
   return getFaseInfoUtil(row)
 }
 
-function FaseAtual({ row }) {
+function FaseAtual({ row, projeto }) {
   const { label, cor } = getFaseInfo(row)
   const resultado = getResultadoVitrine(row, projeto)
   return (

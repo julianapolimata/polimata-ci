@@ -1,7 +1,7 @@
 // SecaoMelhoria — bloco JSX extraído de ModalRegistrarResultado.jsx em 22/mai/2026 (fatiamento Etapa 4).
 import React from 'react'
 
-export default function SecaoMelhoria({ melhoria, setMelhoria, descMelhoria, setDescMelhoria }) {
+export default function SecaoMelhoria({ showDescMelhoria, melhoria, setMelhoria, descMelhoria, setDescMelhoria }) {
   return (
     <>
           {/* Melhoria (sempre) */}
