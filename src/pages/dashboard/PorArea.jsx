@@ -106,7 +106,7 @@ export default function PorArea({ projeto, areasCalc, todosControles, loading, n
     // Pendente Aprovação: em revisão (substitui Criticidade Pendente nesse estágio — aprovação vem antes)
     if (sw === 'em_revisao') {
       alertas.push({
-        label: 'Pendente Aprovação', color: '#1D4ED8', bg: 'rgba(59,130,246,0.10)',
+        label: isAdmin ? 'Revisar' : 'Pendente Aprovação', color: '#1D4ED8', bg: 'rgba(59,130,246,0.10)',
         onClick: isAdmin ? () => setRowRevisar(c) : null,
       })
     } else if (faltaCriticidade && sw === 'aprovado') {

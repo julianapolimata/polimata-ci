@@ -37,15 +37,15 @@ export default function PorAreaTabela({ ctx }) {
                       let primary = null, secondary = null
                       // Em projeto diagnóstico (sem teste de efetividade), workflow simplificado:
                       // sempre permite editar o controle (existência, criticidade, etc.)
-                      if (isDiagnostico && canEdit) {
+                      if (isAdmin && st === 'em_revisao') {
+                        primary = { label: 'Revisar', color: '#1D4ED8', bg: 'rgba(59,130,246,0.12)', border: 'rgba(59,130,246,0.30)', onClick: () => setRowRevisar(c) }
+                      } else if (isDiagnostico && canEdit) {
                         primary = { label: '✏ Editar', color: 'var(--copper-text)', bg: 'rgba(204,145,94,0.12)', border: 'rgba(204,145,94,0.30)', onClick: () => setAtualizarRow(c) }
                       } else if (canEdit && st === 'rascunho') {
                         primary = { label: '▶ Continuar', color: '#92400E', bg: 'rgba(234,179,8,0.15)', border: 'rgba(234,179,8,0.40)', onClick: () => setAtualizarRow(c) }
                       } else if (canEdit && st === 'em_analise') {
                         primary = { label: 'Registrar Resultado', color: '#15803D', bg: 'rgba(22,163,74,0.12)', border: 'rgba(22,163,74,0.35)', onClick: () => setRowRegistrarResultado(c) }
                         secondary = { label: '✏ Editar premissas', onClick: () => setAtualizarRow(c) }
-                      } else if (isAdmin && st === 'em_revisao') {
-                        primary = { label: 'Revisar', color: '#1D4ED8', bg: 'rgba(59,130,246,0.12)', border: 'rgba(59,130,246,0.30)', onClick: () => setRowRevisar(c) }
                       } else if (canEdit && (st === 'nao_iniciado' || st === 'teste_pendente' || st === 'reprovado')) {
                         primary = { label: 'Atualizar', color: 'var(--copper-text)', bg: 'rgba(204,145,94,0.12)', border: 'rgba(204,145,94,0.30)', onClick: () => setAtualizarRow(c) }
                       }
