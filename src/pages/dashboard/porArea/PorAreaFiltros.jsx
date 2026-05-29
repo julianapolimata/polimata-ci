@@ -72,7 +72,7 @@ export default function PorAreaFiltros({ ctx }) {
                 <select value={filtCrit} onChange={e => setFiltCrit(e.target.value)} style={PA.filtroSel}><option value="">Todas criticidades</option>{crits.map(c => <option key={c} value={c}>{c}</option>)}</select>
                 <select value={filtFase} onChange={e => setFiltFase(e.target.value)} style={PA.filtroSel}><option value="">Todas as fases</option>{fasesDisponiveis.map(f => <option key={f} value={f}>{f}</option>)}</select>
                 <select value={filtRes} onChange={e => setFiltRes(e.target.value)} style={PA.filtroSel}><option value="">Todos resultados</option>{ress.map(c => <option key={c} value={c}>{c}</option>)}</select>
-                {!isCliente && <select value={filtStatus} onChange={e => setFiltStatus(e.target.value)} style={{ ...PA.filtroSel, borderColor: 'var(--copper-text)' }} title="Filtro interno Polímata">
+                {!isCliente && <select value={filtStatus} onChange={e => setFiltStatus(e.target.value)} style={PA.filtroSel} title="Filtro interno Polímata">
                   <option value="">Todos status</option>
                   <option value="rascunho">Rascunho</option>
                   <option value="nao_iniciado">Não Iniciado</option>
@@ -89,7 +89,7 @@ export default function PorAreaFiltros({ ctx }) {
                   <option value="em_revisao">Em Revisão</option>
                   <option value="aprovado">Aprovado</option>
                 </select>}
-                {!isCliente && <select value={filtAcao} onChange={e => setFiltAcao(e.target.value)} style={{ ...PA.filtroSel, borderColor: 'var(--copper-text)' }} title="Filtro interno Polímata">
+                {!isCliente && <select value={filtAcao} onChange={e => setFiltAcao(e.target.value)} style={PA.filtroSel} title="Filtro interno Polímata">
                   <option value="">Todas ações</option>
                   {PROXIMA_ACAO_OPCOES.map(a => <option key={a} value={a}>{a}</option>)}
                 </select>}
