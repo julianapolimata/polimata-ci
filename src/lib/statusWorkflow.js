@@ -54,7 +54,24 @@ export function isClienteRole(papel) {
 }
 
 export function isProfissionalRole(papel) {
-  return papel === 'admin_polimata' || papel === 'consultor_polimata'
+  return papel === 'admin_polimata' || papel === 'gerente_polimata' || papel === 'consultor_polimata'
+}
+
+// Pode revisar/aprovar/reprovar controles (admin acumula gerente — exceção SoD)
+export function canRevisar(papel) {
+  return papel === 'admin_polimata' || papel === 'gerente_polimata'
+}
+
+// Pode configurar o sistema (usuários, projetos, áreas, constantes) — só admin
+export function canConfigurar(papel) {
+  return papel === 'admin_polimata'
+}
+
+// Pode editar este controle específico — SoD: gerente/admin só editam se NÃO há consultor alocado
+export function canEditarControle(papel, controleConsultorId) {
+  if (papel === 'consultor_polimata') return true
+  if (papel === 'admin_polimata' || papel === 'gerente_polimata') return !controleConsultorId
+  return false
 }
 
 // ── Funções principais ────────────────────────────────────────────────────────

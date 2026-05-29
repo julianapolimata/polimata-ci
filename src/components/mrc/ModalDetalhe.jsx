@@ -8,7 +8,7 @@ import HistoricoControle from './HistoricoControle'
 
 // ─── MODAL ───────────────────────────────────────────────────────────────────
 
-export function ModalDetalhe({ row, projeto, onClose, onEditar }) {
+export function ModalDetalhe({ row, projeto, onClose, onEditar, primaryAction, secondaryAction }) {
   const [tab, setTab] = useState('ident')
   if (!row) return null
   const isDiagModal = projeto?.f1_tem_teste === false
@@ -33,7 +33,17 @@ export function ModalDetalhe({ row, projeto, onClose, onEditar }) {
         <div className="modal-hdr">
           <div><div className="modal-ttl">{row.rc}{row.area ? ` · ${row.area}` : ''}</div><div className="modal-sub">{row.sub}</div></div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            {onEditar && (
+            {primaryAction && (
+              <button onClick={primaryAction.onClick} title={primaryAction.label} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, background: primaryAction.bg || 'rgba(59,130,246,0.12)', border: `1px solid ${primaryAction.border || 'rgba(59,130,246,0.30)'}`, borderRadius: 999, padding: '6px 14px', fontSize: 11, fontWeight: 700, color: primaryAction.color || '#1D4ED8', cursor: 'pointer', fontFamily: 'inherit' }}>
+                {primaryAction.label}
+              </button>
+            )}
+            {secondaryAction && (
+              <button onClick={secondaryAction.onClick} title={secondaryAction.label} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, background: 'transparent', border: '1px solid rgba(204,145,94,0.30)', borderRadius: 999, padding: '6px 12px', fontSize: 11, fontWeight: 500, color: 'var(--copper-text)', cursor: 'pointer', fontFamily: 'inherit' }}>
+                {secondaryAction.label}
+              </button>
+            )}
+            {!primaryAction && onEditar && (
               <button onClick={onEditar} title="Editar este controle" style={{ display: 'inline-flex', alignItems: 'center', gap: 5, background: 'rgba(204,145,94,0.12)', border: '1px solid rgba(204,145,94,0.35)', borderRadius: 999, padding: '6px 14px', fontSize: 11, fontWeight: 600, color: 'var(--copper-text)', cursor: 'pointer', fontFamily: 'inherit' }}>
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                 Editar
