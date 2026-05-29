@@ -1,6 +1,8 @@
 // PorAreaFiltros — bloco JSX extraído de PorArea.jsx em 22/mai/2026 (fatiamento Etapa 6).
 // Diff-zero: cópia direta do parent. Recebe state e helpers via prop `ctx`.
 import React from 'react'
+import { PROXIMA_ACAO_OPCOES } from '../../../lib/statusWorkflow'
+import { formatNomeEmpresa } from '../../../lib/formatNome'
 
 export default function PorAreaFiltros({ ctx }) {
   const { PA, busca, canEdit, cf, controles, crits, exportarSolicitacoesDaArea, ress, excelMenuAberto, excelMenuRef, expandirFiltros, exportarMRCExcel, fasesDisponiveis, filtAcao, filtCrit, filtFase, filtImp, filtRes, filtSit, filtStatus, gerarTemplateMRC, isCliente, isRealAdmin, nome, projeto, setBusca, setExcelMenuAberto, setExpandirFiltros, setFiltAcao, setFiltCrit, setFiltFase, setFiltImp, setFiltRes, setFiltSit, setFiltStatus, setModalNovoRisco, setSimularPerfil, simularPerfil } = ctx

@@ -1,6 +1,8 @@
 // PorAreaTopo — bloco JSX extraído de PorArea.jsx em 22/mai/2026 (fatiamento Etapa 6).
 // Diff-zero: cópia direta do parent. Recebe state e helpers via prop `ctx`.
 import React from 'react'
+import { CRIT_CORES, CRIT_LABELS, HEAT_CORES, IMP_LABELS, PROB_LABELS, NivelBadge } from '../_shared'
+import NotificacoesPanel from '../../../components/NotificacoesPanel'
 
 export default function PorAreaTopo({ ctx }) {
   const { PA, area, areaHeatmap, controles, dashCollapsed, efetivos, gaps, inefetivos, isDiagnostico, navigate, nome, pa_crit, pa_ex, pa_ix, pa_pc, pa_pct, pa_total, pesoEmpresa, planosAcao, setDashCollapsed } = ctx
