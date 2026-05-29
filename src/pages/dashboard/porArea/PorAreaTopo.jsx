@@ -5,7 +5,7 @@ import { CRIT_CORES, CRIT_LABELS, HEAT_CORES, IMP_LABELS, PROB_LABELS, NivelBadg
 import NotificacoesPanel from '../../../components/NotificacoesPanel'
 
 export default function PorAreaTopo({ ctx }) {
-  const { PA, area, areaHeatmap, controles, dashCollapsed, efetivos, gaps, inefetivos, isDiagnostico, navigate, nome, pa_crit, pa_ex, pa_ix, pa_pc, pa_pct, pa_total, pesoEmpresa, planosAcao, setDashCollapsed } = ctx
+  const { PA, area, areaHeatmap, controles, dashCollapsed, efetivos, gaps, inefetivos, isDiagnostico, navigate, nome, nv, p, pa_crit, pa_ex, pa_ix, pa_pc, pa_pct, pa_total, pesoEmpresa, planosAcao, setDashCollapsed } = ctx
   return (
     <>
       {/* HEADER — padrão MRC Completa */}

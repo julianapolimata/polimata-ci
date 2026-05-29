@@ -340,7 +340,7 @@ export default function PorArea({ projeto, areasCalc, todosControles, loading, n
     getStatusBadge, idxFases, inefetivos, isAdmin, isCliente, isDiagnostico,
     isRealAdmin, loadDados, loading, modalNovoRisco, modalRow, navigate,
     nome, numFases, paSortVal, pa_crit, pa_ex, pa_ix,
-    pa_pc, pa_pct, pa_total, papelAtivo, pesoEmpresa, planosAcao,
+    p, nv, pa_pc, pa_pct, pa_total, papelAtivo, pesoEmpresa, planosAcao,
     projeto, renderFaseCell, rowCriticidade, rowRegistrarResultado, rowRevisar, setAtualizarRow,
     setBusca, setDashCollapsed, setExcelMenuAberto, setExpandirFiltros, setFiltAcao, setFiltCrit,
     setFiltFase, setFiltImp, setFiltRes, setFiltSit, setFiltStatus, setModalNovoRisco,
