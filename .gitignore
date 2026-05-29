@@ -6,3 +6,4 @@ dist/
 # Vite temporary configs
 vite.config.js.timestamp-*.mjs
 vite.config.ts.timestamp-*.mjs
+assets/
