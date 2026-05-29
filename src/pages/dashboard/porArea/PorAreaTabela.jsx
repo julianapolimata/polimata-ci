@@ -1,6 +1,8 @@
 // PorAreaTabela — bloco JSX extraído de PorArea.jsx em 22/mai/2026 (fatiamento Etapa 6).
 // Diff-zero: cópia direta do parent. Recebe state e helpers via prop `ctx`.
 import React from 'react'
+import { fmtDate } from '../_shared'
+import { getFaseLabel, getResultadoVitrine, getStatusComputado } from '../../../lib/fases'
 
 export default function PorAreaTabela({ ctx }) {
   const { FASE_HDR, FASE_KEYS_VISIVEIS, FASE_W_PARA, PA, PA_DATA_COLS, RegressaoBadge, Td, badgeCrit, badgeR, canEdit, cf, cfSorted, faseThS, getAlertas, getStatusBadge, idxFases, isAdmin, isCliente, isDiagnostico, projeto, renderFaseCell, setAtualizarRow, setModalRow, setRowRegistrarResultado, setRowRevisar, sortArrow, tableScrollRef, tdS, toggleSort } = ctx
