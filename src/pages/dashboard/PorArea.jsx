@@ -9,6 +9,7 @@ import { exportarMRCExcel } from '../../lib/exportMRC'
 import { exportarSolicitacoesExcel } from '../../lib/exportSolicitacoes'
 import { supabase } from '../../lib/supabase'
 import { gerarTemplateMRC } from '../../lib/templateMRC'
+import { gerarRelatorioExcel } from '../../lib/gerarRelatorio'
 import { ModalDetalhe } from '../../components/MRCCompleta'
 import ModalAtualizar from '../../components/ModalAtualizar'
 import ModalNovoRisco from '../../components/ModalNovoRisco'
@@ -335,7 +336,7 @@ export default function PorArea({ projeto, areasCalc, todosControles, loading, n
     dashCollapsed, efetivos, excelMenuAberto, excelMenuRef, expandirFiltros, exportarMRCExcel,
     exportarSolicitacoesExcel, faseLabel, faseThS, faseVal, fasesDisponiveis, filtAcao,
     filtCrit, filtFase, filtImp, filtRes, filtSit, filtStatus,
-    gaps, gerarTemplateMRC, getAlertas, getFaseCodigo, getResultadoGeral,
+    gaps, gerarRelatorioExcel, gerarTemplateMRC, getAlertas, getFaseCodigo, getResultadoGeral,
     getStatusBadge, idxFases, inefetivos, isAdmin, isCliente, isDiagnostico,
     isRealAdmin, loadDados, loading, modalNovoRisco, modalRow, navigate,
     nome, numFases, paSortVal, pa_crit, pa_ex, pa_ix,
