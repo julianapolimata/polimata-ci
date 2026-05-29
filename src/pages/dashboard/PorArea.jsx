@@ -98,7 +98,7 @@ export default function PorArea({ projeto, areasCalc, todosControles, loading, n
     const rv = (getResultadoVitrine(c, projeto) || '').toLowerCase()
     const faltaCriticidade = rv && rv !== '—' && rv !== 'teste não realizado' && (!c.imp || !c.prob)
     // Devolvido (reprovado na revisão) — prioridade máxima
-    if (sw === 'reprovado') alertas.push({ label: 'Devolvido', color: '#DC2626', bg: 'rgba(239,68,68,0.08)' })
+    if (sw === 'reprovado' && !isCliente) alertas.push({ label: 'Devolvido', color: '#DC2626', bg: 'rgba(239,68,68,0.08)' })
     // Ficha pendente: salvou dados mas não baixou a ficha de teste
     if (sw === 'teste_pendente') alertas.push({ label: 'Ficha Pendente', color: '#7C3AED', bg: 'rgba(124,58,237,0.08)' })
     // Resultado pendente: tem dados na fase (em_analise) mas não registrou resultado formal
@@ -184,7 +184,12 @@ export default function PorArea({ projeto, areasCalc, todosControles, loading, n
     if (filtImp && String(c.imp||'') !== filtImp) return false
     if (filtRes) { const rg = getResultadoGeral(c); if (!rg || rg !== filtRes) return false }
     if (filtFase) { const fc = getFaseCodigo(c); if (fc !== filtFase) return false }
-    if (!isCliente && filtStatus) { if (getStatusComputado(c) !== filtStatus) return false }
+    if (filtStatus) {
+      const sw = getStatusComputado(c)
+      if (isCliente && filtStatus === 'em_analise') {
+        if (!['em_analise', 'teste_pendente', 'reprovado'].includes(sw)) return false
+      } else if (sw !== filtStatus) return false
+    }
     if (!isCliente && filtAcao) { if (getProximaAcao(getStatusComputado(c)) !== filtAcao) return false }
     return true
   })

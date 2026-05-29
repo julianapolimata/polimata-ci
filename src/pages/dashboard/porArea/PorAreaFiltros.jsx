@@ -82,6 +82,13 @@ export default function PorAreaFiltros({ ctx }) {
                   <option value="aprovado">Aprovado</option>
                   <option value="reprovado">Devolvido</option>
                 </select>}
+                {isCliente && <select value={filtStatus} onChange={e => setFiltStatus(e.target.value)} style={PA.filtroSel}>
+                  <option value="">Todos status</option>
+                  <option value="nao_iniciado">Não Iniciado</option>
+                  <option value="em_analise">Em Análise</option>
+                  <option value="em_revisao">Em Revisão</option>
+                  <option value="aprovado">Aprovado</option>
+                </select>}
                 {!isCliente && <select value={filtAcao} onChange={e => setFiltAcao(e.target.value)} style={{ ...PA.filtroSel, borderColor: 'var(--copper-text)' }} title="Filtro interno Polímata">
                   <option value="">Todas ações</option>
                   {PROXIMA_ACAO_OPCOES.map(a => <option key={a} value={a}>{a}</option>)}

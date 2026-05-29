@@ -42,7 +42,7 @@ const CONFIG_CLIENTE = {
   teste_pendente: { label: 'Em Análise',   color: 'var(--copper)',     bg: 'rgba(204,145,94,0.1)' },
   em_revisao:     { label: 'Em Revisão',   color: '#2563EB',          bg: 'rgba(59,130,246,0.08)' },
   aprovado:       { label: 'Aprovado',     color: 'var(--n4-vis)',          bg: 'rgba(34,197,94,0.1)' },
-  reprovado:      { label: 'Reprovado',    color: 'var(--n1)',          bg: 'rgba(239,68,68,0.1)' },
+  reprovado:      { label: 'Em Análise',   color: 'var(--copper)',     bg: 'rgba(204,145,94,0.1)' },
 }
 
 // Fallback para status desconhecido
