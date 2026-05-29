@@ -43,15 +43,6 @@ export default function UsuariosConfig() {
     loadDados()
   }
 
-  async function excluirUsuario(u) {
-    if (!confirm(`Tem certeza que deseja EXCLUIR permanentemente o usuário "${u.nome}"?\n\nEssa ação não pode ser desfeita.`)) return
-    const { data, error } = await supabase.functions.invoke('manage-user', {
-      body: { action: 'delete', user_id: u.id }
-    })
-    if (error || data?.error) alert(data?.error || 'Erro ao excluir')
-    else { setSelecionado(null); setEditando(false); loadDados() }
-  }
-
   function fecharModal() { setSelecionado(null); setEditando(false) }
 
   if (loading) return <div className="cfg-loading"><div className="spinner"/></div>

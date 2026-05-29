@@ -188,7 +188,6 @@ function ModalResponder({ solicitacao, perfil, controles, areas, onClose, onSave
   const podeResponder = ['aguardando','em_andamento','recusada'].includes(solicitacao.status)
   const [link, setLink] = useState(solicitacao.evidencia_link || '')
   const [descricao, setDescricao] = useState(solicitacao.evidencia_descricao || '')
-  const [novoStatus, setNovoStatus] = useState('em_andamento')
   const [saving, setSaving] = useState(false)
   const [erro, setErro] = useState('')
 

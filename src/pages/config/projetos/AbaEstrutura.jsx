@@ -167,16 +167,40 @@ function AbaEstrutura({ projetoId, areas, subprocessos, onReload }) {
                   <div>
                     <div style={{fontSize:10,fontWeight:600,color:'var(--txt3)',textTransform:'uppercase',letterSpacing:'.4px',marginBottom:6}}>Subprocessos</div>
                     {(subsMap[a.id]||[]).length > 0 ? (
-                      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'4px 20px'}}>
+                      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'4px 20px',marginBottom:8}}>
                         {(subsMap[a.id]||[]).map((s, idx) => (
-                          <div key={s.id} style={{fontSize:12,color:'var(--txt2)',padding:'4px 0'}}>
-                            <span style={{display:'inline-block',minWidth:22,color:'var(--txt3)',fontWeight:600}}>{idx + 1}.</span>{s.nome}
+                          <div key={s.id} style={{fontSize:12,color:'var(--txt2)',padding:'4px 0',display:'flex',alignItems:'center',gap:6}}>
+                            <span style={{display:'inline-block',minWidth:22,color:'var(--txt3)',fontWeight:600}}>{idx + 1}.</span>
+                            <span style={{flex:1}}>{s.nome}</span>
+                            <button
+                              onClick={() => { if (confirm(`Remover subprocesso "${s.nome}"?`)) removerSubprocesso(s.id) }}
+                              title="Remover subprocesso"
+                              style={{background:'none',border:'none',color:'var(--txt3)',cursor:'pointer',padding:'2px 6px',fontSize:11,opacity:0.5,transition:'opacity .15s'}}
+                              onMouseEnter={e => e.currentTarget.style.opacity = '1'}
+                              onMouseLeave={e => e.currentTarget.style.opacity = '0.5'}
+                            >✕</button>
                           </div>
                         ))}
                       </div>
                     ) : (
-                      <div style={{fontSize:11,color:'var(--txt3)',fontStyle:'italic'}}>Nenhum subprocesso cadastrado</div>
+                      <div style={{fontSize:11,color:'var(--txt3)',fontStyle:'italic',marginBottom:8}}>Nenhum subprocesso cadastrado</div>
                     )}
+                    {/* Input + botão de adicionar */}
+                    <div style={{display:'flex',gap:6,marginTop:6}}>
+                      <input
+                        type="text"
+                        value={novoSub[a.id] || ''}
+                        onChange={e => setNovoSub(p => ({...p, [a.id]: e.target.value}))}
+                        onKeyDown={e => { if (e.key === 'Enter') adicionarSubprocesso(a.id) }}
+                        placeholder="Novo subprocesso..."
+                        style={{flex:1,padding:'6px 10px',fontSize:12,background:'rgba(255,255,255,0.03)',border:'1px solid rgba(255,255,255,0.08)',borderRadius:6,color:'var(--txt1)',outline:'none'}}
+                      />
+                      <button
+                        onClick={() => adicionarSubprocesso(a.id)}
+                        disabled={!(novoSub[a.id] || '').trim()}
+                        style={{padding:'6px 12px',fontSize:11,background:'rgba(204,145,94,0.15)',border:'1px solid rgba(204,145,94,0.3)',borderRadius:6,color:'var(--copper)',cursor:(novoSub[a.id] || '').trim()?'pointer':'not-allowed',opacity:(novoSub[a.id] || '').trim()?1:0.4,fontWeight:600}}
+                      >+ Adicionar</button>
+                    </div>
                   </div>
                 </div>
               )}
