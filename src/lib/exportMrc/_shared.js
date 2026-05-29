@@ -1,9 +1,6 @@
 // Helpers e constantes compartilhadas do gerador de Excel MRC.
 // Extraído de exportMRC.js em 22/mai/2026 (fatiamento Etapa 9).
-import ExcelJS from 'exceljs'
-import { getFaseLabel as getFaseLabelUtil, getFaseInfo, getStatusComputado, normalizeFaseValue } from '../fases'
-import { getStatusConfig } from '../statusWorkflow'
-import { supabase } from '../supabase'
+import { getFaseLabel as getFaseLabelUtil } from '../fases'
 
 // ══════════════════════════════════════════════════════════════════════════════
 // EXPORT MRC PARA EXCEL (.xlsx) — Polímata brand

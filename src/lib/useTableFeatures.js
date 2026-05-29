@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, useEffect } from 'react'
+import { useState, useCallback, useRef } from 'react'
 
 /* ── Sorting hook ── */
 export function useSort(defaultKey = null, defaultDir = null) {

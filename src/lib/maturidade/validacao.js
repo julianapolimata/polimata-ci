@@ -1,6 +1,5 @@
 // Validação contra exemplo de referência (Compras).
 // Extraído em 22/mai/2026 (fatiamento Etapa 7).
-import { calcularContribuicaoControle } from './contribuicao'
 import { calcularPercentualArea } from './percentualArea'
 
 // ─── VALIDAÇÃO — EXEMPLO COMPRAS (seção 11) ─────────────────────────────────

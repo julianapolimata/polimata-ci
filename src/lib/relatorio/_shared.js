@@ -1,7 +1,6 @@
 // Helpers e constantes compartilhadas do gerador de relatório Excel.
 // Extraído de src/lib/gerarRelatorio.js em 22/mai/2026 (fatiamento Etapa 4).
-import { getFaseLabel, getStatusComputado, normalizeFaseValue } from '../fases'
-import { getStatusConfig } from '../statusWorkflow'
+import { normalizeFaseValue } from '../fases'
 
 const NAVY = '00203E'
 const GOLD = 'CC915E'

@@ -1,6 +1,7 @@
 import globals from 'globals'
 import reactPlugin from 'eslint-plugin-react'
 import reactHooksPlugin from 'eslint-plugin-react-hooks'
+import unusedImportsPlugin from 'eslint-plugin-unused-imports'
 
 export default [
   {
@@ -14,11 +15,14 @@ export default [
     plugins: {
       react: reactPlugin,
       'react-hooks': reactHooksPlugin,
+      'unused-imports': unusedImportsPlugin,
     },
     settings: { react: { version: '18.3' } },
     rules: {
       'no-undef': 'error',
-      'no-unused-vars': ['warn', { varsIgnorePattern: '^_', argsIgnorePattern: '^_' }],
+      'no-unused-vars': 'off',
+      'unused-imports/no-unused-imports': 'error',
+      'unused-imports/no-unused-vars': ['warn', { varsIgnorePattern: '^_', argsIgnorePattern: '^_' }],
       'react/jsx-uses-react': 'error',
       'react/jsx-uses-vars': 'error',
       'react-hooks/rules-of-hooks': 'error',
