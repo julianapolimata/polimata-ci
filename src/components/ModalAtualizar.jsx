@@ -8,6 +8,7 @@ import React, { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import HistoricoTab from './HistoricoTab'
 import { logAtualizarControle, logBaixarFicha } from '../lib/auditLog'
+import SecaoCenarioAtual from './modalRegistrarResultado/SecaoCenarioAtual'
 
 import ModalComentario from './ModalComentario'
 import { syncPassosESolicitacoes, loadPassosTeste, criarPassoVazio } from '../lib/passosTeste'
@@ -52,6 +53,7 @@ const ModalAtualizar = ({ row, onClose, onSaved, areas, projeto }) => {
   const [quem, setQuem] = useState(row.premissa_quem || '')
   const [como, setComo] = useState(row.premissa_como || '')
   const [resultado, setResultado] = useState(row.premissa_resultado || '')
+  const [cenarioAtual, setCenarioAtual] = useState(row.cenario_atual || '')
 
   // Auxiliary data
   const [areaDestino, setAreaDestino] = useState('')
@@ -227,6 +229,7 @@ const ModalAtualizar = ({ row, onClose, onSaved, areas, projeto }) => {
         premissa_quem: isAutomatic ? 'N/A' : quem,
         premissa_como: como,
         premissa_resultado: resultado,
+        cenario_atual: cenarioAtual.trim() || null,
         status_workflow: 'em_analise',
         atualizado_em: new Date().toISOString(),
         atualizado_por: perfil?.id,
@@ -283,6 +286,7 @@ const ModalAtualizar = ({ row, onClose, onSaved, areas, projeto }) => {
         premissa_quem: isAutomatic ? 'N/A' : quem,
         premissa_como: como,
         premissa_resultado: resultado,
+        cenario_atual: cenarioAtual.trim() || null,
         status_workflow: 'teste_pendente',
         atualizado_em: new Date().toISOString(),
         atualizado_por: perfil?.id,
@@ -384,7 +388,9 @@ const ModalAtualizar = ({ row, onClose, onSaved, areas, projeto }) => {
                 />
               )}
               {step === 2 && (
-                <StepControle
+                <>
+                  <SecaoCenarioAtual cenarioAtual={cenarioAtual} setCenarioAtual={setCenarioAtual} />
+                  <StepControle
                   row={row}
                   ctrlDescChoice={ctrlDescChoice} setCtrlDescChoice={setCtrlDescChoice}
                   novaDescControle={novaDescControle} setNovaDescControle={setNovaDescControle}
@@ -401,7 +407,8 @@ const ModalAtualizar = ({ row, onClose, onSaved, areas, projeto }) => {
                   como={como} setComo={setComo}
                   resultado={resultado} setResultado={setResultado}
                   isAutomatic={isAutomatic}
-                />
+                  />
+                </>
               )}
               {step === 3 && (
                 <StepPassos row={row} passos={passos} setPassos={setPassos} saving={saving} />

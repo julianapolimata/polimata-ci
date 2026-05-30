@@ -323,6 +323,25 @@ const ModalRevisar = ({ row, onClose, onAction }) => {
             </div>
           </div>
 
+          {/* Cenário Atual — F1-E1 (Indagação). Sempre visível pra revisão;
+              quando vazio, destaca em vermelho pra admin/gerente reprovar
+              e devolver pra consultora preencher. */}
+          <div style={S.section}>
+            <div style={S.sectionTitle}>Cenário Atual <span style={{ fontSize: 9, color: '#7A8B9C', fontWeight: 500, marginLeft: 6 }}>(como o processo é feito hoje)</span></div>
+            {row?.cenario_atual && row.cenario_atual.trim() ? (
+              <div style={{ ...S.value, whiteSpace: 'pre-wrap' }}>{row.cenario_atual}</div>
+            ) : (
+              <div style={{
+                background: '#FFEBEE', borderLeft: '3px solid #C62828',
+                padding: '10px 14px', borderRadius: 4,
+                fontSize: 12, fontWeight: 600, color: '#C62828',
+                fontStyle: 'italic',
+              }}>
+                ⚠ Cenário Atual não preenchido. Recomendado reprovar e devolver pra consultora preencher antes de aprovar.
+              </div>
+            )}
+          </div>
+
           {/* Identificação */}
           <div style={S.section}>
             <div style={S.sectionTitle}>Identificação</div>
