@@ -9,6 +9,7 @@ import BannerReprovacao from './modalRegistrarResultado/BannerReprovacao'
 import BannerRegressao from './modalRegistrarResultado/BannerRegressao'
 import SecaoResultado from './modalRegistrarResultado/SecaoResultado'
 import SecaoInconsistencia from './modalRegistrarResultado/SecaoInconsistencia'
+import SecaoCenarioAtual from './modalRegistrarResultado/SecaoCenarioAtual'
 import SecaoMelhoria from './modalRegistrarResultado/SecaoMelhoria'
 import SecaoPA from './modalRegistrarResultado/SecaoPA'
 const ModalRegistrarResultado = ({ row, onClose, onSaved, responsaveis }) => {
@@ -43,6 +44,7 @@ const ModalRegistrarResultado = ({ row, onClose, onSaved, responsaveis }) => {
   const [resultado, setResultado] = useState(row?.r1 || 'inefetivo')
   const [inconsistencia, setInconsistencia] = useState(row?.incons || '')
   const [showInconsistenciaAlert, setShowInconsistenciaAlert] = useState(false)
+  const [cenarioAtual, setCenarioAtual] = useState(row?.cenario_atual || '')
   const [melhoria, setMelhoria] = useState(row?.melhoria ? 'sim' : 'nao')
   const [descMelhoria, setDescMelhoria] = useState(row?.incons_ader || '')
   const [temPA, setTemPA] = useState(row?.dem_pa ? 'sim' : 'nao')
@@ -82,6 +84,7 @@ const ModalRegistrarResultado = ({ row, onClose, onSaved, responsaveis }) => {
   function buildUpdatePayload() {
     const payload = {
       r1: resultado,
+      cenario_atual: cenarioAtual.trim() || null,
       incons: resultado !== 'efetivo' ? inconsistencia : null,
       melhoria: melhoria === 'sim' ? true : false,
       incons_ader: melhoria === 'sim' ? descMelhoria : null,
@@ -247,6 +250,7 @@ const ModalRegistrarResultado = ({ row, onClose, onSaved, responsaveis }) => {
           <BannerReprovacao isReprovado={isReprovado} notaReprovacao={notaReprovacao} faseAtual={faseAtual} />
           <BannerRegressao isRegressao={isRegressao} resultado={resultado} faseAtual={faseAtual} row={row} />
           <SecaoResultado resultado={resultado} handleResultadoChange={handleResultadoChange} />
+          <SecaoCenarioAtual cenarioAtual={cenarioAtual} setCenarioAtual={setCenarioAtual} />
           <SecaoInconsistencia showInconsistencia={showInconsistencia} showInconsistenciaAlert={showInconsistenciaAlert} inconsistencia={inconsistencia} setInconsistencia={setInconsistencia} resultado={resultado} />
           <SecaoMelhoria showDescMelhoria={showDescMelhoria} melhoria={melhoria} setMelhoria={setMelhoria} descMelhoria={descMelhoria} setDescMelhoria={setDescMelhoria} />
           <SecaoPA showPA={showPA} temPA={temPA} setTemPA={setTemPA} paDesc={paDesc} setPaDesc={setPaDesc} paResp={paResp} setPaResp={setPaResp} paPrazo={paPrazo} setPaPrazo={setPaPrazo} paStatus={paStatus} setPaStatus={setPaStatus} justificativaPA={justificativaPA} setJustificativaPA={setJustificativaPA} responsaveis={responsaveis} resultado={resultado} />
