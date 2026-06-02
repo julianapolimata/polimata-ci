@@ -245,7 +245,7 @@ const ModalRegistrarResultado = ({ row, onClose, onSaved, responsaveis }) => {
           <div>
             <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: 2, textTransform: 'uppercase', color: 'var(--copper-soft)', marginBottom: 4 }}>Matriz de Riscos · Resultado</div>
             <div style={{ fontSize: 20, fontWeight: 300, fontFamily: "'Raleway', sans-serif", letterSpacing: 0.3, lineHeight: 1.2 }}>Registrar Resultado do Teste</div>
-            <div style={{ fontSize: 12, fontWeight: 500, opacity: 0.72, marginTop: 4 }}>{row?.area} — {row?.sub} — {row?.rr}</div>
+            <div style={{ fontSize: 12, fontWeight: 500, opacity: 0.72, marginTop: 4 }}>{row?.dr || row?.area} — {row?.sub} — {row?.rr}</div>
           </div>
           <button onClick={requestClose} style={{ background: 'none', border: 'none', fontSize: 28, color: 'white', cursor: 'pointer' }}>×</button>
         </div>

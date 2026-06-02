@@ -187,7 +187,7 @@ const ModalRevisar = ({ row, onClose, onAction }) => {
       <div style={S.modal}>
         <div style={{ ...S.header, borderBottomColor: '#22C55E' }}>
           <h2 style={{ margin: 0, fontSize: 20, fontWeight: 300, fontFamily: "'Raleway', sans-serif", letterSpacing: 0.3 }}>✅ Confirmar Aprovação</h2>
-          <p style={{ margin: '0.3rem 0 0', fontSize: 11, opacity: 0.8 }}>{row?.rc} — {row?.area} — {faseAtual}</p>
+          <p style={{ margin: '0.3rem 0 0', fontSize: 11, opacity: 0.8 }}>{row?.rc} — {row?.dr || row?.area} — {faseAtual}</p>
         </div>
         <div style={S.body}>
           <div style={{ background: '#F0FFF4', border: '1px solid #C6F6D5', borderRadius: 6, padding: '1rem', marginBottom: '1rem' }}>
@@ -216,7 +216,7 @@ const ModalRevisar = ({ row, onClose, onAction }) => {
       <div style={S.modal}>
         <div style={{ ...S.header, borderBottomColor: '#EF4444' }}>
           <h2 style={{ margin: 0, fontSize: 20, fontWeight: 300, fontFamily: "'Raleway', sans-serif", letterSpacing: 0.3 }}>↩ Reprovar Análise</h2>
-          <p style={{ margin: '0.3rem 0 0', fontSize: 11, opacity: 0.8 }}>{row?.rc} — {row?.area} — {faseAtual}</p>
+          <p style={{ margin: '0.3rem 0 0', fontSize: 11, opacity: 0.8 }}>{row?.rc} — {row?.dr || row?.area} — {faseAtual}</p>
         </div>
         <div style={S.body}>
           <div style={{ background: '#FFF5F5', border: '1px solid #FED7D7', borderRadius: 6, padding: '1rem', marginBottom: '1rem' }}>
@@ -286,7 +286,7 @@ const ModalRevisar = ({ row, onClose, onAction }) => {
         <div style={{ ...S.header, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
           <div>
             <h2 style={{ margin: 0, fontSize: 20, fontWeight: 300, fontFamily: "'Raleway', sans-serif", letterSpacing: 0.3 }}>🔍 Revisão de Análise</h2>
-            <p style={{ margin: '0.3rem 0 0', fontSize: 11, opacity: 0.8 }}>{row?.rc} · {row?.rr} — {row?.area}</p>
+            <p style={{ margin: '0.3rem 0 0', fontSize: 11, opacity: 0.8 }}>{row?.rc} · {row?.rr} — {row?.dr || row?.area}</p>
           </div>
           <button onClick={requestClose} style={{ background: 'none', border: 'none', color: 'white', fontSize: 28, cursor: 'pointer', padding: 0 }}>×</button>
         </div>
@@ -392,7 +392,7 @@ const ModalRevisar = ({ row, onClose, onAction }) => {
 
           {/* Resultado do Teste */}
           <div style={S.section}>
-            <div style={S.sectionTitle}>Resultado do Teste</div>
+            <div style={S.sectionTitle}>Resultado da Análise</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
               <div><div style={S.label}>Inconsistência</div><div style={{ ...S.value, whiteSpace: 'pre-wrap' }}>{row?.incons || '—'}</div></div>
               <div><div style={S.label}>Recomendação / Melhoria</div><div style={{ ...S.value, whiteSpace: 'pre-wrap' }}>{row?.incons_ader || row?.rec || '—'}</div></div>

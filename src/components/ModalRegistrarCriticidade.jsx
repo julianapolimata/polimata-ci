@@ -77,7 +77,7 @@ const ModalRegistrarCriticidade = ({ row, onClose, onSaved }) => {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
             <div>
               <div style={{ fontSize: 20, fontWeight: 300, fontFamily: "'Raleway', sans-serif", letterSpacing: 0.3, lineHeight: 1.2 }}>Registrar Criticidade</div>
-              <div style={{ fontSize: 12, fontWeight: 500, opacity: 0.72, marginTop: 4 }}>{row?.rc} · {row?.area}</div>
+              <div style={{ fontSize: 12, fontWeight: 500, opacity: 0.72, marginTop: 4 }}>{row?.rc}{row?.dr ? ` · ${row.dr}` : (row?.area ? ` · ${row.area}` : '')}</div>
             </div>
             <button onClick={requestClose} style={{ background: 'none', border: 'none', fontSize: 28, color: 'white', cursor: 'pointer' }}>×</button>
           </div>

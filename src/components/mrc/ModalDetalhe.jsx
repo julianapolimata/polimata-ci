@@ -24,7 +24,7 @@ export function ModalDetalhe({ row, projeto, onClose, onEditar, primaryAction, s
     <div className="overlay open">
       <div className="modal">
         <div className="modal-hdr">
-          <div><div className="modal-ttl">{row.rc}{row.area ? ` · ${row.area}` : ''}</div><div className="modal-sub">{row.sub}</div></div>
+          <div><div className="modal-ttl" title={row.dr || ''} style={{ maxWidth: 560, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{row.rc}{row.dr ? ` · ${row.dr}` : (row.area ? ` · ${row.area}` : '')}</div><div className="modal-sub">{row.sub}</div></div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             {primaryAction && (
               <button onClick={primaryAction.onClick} title={primaryAction.label} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, background: primaryAction.bg || 'rgba(59,130,246,0.12)', border: `1px solid ${primaryAction.border || 'rgba(59,130,246,0.30)'}`, borderRadius: 999, padding: '6px 14px', fontSize: 11, fontWeight: 700, color: primaryAction.color || '#1D4ED8', cursor: 'pointer', fontFamily: 'inherit' }}>
