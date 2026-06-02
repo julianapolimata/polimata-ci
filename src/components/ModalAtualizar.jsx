@@ -15,6 +15,7 @@ import ModalComentario from './ModalComentario'
 import { syncPassosESolicitacoes, loadPassosTeste, criarPassoVazio } from '../lib/passosTeste'
 import { useAuth } from '../contexts/AuthContext'
 import { gerarFichaRiscoExcel } from '../lib/gerarFichaRiscoExcel'
+import { reabrirBloco, blocosAplicaveis, faseDoBloco, BLOCO_LABEL } from '../lib/aprovacoesBloco'
 
 import StepRisco from './modalAtualizar/StepRisco'
 import StepControle from './modalAtualizar/StepControle'
@@ -24,6 +25,7 @@ import StepFicha from './modalAtualizar/StepFicha'
 const ModalAtualizar = ({ row, onClose, onSaved, areas, projeto }) => {
   const { perfil: perfilAuth } = useAuth()
   const [comentarioFor, setComentarioFor] = useState(null)
+  const [blocosReabrir, setBlocosReabrir] = useState([])
   const { confirm } = useConfirm()
   const [dirty, setDirty] = useState(false)
   const requestClose = async () => {
@@ -256,6 +258,13 @@ const ModalAtualizar = ({ row, onClose, onSaved, areas, projeto }) => {
         console.error('syncPassosESolicitacoes (ficha):', e)
         throw new Error('O controle foi salvo, mas houve erro ao gravar os passos de teste: ' + (e.message || e))
       }
+      // item 11: reabrir blocos selecionados para nova aprovação
+      if (blocosReabrir.length) {
+        for (const b of blocosReabrir) {
+          try { await reabrirBloco({ mrcId: row.id, bloco: b, fase: faseDoBloco(b, row) }) } catch (e) { console.error('reabrirBloco:', e) }
+        }
+        await supabase.from('mrc').update({ status_workflow: 'em_revisao' }).eq('id', row.id)
+      }
       await gerarFichaRiscoExcel({
         row,
         projeto,
@@ -318,6 +327,13 @@ const ModalAtualizar = ({ row, onClose, onSaved, areas, projeto }) => {
         throw new Error('O controle foi salvo, mas houve erro ao gravar os passos de teste: ' + (e.message || e))
       }
       logAtualizarControle(row, row.projeto_id)
+      // item 11: reabrir blocos selecionados para nova aprovação
+      if (blocosReabrir.length) {
+        for (const b of blocosReabrir) {
+          try { await reabrirBloco({ mrcId: row.id, bloco: b, fase: faseDoBloco(b, row) }) } catch (e) { console.error('reabrirBloco:', e) }
+        }
+        await supabase.from('mrc').update({ status_workflow: 'em_revisao' }).eq('id', row.id)
+      }
       alert('✅ Salvo com sucesso! Status: TESTE PENDENTE')
       setComentarioFor({ controleId: row?.id, acao: 'Controle atualizado' })
       // onClose/onSaved será chamado quando o pop-up de comentário fechar
@@ -353,6 +369,20 @@ const ModalAtualizar = ({ row, onClose, onSaved, areas, projeto }) => {
               {showHistorico ? '← Voltar' : '📋 Histórico'}
             </button>
             <button onClick={requestClose} style={{ background: 'none', border: 'none', fontSize: 28, color: 'white', cursor: 'pointer' }}>×</button>
+          </div>
+        </div>
+
+        {/* Reabrir seções para revisão (item 11) */}
+        <div style={{ padding: '12px 24px', background: '#FFF8E1', borderBottom: '1px solid #F0E0A8' }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: '#7A5C00', textTransform: 'uppercase', letterSpacing: 0.4, marginBottom: 6 }}>Reabrir para revisão <span style={{ fontWeight: 400, textTransform: 'none' }}>(opcional)</span></div>
+          <div style={{ fontSize: 11, color: '#7A5C00', marginBottom: 8, lineHeight: 1.4 }}>Marque as seções que você alterou e que precisam ser aprovadas de novo. Só elas voltam para a revisão; as demais mantêm a aprovação.</div>
+          <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap' }}>
+            {blocosAplicaveis(projeto).map(b => (
+              <label key={b} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#00203E', cursor: 'pointer' }}>
+                <input type="checkbox" checked={blocosReabrir.includes(b)} onChange={e => setBlocosReabrir(prev => e.target.checked ? [...prev, b] : prev.filter(x => x !== b))} style={{ accentColor: '#CC915E' }} />
+                {BLOCO_LABEL[b]}
+              </label>
+            ))}
           </div>
         </div>
 
