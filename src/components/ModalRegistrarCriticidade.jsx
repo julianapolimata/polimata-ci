@@ -87,7 +87,7 @@ const ModalRegistrarCriticidade = ({ row, onClose, onSaved }) => {
         <div style={{ flex: 1, padding: 24, overflowY: 'auto' }}>
           {row?.cenario_atual && row.cenario_atual.trim() ? (
             <div style={{ background: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: 8, padding: 12, marginBottom: 12 }}>
-              <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--lt-text3, #5D6E80)', textTransform: 'uppercase', marginBottom: 4, letterSpacing: 0.4 }}>Contexto Atual</div>
+              <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--lt-text3, #5D6E80)', textTransform: 'uppercase', marginBottom: 4, letterSpacing: 0.4 }}>Cenário Atual</div>
               <div style={{ fontSize: 12, color: '#00203E', lineHeight: 1.5, whiteSpace: 'pre-wrap' }}>{row.cenario_atual}</div>
             </div>
           ) : null}
