@@ -5,7 +5,7 @@ import React from 'react'
  * Cada item: { id?, descricao, documentacao_solicitada, gerar_solicitacao }
  *
  * Layout por linha:
- *   [#] [✓ Solicitar] [Passo de Teste] [Documentação Solicitada] [✕]
+ *   [#] [✓ Solicitar] [Passo de Teste] [✕]
  *
  * Caixinha = "Incluir na lista de Solicitações". Quando marcada, ao salvar
  * o controle, o conteúdo de "Documentação Solicitada" vira a descrição
@@ -28,9 +28,9 @@ const PassosTesteList = ({ passos, onChange, disabled = false }) => {
         Passos de Teste
       </div>
       <div style={{ fontSize: 11, color: 'var(--lt-text3, #5D6E80)', lineHeight: 1.55, marginBottom: '1rem' }}>
-        Cada linha tem o <strong>passo de teste</strong> (o que vai ser feito) e a <strong>documentação solicitada</strong>
-        (o que o cliente precisa enviar). Marque <strong>“Solicitar”</strong> para gerar automaticamente uma solicitação
-        com o texto da documentação ao salvar. Desmarcar cancela a solicitação correspondente.
+        Cada linha tem o <strong>passo de teste</strong> (o que vai ser feito). Marque <strong>“Solicitar”</strong> para
+        incluir o passo na lista de <strong>Solicitações de Evidências</strong> — a documentação a ser pedida ao cliente
+        é detalhada lá, no painel de Solicitações. Desmarcar cancela a solicitação correspondente.
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -49,7 +49,7 @@ const PassosTesteList = ({ passos, onChange, disabled = false }) => {
               borderRadius: 6,
               background: 'white',
               display: 'grid',
-              gridTemplateColumns: '32px 90px 1fr 1fr 28px',
+              gridTemplateColumns: '32px 90px 1fr 28px',
               gap: 10,
               alignItems: 'start',
             }}
@@ -89,19 +89,6 @@ const PassosTesteList = ({ passos, onChange, disabled = false }) => {
                 onChange={e => setItem(idx, { descricao: e.target.value })}
                 disabled={disabled}
                 placeholder="O que será feito neste passo…"
-                style={{ width: '100%', padding: '8px 10px', border: '1px solid #D0D0D0', borderRadius: 4, fontFamily: 'Montserrat, sans-serif', fontSize: 13, minHeight: 60, resize: 'vertical', background: disabled ? '#F5F5F5' : 'white', boxSizing: 'border-box' }}
-              />
-            </div>
-
-            <div>
-              <label style={{ display: 'block', fontSize: 10, fontWeight: 600, color: 'var(--lt-text3, #5D6E80)', textTransform: 'uppercase', letterSpacing: 0.3, marginBottom: 4 }}>
-                Documentação Solicitada
-              </label>
-              <textarea
-                value={p.documentacao_solicitada || ''}
-                onChange={e => setItem(idx, { documentacao_solicitada: e.target.value })}
-                disabled={disabled}
-                placeholder="O que o cliente precisa enviar…"
                 style={{ width: '100%', padding: '8px 10px', border: '1px solid #D0D0D0', borderRadius: 4, fontFamily: 'Montserrat, sans-serif', fontSize: 13, minHeight: 60, resize: 'vertical', background: disabled ? '#F5F5F5' : 'white', boxSizing: 'border-box' }}
               />
             </div>

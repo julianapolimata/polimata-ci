@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { logAtualizarControle } from '../lib/auditLog'
+import { useConfirm } from './ConfirmDialog'
 
 // Tabela compartilhada de criticidade (replicada dos demais modais).
 function getCriticidadeLabel(crit) {
@@ -29,6 +30,15 @@ const ModalRegistrarCriticidade = ({ row, onClose, onSaved }) => {
   const [impacto, setImpacto] = useState(row?.imp?.toString() || '')
   const [probabilidade, setProbabilidade] = useState(row?.prob?.toString() || '')
   const [saving, setSaving] = useState(false)
+  const { confirm } = useConfirm()
+  const [dirty, setDirty] = useState(false)
+  const requestClose = async () => {
+    if (dirty) {
+      const ok = await confirm({ title: 'Descartar alterações?', message: 'Há alterações não salvas neste formulário. Deseja fechar mesmo assim? As alterações serão perdidas.', confirmText: 'Descartar', cancelText: 'Continuar editando', variant: 'danger' })
+      if (!ok) return
+    }
+    onClose?.()
+  }
 
   const criticidade = impacto && probabilidade ? parseInt(impacto) * parseInt(probabilidade) : null
   const critLabel = getCriticidadeLabel(criticidade)
@@ -59,7 +69,7 @@ const ModalRegistrarCriticidade = ({ row, onClose, onSaved }) => {
   }
 
   return (
-    <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999 }}>
+    <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999 }} onChangeCapture={() => setDirty(true)}>
       <div style={{ background: 'white', borderRadius: 12, boxShadow: '0 20px 60px rgba(0,0,0,0.15)', maxWidth: 560, width: '90vw', maxHeight: '90vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
         {/* HEADER */}
         <div style={{ padding: '22px 24px 18px', background: '#00203E', color: 'white' }}>
@@ -69,15 +79,25 @@ const ModalRegistrarCriticidade = ({ row, onClose, onSaved }) => {
               <div style={{ fontSize: 20, fontWeight: 300, fontFamily: "'Raleway', sans-serif", letterSpacing: 0.3, lineHeight: 1.2 }}>Registrar Criticidade</div>
               <div style={{ fontSize: 12, fontWeight: 500, opacity: 0.72, marginTop: 4 }}>{row?.rc} · {row?.area}</div>
             </div>
-            <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: 28, color: 'white', cursor: 'pointer' }}>×</button>
+            <button onClick={requestClose} style={{ background: 'none', border: 'none', fontSize: 28, color: 'white', cursor: 'pointer' }}>×</button>
           </div>
         </div>
 
         {/* BODY */}
         <div style={{ flex: 1, padding: 24, overflowY: 'auto' }}>
-          <div style={{ background: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: 8, padding: 12, marginBottom: 20 }}>
+          {row?.cenario_atual && row.cenario_atual.trim() ? (
+            <div style={{ background: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: 8, padding: 12, marginBottom: 12 }}>
+              <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--lt-text3, #5D6E80)', textTransform: 'uppercase', marginBottom: 4, letterSpacing: 0.4 }}>Contexto Atual</div>
+              <div style={{ fontSize: 12, color: '#00203E', lineHeight: 1.5, whiteSpace: 'pre-wrap' }}>{row.cenario_atual}</div>
+            </div>
+          ) : null}
+          <div style={{ background: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: 8, padding: 12, marginBottom: 12 }}>
             <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--lt-text3, #5D6E80)', textTransform: 'uppercase', marginBottom: 4, letterSpacing: 0.4 }}>Descrição do Risco</div>
             <div style={{ fontSize: 12, color: '#00203E', lineHeight: 1.5 }}>{row?.dr || '—'}</div>
+          </div>
+          <div style={{ background: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: 8, padding: 12, marginBottom: 20 }}>
+            <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--lt-text3, #5D6E80)', textTransform: 'uppercase', marginBottom: 4, letterSpacing: 0.4 }}>Descrição do Controle</div>
+            <div style={{ fontSize: 12, color: '#00203E', lineHeight: 1.5 }}>{row?.dc || '—'}</div>
           </div>
 
           <div style={{ fontSize: 12, fontWeight: 600, color: '#00203E', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '1rem', paddingBottom: '0.75rem', borderBottom: '2px solid #CC915E' }}>
@@ -131,7 +151,7 @@ const ModalRegistrarCriticidade = ({ row, onClose, onSaved }) => {
 
         {/* FOOTER */}
         <div style={{ display: 'flex', gap: 8, padding: 24, borderTop: '1px solid #e5e7eb', background: '#fafbfc' }}>
-          <button onClick={onClose} style={{ flex: 1, padding: '12px 16px', border: '1px solid #e5e7eb', borderRadius: 6, fontFamily: 'Montserrat, sans-serif', fontSize: 13, fontWeight: 700, cursor: 'pointer', background: 'white', color: '#00203E' }}>
+          <button onClick={requestClose} style={{ flex: 1, padding: '12px 16px', border: '1px solid #e5e7eb', borderRadius: 6, fontFamily: 'Montserrat, sans-serif', fontSize: 13, fontWeight: 700, cursor: 'pointer', background: 'white', color: '#00203E' }}>
             Cancelar
           </button>
           <button onClick={handleSave} disabled={!canSave || saving} style={{ flex: 1, padding: '12px 16px', border: 'none', borderRadius: 6, fontFamily: 'Montserrat, sans-serif', fontSize: 13, fontWeight: 700, cursor: !canSave || saving ? 'not-allowed' : 'pointer', background: '#CC915E', color: 'white', opacity: !canSave || saving ? 0.5 : 1 }}>

@@ -14,7 +14,7 @@ function HistoricoControle({ controleId, projetoId }) {
     const { data } = await supabase.from('controle_comentarios').select('id, autor_nome, texto, criado_em').eq('controle_id', controleId).order('criado_em', { ascending: false })
     setComentarios(data || []); setLoading(false)
   }
-  useEffect(() => { load() }, [controleId])
+  useEffect(() => { if (isPolimata) load(); else setLoading(false) }, [controleId, isPolimata])
 
   async function adicionar() {
     if (!novoTexto.trim()) return
@@ -33,6 +33,11 @@ function HistoricoControle({ controleId, projetoId }) {
     setSalvando(false)
   }
   if (loading) return <div style={{ padding: 16, color: 'var(--lt-text3)', fontSize: 12 }}>Carregando histórico…</div>
+  if (!isPolimata) return (
+    <div className="ms"><div className="ms-t">Histórico</div>
+      <div style={{ fontSize: 12, color: 'var(--lt-text3)', fontStyle: 'italic', padding: '8px 0' }}>Nenhum histórico disponível.</div>
+    </div>
+  )
 
   const formAdicionar = isPolimata && (
     <div style={{ marginTop: 12, padding: 12, background: 'var(--lt-bg)', border: '1px solid var(--lt-border)', borderRadius: 6 }}>

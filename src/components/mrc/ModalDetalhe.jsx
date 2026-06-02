@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { getCategoriaRecomendacao } from '../../lib/fases'
 import {
   R1_MAP, IMP_MAP, PROB_MAP, HM_IMPS, HM_PROBS, HM_COLORS,
   badge, critBadge, badgeExistencia, getFaseInfo,
@@ -15,12 +14,6 @@ export function ModalDetalhe({ row, projeto, onClose, onEditar, primaryAction, s
   const tabs = isDiagModal
     ? [{ id:'ident',label:'Identificação' },{ id:'f1',label:'Diagnóstico Inicial' },{ id:'historico',label:'Histórico' }]
     : [{ id:'ident',label:'Identificação' },{ id:'f1',label:'Diagnóstico Inicial' },{ id:'f2e1',label:'Teste de Desenho' },{ id:'f2e2',label:'Teste de Aderência' },{ id:'f3',label:'Revisão Controles Internos' },{ id:'f4c1',label:'Auditoria Contínua C1' },{ id:'f4c2',label:'Auditoria Contínua C2' },{ id:'f5',label:'Auditoria Independente' },{ id:'historico',label:'Histórico' }]
-  const categoriaRec = getCategoriaRecomendacao(row, projeto)
-  const corCategoria = ({
-    'Implementar controle': '#EF4444',
-    'Complementar / formalizar': '#FACC15',
-    'Manter': '#22C55E',
-  })[categoriaRec] || 'var(--copper)'
   const field = (l, v, fw) => { if (!v || v === 'N/A' || v === '') return null; return <div style={fw ? { marginBottom: 12 } : {}}><div className="ml">{l}</div><div className="mv">{v}</div></div> }
   const fieldTag = (l, v) => { if (!v || v === 'N/A' || v === '') return null; return <div><div className="ml">{l}</div><div style={{ marginTop: 3 }}><span className="tag">{v}</span></div></div> }
   const fieldText = (l, v) => { if (!v || v === 'N/A' || v === '') return null; return <div style={{ marginBottom: 14 }}>{l && <div className="ml">{l}</div>}<div className="mv-t">{v}</div></div> }
@@ -28,7 +21,7 @@ export function ModalDetalhe({ row, projeto, onClose, onEditar, primaryAction, s
   const impIdx = HM_IMPS.indexOf(row.imp); const probIdx = HM_PROBS.indexOf(row.prob)
 
   return (
-    <div className="overlay open" onClick={e => e.target === e.currentTarget && onClose()}>
+    <div className="overlay open">
       <div className="modal">
         <div className="modal-hdr">
           <div><div className="modal-ttl">{row.rc}{row.area ? ` · ${row.area}` : ''}</div><div className="modal-sub">{row.sub}</div></div>
@@ -57,6 +50,7 @@ export function ModalDetalhe({ row, projeto, onClose, onEditar, primaryAction, s
 
           {tab === 'ident' && (<div className="tp active">
             <div className="ms"><div className="ms-t">Identificação do Controle</div><div className="mr">{field('Ref. Risco', row.rr)}{field('Ref. Controle', row.rc)}</div><div className="mr">{field('Área', row.area)}{field('Subprocesso', row.sub)}</div><div className="mr">{field('Gerência', row.ger)}{field('Responsável Processo', row.resp_sub)}</div></div>
+            {row.cenario_atual && row.cenario_atual.trim() ? (<div className="ms"><div className="ms-t">Contexto Atual</div>{fieldText(null, row.cenario_atual)}</div>) : null}
             <div className="ms"><div className="ms-t">Descrição do Risco</div>{fieldText(null, row.dr)}</div>
             <div className="ms"><div className="ms-t">Descrição do Controle</div>{fieldText(null, row.dc)}</div>
             <div className="ms"><div className="ms-t">Atributos do Controle</div><div className="mr3">{fieldTag('Categoria', row.cat)}{fieldTag('Frequência', row.freq)}{fieldTag('Natureza', row.nat)}</div><div className="mr3">{fieldTag('Característica', row.car)}{fieldTag('Sistema', row.sis)}{fieldTag('Controle Chave', row.chave)}</div>
@@ -100,12 +94,6 @@ export function ModalDetalhe({ row, projeto, onClose, onEditar, primaryAction, s
                   {field('Probabilidade', row.prob ? badge(PROB_MAP[row.prob]||'', row.prob) : null)}
                 </div>
                 <div className="mr">{field('Criticidade', critBadge(row.crit))}</div>
-                {categoriaRec && (
-                  <div style={{ marginTop: 12, padding: '8px 12px', background: `${corCategoria}15`, borderLeft: `3px solid ${corCategoria}`, borderRadius: 4 }}>
-                    <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.6, color: 'var(--lt-text3)', marginBottom: 2 }}>Ação Sugerida</div>
-                    <div style={{ fontSize: 13, fontWeight: 600, color: corCategoria }}>{categoriaRec}</div>
-                  </div>
-                )}
               </div>
             ) : (
               <div className="ms"><div className="ms-t">Resultado do Diagnóstico</div><div className="mr3">{field('Resultado Diagnóstico', row.r1 ? badge(R1_MAP[row.r1]||'b-na', row.r1) : null)}{field('Impacto', row.imp ? badge(IMP_MAP[row.imp]||'', row.imp) : null)}{field('Probabilidade', row.prob ? badge(PROB_MAP[row.prob]||'', row.prob) : null)}</div><div className="mr">{field('Criticidade', critBadge(row.crit))}</div></div>

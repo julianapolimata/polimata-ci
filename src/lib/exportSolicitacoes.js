@@ -2,7 +2,7 @@ import ExcelJS from 'exceljs'
 
 const STATUS_LABEL = {
   aguardando: 'Aguardando',
-  em_andamento: 'Em Andamento',
+  em_andamento: 'Em Análise',
   recebida: 'Recebida',
   validada: 'Validada',
   recusada: 'Recusada',

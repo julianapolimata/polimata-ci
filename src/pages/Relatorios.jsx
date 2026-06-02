@@ -221,8 +221,9 @@ export default function Relatorios({ projeto, areasCalc, todosControles, cliente
 
   return (
     <div style={{ padding: '32px 40px 300px', maxWidth: 960, fontFamily: "'Montserrat', sans-serif" }}>
-      <h2 style={{ fontSize: 20, fontWeight: 600, color: 'var(--txt1)', margin: '0 0 4px' }}>
+      <h2 style={{ fontSize: 20, fontWeight: 600, color: 'var(--txt1)', margin: '0 0 4px', display: 'flex', alignItems: 'center', gap: 10 }}>
         Gerar relatório
+        <span style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.6, color: '#92400E', background: 'rgba(234,179,8,0.18)', border: '1px solid rgba(234,179,8,0.4)', borderRadius: 999, padding: '3px 10px' }}>Em desenvolvimento</span>
       </h2>
       <p style={{ fontSize: 13, color: 'var(--txt3)', margin: '0 0 28px' }}>
         Configure as seções e filtros para gerar seu relatório em Excel

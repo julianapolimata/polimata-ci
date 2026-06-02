@@ -5,6 +5,7 @@ import { getFaseAtual } from '../lib/fases'
 import { logAprovar, logDevolver } from '../lib/auditLog'
 import { CRIT_MAP } from './modalRevisar/_consts'
 import { S } from './modalRevisar/styles'
+import { useConfirm } from './ConfirmDialog'
 
 
 const ModalRevisar = ({ row, onClose, onAction }) => {
@@ -17,6 +18,15 @@ const ModalRevisar = ({ row, onClose, onAction }) => {
   const [loadingHist, setLoadingHist] = useState(false)
   const [submetidoPorNome, setSubmetidoPorNome] = useState(null)
   const [consultorResponsavelNome, setConsultorResponsavelNome] = useState(null)
+  const { confirm } = useConfirm()
+  const [dirty, setDirty] = useState(false)
+  const requestClose = async () => {
+    if (dirty) {
+      const ok = await confirm({ title: 'Descartar alterações?', message: 'Há alterações não salvas neste formulário. Deseja fechar mesmo assim? As alterações serão perdidas.', confirmText: 'Descartar', cancelText: 'Continuar editando', variant: 'danger' })
+      if (!ok) return
+    }
+    onClose?.()
+  }
 
   // Bloqueio de auto-revisão — consultor não revisa o que ele mesmo importou/submeteu.
   // Admin sempre pode revisar.
@@ -173,7 +183,7 @@ const ModalRevisar = ({ row, onClose, onAction }) => {
 
   // ═══ VIEW: CONFIRMAR APROVAÇÃO ═══
   if (view === 'approve') return (
-    <div style={S.overlay} onClick={e => e.target === e.currentTarget && onClose?.()}>
+    <div style={S.overlay} onChangeCapture={() => setDirty(true)}>
       <div style={S.modal}>
         <div style={{ ...S.header, borderBottomColor: '#22C55E' }}>
           <h2 style={{ margin: 0, fontSize: 20, fontWeight: 300, fontFamily: "'Raleway', sans-serif", letterSpacing: 0.3 }}>✅ Confirmar Aprovação</h2>
@@ -202,7 +212,7 @@ const ModalRevisar = ({ row, onClose, onAction }) => {
 
   // ═══ VIEW: CONFIRMAR REPROVAÇÃO ═══
   if (view === 'reject') return (
-    <div style={S.overlay} onClick={e => e.target === e.currentTarget && onClose?.()}>
+    <div style={S.overlay} onChangeCapture={() => setDirty(true)}>
       <div style={S.modal}>
         <div style={{ ...S.header, borderBottomColor: '#EF4444' }}>
           <h2 style={{ margin: 0, fontSize: 20, fontWeight: 300, fontFamily: "'Raleway', sans-serif", letterSpacing: 0.3 }}>↩ Reprovar Análise</h2>
@@ -232,7 +242,7 @@ const ModalRevisar = ({ row, onClose, onAction }) => {
 
   // ═══ VIEW: HISTÓRICO ═══
   if (view === 'history') return (
-    <div style={S.overlay} onClick={e => e.target === e.currentTarget && onClose?.()}>
+    <div style={S.overlay} onChangeCapture={() => setDirty(true)}>
       <div style={S.modal}>
         <div style={S.header}>
           <h2 style={{ margin: 0, fontSize: 20, fontWeight: 300, fontFamily: "'Raleway', sans-serif", letterSpacing: 0.3 }}>📋 Histórico de Revisões — {row?.rc}</h2>
@@ -271,14 +281,14 @@ const ModalRevisar = ({ row, onClose, onAction }) => {
 
   // ═══ VIEW: REVISÃO PRINCIPAL ═══
   return (
-    <div style={S.overlay} onClick={e => e.target === e.currentTarget && onClose?.()}>
+    <div style={S.overlay} onChangeCapture={() => setDirty(true)}>
       <div style={S.modal}>
         <div style={{ ...S.header, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
           <div>
             <h2 style={{ margin: 0, fontSize: 20, fontWeight: 300, fontFamily: "'Raleway', sans-serif", letterSpacing: 0.3 }}>🔍 Revisão de Análise</h2>
             <p style={{ margin: '0.3rem 0 0', fontSize: 11, opacity: 0.8 }}>{row?.rc} · {row?.rr} — {row?.area}</p>
           </div>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'white', fontSize: 28, cursor: 'pointer', padding: 0 }}>×</button>
+          <button onClick={requestClose} style={{ background: 'none', border: 'none', color: 'white', fontSize: 28, cursor: 'pointer', padding: 0 }}>×</button>
         </div>
         <div style={S.body}>
           {/* Resumo */}
@@ -446,7 +456,7 @@ const ModalRevisar = ({ row, onClose, onAction }) => {
 
         {/* Footer com ações */}
         <div style={S.footer}>
-          <button onClick={onClose} style={{ ...S.btn, border: '1px solid #D0D0D0', background: 'white', color: '#7A8B9C' }}>Fechar</button>
+          <button onClick={requestClose} style={{ ...S.btn, border: '1px solid #D0D0D0', background: 'white', color: '#7A8B9C' }}>Fechar</button>
           {!bloqueado && (
             <>
               <button onClick={() => setView('reject')} style={{ ...S.btn, border: '1px solid #EF4444', background: 'white', color: '#EF4444' }}>↩ Reprovar</button>

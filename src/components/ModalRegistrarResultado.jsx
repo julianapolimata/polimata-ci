@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
+import { useConfirm } from './ConfirmDialog'
 import { useAuth } from '../contexts/AuthContext'
 import { getFaseAtual } from '../lib/fases'
 import { logRegistrarResultado, logRegressao } from '../lib/auditLog'
@@ -16,6 +17,15 @@ const ModalRegistrarResultado = ({ row, onClose, onSaved, responsaveis }) => {
   // ═══ STATE ═══
   const { user } = useAuth()
   const [saving, setSaving] = useState(false)
+  const { confirm } = useConfirm()
+  const [dirty, setDirty] = useState(false)
+  const requestClose = async () => {
+    if (dirty) {
+      const ok = await confirm({ title: 'Descartar alterações?', message: 'Há alterações não salvas neste formulário. Deseja fechar mesmo assim? As alterações serão perdidas.', confirmText: 'Descartar', cancelText: 'Continuar editando', variant: 'danger' })
+      if (!ok) return
+    }
+    onClose?.()
+  }
   const [submitting, setSubmitting] = useState(false)
   const [notaReprovacao, setNotaReprovacao] = useState(null)
   const faseAtual = getFaseAtual(row || {})
@@ -219,7 +229,7 @@ const ModalRegistrarResultado = ({ row, onClose, onSaved, responsaveis }) => {
       alignItems: 'center',
       justifyContent: 'center',
       zIndex: 9999
-    }}>
+    }} onChangeCapture={() => setDirty(true)}>
       <div style={{
         background: 'white',
         borderRadius: 12,
@@ -237,7 +247,7 @@ const ModalRegistrarResultado = ({ row, onClose, onSaved, responsaveis }) => {
             <div style={{ fontSize: 20, fontWeight: 300, fontFamily: "'Raleway', sans-serif", letterSpacing: 0.3, lineHeight: 1.2 }}>Registrar Resultado do Teste</div>
             <div style={{ fontSize: 12, fontWeight: 500, opacity: 0.72, marginTop: 4 }}>{row?.area} — {row?.sub} — {row?.rr}</div>
           </div>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: 28, color: 'white', cursor: 'pointer' }}>×</button>
+          <button onClick={requestClose} style={{ background: 'none', border: 'none', fontSize: 28, color: 'white', cursor: 'pointer' }}>×</button>
         </div>
 
         {/* BODY */}
@@ -277,7 +287,7 @@ const ModalRegistrarResultado = ({ row, onClose, onSaved, responsaveis }) => {
 
         {/* FOOTER */}
         <div style={{ display: 'flex', gap: 8, padding: 24, borderTop: '1px solid #e5e7eb', background: '#fafbfc' }}>
-          <button onClick={onClose} style={{ flex: 1, padding: '12px 16px', border: '1px solid #e5e7eb', borderRadius: 6, fontFamily: 'Montserrat, sans-serif', fontSize: 13, fontWeight: 700, cursor: 'pointer', background: 'white', color: '#00203E' }}>
+          <button onClick={requestClose} style={{ flex: 1, padding: '12px 16px', border: '1px solid #e5e7eb', borderRadius: 6, fontFamily: 'Montserrat, sans-serif', fontSize: 13, fontWeight: 700, cursor: 'pointer', background: 'white', color: '#00203E' }}>
             Cancelar
           </button>
           <button onClick={saveOnly} disabled={!canSave || saving || submitting} style={{ flex: 1, padding: '12px 16px', border: '1px solid #e5e7eb', borderRadius: 6, fontFamily: 'Montserrat, sans-serif', fontSize: 13, fontWeight: 700, cursor: 'pointer', background: 'white', color: '#00203E', opacity: !canSave || saving || submitting ? 0.5 : 1 }}>

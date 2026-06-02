@@ -6,6 +6,7 @@
 
 import React, { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
+import { useConfirm } from './ConfirmDialog'
 import HistoricoTab from './HistoricoTab'
 import { logAtualizarControle, logBaixarFicha } from '../lib/auditLog'
 import SecaoCenarioAtual from './modalRegistrarResultado/SecaoCenarioAtual'
@@ -23,6 +24,15 @@ import StepFicha from './modalAtualizar/StepFicha'
 const ModalAtualizar = ({ row, onClose, onSaved, areas, projeto }) => {
   const { perfil: perfilAuth } = useAuth()
   const [comentarioFor, setComentarioFor] = useState(null)
+  const { confirm } = useConfirm()
+  const [dirty, setDirty] = useState(false)
+  const requestClose = async () => {
+    if (dirty) {
+      const ok = await confirm({ title: 'Descartar alterações?', message: 'Há alterações não salvas neste formulário. Deseja fechar mesmo assim? As alterações serão perdidas.', confirmText: 'Descartar', cancelText: 'Continuar editando', variant: 'danger' })
+      if (!ok) return
+    }
+    onClose?.()
+  }
   // ═══ STATE ═══
   const [step, setStep] = useState(1)
   const [statusChoice, setStatusChoice] = useState(null)
@@ -311,14 +321,14 @@ const ModalAtualizar = ({ row, onClose, onSaved, areas, projeto }) => {
   // ═══ MAIN RENDER ═══
   return (
     <>
-    <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0, 0, 0, 0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999 }}>
+    <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0, 0, 0, 0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999 }} onChangeCapture={() => setDirty(true)}>
       <div style={{ background: 'white', borderRadius: 12, boxShadow: '0 20px 60px rgba(0, 0, 0, 0.15)', maxWidth: 700, width: '90vw', maxHeight: '90vh', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
         {/* HEADER */}
         <div style={{ padding: '22px 24px 18px', borderBottom: '1px solid rgba(255,255,255,0.12)', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', background: '#00203E', color: 'white' }}>
           <div>
             <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: 2, textTransform: 'uppercase', color: 'var(--copper-soft)', marginBottom: 4 }}>Matriz de Riscos · Controle</div>
             <div style={{ fontSize: 20, fontWeight: 300, fontFamily: "'Raleway', sans-serif", letterSpacing: 0.3, lineHeight: 1.2 }}>Atualizar Controle</div>
-            <div style={{ fontSize: 12, fontWeight: 500, opacity: 0.72, marginTop: 4 }}>{row.rc} · {row.area}</div>
+            <div title={row.dr || row.area || ''} style={{ fontSize: 12, fontWeight: 500, opacity: 0.72, marginTop: 4, maxWidth: 480, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{row.rc}{row.dr ? ` · ${row.dr}` : (row.area ? ` · ${row.area}` : '')}</div>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <button
@@ -332,7 +342,7 @@ const ModalAtualizar = ({ row, onClose, onSaved, areas, projeto }) => {
             >
               {showHistorico ? '← Voltar' : '📋 Histórico'}
             </button>
-            <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: 28, color: 'white', cursor: 'pointer' }}>×</button>
+            <button onClick={requestClose} style={{ background: 'none', border: 'none', fontSize: 28, color: 'white', cursor: 'pointer' }}>×</button>
           </div>
         </div>
 
@@ -434,7 +444,7 @@ const ModalAtualizar = ({ row, onClose, onSaved, areas, projeto }) => {
         {/* FOOTER */}
         <div style={{ display: 'flex', gap: 8, padding: 24, borderTop: '1px solid #e5e7eb', background: '#fafbfc' }}>
           <button
-            onClick={onClose}
+            onClick={requestClose}
             style={{ flex: 1, padding: '12px 16px', border: '1px solid #e5e7eb', borderRadius: 6, fontFamily: 'Montserrat, sans-serif', fontSize: 13, fontWeight: 700, cursor: 'pointer', background: 'white', color: '#00203E' }}
           >
             Cancelar

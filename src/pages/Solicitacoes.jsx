@@ -7,7 +7,7 @@ import { formatNomeEmpresa } from '../lib/formatNome'
 // ─── CONSTANTES ───────────────────────────────────────────────────────────
 const STATUS_CFG = {
   aguardando:   { label: 'Aguardando',   color: '#1D4ED8', bg: 'rgba(59,130,246,0.10)' },
-  em_andamento: { label: 'Em Andamento', color: '#92400E', bg: 'rgba(234,179,8,0.15)' },
+  em_andamento: { label: 'Em Análise', color: '#92400E', bg: 'rgba(234,179,8,0.15)' },
   recebida:     { label: 'Recebida',     color: '#7C2D12', bg: 'rgba(234,88,12,0.15)' },
   validada:     { label: 'Validada',     color: '#15803D', bg: 'rgba(34,197,94,0.12)' },
   recusada:     { label: 'Recusada',     color: '#991B1B', bg: 'rgba(239,68,68,0.12)' },
@@ -339,7 +339,7 @@ function ModalSolicitacao({ projeto, controles, areas, perfil, solicitacao, onCl
               <div style={M.field}><label style={M.label}>Controle <span style={{color:'#DC2626'}}>*</span></label>
                 <select value={form.controle_id} onChange={e=>u('controle_id', e.target.value)} style={M.input}>
                   <option value="">— Selecione —</option>
-                  {controles.map(c => <option key={c.id} value={c.id}>{c.rc} · {(c.dc || '').slice(0, 70)}</option>)}
+                  {[...controles].sort((a,b)=>(a.rc||'').localeCompare(b.rc||'', 'pt', { numeric: true })).map(c => <option key={c.id} value={c.id}>{c.rc} · {(c.dc || '').slice(0, 70)}</option>)}
                 </select>
               </div>
               <div style={M.field}><label style={M.label}>Fase</label>

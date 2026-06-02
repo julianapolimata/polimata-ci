@@ -213,6 +213,8 @@ export default function ImportarMRC({ projetoId, projeto, areas, onImported, all
               else reg[field] = null
             } else reg[field] = typeof cleaned === 'string' ? cleaned : cleaned !== null ? String(cleaned) : null
           })
+          // Normaliza Ref. Risco: se vier sem sigla (ex.: R.05) ou com codigo de controle, deriva do Ref. Controle (C.SIGLA.NN -> R.SIGLA.NN)
+          if (reg.rr && reg.rc && !/^R\.[A-Za-z]/.test(reg.rr) && /^C\.[A-Za-z0-9]/.test(reg.rc)) reg.rr = 'R' + reg.rc.slice(1).replace(/\s/g, '')
           return reg
         })
         const batchSize = 50; let inserted = 0
@@ -244,6 +246,8 @@ export default function ImportarMRC({ projetoId, projeto, areas, onImported, all
               else reg[field] = null
             } else reg[field] = typeof cleaned === 'string' ? cleaned : cleaned !== null ? String(cleaned) : null
           })
+          // Normaliza Ref. Risco: se vier sem sigla (ex.: R.05) ou com codigo de controle, deriva do Ref. Controle (C.SIGLA.NN -> R.SIGLA.NN)
+          if (reg.rr && reg.rc && !/^R\.[A-Za-z]/.test(reg.rr) && /^C\.[A-Za-z0-9]/.test(reg.rc)) reg.rr = 'R' + reg.rc.slice(1).replace(/\s/g, '')
           return reg
         })
         const batchSize = 50; let inserted = 0

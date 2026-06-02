@@ -42,7 +42,7 @@ export default function ModalComentario({ controleId, projetoId, perfil, acao = 
   }
 
   return (
-    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10000, padding: 20 }} onClick={e => { if (e.target === e.currentTarget) onClose?.() }}>
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10000, padding: 20 }}>
       <div style={{ background: '#fff', borderRadius: 12, padding: '24px 28px', maxWidth: 520, width: '100%', fontFamily: "'Montserrat', sans-serif", boxShadow: '0 20px 60px rgba(0,0,0,0.4)' }}>
         <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--copper)', textTransform: 'uppercase', letterSpacing: 1.5, marginBottom: 6 }}>{acao}</div>
         <div style={{ fontSize: 17, fontWeight: 600, color: '#00203E', marginBottom: 4 }}>Algum comentário para registrar?</div>

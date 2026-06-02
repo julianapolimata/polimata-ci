@@ -57,7 +57,7 @@ export default function SecaoCenarioAtual({ cenarioAtual, setCenarioAtual }) {
           minHeight: '80px',
           resize: 'vertical',
         }}
-        placeholder="Ex.: planilha mantida pela Cláudia, sem rotina formal de conferência; lançamentos manuais conferidos pela própria gerente uma vez por semana..."
+        placeholder="Descreva como o processo é executado hoje."
       />
     </div>
   )
