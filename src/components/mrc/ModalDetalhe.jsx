@@ -7,7 +7,7 @@ import HistoricoControle from './HistoricoControle'
 
 // ─── MODAL ───────────────────────────────────────────────────────────────────
 
-export function ModalDetalhe({ row, projeto, onClose, onEditar, primaryAction, secondaryAction }) {
+export function ModalDetalhe({ row, projeto, onClose, onEditar, primaryAction, secondaryAction, onAnalisarCriticidade }) {
   const [tab, setTab] = useState('ident')
   if (!row) return null
   const isDiagModal = projeto?.f1_tem_teste === false
@@ -82,6 +82,13 @@ export function ModalDetalhe({ row, projeto, onClose, onEditar, primaryAction, s
                   </div>
                 </div>
               </div>
+              {onAnalisarCriticidade && (
+                <div style={{ marginTop: 12, textAlign: 'right' }}>
+                  <button onClick={onAnalisarCriticidade} title="Avaliar impacto e probabilidade" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'rgba(204,145,94,0.12)', border: '1px solid rgba(204,145,94,0.4)', borderRadius: 999, padding: '8px 16px', fontSize: 12, fontWeight: 700, color: 'var(--copper-text)', cursor: 'pointer', fontFamily: 'inherit' }}>
+                    Analisar criticidade
+                  </button>
+                </div>
+              )}
             </div>
           </div>)}
 
