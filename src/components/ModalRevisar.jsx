@@ -5,10 +5,11 @@ import { getFaseAtual } from '../lib/fases'
 import { logAprovar, logDevolver } from '../lib/auditLog'
 import { CRIT_MAP } from './modalRevisar/_consts'
 import { S } from './modalRevisar/styles'
+import { BLOCO_LABEL, blocosAplicaveis, faseDoBloco, loadAprovacoes, setBlocoStatus, deriveStatusGeral, ensureBlocos } from '../lib/aprovacoesBloco'
 import { useConfirm } from './ConfirmDialog'
 
 
-const ModalRevisar = ({ row, onClose, onAction }) => {
+const ModalRevisar = ({ row, onClose, onAction, projeto }) => {
   const { user, perfil } = useAuth()
   const [view, setView] = useState('review') // review | approve | reject | history
   const [nota, setNota] = useState('')
@@ -18,6 +19,8 @@ const ModalRevisar = ({ row, onClose, onAction }) => {
   const [loadingHist, setLoadingHist] = useState(false)
   const [submetidoPorNome, setSubmetidoPorNome] = useState(null)
   const [consultorResponsavelNome, setConsultorResponsavelNome] = useState(null)
+  const [blocoAlvo, setBlocoAlvo] = useState(null)
+  const [aprovacoes, setAprovacoes] = useState([])
   const { confirm } = useConfirm()
   const [dirty, setDirty] = useState(false)
   const requestClose = async () => {
@@ -43,6 +46,11 @@ const ModalRevisar = ({ row, onClose, onAction }) => {
   }, [row?.id])
 
   useEffect(() => {
+    if (row?.id) ensureBlocos(row, projeto).then(setAprovacoes)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [row?.id])
+
+  useEffect(() => {
     if (!row?.submetido_por) { setSubmetidoPorNome(null); return }
     supabase.from('perfis').select('nome').eq('id', row.submetido_por).maybeSingle()
       .then(({ data }) => setSubmetidoPorNome(data?.nome || null))
@@ -65,121 +73,98 @@ const ModalRevisar = ({ row, onClose, onAction }) => {
     setLoadingHist(false)
   }
 
-  // ═══ APROVAR ═══
+  // ═══ APROVAR BLOCO ═══
   async function handleAprovar() {
+    if (!blocoAlvo) return
     setProcessing(true)
     try {
-      // 1. Marcar como aprovado nesta fase
-      const { error } = await supabase
-        .from('mrc')
-        .update({
-          status_workflow: 'aprovado',
-          aprovado_por: user?.id,
-          aprovado_em: new Date().toISOString(),
-        })
-        .eq('id', row.id)
-      if (error) throw error
+      const fase = faseDoBloco(blocoAlvo, row)
+      await setBlocoStatus({ mrcId: row.id, bloco: blocoAlvo, fase, status: 'aprovado', revisorId: user?.id, nota: notaAprovar })
+      const aps = await loadAprovacoes(row.id)
+      setAprovacoes(aps)
+      const geral = deriveStatusGeral(aps, row, projeto)
 
-      // 2. Registrar revisão
+      const updates = { status_workflow: geral }
+      if (geral === 'aprovado') { updates.aprovado_por = user?.id; updates.aprovado_em = new Date().toISOString() }
+      await supabase.from('mrc').update(updates).eq('id', row.id)
+
       await supabase.from('revisoes').insert({
-        mrc_id: row.id,
-        autor_id: user?.id,
-        tipo: 'aprovacao',
-        nota: notaAprovar || null,
-        status_antes: 'em_revisao',
-        status_depois: 'aprovado',
-        fase: faseAtual,
+        mrc_id: row.id, autor_id: user?.id, tipo: 'aprovacao',
+        nota: `[${BLOCO_LABEL[blocoAlvo]}] ${notaAprovar || ''}`.trim(),
+        status_antes: 'em_revisao', status_depois: geral, fase: faseAtual,
       })
 
-      // 3. Status fica 'aprovado' — o cálculo de maturidade conta a contribuição.
-      // O reset para 'nao_iniciado' acontecerá ao avançar de fase.
-
-      // 4. Notificar consultor RESPONSÁVEL (fallback: quem submeteu)
-      const destinatarioId = row.consultor_id || row.submetido_por
-      if (destinatarioId) {
-        await supabase.from('notificacoes').insert({
-          para_id: destinatarioId,
-          de_id: user?.id,
-          tipo: 'aprovacao',
-          titulo: `Análise aprovada — ${row.rc || row.rr}`,
-          mensagem: `${row.rc} (${row.area}) foi aprovado na fase ${faseAtual}. O controle avança para a próxima fase.`,
-          lida: false,
-          mrc_id: row.id,
-        })
-        // Enviar email de aprovação
-        supabase.functions.invoke('send-email', {
-          body: { type: 'review_completed', data: { autor_id: destinatarioId, revisor_id: user?.id, ref: row.rc || row.rr, resultado: 'aprovado', nota: notaAprovar || '', area_id: row.area_id } }
-        }).catch(err => console.error('Erro ao enviar email:', err))
+      if (geral === 'aprovado') {
+        const destinatarioId = row.consultor_id || row.submetido_por
+        if (destinatarioId) {
+          await supabase.from('notificacoes').insert({
+            para_id: destinatarioId, de_id: user?.id, tipo: 'aprovacao',
+            titulo: `Análise aprovada — ${row.rc || row.rr}`,
+            mensagem: `${row.rc} (${row.area}) foi aprovado na fase ${faseAtual}. Todos os blocos foram aprovados.`,
+            lida: false, mrc_id: row.id,
+          })
+          supabase.functions.invoke('send-email', {
+            body: { type: 'review_completed', data: { autor_id: destinatarioId, revisor_id: user?.id, ref: row.rc || row.rr, resultado: 'aprovado', nota: notaAprovar || '', area_id: row.area_id } }
+          }).catch(err => console.error('Erro ao enviar email:', err))
+        }
+        logAprovar(row, row.projeto_id)
+        onAction?.('aprovado')
+        onClose?.()
+      } else {
+        // ainda há blocos pendentes — volta pra revisão para tratar os demais
+        setNotaAprovar(''); setBlocoAlvo(null); setDirty(false); setView('review')
+        onAction?.('parcial')
       }
-
-      // Audit log
-      logAprovar(row, row.projeto_id)
-
-      onAction?.('aprovado')
-      onClose?.()
     } catch (err) {
-      console.error('Erro ao aprovar:', err)
+      console.error('Erro ao aprovar bloco:', err)
       alert('Erro ao aprovar. Tente novamente.')
     } finally {
       setProcessing(false)
     }
   }
 
-  // ═══ REPROVAR ═══
+  // ═══ REPROVAR BLOCO ═══
   async function handleReprovar() {
+    if (!blocoAlvo) return
     if (!nota.trim()) return alert('A nota de reprovação é obrigatória.')
     setProcessing(true)
     try {
-      // 1. Atualizar MRC
-      const { error } = await supabase
-        .from('mrc')
-        .update({ status_workflow: 'reprovado' })
-        .eq('id', row.id)
-      if (error) throw error
+      const fase = faseDoBloco(blocoAlvo, row)
+      await setBlocoStatus({ mrcId: row.id, bloco: blocoAlvo, fase, status: 'reprovado', revisorId: user?.id, nota })
+      const aps = await loadAprovacoes(row.id)
+      setAprovacoes(aps)
+      // Reprovar qualquer bloco devolve o controle para o consultor
+      await supabase.from('mrc').update({ status_workflow: 'reprovado' }).eq('id', row.id)
 
-      // 2. Registrar revisão
       await supabase.from('revisoes').insert({
-        mrc_id: row.id,
-        autor_id: user?.id,
-        tipo: 'reprovacao',
-        nota: nota,
-        status_antes: 'em_revisao',
-        status_depois: 'reprovado',
-        fase: faseAtual,
+        mrc_id: row.id, autor_id: user?.id, tipo: 'reprovacao',
+        nota: `[${BLOCO_LABEL[blocoAlvo]}] ${nota}`,
+        status_antes: 'em_revisao', status_depois: 'reprovado', fase: faseAtual,
       })
 
-      // 3. Notificar consultor RESPONSÁVEL (fallback: quem submeteu)
-      //    consultor_id é gravado na importação e direciona o ciclo de devolução.
       const destinatarioId = row.consultor_id || row.submetido_por
       if (destinatarioId) {
         await supabase.from('notificacoes').insert({
-          para_id: destinatarioId,
-          de_id: user?.id,
-          tipo: 'reprovacao',
+          para_id: destinatarioId, de_id: user?.id, tipo: 'reprovacao',
           titulo: `Análise reprovada — ${row.rc || row.rr}`,
-          mensagem: `${row.rc} (${row.area}) foi reprovado na fase ${faseAtual}. Motivo: ${nota.substring(0, 100)}${nota.length > 100 ? '...' : ''}`,
-          lida: false,
-          mrc_id: row.id,
+          mensagem: `Bloco "${BLOCO_LABEL[blocoAlvo]}" de ${row.rc} (${row.area}) foi reprovado na fase ${faseAtual}. Motivo: ${nota.substring(0, 100)}${nota.length > 100 ? '...' : ''}`,
+          lida: false, mrc_id: row.id,
         })
-        // Enviar email IMEDIATO de devolução pro consultor responsável
         supabase.functions.invoke('send-email', {
-          body: { type: 'review_completed', data: { autor_id: destinatarioId, revisor_id: user?.id, ref: row.rc || row.rr, resultado: 'reprovado', nota: nota, area_id: row.area_id } }
+          body: { type: 'review_completed', data: { autor_id: destinatarioId, revisor_id: user?.id, ref: row.rc || row.rr, resultado: 'reprovado', nota: `[Bloco: ${BLOCO_LABEL[blocoAlvo]}] ${nota}`, area_id: row.area_id } }
         }).catch(err => console.error('Erro ao enviar email:', err))
       }
 
-      // Audit log
       logDevolver(row, nota, row.projeto_id)
-
       onAction?.('reprovado')
       onClose?.()
     } catch (err) {
-      console.error('Erro ao reprovar:', err)
+      console.error('Erro ao reprovar bloco:', err)
       alert('Erro ao reprovar. Tente novamente.')
     } finally {
       setProcessing(false)
     }
   }
-
 
   // ═══ VIEW: CONFIRMAR APROVAÇÃO ═══
   if (view === 'approve') return (
@@ -187,7 +172,7 @@ const ModalRevisar = ({ row, onClose, onAction }) => {
       <div style={S.modal}>
         <div style={{ ...S.header, borderBottomColor: '#22C55E' }}>
           <h2 style={{ margin: 0, fontSize: 20, fontWeight: 300, fontFamily: "'Raleway', sans-serif", letterSpacing: 0.3 }}>✅ Confirmar Aprovação</h2>
-          <p style={{ margin: '0.3rem 0 0', fontSize: 11, opacity: 0.8 }}>{row?.rc} — {row?.dr || row?.area} — {faseAtual}</p>
+          <p style={{ margin: '0.3rem 0 0', fontSize: 11, opacity: 0.8 }}>{row?.rc} — {blocoAlvo ? `Bloco: ${BLOCO_LABEL[blocoAlvo]}` : (row?.dr || row?.area)} — {faseAtual}</p>
         </div>
         <div style={S.body}>
           <div style={{ background: '#F0FFF4', border: '1px solid #C6F6D5', borderRadius: 6, padding: '1rem', marginBottom: '1rem' }}>
@@ -216,7 +201,7 @@ const ModalRevisar = ({ row, onClose, onAction }) => {
       <div style={S.modal}>
         <div style={{ ...S.header, borderBottomColor: '#EF4444' }}>
           <h2 style={{ margin: 0, fontSize: 20, fontWeight: 300, fontFamily: "'Raleway', sans-serif", letterSpacing: 0.3 }}>↩ Reprovar Análise</h2>
-          <p style={{ margin: '0.3rem 0 0', fontSize: 11, opacity: 0.8 }}>{row?.rc} — {row?.dr || row?.area} — {faseAtual}</p>
+          <p style={{ margin: '0.3rem 0 0', fontSize: 11, opacity: 0.8 }}>{row?.rc} — {blocoAlvo ? `Bloco: ${BLOCO_LABEL[blocoAlvo]}` : (row?.dr || row?.area)} — {faseAtual}</p>
         </div>
         <div style={S.body}>
           <div style={{ background: '#FFF5F5', border: '1px solid #FED7D7', borderRadius: 6, padding: '1rem', marginBottom: '1rem' }}>
@@ -320,6 +305,34 @@ const ModalRevisar = ({ row, onClose, onAction }) => {
             <div style={S.section}>
               <div style={S.label}>Fase</div>
               <div style={{ ...S.value, fontSize: 11, color: '#CC915E', fontWeight: 600 }}>{faseAtual}</div>
+            </div>
+          </div>
+
+          {/* Aprovação por bloco (itens 10/13) */}
+          <div style={S.section}>
+            <div style={S.sectionTitle}>Aprovação por bloco</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {blocosAplicaveis(projeto).map(b => {
+                const f = faseDoBloco(b, row)
+                const ap = aprovacoes.find(e => e.bloco === b && (e.fase || null) === (f || null))
+                const st = ap?.status || 'a_aprovar'
+                const cfg = st === 'aprovado' ? { t: 'Aprovado', c: '#1B5E20', bg: '#E8F5E9' }
+                          : st === 'reprovado' ? { t: 'Reprovado', c: '#C62828', bg: '#FFEBEE' }
+                          : { t: 'A aprovar', c: '#92400E', bg: 'rgba(234,179,8,0.18)' }
+                return (
+                  <div key={b} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px', border: '1px solid #ECECEC', borderRadius: 6, background: '#FAFAFA' }}>
+                    <div style={{ fontSize: 12, fontWeight: 700, color: '#00203E', minWidth: 90 }}>{BLOCO_LABEL[b]}{b === 'teste' && f ? ` (${f})` : ''}</div>
+                    <span style={{ fontSize: 10, fontWeight: 700, color: cfg.c, background: cfg.bg, padding: '3px 10px', borderRadius: 999, textTransform: 'uppercase', letterSpacing: 0.4 }}>{cfg.t}</span>
+                    {ap?.data_acao && <span style={{ fontSize: 10, color: '#7A8B9C' }}>{new Date(ap.data_acao).toLocaleDateString('pt-BR')}</span>}
+                    {!bloqueado && (
+                      <div style={{ marginLeft: 'auto', display: 'flex', gap: 6 }}>
+                        <button onClick={() => { setBlocoAlvo(b); setNota(''); setView('reject') }} style={{ fontSize: 11, fontWeight: 700, color: '#EF4444', background: 'white', border: '1px solid #EF4444', borderRadius: 6, padding: '4px 10px', cursor: 'pointer', fontFamily: 'inherit' }}>↩ Reprovar</button>
+                        <button onClick={() => { setBlocoAlvo(b); setNotaAprovar(''); setView('approve') }} style={{ fontSize: 11, fontWeight: 700, color: 'white', background: '#22C55E', border: '1px solid #22C55E', borderRadius: 6, padding: '4px 10px', cursor: 'pointer', fontFamily: 'inherit' }}>✅ Aprovar</button>
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
             </div>
           </div>
 
@@ -457,12 +470,7 @@ const ModalRevisar = ({ row, onClose, onAction }) => {
         {/* Footer com ações */}
         <div style={S.footer}>
           <button onClick={requestClose} style={{ ...S.btn, border: '1px solid #D0D0D0', background: 'white', color: '#7A8B9C' }}>Fechar</button>
-          {!bloqueado && (
-            <>
-              <button onClick={() => setView('reject')} style={{ ...S.btn, border: '1px solid #EF4444', background: 'white', color: '#EF4444' }}>↩ Reprovar</button>
-              <button onClick={() => setView('approve')} style={{ ...S.btn, border: '1px solid #22C55E', background: '#22C55E', color: 'white' }}>✅ Aprovar</button>
-            </>
-          )}
+          {/* Aprovação agora é por bloco (painel acima). */}
         </div>
       </div>
     </div>

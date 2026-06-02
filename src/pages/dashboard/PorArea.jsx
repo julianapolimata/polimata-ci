@@ -379,7 +379,7 @@ export default function PorArea({ projeto, areasCalc, todosControles, loading, n
       {modalNovoRisco && <ModalNovoRisco onClose={() => setModalNovoRisco(false)} onSaved={() => { setModalNovoRisco(false); if (projeto?.id) loadDados(projeto.id) }} areas={areasCalc} projeto={projeto} areaFixa={area} />}
       {rowRegistrarResultado && <ModalRegistrarResultado row={rowRegistrarResultado} onClose={() => setRowRegistrarResultado(null)} onSaved={() => { setRowRegistrarResultado(null); if (projeto?.id) loadDados(projeto.id) }} responsaveis={[]} />}
       {rowCriticidade && <ModalRegistrarCriticidade row={rowCriticidade} onClose={() => setRowCriticidade(null)} onSaved={() => { setRowCriticidade(null); if (projeto?.id) loadDados(projeto.id) }} />}
-      {rowRevisar && <ModalRevisar row={rowRevisar} onClose={() => setRowRevisar(null)} onAction={() => { setRowRevisar(null); if (projeto?.id) loadDados(projeto.id) }} />}
+      {rowRevisar && <ModalRevisar row={rowRevisar} projeto={projeto} onClose={() => setRowRevisar(null)} onAction={() => { setRowRevisar(null); if (projeto?.id) loadDados(projeto.id) }} />}
     </div>
   )
 }
