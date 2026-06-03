@@ -147,7 +147,7 @@ export const CETICISMO_PROFISSIONAL =
 // Opções da lista suspensa (causa-raiz → fase de retorno)
 export const FASE_DESTINO_LABEL = {
   '2/1': 'Fase 2-E1 — Plano de Ação + Teste de Desenho (TOD)',
-  '2/2': 'Fase 2-E2 — Teste de Aderência (TOE)',
+  '2/2': 'Fase 2-E2 — Teste de Efetividade (TOE)',
 }
 
 export const CAUSAS_RAIZ = [
@@ -167,5 +167,5 @@ export function recomendacaoCausa(nErros, nAmostra, { taxaTolerada = 0.05 } = {}
       texto: `Resultado da amostra: ${n} falha(s) em ${tam} itens (${pct}%). Nossa metodologia entende que um índice de falha acima de ${lim}% tende a indicar que a causa-raiz está no desenho atual do controle. Recomendação: retorno à Fase 2-E1 — Plano de Ação + Teste de Desenho (TOD).` }
   }
   return { sugestao: 'aderencia', destino: '2/2', taxa,
-    texto: `Resultado da amostra: ${n} falha(s) em ${tam} itens (${pct}%). Um índice dentro da faixa de desvio isolado (≤ ${lim}%) tende a indicar falha de execução/aderência (erro humano), não de desenho. Recomendação: retorno à Fase 2-E2 — Teste de Aderência (TOE).` }
+    texto: `Resultado da amostra: ${n} falha(s) em ${tam} itens (${pct}%). Um índice dentro da faixa de desvio isolado (≤ ${lim}%) tende a indicar falha de execução/aderência (erro humano), não de desenho. Recomendação: retorno à Fase 2-E2 — Teste de Efetividade (TOE).` }
 }

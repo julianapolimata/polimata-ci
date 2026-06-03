@@ -12,7 +12,7 @@ export const FASES_LABEL = {
 }
 export const FASES_DETALHE = {
   1: 'Projeto vai até a Fase 1. Pode ter apenas indagação (sem teste) ou incluir teste de efetividade — selecione no campo ao lado.',
-  2: 'Projeto vai até a Fase 2 — Teste Operacional de Desenho (TOD) e Teste de Aderência (TOE).',
+  2: 'Projeto vai até a Fase 2 — Teste Operacional de Desenho (TOD) e Teste de Efetividade Operacional (TOE).',
   3: 'Projeto vai até a Fase 3 — Revisão Integral dos controles que avançaram (Efetivos na F1 ou na F2).',
   4: 'Projeto vai até a Fase 4 — adiciona dois ciclos de Auditoria Contínua (C1 e C2).',
   5: 'Ciclo completo — Fase 5 fecha com a Auditoria Independente.',

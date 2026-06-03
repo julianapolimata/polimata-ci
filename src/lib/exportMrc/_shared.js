@@ -60,7 +60,7 @@ export const MRC_COLUMNS = [
   // ── HISTÓRICO POR FASE (X-AD) ──
   { key: '_hist_f1', header: 'F1 Diagnóstico', width: 14, computed: true },
   { key: '_hist_f2d', header: 'F2 Desenho', width: 14, computed: true },
-  { key: '_hist_f2e', header: 'F2 Aderência', width: 14, computed: true },
+  { key: '_hist_f2e', header: 'F2 Efetividade', width: 14, computed: true },
   { key: '_hist_f3', header: 'F3 Revisão Integral', width: 14, computed: true },
   { key: '_hist_f4c1', header: 'F4 AI - Ciclo 1', width: 14, computed: true },
   { key: '_hist_f4c2', header: 'F4 AI - Ciclo 2', width: 14, computed: true },

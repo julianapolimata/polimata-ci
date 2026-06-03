@@ -230,7 +230,7 @@ export default function PorArea({ projeto, areasCalc, todosControles, loading, n
     if (fezEtapa(c.r_f4c2)) return { f: 'Auditoria Contínua — Ciclo 2', s: c.r_f4c2 }
     if (fezEtapa(c.r_f4c1)) return { f: 'Auditoria Contínua — Ciclo 1', s: c.r_f4c1 }
     if (fezEtapa(c.r3)) return { f: 'Revisão Integral', s: c.r3 }
-    if (fezEtapa(c.r_ader)) return { f: 'Teste de Aderência', s: c.r_ader }
+    if (fezEtapa(c.r_ader)) return { f: 'Teste de Efetividade', s: c.r_ader }
     if (fezEtapa(c.st_pa)) return { f: 'Teste de Desenho', s: c.st_pa }
     if (fezEtapa(c.r1)) return String(c.r1).toLowerCase() === 'efetivo' ? { f: 'Revisão Integral', s: 'Teste Não Realizado' } : { f: 'Teste de Desenho', s: 'Teste Não Realizado' }
     return { f: 'Diagnóstico Inicial', s: 'Teste Não Realizado' }
@@ -307,7 +307,7 @@ export default function PorArea({ projeto, areasCalc, todosControles, loading, n
   const FASE_HDR_FULL = [
     { h: 'Fase 1\nDiagnóstico', bg: '#00203E' },
     { h: 'Fase 2\nE1 - Desenho', bg: '#1D3B5C' },
-    { h: 'Fase 2\nE2 - Aderência', bg: '#1D3B5C' },
+    { h: 'Fase 2\nE2 - Efetividade', bg: '#1D3B5C' },
     { h: 'Fase 3\nRevisão Integral', bg: '#660033' },
     { h: 'Fase 4\nAI - Ciclo 1', bg: '#660066' },
     { h: 'Fase 4\nAI - Ciclo 2', bg: '#660066' },

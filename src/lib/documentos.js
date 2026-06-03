@@ -34,13 +34,13 @@ function slug(s) {
 export function faseFolders(fase) {
   const m = {
     'F2-E1': ['F2', 'Desenho'], 'F2E1': ['F2', 'Desenho'],
-    'F2-E2': ['F2', 'Aderencia'], 'F2E2': ['F2', 'Aderencia'],
+    'F2-E2': ['F2', 'Efetividade'], 'F2E2': ['F2', 'Efetividade'],
     'F4-C1': ['F4', 'Ciclo_1'], 'F4C1': ['F4', 'Ciclo_1'],
     'F4-C2': ['F4', 'Ciclo_2'], 'F4C2': ['F4', 'Ciclo_2'],
   }
   return m[fase] || [fase || 'Geral']
 }
-export const SUBFASE_LABEL = { Desenho: 'Desenho', Aderencia: 'Aderência', Ciclo_1: 'Ciclo 1', Ciclo_2: 'Ciclo 2' }
+export const SUBFASE_LABEL = { Desenho: 'Desenho', Efetividade: 'Efetividade', Aderencia: 'Efetividade', Ciclo_1: 'Ciclo 1', Ciclo_2: 'Ciclo 2' }
 
 export function montarPath({ projetoId, areaId, subprocessoId, controleId, fase, categoria, nomeArquivo }) {
   const [f, sub] = faseFolders(fase)

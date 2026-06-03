@@ -70,7 +70,7 @@ function normImp(val) {
 const TODAS_FASES = [
   { codigo: 'F1',    numero: 1, label: 'F1 — Diagnóstico Inicial' },
   { codigo: 'F2-E1', numero: 2, label: 'F2-E1 — Teste de Desenho' },
-  { codigo: 'F2-E2', numero: 2, label: 'F2-E2 — Planos de Ação e Aderência' },
+  { codigo: 'F2-E2', numero: 2, label: 'F2-E2 — Teste de Efetividade' },
   { codigo: 'F3',    numero: 3, label: 'F3 — Controles Internos' },
   { codigo: 'F4-C1', numero: 4, label: 'F4-C1 — Auditoria Contínua (Ciclo 1)' },
   { codigo: 'F4-C2', numero: 4, label: 'F4-C2 — Auditoria Contínua (Ciclo 2)' },

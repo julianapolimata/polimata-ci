@@ -78,8 +78,8 @@ export function getFaseInfo(c) {
   if (fezEtapa(c.st_pa)) {
     return {
       codigo: 'F2E2', numero: 2,
-      nome: 'Teste de Aderência',
-      label: 'F2-E2 — Teste de Aderência',
+      nome: 'Teste de Efetividade',
+      label: 'F2-E2 — Teste de Efetividade',
       resultado: '—',
       cor: 'var(--f2e2c, #10B981)',
     }

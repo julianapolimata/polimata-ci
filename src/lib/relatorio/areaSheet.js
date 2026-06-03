@@ -26,7 +26,7 @@ const DETAIL_COLUMNS = [
   { key: 'chave', header: 'Controle Chave?', width: 13 },
   { key: '_hist_f1', header: 'F1 Diagnóstico', width: 14 },
   { key: '_hist_f2d', header: 'F2 Desenho', width: 14 },
-  { key: '_hist_f2e', header: 'F2 Aderência', width: 14 },
+  { key: '_hist_f2e', header: 'F2 Efetividade', width: 14 },
   { key: '_hist_f3', header: 'F3 Revisão', width: 14 },
   { key: '_hist_f4c1', header: 'F4 Ciclo 1', width: 14 },
   { key: '_hist_f4c2', header: 'F4 Ciclo 2', width: 14 },

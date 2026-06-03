@@ -141,7 +141,7 @@ export function calcularContribuicaoControle(controle, pesoControle, options = {
     resultado.contribuicao += pesoControle * PESO_FASE.F2E1
     resultado.faseAtual = 'F2-E2'
 
-    // ── F2-E2: Teste de Aderência ──
+    // ── F2-E2: Teste de Efetividade ──
     const rAder = controle.r_ader
     if (!rAder || rAder === 'Teste Não Realizado') {
       resultado.detalheFases.F2E2 = { resultado: null, contribuicao: 0 }
