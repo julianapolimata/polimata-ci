@@ -5,13 +5,13 @@
 import { supabase } from './supabase'
 import { getFaseInfo } from './fases'
 
-export const BLOCO_LABEL = { risco: 'Risco', controle: 'Controle', teste: 'Teste' }
+export const BLOCO_LABEL = { cenario: 'Cenário Atual', risco: 'Risco', controle: 'Controle', teste: 'Teste' }
 
 // Quais blocos se aplicam: diagnóstico (f1_tem_teste === false) = risco + controle.
 // Demais = risco + controle + teste.
 export function blocosAplicaveis(projeto) {
   const temTeste = !(projeto?.f1_tem_teste === false)
-  return temTeste ? ['risco', 'controle', 'teste'] : ['risco', 'controle']
+  return temTeste ? ['cenario', 'risco', 'controle', 'teste'] : ['cenario', 'risco', 'controle']
 }
 
 export function faseCodigoAtual(row) {

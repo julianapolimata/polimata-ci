@@ -38,6 +38,8 @@ const ModalRevisar = ({ row, onClose, onAction, projeto }) => {
   const bloqueado = isAutoRevisao && !isAdmin
 
   const faseAtual = getFaseAtual(row || {})
+  const isDiag = projeto?.f1_tem_teste === false
+  const faseDisplay = isDiag ? `${faseAtual} — Indagação` : faseAtual
   const crit = CRIT_MAP[row?.crit] || { label: '—', bg: '#EEE', color: '#7A8B9C' }
 
   // Carregar histórico
@@ -172,7 +174,7 @@ const ModalRevisar = ({ row, onClose, onAction, projeto }) => {
       <div style={S.modal}>
         <div style={{ ...S.header, borderBottomColor: '#22C55E' }}>
           <h2 style={{ margin: 0, fontSize: 20, fontWeight: 300, fontFamily: "'Raleway', sans-serif", letterSpacing: 0.3 }}>✅ Confirmar Aprovação</h2>
-          <p style={{ margin: '0.3rem 0 0', fontSize: 11, opacity: 0.8 }}>{row?.rc} — {blocoAlvo ? `Bloco: ${BLOCO_LABEL[blocoAlvo]}` : (row?.dr || row?.area)} — {faseAtual}</p>
+          <p style={{ margin: '0.3rem 0 0', fontSize: 11, opacity: 0.8 }}>{row?.rc} — {blocoAlvo ? `Bloco: ${BLOCO_LABEL[blocoAlvo]}` : (row?.dr || row?.area)} — {faseDisplay}</p>
         </div>
         <div style={S.body}>
           <div style={{ background: '#F0FFF4', border: '1px solid #C6F6D5', borderRadius: 6, padding: '1rem', marginBottom: '1rem' }}>
@@ -201,7 +203,7 @@ const ModalRevisar = ({ row, onClose, onAction, projeto }) => {
       <div style={S.modal}>
         <div style={{ ...S.header, borderBottomColor: '#EF4444' }}>
           <h2 style={{ margin: 0, fontSize: 20, fontWeight: 300, fontFamily: "'Raleway', sans-serif", letterSpacing: 0.3 }}>↩ Reprovar Análise</h2>
-          <p style={{ margin: '0.3rem 0 0', fontSize: 11, opacity: 0.8 }}>{row?.rc} — {blocoAlvo ? `Bloco: ${BLOCO_LABEL[blocoAlvo]}` : (row?.dr || row?.area)} — {faseAtual}</p>
+          <p style={{ margin: '0.3rem 0 0', fontSize: 11, opacity: 0.8 }}>{row?.rc} — {blocoAlvo ? `Bloco: ${BLOCO_LABEL[blocoAlvo]}` : (row?.dr || row?.area)} — {faseDisplay}</p>
         </div>
         <div style={S.body}>
           <div style={{ background: '#FFF5F5', border: '1px solid #FED7D7', borderRadius: 6, padding: '1rem', marginBottom: '1rem' }}>
@@ -304,7 +306,7 @@ const ModalRevisar = ({ row, onClose, onAction, projeto }) => {
             </div>
             <div style={S.section}>
               <div style={S.label}>Fase</div>
-              <div style={{ ...S.value, fontSize: 11, color: '#CC915E', fontWeight: 600 }}>{faseAtual}</div>
+              <div style={{ ...S.value, fontSize: 11, color: '#CC915E', fontWeight: 600 }}>{faseDisplay}</div>
             </div>
           </div>
 
@@ -346,6 +348,19 @@ const ModalRevisar = ({ row, onClose, onAction, projeto }) => {
             </div>
           </div>
 
+          {/* Identificação */}
+          <div style={S.section}>
+            <div style={S.sectionTitle}>Identificação</div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+              <div><div style={S.label}>Ref. Risco</div><div style={S.value}>{row?.rr || '—'}</div></div>
+              <div><div style={S.label}>Ref. Controle</div><div style={S.value}>{row?.rc || '—'}</div></div>
+              <div><div style={S.label}>Área</div><div style={S.value}>{row?.area || '—'}</div></div>
+              <div><div style={S.label}>Subprocesso</div><div style={S.value}>{row?.sub || '—'}</div></div>
+              <div><div style={S.label}>Gerência</div><div style={S.value}>{row?.ger || '—'}</div></div>
+              <div><div style={S.label}>Responsável Processo</div><div style={S.value}>{row?.resp_sub || '—'}</div></div>
+            </div>
+          </div>
+
           {/* Cenário Atual — F1-E1 (Indagação). Sempre visível pra revisão;
               quando vazio, destaca em vermelho pra admin/gerente reprovar
               e devolver pra consultora preencher. */}
@@ -363,19 +378,6 @@ const ModalRevisar = ({ row, onClose, onAction, projeto }) => {
                 ⚠ Cenário Atual não preenchido. Recomendado reprovar e devolver pra consultora preencher antes de aprovar.
               </div>
             )}
-          </div>
-
-          {/* Identificação */}
-          <div style={S.section}>
-            <div style={S.sectionTitle}>Identificação</div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-              <div><div style={S.label}>Ref. Risco</div><div style={S.value}>{row?.rr || '—'}</div></div>
-              <div><div style={S.label}>Ref. Controle</div><div style={S.value}>{row?.rc || '—'}</div></div>
-              <div><div style={S.label}>Área</div><div style={S.value}>{row?.area || '—'}</div></div>
-              <div><div style={S.label}>Subprocesso</div><div style={S.value}>{row?.sub || '—'}</div></div>
-              <div><div style={S.label}>Gerência</div><div style={S.value}>{row?.ger || '—'}</div></div>
-              <div><div style={S.label}>Responsável Processo</div><div style={S.value}>{row?.resp_sub || '—'}</div></div>
-            </div>
           </div>
 
           {/* Descrição do Risco */}
@@ -403,18 +405,25 @@ const ModalRevisar = ({ row, onClose, onAction, projeto }) => {
             </div>
           </div>
 
-          {/* Resultado do Teste */}
-          <div style={S.section}>
-            <div style={S.sectionTitle}>Resultado da Análise</div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              <div><div style={S.label}>Inconsistência</div><div style={{ ...S.value, whiteSpace: 'pre-wrap' }}>{row?.incons || '—'}</div></div>
-              <div><div style={S.label}>Recomendação / Melhoria</div><div style={{ ...S.value, whiteSpace: 'pre-wrap' }}>{row?.incons_ader || row?.rec || '—'}</div></div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-                <div><div style={S.label}>Impacto</div><div style={S.value}>{row?.imp || '—'}</div></div>
-                <div><div style={S.label}>Probabilidade</div><div style={S.value}>{row?.prob || '—'}</div></div>
+          {/* Resultado / Recomendação */}
+          {isDiag ? (
+            <div style={S.section}>
+              <div style={S.sectionTitle}>Recomendação / Melhoria</div>
+              <div style={{ ...S.value, whiteSpace: 'pre-wrap' }}>{row?.rec || row?.incons_ader || '—'}</div>
+            </div>
+          ) : (
+            <div style={S.section}>
+              <div style={S.sectionTitle}>Resultado da Análise</div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <div><div style={S.label}>Inconsistência</div><div style={{ ...S.value, whiteSpace: 'pre-wrap' }}>{row?.incons || '—'}</div></div>
+                <div><div style={S.label}>Recomendação / Melhoria</div><div style={{ ...S.value, whiteSpace: 'pre-wrap' }}>{row?.incons_ader || row?.rec || '—'}</div></div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                  <div><div style={S.label}>Impacto</div><div style={S.value}>{row?.imp || '—'}</div></div>
+                  <div><div style={S.label}>Probabilidade</div><div style={S.value}>{row?.prob || '—'}</div></div>
+                </div>
               </div>
             </div>
-          </div>
+          )}
 
           {/* Premissas */}
           <div style={S.section}>
