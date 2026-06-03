@@ -350,6 +350,7 @@ const ModalAtualizar = ({ row, onClose, onSaved, areas, projeto }) => {
 
   // ═══ SALVAR E ENVIAR PARA REVISÃO (edição de seção; sem ficha; exige nova ficha após aprovação) ═══
   async function handleSalvarEnviarRevisao() {
+    if (!canAdvanceStep1 || !canAdvanceStep2) { alert('Preencha os campos obrigatórios (Risco, Controle e Premissas) antes de enviar para revisão.'); return }
     setSaving(true)
     try {
       const updates = {
@@ -555,7 +556,7 @@ const ModalAtualizar = ({ row, onClose, onSaved, areas, projeto }) => {
                 </>
               )}
               {blocosReabrir.length > 0 && (
-                <button onClick={handleSalvarEnviarRevisao} disabled={saving} style={{ flex: 2, padding: '10px 14px', border: 'none', borderRadius: 6, fontFamily: 'Montserrat, sans-serif', fontSize: 12, fontWeight: 700, cursor: 'pointer', background: '#15803D', color: 'white', opacity: saving ? 0.5 : 1 }}>
+                <button onClick={handleSalvarEnviarRevisao} disabled={saving || !canAdvanceStep1 || !canAdvanceStep2} title={(!canAdvanceStep1 || !canAdvanceStep2) ? 'Preencha os campos obrigatórios (Risco, Controle e Premissas) antes de enviar.' : ''} style={{ flex: 2, padding: '10px 14px', border: 'none', borderRadius: 6, fontFamily: 'Montserrat, sans-serif', fontSize: 12, fontWeight: 700, cursor: (saving || !canAdvanceStep1 || !canAdvanceStep2) ? 'not-allowed' : 'pointer', background: '#15803D', color: 'white', opacity: (saving || !canAdvanceStep1 || !canAdvanceStep2) ? 0.5 : 1 }}>
                   {saving ? 'Salvando...' : '✓ Salvar e enviar para revisão'}
                 </button>
               )}
