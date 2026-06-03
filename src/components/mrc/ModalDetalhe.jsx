@@ -6,6 +6,7 @@ import {
 import HistoricoControle from './HistoricoControle'
 import MotivoReprovacao from './MotivoReprovacao'
 import { loadAprovacoes, blocosAplicaveis, faseDoBloco, BLOCO_LABEL } from '../../lib/aprovacoesBloco'
+import { ultimaDataTeste } from '../../lib/amostragem'
 
 // ─── MODAL ───────────────────────────────────────────────────────────────────
 
@@ -39,6 +40,8 @@ export function ModalDetalhe({ row, projeto, onClose, onEditar, primaryAction, s
     )
   }
   const faseInfo = getFaseInfo(row)
+  const ultTeste = ultimaDataTeste(row)
+  const fmtData = (v) => { if (!v) return null; const m = String(v).match(/^(\d{4})-(\d{2})-(\d{2})/); return m ? `${m[3]}/${m[2]}/${m[1]}` : String(v).slice(0,10) }
   const impIdx = HM_IMPS.indexOf(row.imp); const probIdx = HM_PROBS.indexOf(row.prob)
 
   return (
@@ -70,7 +73,7 @@ export function ModalDetalhe({ row, projeto, onClose, onEditar, primaryAction, s
         <div className="modal-body">
 
           {tab === 'ident' && (<div className="tp active">
-            <div className="ms"><div className="ms-t">Identificação do Controle</div><div className="mr">{field('Ref. Risco', row.rr)}{field('Ref. Controle', row.rc)}</div><div className="mr">{field('Área', row.area)}{field('Subprocesso', row.sub)}</div><div className="mr">{field('Gerência', row.ger)}{field('Responsável Processo', row.resp_sub)}</div></div>
+            <div className="ms"><div className="ms-t">Identificação do Controle</div><div className="mr">{field('Ref. Risco', row.rr)}{field('Ref. Controle', row.rc)}</div><div className="mr">{field('Área', row.area)}{field('Subprocesso', row.sub)}</div><div className="mr">{field('Gerência', row.ger)}{field('Responsável Processo', row.resp_sub)}</div><div className="mr">{field('Data de implementação', fmtData(row.dt_implementacao))}{field('Última data de teste', ultTeste ? ultTeste.toLocaleDateString('pt-BR') : null)}</div></div>
             <div className="ms"><div className="ms-t" style={{ display: 'flex', alignItems: 'center' }}>Cenário Atual{blocoBadge('cenario')}</div>{row.cenario_atual && row.cenario_atual.trim() ? fieldText(null, row.cenario_atual) : <div style={{ fontSize: 12, color: '#C62828', fontStyle: 'italic', padding: '6px 10px', background: '#FFEBEE', borderLeft: '3px solid #C62828', borderRadius: 4 }}>— Não preenchido —</div>}</div>
             <div className="ms"><div className="ms-t" style={{ display: 'flex', alignItems: 'center' }}>Descrição do Risco{blocoBadge('risco')}</div>{fieldText(null, row.dr)}</div>
             <div className="ms"><div className="ms-t" style={{ display: 'flex', alignItems: 'center' }}>Descrição do Controle{blocoBadge('controle')}</div>{fieldText(null, row.dc)}</div>

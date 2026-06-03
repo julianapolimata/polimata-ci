@@ -13,6 +13,7 @@ import SecaoInconsistencia from './modalRegistrarResultado/SecaoInconsistencia'
 import SecaoCenarioAtual from './modalRegistrarResultado/SecaoCenarioAtual'
 import SecaoMelhoria from './modalRegistrarResultado/SecaoMelhoria'
 import SecaoPA from './modalRegistrarResultado/SecaoPA'
+import { calcularAmostra } from '../lib/amostragem'
 import ModalClassificacaoCausa from './ModalClassificacaoCausa'
 import { FASE_DESTINO_LABEL } from '../lib/amostragem'
 const ModalRegistrarResultado = ({ row, onClose, onSaved, responsaveis }) => {
@@ -271,6 +272,14 @@ const ModalRegistrarResultado = ({ row, onClose, onSaved, responsaveis }) => {
         }}>
           <BannerReprovacao isReprovado={isReprovado} notaReprovacao={notaReprovacao} faseAtual={faseAtual} />
           <BannerRegressao isRegressao={isRegressao} resultado={resultado} faseAtual={faseAtual} row={row} />
+          <div style={{ background: '#F3EEE4', border: '1px solid #E0D5C7', borderRadius: 8, padding: '10px 14px', marginBottom: 16, fontSize: 12, color: '#00203E', lineHeight: 1.5 }}>
+            {(() => {
+              const a = calcularAmostra(row || {})
+              if (a.requerUniverseManual) return <span><strong>Amostra (sob demanda):</strong> informe o nº de ocorrências do período ao classificar a causa-raiz.</span>
+              if (!a.ok) return <span style={{ color: '#C62828' }}>⚠ Amostra: {a.motivo}</span>
+              return <span><strong>Amostra recomendada: {a.amostraFinal}</strong>{a.itgc ? ' (saídas) + avaliação de ITGCs' : ''} — {a.periodoInicio ? `período ${a.periodoInicio.toLocaleDateString('pt-BR')} → hoje, ` : ''}{a.universo != null ? `universo ${a.universo}, ` : ''}base {a.amostraBase}{a.ajustes && a.ajustes.length ? ` (${a.ajustes.join(', ')})` : ''}.</span>
+            })()}
+          </div>
           {isRegressao && (
             <div style={{ background: '#FFF5F5', border: '1px solid #FED7D7', borderRadius: 8, padding: '12px 14px', marginBottom: 16 }}>
               <div style={{ fontSize: 12, fontWeight: 700, color: '#C62828', textTransform: 'uppercase', letterSpacing: 0.4, marginBottom: 6 }}>Classificação de causa-raiz (obrigatória)</div>
