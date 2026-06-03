@@ -78,7 +78,7 @@ const ModalRevisar = ({ row, onClose, onAction, projeto }) => {
 
   useEffect(() => {
     if (row?.id) ensureBlocos(row, projeto).then(setAprovacoes)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [row?.id])
 
   useEffect(() => {

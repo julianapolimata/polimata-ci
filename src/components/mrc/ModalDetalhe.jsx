@@ -5,7 +5,7 @@ import {
 } from './badges'
 import HistoricoControle from './HistoricoControle'
 import MotivoReprovacao from './MotivoReprovacao'
-import { loadAprovacoes, blocosAplicaveis, faseDoBloco, BLOCO_LABEL } from '../../lib/aprovacoesBloco'
+import { loadAprovacoes, faseDoBloco } from '../../lib/aprovacoesBloco'
 import { ultimaDataTeste } from '../../lib/amostragem'
 
 // ─── MODAL ───────────────────────────────────────────────────────────────────

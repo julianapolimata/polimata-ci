@@ -15,7 +15,7 @@ import ModalComentario from './ModalComentario'
 import { syncPassosESolicitacoes, loadPassosTeste, criarPassoVazio } from '../lib/passosTeste'
 import { useAuth } from '../contexts/AuthContext'
 import { gerarFichaRiscoExcel } from '../lib/gerarFichaRiscoExcel'
-import { reabrirBloco, blocosAplicaveis, faseDoBloco, BLOCO_LABEL } from '../lib/aprovacoesBloco'
+import { reabrirBloco, blocosAplicaveis, faseDoBloco } from '../lib/aprovacoesBloco'
 
 import StepRisco from './modalAtualizar/StepRisco'
 import StepControle from './modalAtualizar/StepControle'
