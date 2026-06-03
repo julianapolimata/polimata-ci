@@ -145,6 +145,11 @@ export const CETICISMO_PROFISSIONAL =
   'O ceticismo profissional é uma postura de mente questionadora e avaliação crítica. Significa não aceitar informações de forma cega ou presumir que tudo está correto. O profissional adota um estado de alerta para inconsistências, erros ou fraudes, buscando evidências sólidas antes de formar uma conclusão. (Fonte: Conselho Federal de Contabilidade — CFC.)'
 
 // Opções da lista suspensa (causa-raiz → fase de retorno)
+export const FASE_DESTINO_LABEL = {
+  '2/1': 'Fase 2-E1 — Plano de Ação + Teste de Desenho (TOD)',
+  '2/2': 'Fase 2-E2 — Teste de Aderência (TOE)',
+}
+
 export const CAUSAS_RAIZ = [
   { valor: 'desenho', rotulo: 'Falha de desenho do controle', destino: '2/1' },
   { valor: 'aderencia', rotulo: 'Falha de execução/aderência (erro humano)', destino: '2/2' },
@@ -159,8 +164,8 @@ export function recomendacaoCausa(nErros, nAmostra, { taxaTolerada = 0.05 } = {}
   const pct = (taxa * 100).toFixed(1); const lim = (taxaTolerada * 100).toFixed(0)
   if (taxa > taxaTolerada) {
     return { sugestao: 'desenho', destino: '2/1', taxa,
-      texto: `Resultado da amostra: ${n} falha(s) em ${tam} itens (${pct}%). Nossa metodologia entende que um índice de falha acima de ${lim}% tende a indicar que a causa-raiz está no desenho atual do controle. Recomendação: retorno à Fase 2/1 (redesenho / plano de ação).` }
+      texto: `Resultado da amostra: ${n} falha(s) em ${tam} itens (${pct}%). Nossa metodologia entende que um índice de falha acima de ${lim}% tende a indicar que a causa-raiz está no desenho atual do controle. Recomendação: retorno à Fase 2-E1 — Plano de Ação + Teste de Desenho (TOD).` }
   }
   return { sugestao: 'aderencia', destino: '2/2', taxa,
-    texto: `Resultado da amostra: ${n} falha(s) em ${tam} itens (${pct}%). Um índice dentro da faixa de desvio isolado (≤ ${lim}%) tende a indicar falha de execução/aderência (erro humano), não de desenho. Recomendação: retorno à Fase 2/2 (reforço da aderência).` }
+    texto: `Resultado da amostra: ${n} falha(s) em ${tam} itens (${pct}%). Um índice dentro da faixa de desvio isolado (≤ ${lim}%) tende a indicar falha de execução/aderência (erro humano), não de desenho. Recomendação: retorno à Fase 2-E2 — Teste de Aderência (TOE).` }
 }

@@ -14,6 +14,7 @@ import SecaoCenarioAtual from './modalRegistrarResultado/SecaoCenarioAtual'
 import SecaoMelhoria from './modalRegistrarResultado/SecaoMelhoria'
 import SecaoPA from './modalRegistrarResultado/SecaoPA'
 import ModalClassificacaoCausa from './ModalClassificacaoCausa'
+import { FASE_DESTINO_LABEL } from '../lib/amostragem'
 const ModalRegistrarResultado = ({ row, onClose, onSaved, responsaveis }) => {
   // ═══ STATE ═══
   const { user } = useAuth()
@@ -275,7 +276,7 @@ const ModalRegistrarResultado = ({ row, onClose, onSaved, responsaveis }) => {
               <div style={{ fontSize: 12, fontWeight: 700, color: '#C62828', textTransform: 'uppercase', letterSpacing: 0.4, marginBottom: 6 }}>Classificação de causa-raiz (obrigatória)</div>
               {classificacao ? (
                 <div style={{ fontSize: 12, color: '#00203E', lineHeight: 1.5 }}>
-                  <strong>{classificacao.causaRaiz === 'desenho' ? 'Falha de desenho' : 'Falha de execução/aderência (erro humano)'}</strong> → Fase {classificacao.destino} · {classificacao.nFalhas}/{classificacao.nTestado} falhas
+                  <strong>{classificacao.causaRaiz === 'desenho' ? 'Falha de desenho' : 'Falha de execução/aderência (erro humano)'}</strong> → {FASE_DESTINO_LABEL[classificacao.destino]} · {classificacao.nFalhas}/{classificacao.nTestado} falhas
                   <button type="button" onClick={() => setShowClassif(true)} style={{ marginLeft: 10, fontSize: 11, fontWeight: 700, color: 'var(--copper-text, #A6512F)', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline', fontFamily: 'inherit' }}>Refazer</button>
                 </div>
               ) : (

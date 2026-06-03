@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react'
-import { calcularAmostra, recomendacaoCausa, CETICISMO_PROFISSIONAL, CAUSAS_RAIZ } from '../lib/amostragem'
+import { calcularAmostra, recomendacaoCausa, CETICISMO_PROFISSIONAL, CAUSAS_RAIZ, FASE_DESTINO_LABEL } from '../lib/amostragem'
 import InfoTooltip from './InfoTooltip'
 
 // Pop-up de classificação de causa-raiz da inefetividade (item 29).
@@ -88,9 +88,9 @@ export default function ModalClassificacaoCausa({ row, onClose, onConfirmar, ini
             <label style={L}>Causa-raiz <span style={{ color: '#E24B4A' }}>*</span></label>
             <select value={causaRaiz} onChange={e => setCausaRaiz(e.target.value)} style={INP}>
               <option value="">— Selecione —</option>
-              {CAUSAS_RAIZ.map(c => <option key={c.valor} value={c.valor}>{c.rotulo} → Fase {c.destino}</option>)}
+              {CAUSAS_RAIZ.map(c => <option key={c.valor} value={c.valor}>{c.rotulo} → {FASE_DESTINO_LABEL[c.destino]}</option>)}
             </select>
-            {destino && <div style={{ fontSize: 11, color: 'var(--copper-text, #A6512F)', marginTop: 6, fontWeight: 600 }}>Caminho de retorno: Fase {destino}{destino === '2/1' ? ' (redesenho / plano de ação)' : ' (reforço da aderência)'}</div>}
+            {destino && <div style={{ fontSize: 11, color: 'var(--copper-text, #A6512F)', marginTop: 6, fontWeight: 600 }}>Caminho de retorno: {FASE_DESTINO_LABEL[destino]}</div>}
           </div>
 
           <div>
