@@ -70,6 +70,11 @@ const ModalAtualizar = ({ row, onClose, onSaved, areas, projeto }) => {
   const [como, setComo] = useState(row.premissa_como || '')
   const [resultado, setResultado] = useState(row.premissa_resultado || '')
   const [cenarioAtual, setCenarioAtual] = useState(row.cenario_atual || '')
+  const [dtImplementacao, setDtImplementacao] = useState(() => {
+    const v = row.dt_implementacao || ''
+    const m = v.match(/^(\d{2})\/(\d{2})\/(\d{4})/)
+    return m ? `${m[3]}-${m[2]}-${m[1]}` : v
+  })
 
   // Auxiliary data
   const [areaDestino, setAreaDestino] = useState('')
@@ -246,6 +251,7 @@ const ModalAtualizar = ({ row, onClose, onSaved, areas, projeto }) => {
         premissa_como: como,
         premissa_resultado: resultado,
         cenario_atual: cenarioAtual.trim() || null,
+        dt_implementacao: dtImplementacao || null,
         status_workflow: 'em_analise',
         atualizado_em: new Date().toISOString(),
         atualizado_por: perfil?.id,
@@ -315,6 +321,7 @@ const ModalAtualizar = ({ row, onClose, onSaved, areas, projeto }) => {
         premissa_como: como,
         premissa_resultado: resultado,
         cenario_atual: cenarioAtual.trim() || null,
+        dt_implementacao: dtImplementacao || null,
         status_workflow: 'teste_pendente',
         atualizado_em: new Date().toISOString(),
         atualizado_por: perfil?.id,
@@ -360,6 +367,7 @@ const ModalAtualizar = ({ row, onClose, onSaved, areas, projeto }) => {
         premissa_porque: pq, premissa_quando: quando, premissa_onde: onde,
         premissa_quem: isAutomatic ? 'N/A' : quem, premissa_como: como, premissa_resultado: resultado,
         cenario_atual: cenarioAtual.trim() || null,
+        dt_implementacao: dtImplementacao || null,
         status_workflow: 'em_revisao',
         edicao_pendente: true,
         submetido_por: perfil?.id,
@@ -500,6 +508,7 @@ const ModalAtualizar = ({ row, onClose, onSaved, areas, projeto }) => {
                   quem={quem} setQuem={setQuem}
                   como={como} setComo={setComo}
                   resultado={resultado} setResultado={setResultado}
+                  dtImplementacao={dtImplementacao} setDtImplementacao={setDtImplementacao}
                   isAutomatic={isAutomatic}
                   />
                 </>
