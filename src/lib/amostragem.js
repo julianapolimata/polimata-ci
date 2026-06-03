@@ -139,3 +139,28 @@ export function decidirRegressao(nErros, nAmostra, { taxaTolerada = 0.05, sistem
   if (taxa <= taxaTolerada) return { destino: '2/2', classe: 'aderencia', taxa, rotulo: `${n}/${tam} = ${pct}% (≤ ${lim}%) → reforçar aderência (volta à Fase 2/2)` }
   return { destino: '2/1', classe: 'desenho', taxa, rotulo: `${n}/${tam} = ${pct}% (> ${lim}%) → problema de desenho (volta à Fase 2/1)` }
 }
+
+// ─── Textos do pop-up de classificação de causa-raiz (item 29) ──────────────
+export const CETICISMO_PROFISSIONAL =
+  'Ceticismo profissional é avaliar com uma postura questionadora, sem dar como certo que o controle funciona só porque "sempre funcionou". Na prática: peça evidências, não aceite explicações sem confirmar, e investigue o que não fizer sentido antes de concluir. (Base metodológica: ISA 200, PCAOB, IIA.)'
+
+// Opções da lista suspensa (causa-raiz → fase de retorno)
+export const CAUSAS_RAIZ = [
+  { valor: 'desenho', rotulo: 'Falha de desenho do controle', destino: '2/1' },
+  { valor: 'aderencia', rotulo: 'Falha de execução/aderência (erro humano)', destino: '2/2' },
+]
+
+// Sugestão do sistema (com base na taxa de desvio). NÃO decide — apenas orienta.
+export function recomendacaoCausa(nErros, nAmostra, { taxaTolerada = 0.05 } = {}) {
+  const n = Number(nErros) || 0
+  const tam = Number(nAmostra) || 0
+  if (n <= 0) return { sugestao: null, destino: null, texto: 'Nenhuma falha na amostra — controle efetivo nesta fase.' }
+  const taxa = tam > 0 ? n / tam : 1
+  const pct = (taxa * 100).toFixed(1); const lim = (taxaTolerada * 100).toFixed(0)
+  if (taxa > taxaTolerada) {
+    return { sugestao: 'desenho', destino: '2/1', taxa,
+      texto: `Resultado da amostra: ${n} falha(s) em ${tam} itens (${pct}%). Nossa metodologia entende que um índice de falha acima de ${lim}% tende a indicar que a causa-raiz está no desenho atual do controle. Recomendação: retorno à Fase 2/1 (redesenho / plano de ação).` }
+  }
+  return { sugestao: 'aderencia', destino: '2/2', taxa,
+    texto: `Resultado da amostra: ${n} falha(s) em ${tam} itens (${pct}%). Um índice dentro da faixa de desvio isolado (≤ ${lim}%) tende a indicar falha de execução/aderência (erro humano), não de desenho. Recomendação: retorno à Fase 2/2 (reforço da aderência).` }
+}
