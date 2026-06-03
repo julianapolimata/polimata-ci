@@ -33,7 +33,7 @@ export function ModalDetalhe({ row, projeto, onClose, onEditar, primaryAction, s
       <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, marginLeft: 'auto' }}>
         <span style={{ fontSize: 9, fontWeight: 700, color: cfg.c, background: cfg.bg, padding: '2px 8px', borderRadius: 999, textTransform: 'uppercase', letterSpacing: 0.3 }}>{cfg.t}</span>
         {ap.data_acao && <span style={{ fontSize: 9, color: 'var(--lt-text3)', marginLeft: 2 }}>{new Date(ap.data_acao).toLocaleDateString('pt-BR')}</span>}
-        {st === 'reprovado' && ap.nota && <span style={{ fontSize: 11, color: '#C62828', fontStyle: 'italic', fontWeight: 400 }}>— {ap.nota}</span>}
+        {st === 'reprovado' && ap.nota && <span title={ap.nota} style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 16, height: 16, borderRadius: '50%', background: '#C62828', color: '#fff', fontSize: 10, fontWeight: 700, fontStyle: 'normal', cursor: 'help', textTransform: 'none' }}>!</span>}
       </span>
     )
   }
@@ -107,7 +107,7 @@ export function ModalDetalhe({ row, projeto, onClose, onEditar, primaryAction, s
                 return (
                   <div style={{ marginTop: 12, textAlign: 'right' }}>
                     <button onClick={criticidadeLiberada ? onAnalisarCriticidade : undefined} disabled={!criticidadeLiberada} title={criticidadeLiberada ? 'Avaliar impacto e probabilidade' : 'Disponível após a aprovação de todos os blocos'} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'rgba(204,145,94,0.12)', border: '1px solid rgba(204,145,94,0.4)', borderRadius: 999, padding: '8px 16px', fontSize: 12, fontWeight: 700, color: 'var(--copper-text)', cursor: criticidadeLiberada ? 'pointer' : 'not-allowed', opacity: criticidadeLiberada ? 1 : 0.5, fontFamily: 'inherit' }}>
-                      Avaliação da criticidade
+                      Avaliação da Criticidade
                     </button>
                   </div>
                 )
