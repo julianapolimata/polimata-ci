@@ -80,7 +80,7 @@ export default function PorAreaFiltros({ ctx }) {
                   <option value="teste_pendente">Teste Pendente</option>
                   <option value="em_revisao">Em Revisão</option>
                   <option value="aprovado">Aprovado</option>
-                  <option value="reprovado">Devolvido</option>
+                  <option value="reprovado">Em Correção</option>
                 </select>}
                 {isCliente && <select value={filtStatus} onChange={e => setFiltStatus(e.target.value)} style={PA.filtroSel}>
                   <option value="">Todos status</option>

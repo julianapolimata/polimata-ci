@@ -103,7 +103,7 @@ export default function PorArea({ projeto, areasCalc, todosControles, loading, n
     const rv = (getResultadoVitrine(c, projeto) || '').toLowerCase()
     const faltaCriticidade = rv && rv !== '—' && rv !== 'teste não realizado' && (!c.imp || !c.prob)
     // Devolvido (reprovado na revisão) — prioridade máxima
-    if (sw === 'reprovado' && !isCliente) alertas.push({ label: 'Devolvido', color: '#DC2626', bg: 'rgba(239,68,68,0.08)' })
+    if (sw === 'reprovado' && !isCliente) alertas.push({ label: 'Em Correção', color: '#DC2626', bg: 'rgba(239,68,68,0.08)' })
     // Ficha pendente: salvou dados mas não baixou a ficha de teste
     if (sw === 'teste_pendente') alertas.push({ label: 'Ficha Pendente', color: '#7C3AED', bg: 'rgba(124,58,237,0.08)' })
     // Resultado pendente: tem dados na fase (em_analise) mas não registrou resultado formal

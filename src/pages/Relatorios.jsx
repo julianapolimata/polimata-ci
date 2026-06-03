@@ -111,7 +111,7 @@ const STATUS_OPTIONS = [
   { value: 'em_analise', label: 'Em Análise' },
   { value: 'em_revisao', label: 'Em Revisão' },
   { value: 'aprovado', label: 'Aprovado' },
-  { value: 'reprovado', label: 'Devolvido' },
+  { value: 'reprovado', label: 'Em Correção' },
 ]
 
 const SITUACAO_OPTIONS = [
