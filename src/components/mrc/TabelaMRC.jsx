@@ -10,7 +10,7 @@ import {
 // ─── TABELA MRC ──────────────────────────────────────────────────────────────
 
 // Headers de fase coloridos (padrão PorArea)
-function TabelaMRC({ rows, onOpenModal, isDiagnostico = false, projeto }) {
+function TabelaMRC({ rows, onOpenModal, isDiagnostico = false, projeto, onBaixarFicha, podeFicha }) {
   const [sortCol, setSortCol] = useState(null)
   const [sortDir, setSortDir] = useState('asc')
   const toggle = (k) => { if (sortCol === k) { setSortDir(d => d === 'asc' ? 'desc' : 'asc') } else { setSortCol(k); setSortDir('asc') } }
@@ -61,7 +61,7 @@ function TabelaMRC({ rows, onOpenModal, isDiagnostico = false, projeto }) {
               {!isDiagnostico && <td style={{ ...mrcTdS, width: 90, minWidth: 90, textAlign: 'center' }}>{badgeResultado(getResultadoVitrine(row, projeto))}</td>}
               <td style={{ ...mrcTdS, width: 110, minWidth: 110, textAlign: 'center' }}>{critBadge(row.crit)}</td>
               {!isDiagnostico && <td style={{ ...mrcTdS, width: 130, minWidth: 130, fontSize: 11, fontWeight: 500, textAlign: 'center' }}>{getFaseLabel(row)}{row.num_regressoes > 0 && <RegressaoBadgeMRC n={row.num_regressoes} />}</td>}
-              <td style={{ ...mrcTdS, width: 110, minWidth: 110, textAlign: 'center' }}>{(() => { const st = getStatusComputado(row); const cfg = getStatusConfig(st); return <span style={{ fontSize: 10, fontWeight: 700, color: cfg.color, background: cfg.bg, padding: '3px 10px', borderRadius: 999, textTransform: 'uppercase', letterSpacing: 0.4 }}>{cfg.label}</span> })()}</td>
+              <td style={{ ...mrcTdS, width: 110, minWidth: 110, textAlign: 'center' }}>{(() => { const st = getStatusComputado(row); const cfg = getStatusConfig(st); if (st === 'teste_pendente' && onBaixarFicha && podeFicha?.(row)) return <button onClick={e => { e.stopPropagation(); onBaixarFicha(row) }} title="Clique para baixar a ficha" style={{ fontSize: 10, fontWeight: 700, color: cfg.color, background: cfg.bg, padding: '3px 10px', borderRadius: 999, textTransform: 'uppercase', letterSpacing: 0.4, border: '1px solid rgba(204,145,94,0.45)', cursor: 'pointer', fontFamily: 'inherit' }}>📄 {cfg.label}</button>; return <span style={{ fontSize: 10, fontWeight: 700, color: cfg.color, background: cfg.bg, padding: '3px 10px', borderRadius: 999, textTransform: 'uppercase', letterSpacing: 0.4 }}>{cfg.label}</span> })()}</td>
               {isDiagnostico ? (
                 <td style={{ ...mrcTdS, width: 130, minWidth: 130, maxWidth: 130, textAlign: 'center' }}>{badgeExistencia(row.existencia)}</td>
               ) : (
