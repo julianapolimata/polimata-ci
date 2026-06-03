@@ -106,7 +106,7 @@ export default function PorArea({ projeto, areasCalc, todosControles, loading, n
     // Devolvido (reprovado na revisão) — prioridade máxima
     if (sw === 'reprovado' && !isCliente) alertas.push({ label: 'Em Correção', color: '#DC2626', bg: 'rgba(239,68,68,0.08)' })
     // Ficha pendente: salvou dados mas não baixou a ficha de teste
-    if (sw === 'teste_pendente') alertas.push({ label: 'Ficha Pendente', color: '#7C3AED', bg: 'rgba(124,58,237,0.08)' })
+    if (sw === 'teste_pendente') alertas.push({ label: 'Ficha Pendente', color: '#7C3AED', bg: 'rgba(124,58,237,0.08)', onClick: canEditControle(c) ? () => { setAtualizarFicha(true); setAtualizarRow(c) } : undefined })
     // Resultado pendente: tem dados na fase (em_analise) mas não registrou resultado formal
     if (sw === 'em_analise') alertas.push({ label: 'Resultado Pendente', color: '#CA8A04', bg: 'rgba(234,179,8,0.08)' })
     // Pendente Aprovação: em revisão (substitui Criticidade Pendente nesse estágio — aprovação vem antes)
