@@ -122,17 +122,20 @@ export function calcularAmostra(row, { hoje = new Date(), universoManual = null 
   return r
 }
 
-// Decisão de regressão por TAXA DE DESVIO (taxa tolerável). Item 29.
-// 0 desvios → sem deficiência; >0 e ≤ taxaTolerada → 2/2 (aderência);
-// > taxaTolerada → 2/1 (desenho); padrão sistêmico → sempre 2/1.
+// Decisão de regressão (item 29) — REGRA COMBINADA, aderente a amostras pequenas:
+//   0 desvios → sem deficiência;
+//   1 exceção → 2/2 (investigar causa-raiz / reforçar aderência) — Tabela 4;
+//   2+ exceções: taxa ≤ taxaTolerada → 2/2; taxa > taxaTolerada → 2/1 (desenho);
+//   padrão sistêmico → sempre 2/1.
+//   (override do destino pelo gerente, com justificativa, fica por fora.)
 export function decidirRegressao(nErros, nAmostra, { taxaTolerada = 0.05, sistemico = false } = {}) {
   const n = Number(nErros) || 0
   const tam = Number(nAmostra) || 0
   if (n <= 0) return { destino: null, classe: 'sem_deficiencia', taxa: 0, rotulo: 'Sem deficiência identificada' }
   const taxa = tam > 0 ? n / tam : 1
-  const pct = (taxa * 100).toFixed(1)
-  const lim = (taxaTolerada * 100).toFixed(0)
-  if (sistemico) return { destino: '2/1', classe: 'desenho', taxa, rotulo: `Padrão sistêmico → problema de desenho (volta à Fase 2/1)` }
+  const pct = (taxa * 100).toFixed(1); const lim = (taxaTolerada * 100).toFixed(0)
+  if (sistemico) return { destino: '2/1', classe: 'desenho', taxa, rotulo: 'Padrão sistêmico → problema de desenho (volta à Fase 2/1)' }
+  if (n === 1) return { destino: '2/2', classe: 'aderencia', taxa, rotulo: `1 exceção (1/${tam}) → investigar causa-raiz / reforçar aderência (volta à Fase 2/2)` }
   if (taxa <= taxaTolerada) return { destino: '2/2', classe: 'aderencia', taxa, rotulo: `${n}/${tam} = ${pct}% (≤ ${lim}%) → reforçar aderência (volta à Fase 2/2)` }
   return { destino: '2/1', classe: 'desenho', taxa, rotulo: `${n}/${tam} = ${pct}% (> ${lim}%) → problema de desenho (volta à Fase 2/1)` }
 }
