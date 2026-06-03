@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
 import { exportarSolicitacoesExcel } from '../lib/exportSolicitacoes'
 import { formatNomeEmpresa } from '../lib/formatNome'
+import { uploadDocumento, listarPorSolicitacao, baixarDocumento, excluirDocumento, fmtTamanho } from '../lib/documentos'
 
 // ─── CONSTANTES ───────────────────────────────────────────────────────────
 const STATUS_CFG = {
@@ -10,14 +11,18 @@ const STATUS_CFG = {
   em_andamento: { label: 'Em Análise', color: '#92400E', bg: 'rgba(234,179,8,0.15)' },
   recebida:     { label: 'Recebida',     color: '#7C2D12', bg: 'rgba(234,88,12,0.15)' },
   validada:     { label: 'Validada',     color: '#15803D', bg: 'rgba(34,197,94,0.12)' },
-  recusada:     { label: 'Recusada',     color: '#991B1B', bg: 'rgba(239,68,68,0.12)' },
-  cancelada:    { label: 'Cancelada',    color: 'var(--lt-text3)', bg: 'rgba(0,32,62,0.06)' },
+  recusada:     { label: 'Devolvida',     color: '#991B1B', bg: 'rgba(239,68,68,0.12)' },
+  cancelada:    { label: 'Encerrada',    color: 'var(--lt-text3)', bg: 'rgba(0,32,62,0.06)' },
 }
 const FASES_OPCOES = ['F1','F2-E1','F2-E2','F3','F4-C1','F4-C2','F5']
 
 function StatusBadge({ status }) {
   const cfg = STATUS_CFG[status] || STATUS_CFG.aguardando
   return <span style={{ fontSize: 10, fontWeight: 700, color: cfg.color, background: cfg.bg, padding: '3px 10px', borderRadius: 999, textTransform: 'uppercase', letterSpacing: 0.4 }}>{cfg.label}</span>
+}
+
+function prazoMais7() {
+  return new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10)
 }
 
 function diasEntre(d1, d2) {
@@ -49,13 +54,14 @@ export default function Solicitacoes({ projeto }) {
   const [modalNova, setModalNova] = useState(false)
   const [modalEdit, setModalEdit] = useState(null)
   const [modalResponder, setModalResponder] = useState(null)
+  const [modalDuplicar, setModalDuplicar] = useState(null)
 
   async function load() {
     if (!projeto?.id) return
     setLoading(true)
     const [solRes, ctrlRes, arRes] = await Promise.all([
       supabase.from('solicitacoes').select('*').eq('projeto_id', projeto.id).order('criado_em', { ascending: false }),
-      supabase.from('mrc').select('id, rr, rc, dr, dc, area_id').eq('projeto_id', projeto.id).order('rc'),
+      supabase.from('mrc').select('id, rr, rc, dr, dc, area_id, subprocesso_id').eq('projeto_id', projeto.id).order('rc'),
       supabase.from('areas').select('id, nome, prefixo').eq('projeto_id', projeto.id).order('nome'),
     ])
     setSolicitacoes(solRes.data || [])
@@ -175,7 +181,8 @@ export default function Solicitacoes({ projeto }) {
       </div>
 
       {modalNova && <ModalSolicitacao projeto={projeto} controles={controles} areas={areas} perfil={perfil} onClose={() => setModalNova(false)} onSaved={() => { setModalNova(false); load() }} />}
-      {modalEdit && <ModalSolicitacao projeto={projeto} controles={controles} areas={areas} perfil={perfil} solicitacao={modalEdit} onClose={() => setModalEdit(null)} onSaved={() => { setModalEdit(null); load() }} />}
+      {modalEdit && <ModalSolicitacao projeto={projeto} controles={controles} areas={areas} perfil={perfil} solicitacao={modalEdit} onClose={() => setModalEdit(null)} onSaved={() => { setModalEdit(null); load() }} onDuplicar={(sol) => { setModalEdit(null); setModalDuplicar(sol); load() }} />}
+      {modalDuplicar && <ModalSolicitacao projeto={projeto} controles={controles} areas={areas} perfil={perfil} duplicarDe={modalDuplicar} onClose={() => { setModalDuplicar(null); load() }} onSaved={() => { setModalDuplicar(null); load() }} />}
       {modalResponder && <ModalResponder solicitacao={modalResponder} perfil={perfil} controles={controles} areas={areas} onClose={() => setModalResponder(null)} onSaved={() => { setModalResponder(null); load() }} />}
     </div>
   )
@@ -190,6 +197,25 @@ function ModalResponder({ solicitacao, perfil, controles, areas, onClose, onSave
   const [descricao, setDescricao] = useState(solicitacao.evidencia_descricao || '')
   const [saving, setSaving] = useState(false)
   const [erro, setErro] = useState('')
+  const [anexos, setAnexos] = useState([])
+  const [subindo, setSubindo] = useState(false)
+  useEffect(() => { listarPorSolicitacao(solicitacao.id).then(setAnexos).catch(() => {}) }, [solicitacao.id])
+
+  async function anexar(e) {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (!file) return
+    setSubindo(true); setErro('')
+    try {
+      await uploadDocumento({ arquivo: file, meta: {
+        projetoId: solicitacao.projeto_id, areaId: solicitacao.area_id || ctrl?.area_id || null,
+        subprocessoId: ctrl?.subprocesso_id || null, controleId: solicitacao.controle_id || null,
+        solicitacaoId: solicitacao.id, fase: solicitacao.fase, categoria: 'evidencia', enviadoPor: perfil?.id,
+      } })
+      setAnexos(await listarPorSolicitacao(solicitacao.id))
+    } catch (err) { setErro(err.message) }
+    setSubindo(false)
+  }
 
   async function salvar(statusFinal) {
     setSaving(true); setErro('')
@@ -220,6 +246,12 @@ function ModalResponder({ solicitacao, perfil, controles, areas, onClose, onSave
         <div style={M.body}>
           {erro && <div style={M.erro}>{erro}</div>}
 
+          {solicitacao.recusa_justificativa && solicitacao.status === 'recusada' && (
+            <div style={{ marginBottom: 14, padding: '10px 14px', background: 'rgba(239,68,68,0.07)', border: '1px solid rgba(239,68,68,0.25)', borderRadius: 6, fontSize: 12, color: '#7F1D1D', lineHeight: 1.5 }}>
+              <strong>Devolvida pela Polímata</strong> — {solicitacao.recusa_justificativa}
+            </div>
+          )}
+
           <div style={M.group}>
             <div style={M.groupTitle}>Pedido da Polímata</div>
             <div style={{ fontSize: 12, color: 'var(--lt-text2)', lineHeight: 1.5, padding: '10px 14px', background: 'var(--lt-bg)', borderRadius: 6, border: '1px solid var(--lt-border)' }}>
@@ -235,8 +267,23 @@ function ModalResponder({ solicitacao, perfil, controles, areas, onClose, onSave
 
           <div style={M.group}>
             <div style={M.groupTitle}>Sua resposta</div>
-            <div style={M.field}><label style={M.label}>Link da evidência (Google Drive)</label>
-              <input value={link} onChange={e=>setLink(e.target.value)} disabled={!podeResponder} placeholder="Cole aqui o link da pasta ou arquivo no Drive" style={M.input} />
+            <div style={M.field}><label style={M.label}>Anexar evidência (PDF, Excel, Word, imagem ou ZIP — até 25 MB)</label>
+              {anexos.length > 0 && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginBottom: 6 }}>
+                  {anexos.map(d => (
+                    <div key={d.id} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, padding: '6px 10px', background: 'var(--lt-bg)', border: '1px solid var(--lt-border)', borderRadius: 6 }}>
+                      <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>📎 {d.nome_arquivo}</span>
+                      <span style={{ color: 'var(--lt-text3)', fontSize: 10 }}>{fmtTamanho(d.tamanho_bytes)}</span>
+                      <button onClick={() => baixarDocumento(d).catch(err => setErro(err.message))} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 11, fontWeight: 600, color: 'var(--copper-text)', fontFamily: 'inherit' }}>Baixar</button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {podeResponder && <input type="file" accept=".pdf,.xlsx,.xls,.docx,.doc,.png,.jpg,.jpeg,.zip" onChange={anexar} disabled={subindo} style={{ fontSize: 12 }} />}
+              {subindo && <div style={{ fontSize: 11, color: 'var(--lt-text3)', marginTop: 4 }}>Enviando arquivo...</div>}
+            </div>
+            <div style={M.field}><label style={M.label}>Link externo (opcional)</label>
+              <input value={link} onChange={e=>setLink(e.target.value)} disabled={!podeResponder} placeholder="Se a evidência estiver em outro lugar, cole o link aqui" style={M.input} />
             </div>
             <div style={M.field}><label style={M.label}>Descrição do que está enviando</label>
               <textarea value={descricao} onChange={e=>setDescricao(e.target.value)} disabled={!podeResponder} rows={3} placeholder="Ex: Política de Compras vigente, versão de janeiro/2026 (PDF)" style={{ ...M.input, resize: 'vertical', fontFamily: 'inherit' }} />
@@ -255,7 +302,7 @@ function ModalResponder({ solicitacao, perfil, controles, areas, onClose, onSave
           {podeResponder && (
             <>
               <button onClick={() => salvar('em_andamento')} disabled={saving} style={{ ...M.btn, color: 'var(--copper)', borderColor: 'rgba(204,145,94,0.4)' }}>Salvar progresso</button>
-              <button onClick={() => salvar('recebida')} disabled={saving || !link.trim()} style={{ ...M.btnPrimary, opacity: (saving || !link.trim()) ? 0.5 : 1 }} title={!link.trim() ? 'Informe o link da evidência primeiro' : ''}>✓ Enviar resposta</button>
+              <button onClick={() => salvar('recebida')} disabled={saving || (!link.trim() && anexos.length === 0)} style={{ ...M.btnPrimary, opacity: (saving || (!link.trim() && anexos.length === 0)) ? 0.5 : 1 }} title={(!link.trim() && anexos.length === 0) ? 'Anexe um arquivo ou informe um link primeiro' : ''}>✓ Enviar resposta</button>
             </>
           )}
         </div>
@@ -265,16 +312,17 @@ function ModalResponder({ solicitacao, perfil, controles, areas, onClose, onSave
 }
 
 // ─── MODAL CRIAR / EDITAR / VALIDAR ───────────────────────────────────────
-function ModalSolicitacao({ projeto, controles, areas, perfil, solicitacao, onClose, onSaved }) {
+function ModalSolicitacao({ projeto, controles, areas, perfil, solicitacao, duplicarDe, onClose, onSaved, onDuplicar }) {
   const editing = !!solicitacao
+  const base = solicitacao || duplicarDe || null
   const [form, setForm] = useState({
-    controle_id: solicitacao?.controle_id || '',
-    fase: solicitacao?.fase || '',
-    titulo: solicitacao?.titulo || '',
-    descricao: solicitacao?.descricao || '',
-    responsavel_cliente_nome: solicitacao?.responsavel_cliente_nome || '',
-    responsavel_cliente_email: solicitacao?.responsavel_cliente_email || '',
-    prazo: solicitacao?.prazo || '',
+    controle_id: base?.controle_id || '',
+    fase: base?.fase || '',
+    titulo: base?.titulo || '',
+    descricao: base?.descricao || '',
+    responsavel_cliente_nome: base?.responsavel_cliente_nome || '',
+    responsavel_cliente_email: base?.responsavel_cliente_email || '',
+    prazo: solicitacao?.prazo || new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10),
     status: solicitacao?.status || 'aguardando',
     evidencia_link: solicitacao?.evidencia_link || '',
     evidencia_descricao: solicitacao?.evidencia_descricao || '',
@@ -283,6 +331,14 @@ function ModalSolicitacao({ projeto, controles, areas, perfil, solicitacao, onCl
   const [saving, setSaving] = useState(false)
   const [erro, setErro] = useState('')
   const u = (k, v) => setForm(p => ({ ...p, [k]: v }))
+  const [anexos, setAnexos] = useState([])
+  const [modalRecusa, setModalRecusa] = useState(false)
+  useEffect(() => { if (editing) listarPorSolicitacao(solicitacao.id).then(setAnexos).catch(() => {}) }, [])
+
+  async function excluirAnexo(d) {
+    if (!confirm(`Excluir o arquivo "${d.nome_arquivo}"? Essa ação fica registrada.`)) return
+    try { await excluirDocumento(d); setAnexos(a => a.filter(x => x.id !== d.id)) } catch (e) { setErro(e.message) }
+  }
 
   async function salvar() {
     if (!form.titulo.trim()) { setErro('Título é obrigatório'); return }
@@ -294,6 +350,7 @@ function ModalSolicitacao({ projeto, controles, areas, perfil, solicitacao, onCl
         projeto_id: projeto.id,
         titulo: form.titulo.trim(),
         prazo: form.prazo || null,
+        area_id: (controles.find(c => c.id === form.controle_id) || {}).area_id || null,
         responsavel_polimata_id: perfil?.id || null,
         criado_por: perfil?.id || null,
       }
@@ -379,7 +436,24 @@ function ModalSolicitacao({ projeto, controles, areas, perfil, solicitacao, onCl
 
           <div style={M.group}>
             <div style={M.groupTitle}>Resposta / Evidência</div>
-            <div style={M.field}><label style={M.label}>Link do Google Drive</label>
+            {editing && anexos.length > 0 && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginBottom: 10 }}>
+                {anexos.map(d => (
+                  <div key={d.id} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, padding: '6px 10px', background: 'var(--lt-bg)', border: '1px solid var(--lt-border)', borderRadius: 6 }}>
+                    <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>📎 {d.nome_arquivo}</span>
+                    <span style={{ color: 'var(--lt-text3)', fontSize: 10 }}>{fmtTamanho(d.tamanho_bytes)}{d.criado_em ? ' · ' + new Date(d.criado_em).toLocaleDateString('pt-BR') : ''}</span>
+                    <button onClick={() => baixarDocumento(d).catch(err => setErro(err.message))} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 11, fontWeight: 600, color: 'var(--copper-text)', fontFamily: 'inherit' }}>Baixar</button>
+                    <button onClick={() => excluirAnexo(d)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 11, fontWeight: 600, color: '#DC2626', fontFamily: 'inherit' }}>Excluir</button>
+                  </div>
+                ))}
+              </div>
+            )}
+            {editing && solicitacao.recusa_justificativa && (
+              <div style={{ marginBottom: 10, padding: '8px 12px', background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 6, fontSize: 11.5, color: '#7F1D1D' }}>
+                <strong>Recusa registrada{solicitacao.recusada_em ? ' em ' + new Date(solicitacao.recusada_em).toLocaleDateString('pt-BR') : ''}:</strong> {solicitacao.recusa_justificativa}
+              </div>
+            )}
+            <div style={M.field}><label style={M.label}>Link externo</label>
               <input value={form.evidencia_link} onChange={e=>u('evidencia_link', e.target.value)} placeholder="https://drive.google.com/..." style={M.input} />
             </div>
             <div style={M.field}><label style={M.label}>Descrição da evidência</label>
@@ -400,9 +474,78 @@ function ModalSolicitacao({ projeto, controles, areas, perfil, solicitacao, onCl
 
         <div style={M.footer}>
           {editing && <button onClick={excluir} style={{ ...M.btn, color: '#DC2626', border: '1px solid rgba(239,68,68,0.3)' }}>Excluir</button>}
+          {editing && ['recebida', 'validada'].includes(solicitacao.status) && <button onClick={() => setModalRecusa(true)} style={{ ...M.btn, color: '#B45309', border: '1px solid rgba(234,139,8,0.4)' }}>✗ Recusar evidência</button>}
           <div style={{ flex: 1 }} />
           <button onClick={onClose} style={M.btn}>Cancelar</button>
           <button onClick={salvar} disabled={saving} style={{ ...M.btnPrimary, opacity: saving ? 0.6 : 1 }}>{saving ? 'Salvando...' : (editing ? 'Salvar alterações' : '✓ Criar solicitação')}</button>
+        </div>
+        {modalRecusa && <ModalRecusa solicitacao={solicitacao} onClose={() => setModalRecusa(false)} onDone={() => { setModalRecusa(false); onSaved() }} onDuplicar={() => { setModalRecusa(false); onDuplicar?.(solicitacao) }} />}
+      </div>
+    </div>
+  )
+}
+
+// ─── MODAL RECUSA — 3 SAÍDAS ──────────────────────────────────────────────
+function ModalRecusa({ solicitacao, onClose, onDone, onDuplicar }) {
+  const [just, setJust] = useState('')
+  const [saving, setSaving] = useState(false)
+  const [erro, setErro] = useState('')
+  const M = mStyles
+
+  async function executar(acao) {
+    if (!just.trim()) { setErro('A justificativa é obrigatória.'); return }
+    setSaving(true); setErro('')
+    try {
+      const base = { recusa_justificativa: just.trim(), recusa_acao: acao, recusada_em: new Date().toISOString() }
+      if (acao === 'devolvida') {
+        const { error } = await supabase.from('solicitacoes').update({ ...base, status: 'recusada', prazo: prazoMais7(), data_resposta: null }).eq('id', solicitacao.id)
+        if (error) throw error
+        onDone()
+      } else if (acao === 'encerrada') {
+        const { error } = await supabase.from('solicitacoes').update({ ...base, status: 'cancelada' }).eq('id', solicitacao.id)
+        if (error) throw error
+        onDone()
+      } else {
+        const { error } = await supabase.from('solicitacoes').update({ ...base, status: 'cancelada' }).eq('id', solicitacao.id)
+        if (error) throw error
+        onDuplicar()
+      }
+    } catch (e) { setErro(e.message); setSaving(false) }
+  }
+
+  const opcoes = [
+    { acao: 'devolvida', titulo: '↩ Devolver ao cliente', desc: 'A evidência veio errada. A mesma solicitação volta para o cliente com o motivo e novo prazo de 7 dias.', cor: '#B45309', borda: 'rgba(234,139,8,0.45)' },
+    { acao: 'duplicada', titulo: '⧉ Duplicar', desc: 'O pedido mudou. Esta solicitação é encerrada e abre uma cópia editável para você ajustar e enviar.', cor: '#1D4ED8', borda: 'rgba(59,130,246,0.45)' },
+    { acao: 'encerrada', titulo: '✕ Encerrar', desc: 'A abordagem mudou por completo. Só encerra — se precisar, crie uma nova solicitação do zero.', cor: '#991B1B', borda: 'rgba(239,68,68,0.45)' },
+  ]
+
+  return (
+    <div style={{ ...M.overlay, zIndex: 10000 }} onClick={e => e.target === e.currentTarget && onClose()}>
+      <div style={{ ...M.modal, maxWidth: 560 }}>
+        <div style={M.header}>
+          <div>
+            <div style={M.eyebrow}>Solicitação {solicitacao.numero}</div>
+            <div style={M.title}>Recusar evidência</div>
+          </div>
+          <button onClick={onClose} style={M.close}>×</button>
+        </div>
+        <div style={M.body}>
+          {erro && <div style={M.erro}>{erro}</div>}
+          <div style={M.field}>
+            <label style={M.label}>Justificativa da recusa <span style={{ color: '#DC2626' }}>*</span></label>
+            <textarea value={just} onChange={e => setJust(e.target.value)} rows={3} placeholder="Explique o motivo — o cliente verá este texto se a solicitação for devolvida." style={{ ...M.input, resize: 'vertical', fontFamily: 'inherit' }} />
+          </div>
+          <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--copper)', textTransform: 'uppercase', letterSpacing: 1, margin: '14px 0 8px' }}>O que fazer com a solicitação?</div>
+          {opcoes.map(o => (
+            <button key={o.acao} onClick={() => executar(o.acao)} disabled={saving} style={{ display: 'block', width: '100%', textAlign: 'left', background: '#fff', border: '1px solid ' + o.borda, borderRadius: 8, padding: '10px 14px', marginBottom: 8, cursor: 'pointer', fontFamily: 'inherit', opacity: saving ? 0.6 : 1 }}>
+              <div style={{ fontSize: 12.5, fontWeight: 700, color: o.cor, marginBottom: 2 }}>{o.titulo}</div>
+              <div style={{ fontSize: 11.5, color: 'var(--lt-text2)', lineHeight: 1.45 }}>{o.desc}</div>
+            </button>
+          ))}
+        </div>
+        <div style={M.footer}>
+          <div style={{ flex: 1 }} />
+          <button onClick={onClose} style={M.btn}>Cancelar</button>
         </div>
       </div>
     </div>

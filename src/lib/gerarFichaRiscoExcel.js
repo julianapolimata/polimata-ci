@@ -351,4 +351,5 @@ export async function gerarFichaRiscoExcel({
   a.click()
   document.body.removeChild(a)
   URL.revokeObjectURL(url)
+  return { blob, filename: a.download }
 }

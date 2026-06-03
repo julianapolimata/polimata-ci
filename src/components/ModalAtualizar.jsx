@@ -15,6 +15,8 @@ import ModalComentario from './ModalComentario'
 import { syncPassosESolicitacoes, loadPassosTeste, criarPassoVazio } from '../lib/passosTeste'
 import { useAuth } from '../contexts/AuthContext'
 import { gerarFichaRiscoExcel } from '../lib/gerarFichaRiscoExcel'
+import { uploadDocumento } from '../lib/documentos'
+import { getFaseInfo } from '../lib/fases'
 import { reabrirBloco, blocosAplicaveis, faseDoBloco } from '../lib/aprovacoesBloco'
 
 import StepRisco from './modalAtualizar/StepRisco'
@@ -276,7 +278,7 @@ const ModalAtualizar = ({ row, onClose, onSaved, areas, projeto }) => {
         }
         await supabase.from('mrc').update({ status_workflow: 'em_revisao' }).eq('id', row.id)
       }
-      await gerarFichaRiscoExcel({
+      const ficha = await gerarFichaRiscoExcel({
         row,
         projeto,
         perfil,
@@ -292,6 +294,13 @@ const ModalAtualizar = ({ row, onClose, onSaved, areas, projeto }) => {
         passos,
         isAutomatic,
       })
+      try {
+        if (ficha?.blob) await uploadDocumento({
+          arquivo: ficha.blob, nomeArquivo: ficha.filename,
+          meta: { projetoId: row.projeto_id, areaId: row.area_id, subprocessoId: row.subprocesso_id,
+            controleId: row.id, fase: getFaseInfo(row).codigo, categoria: 'ficha', enviadoPor: perfil?.id },
+        })
+      } catch (e) { console.error('ficha->storage:', e); alert('A ficha foi baixada, mas não foi salva em Documentos: ' + e.message) }
       logAtualizarControle(row, row.projeto_id)
       logBaixarFicha(row, row.projeto_id)
       setComentarioFor({ controleId: row?.id, acao: 'Controle atualizado' })
