@@ -4,6 +4,7 @@ import {
   badge, critBadge, badgeExistencia, getFaseInfo,
 } from './badges'
 import HistoricoControle from './HistoricoControle'
+import MotivoReprovacao from './MotivoReprovacao'
 import { loadAprovacoes, blocosAplicaveis, faseDoBloco, BLOCO_LABEL } from '../../lib/aprovacoesBloco'
 
 // ─── MODAL ───────────────────────────────────────────────────────────────────
@@ -33,7 +34,7 @@ export function ModalDetalhe({ row, projeto, onClose, onEditar, primaryAction, s
       <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, marginLeft: 'auto' }}>
         <span style={{ fontSize: 9, fontWeight: 700, color: cfg.c, background: cfg.bg, padding: '2px 8px', borderRadius: 999, textTransform: 'uppercase', letterSpacing: 0.3 }}>{cfg.t}</span>
         {ap.data_acao && <span style={{ fontSize: 9, color: 'var(--lt-text3)', marginLeft: 2 }}>{new Date(ap.data_acao).toLocaleDateString('pt-BR')}</span>}
-        {st === 'reprovado' && ap.nota && <span title={ap.nota} style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 16, height: 16, borderRadius: '50%', background: '#C62828', color: '#fff', fontSize: 10, fontWeight: 700, fontStyle: 'normal', cursor: 'help', textTransform: 'none' }}>!</span>}
+        {st === 'reprovado' && ap.nota && <MotivoReprovacao texto={ap.nota} />}
       </span>
     )
   }

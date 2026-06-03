@@ -5,6 +5,7 @@ import { getFaseAtual } from '../lib/fases'
 import { logAprovar, logDevolver } from '../lib/auditLog'
 import { CRIT_MAP } from './modalRevisar/_consts'
 import { S } from './modalRevisar/styles'
+import MotivoReprovacao from './mrc/MotivoReprovacao'
 import { BLOCO_LABEL, blocosAplicaveis, faseDoBloco, loadAprovacoes, setBlocoStatus, deriveStatusGeral, ensureBlocos, reabrirBloco } from '../lib/aprovacoesBloco'
 import { useConfirm } from './ConfirmDialog'
 
@@ -55,7 +56,7 @@ const ModalRevisar = ({ row, onClose, onAction, projeto }) => {
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
           <span style={{ fontSize: 9, fontWeight: 700, color: cfg.c, background: cfg.bg, padding: '2px 8px', borderRadius: 999, textTransform: 'uppercase', letterSpacing: 0.3 }}>{cfg.t}</span>
           {ap?.data_acao && <span style={{ fontSize: 9, color: '#7A8B9C', marginLeft: 2 }}>{new Date(ap.data_acao).toLocaleDateString('pt-BR')}</span>}
-          {ap?.status === 'reprovado' && ap?.nota && <span title={ap.nota} style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 16, height: 16, borderRadius: '50%', background: '#C62828', color: '#fff', fontSize: 10, fontWeight: 700, cursor: 'help' }}>!</span>}
+          {ap?.status === 'reprovado' && ap?.nota && <MotivoReprovacao texto={ap.nota} />}
           {!bloqueado && (st === 'a_aprovar' ? (
             <>
               <button onClick={() => { setBlocoAlvo(blocoKey); setNota(''); setView('reject') }} style={{ fontSize: 10, fontWeight: 700, color: '#EF4444', background: 'white', border: '1px solid #EF4444', borderRadius: 6, padding: '3px 9px', cursor: 'pointer', fontFamily: 'inherit' }}>↩ Reprovar</button>
