@@ -376,22 +376,19 @@ const ModalAtualizar = ({ row, onClose, onSaved, areas, projeto }) => {
         </div>
 
         {/* Editar seção — navega direto e reabre para aprovação (item 11) */}
-        <div style={{ padding: '12px 24px', background: '#FFF8E1', borderBottom: '1px solid #F0E0A8' }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: '#7A5C00', textTransform: 'uppercase', letterSpacing: 0.4, marginBottom: 6 }}>Editar seção</div>
-          <div style={{ fontSize: 11, color: '#7A5C00', marginBottom: 8, lineHeight: 1.4 }}>Escolha a seção que vai alterar — o formulário vai direto para ela. A seção editada volta para aprovação ao salvar; as demais mantêm a aprovação.</div>
-          <select value="" onChange={e => { const b = e.target.value; if (!b) return; setStep(SECAO_STEP[b] || 1); setBlocosReabrir(prev => prev.includes(b) ? prev : [...prev, b]) }} style={{ width: '100%', maxWidth: 380, padding: '8px 10px', border: '1px solid #E0C98A', borderRadius: 6, fontFamily: 'inherit', fontSize: 13, background: '#fff', color: '#00203E', cursor: 'pointer' }}>
-            <option value="">— Selecione a seção que vai editar —</option>
+        <div style={{ padding: '8px 24px', background: '#FFF8E1', borderBottom: '1px solid #F0E0A8', display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+          <span style={{ fontSize: 11, fontWeight: 700, color: '#7A5C00', textTransform: 'uppercase', letterSpacing: 0.4, whiteSpace: 'nowrap' }}>Editar seção:</span>
+          <select value="" onChange={e => { const b = e.target.value; if (!b) return; setStep(SECAO_STEP[b] || 1); setBlocosReabrir(prev => prev.includes(b) ? prev : [...prev, b]) }} style={{ flex: 1, minWidth: 220, maxWidth: 320, padding: '6px 8px', border: '1px solid #E0C98A', borderRadius: 6, fontFamily: 'inherit', fontSize: 13, background: '#fff', color: '#00203E', cursor: 'pointer' }}>
+            <option value="">— pular direto para a seção —</option>
             {blocosAplicaveis(projeto).map(b => <option key={b} value={b}>{SECAO_LABEL[b] || b}</option>)}
           </select>
           {blocosReabrir.length > 0 && (
-            <div style={{ marginTop: 8, fontSize: 11, fontWeight: 600, color: '#7A5C00', background: 'rgba(204,145,94,0.14)', border: '1px solid #E0C98A', borderRadius: 6, padding: '6px 10px', lineHeight: 1.45 }}>
-              ✓ Ao salvar, {blocosReabrir.map(b => SECAO_LABEL[b] || b).join(', ')} volta{blocosReabrir.length > 1 ? 'm' : ''} para "A aprovar". Os demais blocos mantêm a aprovação.
-            </div>
+            <span style={{ fontSize: 11, fontWeight: 600, color: '#7A5C00', flexBasis: '100%' }}>✓ Ao salvar, {blocosReabrir.map(b => SECAO_LABEL[b] || b).join(', ')} volta{blocosReabrir.length > 1 ? 'm' : ''} para "A aprovar". Os demais mantêm a aprovação.</span>
           )}
         </div>
 
         {/* STEPPER */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px 24px', gap: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '12px 24px', gap: 0 }}>
           {[1, 2, 3, 4].map((s) => (
             <React.Fragment key={s}>
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, flex: 1 }}>

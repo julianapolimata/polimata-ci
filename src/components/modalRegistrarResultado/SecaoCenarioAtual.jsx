@@ -33,17 +33,6 @@ export default function SecaoCenarioAtual({ cenarioAtual, setCenarioAtual }) {
         Esse contexto justifica a classificação acima e serve de baseline caso o projeto
         avance para Fase 2 (remediação).
       </div>
-      <label style={{
-        display: 'block',
-        fontSize: '13px',
-        fontWeight: 500,
-        color: '#00203E',
-        marginBottom: '0.5rem',
-        textTransform: 'uppercase',
-        letterSpacing: '0.3px',
-      }}>
-        Como o processo é feito hoje?
-      </label>
       <textarea
         value={cenarioAtual}
         onChange={e => setCenarioAtual(e.target.value)}
