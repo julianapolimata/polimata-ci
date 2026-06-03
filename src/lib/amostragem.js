@@ -92,14 +92,14 @@ export function calcularAmostra(row, { hoje = new Date(), universoManual = null 
   }
   r.universo = universo
 
-  // Base (Tabela 2). Para sob demanda, deriva a frequência efetiva pelo universo/período.
+  // Base. Frequência fixa → Tabela 2. Sob demanda → CURVA POR POPULAÇÃO (padrão de mercado).
   let base
   if (freqInfo.key === 'sob_demanda') {
-    const porMes = meses > 0 ? universo / meses : universo
-    const eq = classificarFrequencia(
-      porMes >= 15 ? 'diario' : porMes >= 3 ? 'semanal' : porMes >= 1.5 ? 'quinzenal' : porMes >= 0.5 ? 'mensal' : porMes >= 0.2 ? 'trimestral' : 'anual'
-    )
-    base = eq.baseManual
+    if (universo <= 10) base = universo                                   // população pequena → testar 100%
+    else if (universo <= 50) base = Math.max(Math.ceil(universo * 0.10), 5)
+    else if (universo <= 250) base = Math.min(Math.max(Math.ceil(universo * 0.10), 5), 25)
+    else base = 25                                                        // > 250 → 25 (expandir 25→40→60 por exceções)
+    r.curvaPopulacao = true
   } else {
     base = freqInfo.baseManual
   }
