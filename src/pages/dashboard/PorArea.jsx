@@ -374,7 +374,7 @@ export default function PorArea({ projeto, areasCalc, todosControles, loading, n
 
       <PorAreaFiltros ctx={ctx} />
       <PorAreaTabela ctx={ctx} />
-      {modalRow && (() => { const acts = getModalActions(modalRow); return <ModalDetalhe row={modalRow} projeto={projeto} onClose={() => setModalRow(null)} onEditar={canEdit && !acts.primary ? () => { setAtualizarRow(modalRow); setModalRow(null) } : undefined} primaryAction={acts.primary} secondaryAction={acts.secondary} onAnalisarCriticidade={canEdit ? () => { setRowCriticidade(modalRow); setModalRow(null) } : undefined} /> })()}
+      {modalRow && (() => { const acts = getModalActions(modalRow); return <ModalDetalhe row={modalRow} projeto={projeto} onClose={() => setModalRow(null)} onEditar={canEdit && !acts.primary ? () => { setAtualizarRow(modalRow); setModalRow(null) } : undefined} primaryAction={acts.primary} secondaryAction={acts.secondary} onAnalisarCriticidade={canEdit ? () => { setRowCriticidade(modalRow); setModalRow(null) } : undefined} verAprovacoes={!isCliente} /> })()}
       {atualizarRow && <ModalAtualizar row={atualizarRow} onClose={() => setAtualizarRow(null)} onSaved={() => { setAtualizarRow(null); if (projeto?.id) loadDados(projeto.id) }} areas={areasCalc} projeto={projeto} />}
       {modalNovoRisco && <ModalNovoRisco onClose={() => setModalNovoRisco(false)} onSaved={() => { setModalNovoRisco(false); if (projeto?.id) loadDados(projeto.id) }} areas={areasCalc} projeto={projeto} areaFixa={area} />}
       {rowRegistrarResultado && <ModalRegistrarResultado row={rowRegistrarResultado} onClose={() => setRowRegistrarResultado(null)} onSaved={() => { setRowRegistrarResultado(null); if (projeto?.id) loadDados(projeto.id) }} responsaveis={[]} />}

@@ -75,48 +75,14 @@ const ModalRevisar = ({ row, onClose, onAction, projeto }) => {
     setLoadingHist(false)
   }
 
-  // ═══ APROVAR BLOCO ═══
+  // ═══ APROVAR BLOCO (só registra; não finaliza) ═══
   async function handleAprovar() {
     if (!blocoAlvo) return
     setProcessing(true)
     try {
-      const fase = faseDoBloco(blocoAlvo, row)
-      await setBlocoStatus({ mrcId: row.id, bloco: blocoAlvo, fase, status: 'aprovado', revisorId: user?.id, nota: notaAprovar })
-      const aps = await loadAprovacoes(row.id)
-      setAprovacoes(aps)
-      const geral = deriveStatusGeral(aps, row, projeto)
-
-      const updates = { status_workflow: geral }
-      if (geral === 'aprovado') { updates.aprovado_por = user?.id; updates.aprovado_em = new Date().toISOString() }
-      await supabase.from('mrc').update(updates).eq('id', row.id)
-
-      await supabase.from('revisoes').insert({
-        mrc_id: row.id, autor_id: user?.id, tipo: 'aprovacao',
-        nota: `[${BLOCO_LABEL[blocoAlvo]}] ${notaAprovar || ''}`.trim(),
-        status_antes: 'em_revisao', status_depois: geral, fase: faseAtual,
-      })
-
-      if (geral === 'aprovado') {
-        const destinatarioId = row.consultor_id || row.submetido_por
-        if (destinatarioId) {
-          await supabase.from('notificacoes').insert({
-            para_id: destinatarioId, de_id: user?.id, tipo: 'aprovacao',
-            titulo: `Análise aprovada — ${row.rc || row.rr}`,
-            mensagem: `${row.rc} (${row.area}) foi aprovado na fase ${faseAtual}. Todos os blocos foram aprovados.`,
-            lida: false, mrc_id: row.id,
-          })
-          supabase.functions.invoke('send-email', {
-            body: { type: 'review_completed', data: { autor_id: destinatarioId, revisor_id: user?.id, ref: row.rc || row.rr, resultado: 'aprovado', nota: notaAprovar || '', area_id: row.area_id } }
-          }).catch(err => console.error('Erro ao enviar email:', err))
-        }
-        logAprovar(row, row.projeto_id)
-        onAction?.('aprovado')
-        onClose?.()
-      } else {
-        // ainda há blocos pendentes — volta pra revisão para tratar os demais
-        setNotaAprovar(''); setBlocoAlvo(null); setDirty(false); setView('review')
-        onAction?.('parcial')
-      }
+      await setBlocoStatus({ mrcId: row.id, bloco: blocoAlvo, fase: faseDoBloco(blocoAlvo, row), status: 'aprovado', revisorId: user?.id, nota: notaAprovar })
+      setAprovacoes(await loadAprovacoes(row.id))
+      setNotaAprovar(''); setBlocoAlvo(null); setDirty(false); setView('review')
     } catch (err) {
       console.error('Erro ao aprovar bloco:', err)
       alert('Erro ao aprovar. Tente novamente.')
@@ -125,44 +91,88 @@ const ModalRevisar = ({ row, onClose, onAction, projeto }) => {
     }
   }
 
-  // ═══ REPROVAR BLOCO ═══
+  // ═══ REPROVAR BLOCO (só registra; não finaliza) ═══
   async function handleReprovar() {
     if (!blocoAlvo) return
     if (!nota.trim()) return alert('A nota de reprovação é obrigatória.')
     setProcessing(true)
     try {
-      const fase = faseDoBloco(blocoAlvo, row)
-      await setBlocoStatus({ mrcId: row.id, bloco: blocoAlvo, fase, status: 'reprovado', revisorId: user?.id, nota })
-      const aps = await loadAprovacoes(row.id)
-      setAprovacoes(aps)
-      // Reprovar qualquer bloco devolve o controle para o consultor
-      await supabase.from('mrc').update({ status_workflow: 'reprovado' }).eq('id', row.id)
-
-      await supabase.from('revisoes').insert({
-        mrc_id: row.id, autor_id: user?.id, tipo: 'reprovacao',
-        nota: `[${BLOCO_LABEL[blocoAlvo]}] ${nota}`,
-        status_antes: 'em_revisao', status_depois: 'reprovado', fase: faseAtual,
-      })
-
-      const destinatarioId = row.consultor_id || row.submetido_por
-      if (destinatarioId) {
-        await supabase.from('notificacoes').insert({
-          para_id: destinatarioId, de_id: user?.id, tipo: 'reprovacao',
-          titulo: `Análise reprovada — ${row.rc || row.rr}`,
-          mensagem: `Bloco "${BLOCO_LABEL[blocoAlvo]}" de ${row.rc} (${row.area}) foi reprovado na fase ${faseAtual}. Motivo: ${nota.substring(0, 100)}${nota.length > 100 ? '...' : ''}`,
-          lida: false, mrc_id: row.id,
-        })
-        supabase.functions.invoke('send-email', {
-          body: { type: 'review_completed', data: { autor_id: destinatarioId, revisor_id: user?.id, ref: row.rc || row.rr, resultado: 'reprovado', nota: `[Bloco: ${BLOCO_LABEL[blocoAlvo]}] ${nota}`, area_id: row.area_id } }
-        }).catch(err => console.error('Erro ao enviar email:', err))
-      }
-
-      logDevolver(row, nota, row.projeto_id)
-      onAction?.('reprovado')
-      onClose?.()
+      await setBlocoStatus({ mrcId: row.id, bloco: blocoAlvo, fase: faseDoBloco(blocoAlvo, row), status: 'reprovado', revisorId: user?.id, nota })
+      setAprovacoes(await loadAprovacoes(row.id))
+      setNota(''); setBlocoAlvo(null); setDirty(false); setView('review')
     } catch (err) {
       console.error('Erro ao reprovar bloco:', err)
       alert('Erro ao reprovar. Tente novamente.')
+    } finally {
+      setProcessing(false)
+    }
+  }
+
+  // ═══ CONCLUIR REVISÃO (finaliza tudo de uma vez: status + 1 e-mail) ═══
+  async function concluirRevisao() {
+    const blocos = blocosAplicaveis(projeto)
+    const rel = blocos.map(b => {
+      const f = faseDoBloco(b, row)
+      return { b, ap: aprovacoes.find(e => e.bloco === b && (e.fase || null) === (f || null)) }
+    })
+    const reprovados = rel.filter(r => r.ap?.status === 'reprovado')
+    const pendentes = rel.filter(r => !r.ap || r.ap.status === 'a_aprovar')
+    if (!reprovados.length && pendentes.length) {
+      alert('Ainda faltam blocos para decidir: ' + pendentes.map(r => BLOCO_LABEL[r.b]).join(', ') + '.\nAprove ou reprove todos antes de concluir (ou feche para continuar depois).')
+      return
+    }
+    setProcessing(true)
+    try {
+      const geral = deriveStatusGeral(aprovacoes, row, projeto)
+      const updates = { status_workflow: geral }
+      if (geral === 'aprovado') { updates.aprovado_por = user?.id; updates.aprovado_em = new Date().toISOString() }
+      await supabase.from('mrc').update(updates).eq('id', row.id)
+      const destinatarioId = row.consultor_id || row.submetido_por
+
+      if (geral === 'reprovado') {
+        const detalhe = reprovados.map(r => `${BLOCO_LABEL[r.b]}: ${r.ap?.nota || '(sem nota)'}`).join(' | ')
+        await supabase.from('revisoes').insert({
+          mrc_id: row.id, autor_id: user?.id, tipo: 'reprovacao',
+          nota: `Blocos reprovados — ${detalhe}`,
+          status_antes: 'em_revisao', status_depois: 'reprovado', fase: faseAtual,
+        })
+        if (destinatarioId) {
+          await supabase.from('notificacoes').insert({
+            para_id: destinatarioId, de_id: user?.id, tipo: 'reprovacao',
+            titulo: `Análise devolvida — ${row.rc || row.rr}`,
+            mensagem: `${row.rc} (${row.area}) foi devolvido na fase ${faseAtual}. Blocos a corrigir: ${reprovados.map(r => BLOCO_LABEL[r.b]).join(', ')}.`,
+            lida: false, mrc_id: row.id,
+          })
+          supabase.functions.invoke('send-email', {
+            body: { type: 'review_completed', data: { autor_id: destinatarioId, revisor_id: user?.id, ref: row.rc || row.rr, resultado: 'reprovado', nota: detalhe, area_id: row.area_id } }
+          }).catch(err => console.error('Erro ao enviar email:', err))
+        }
+        logDevolver(row, reprovados.map(r => `${BLOCO_LABEL[r.b]}: ${r.ap?.nota || ''}`).join(' | '), row.projeto_id)
+        onAction?.('reprovado')
+      } else {
+        await supabase.from('revisoes').insert({
+          mrc_id: row.id, autor_id: user?.id, tipo: 'aprovacao',
+          nota: 'Todos os blocos aprovados.',
+          status_antes: 'em_revisao', status_depois: 'aprovado', fase: faseAtual,
+        })
+        if (destinatarioId) {
+          await supabase.from('notificacoes').insert({
+            para_id: destinatarioId, de_id: user?.id, tipo: 'aprovacao',
+            titulo: `Análise aprovada — ${row.rc || row.rr}`,
+            mensagem: `${row.rc} (${row.area}) foi aprovado na fase ${faseAtual}. Todos os blocos foram aprovados.`,
+            lida: false, mrc_id: row.id,
+          })
+          supabase.functions.invoke('send-email', {
+            body: { type: 'review_completed', data: { autor_id: destinatarioId, revisor_id: user?.id, ref: row.rc || row.rr, resultado: 'aprovado', nota: '', area_id: row.area_id } }
+          }).catch(err => console.error('Erro ao enviar email:', err))
+        }
+        logAprovar(row, row.projeto_id)
+        onAction?.('aprovado')
+      }
+      onClose?.()
+    } catch (err) {
+      console.error('Erro ao concluir revisão:', err)
+      alert('Erro ao concluir a revisão. Tente novamente.')
     } finally {
       setProcessing(false)
     }
@@ -479,7 +489,11 @@ const ModalRevisar = ({ row, onClose, onAction, projeto }) => {
         {/* Footer com ações */}
         <div style={S.footer}>
           <button onClick={requestClose} style={{ ...S.btn, border: '1px solid #D0D0D0', background: 'white', color: '#7A8B9C' }}>Fechar</button>
-          {/* Aprovação agora é por bloco (painel acima). */}
+          {!bloqueado && (
+            <button onClick={concluirRevisao} disabled={processing} style={{ ...S.btn, border: '1px solid #00203E', background: '#00203E', color: 'white', opacity: processing ? 0.5 : 1 }}>
+              {processing ? 'Concluindo...' : 'Concluir revisão'}
+            </button>
+          )}
         </div>
       </div>
     </div>

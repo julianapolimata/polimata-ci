@@ -1,14 +1,17 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import {
   R1_MAP, IMP_MAP, PROB_MAP, HM_IMPS, HM_PROBS, HM_COLORS,
   badge, critBadge, badgeExistencia, getFaseInfo,
 } from './badges'
 import HistoricoControle from './HistoricoControle'
+import { loadAprovacoes, blocosAplicaveis, faseDoBloco, BLOCO_LABEL } from '../../lib/aprovacoesBloco'
 
 // ─── MODAL ───────────────────────────────────────────────────────────────────
 
-export function ModalDetalhe({ row, projeto, onClose, onEditar, primaryAction, secondaryAction, onAnalisarCriticidade }) {
+export function ModalDetalhe({ row, projeto, onClose, onEditar, primaryAction, secondaryAction, onAnalisarCriticidade, verAprovacoes }) {
   const [tab, setTab] = useState('ident')
+  const [aprovacoes, setAprovacoes] = useState([])
+  useEffect(() => { if (verAprovacoes && row?.id) loadAprovacoes(row.id).then(setAprovacoes) }, [verAprovacoes, row?.id])
   if (!row) return null
   const isDiagModal = projeto?.f1_tem_teste === false
   const tabs = isDiagModal
@@ -49,6 +52,28 @@ export function ModalDetalhe({ row, projeto, onClose, onEditar, primaryAction, s
         <div className="modal-body">
 
           {tab === 'ident' && (<div className="tp active">
+            {verAprovacoes && aprovacoes.length > 0 && (
+              <div className="ms"><div className="ms-t">Status de aprovação por bloco</div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  {blocosAplicaveis(projeto).map(b => {
+                    const f = faseDoBloco(b, row)
+                    const ap = aprovacoes.find(e => e.bloco === b && (e.fase || null) === (f || null))
+                    const st = ap?.status || 'a_aprovar'
+                    const cfg = st === 'aprovado' ? { t: 'Aprovado', c: '#1B5E20', bg: '#E8F5E9' }
+                              : st === 'reprovado' ? { t: 'Reprovado', c: '#C62828', bg: '#FFEBEE' }
+                              : { t: 'A aprovar', c: '#92400E', bg: 'rgba(234,179,8,0.18)' }
+                    return (
+                      <div key={b} style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                        <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--lt-text)', minWidth: 96 }}>{BLOCO_LABEL[b]}</span>
+                        <span style={{ fontSize: 10, fontWeight: 700, color: cfg.c, background: cfg.bg, padding: '2px 8px', borderRadius: 999, textTransform: 'uppercase', letterSpacing: 0.3 }}>{cfg.t}</span>
+                        {ap?.data_acao && <span style={{ fontSize: 10, color: 'var(--lt-text3)' }}>{new Date(ap.data_acao).toLocaleDateString('pt-BR')}</span>}
+                        {st === 'reprovado' && ap?.nota && <span style={{ fontSize: 11, color: '#C62828', fontStyle: 'italic' }}>— {ap.nota}</span>}
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
             <div className="ms"><div className="ms-t">Identificação do Controle</div><div className="mr">{field('Ref. Risco', row.rr)}{field('Ref. Controle', row.rc)}</div><div className="mr">{field('Área', row.area)}{field('Subprocesso', row.sub)}</div><div className="mr">{field('Gerência', row.ger)}{field('Responsável Processo', row.resp_sub)}</div></div>
             <div className="ms"><div className="ms-t">Cenário Atual</div>{row.cenario_atual && row.cenario_atual.trim() ? fieldText(null, row.cenario_atual) : <div style={{ fontSize: 12, color: '#C62828', fontStyle: 'italic', padding: '6px 10px', background: '#FFEBEE', borderLeft: '3px solid #C62828', borderRadius: 4 }}>— Não preenchido —</div>}</div>
             <div className="ms"><div className="ms-t">Descrição do Risco</div>{fieldText(null, row.dr)}</div>
