@@ -5,7 +5,7 @@ import { getFaseAtual } from '../lib/fases'
 import { logAprovar, logDevolver } from '../lib/auditLog'
 import { CRIT_MAP } from './modalRevisar/_consts'
 import { S } from './modalRevisar/styles'
-import { BLOCO_LABEL, blocosAplicaveis, faseDoBloco, loadAprovacoes, setBlocoStatus, deriveStatusGeral, ensureBlocos } from '../lib/aprovacoesBloco'
+import { BLOCO_LABEL, blocosAplicaveis, faseDoBloco, loadAprovacoes, setBlocoStatus, deriveStatusGeral, ensureBlocos, reabrirBloco } from '../lib/aprovacoesBloco'
 import { useConfirm } from './ConfirmDialog'
 
 
@@ -54,12 +54,14 @@ const ModalRevisar = ({ row, onClose, onAction, projeto }) => {
         <div style={S.sectionTitle}>{titleNode}</div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
           <span style={{ fontSize: 9, fontWeight: 700, color: cfg.c, background: cfg.bg, padding: '2px 8px', borderRadius: 999, textTransform: 'uppercase', letterSpacing: 0.3 }}>{cfg.t}</span>
-          {!bloqueado && (
+          {!bloqueado && (st === 'a_aprovar' ? (
             <>
               <button onClick={() => { setBlocoAlvo(blocoKey); setNota(''); setView('reject') }} style={{ fontSize: 10, fontWeight: 700, color: '#EF4444', background: 'white', border: '1px solid #EF4444', borderRadius: 6, padding: '3px 9px', cursor: 'pointer', fontFamily: 'inherit' }}>↩ Reprovar</button>
               <button onClick={() => { setBlocoAlvo(blocoKey); setNotaAprovar(''); setView('approve') }} style={{ fontSize: 10, fontWeight: 700, color: 'white', background: '#22C55E', border: '1px solid #22C55E', borderRadius: 6, padding: '3px 9px', cursor: 'pointer', fontFamily: 'inherit' }}>✅ Aprovar</button>
             </>
-          )}
+          ) : (
+            <button onClick={async () => { await reabrirBloco({ mrcId: row.id, bloco: blocoKey, fase: faseDoBloco(blocoKey, row) }); setAprovacoes(await loadAprovacoes(row.id)) }} title="Refazer esta decisão" style={{ fontSize: 10, fontWeight: 600, color: '#7A8B9C', background: 'white', border: '1px solid #D0D0D0', borderRadius: 6, padding: '3px 9px', cursor: 'pointer', fontFamily: 'inherit' }}>↺ Refazer</button>
+          ))}
         </div>
       </div>
     )

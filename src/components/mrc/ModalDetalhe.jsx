@@ -20,6 +20,22 @@ export function ModalDetalhe({ row, projeto, onClose, onEditar, primaryAction, s
   const field = (l, v, fw) => { if (!v || v === 'N/A' || v === '') return null; return <div style={fw ? { marginBottom: 12 } : {}}><div className="ml">{l}</div><div className="mv">{v}</div></div> }
   const fieldTag = (l, v) => { if (!v || v === 'N/A' || v === '') return null; return <div><div className="ml">{l}</div><div style={{ marginTop: 3 }}><span className="tag">{v}</span></div></div> }
   const fieldText = (l, v) => { if (!v || v === 'N/A' || v === '') return null; return <div style={{ marginBottom: 14 }}>{l && <div className="ml">{l}</div>}<div className="mv-t">{v}</div></div> }
+  const blocoBadge = (blocoKey) => {
+    if (!verAprovacoes) return null
+    const f = faseDoBloco(blocoKey, row)
+    const ap = aprovacoes.find(e => e.bloco === blocoKey && (e.fase || null) === (f || null))
+    if (!ap) return null
+    const st = ap.status
+    const cfg = st === 'aprovado' ? { t: 'Aprovado', c: '#1B5E20', bg: '#E8F5E9' }
+              : st === 'reprovado' ? { t: 'Reprovado', c: '#C62828', bg: '#FFEBEE' }
+              : { t: 'A aprovar', c: '#92400E', bg: 'rgba(234,179,8,0.18)' }
+    return (
+      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, marginLeft: 'auto' }}>
+        <span style={{ fontSize: 9, fontWeight: 700, color: cfg.c, background: cfg.bg, padding: '2px 8px', borderRadius: 999, textTransform: 'uppercase', letterSpacing: 0.3 }}>{cfg.t}</span>
+        {st === 'reprovado' && ap.nota && <span style={{ fontSize: 11, color: '#C62828', fontStyle: 'italic', fontWeight: 400 }}>— {ap.nota}</span>}
+      </span>
+    )
+  }
   const faseInfo = getFaseInfo(row)
   const impIdx = HM_IMPS.indexOf(row.imp); const probIdx = HM_PROBS.indexOf(row.prob)
 
@@ -52,32 +68,10 @@ export function ModalDetalhe({ row, projeto, onClose, onEditar, primaryAction, s
         <div className="modal-body">
 
           {tab === 'ident' && (<div className="tp active">
-            {verAprovacoes && aprovacoes.length > 0 && (
-              <div className="ms"><div className="ms-t">Status de aprovação por bloco</div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                  {blocosAplicaveis(projeto).map(b => {
-                    const f = faseDoBloco(b, row)
-                    const ap = aprovacoes.find(e => e.bloco === b && (e.fase || null) === (f || null))
-                    const st = ap?.status || 'a_aprovar'
-                    const cfg = st === 'aprovado' ? { t: 'Aprovado', c: '#1B5E20', bg: '#E8F5E9' }
-                              : st === 'reprovado' ? { t: 'Reprovado', c: '#C62828', bg: '#FFEBEE' }
-                              : { t: 'A aprovar', c: '#92400E', bg: 'rgba(234,179,8,0.18)' }
-                    return (
-                      <div key={b} style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                        <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--lt-text)', minWidth: 96 }}>{BLOCO_LABEL[b]}</span>
-                        <span style={{ fontSize: 10, fontWeight: 700, color: cfg.c, background: cfg.bg, padding: '2px 8px', borderRadius: 999, textTransform: 'uppercase', letterSpacing: 0.3 }}>{cfg.t}</span>
-                        {ap?.data_acao && <span style={{ fontSize: 10, color: 'var(--lt-text3)' }}>{new Date(ap.data_acao).toLocaleDateString('pt-BR')}</span>}
-                        {st === 'reprovado' && ap?.nota && <span style={{ fontSize: 11, color: '#C62828', fontStyle: 'italic' }}>— {ap.nota}</span>}
-                      </div>
-                    )
-                  })}
-                </div>
-              </div>
-            )}
             <div className="ms"><div className="ms-t">Identificação do Controle</div><div className="mr">{field('Ref. Risco', row.rr)}{field('Ref. Controle', row.rc)}</div><div className="mr">{field('Área', row.area)}{field('Subprocesso', row.sub)}</div><div className="mr">{field('Gerência', row.ger)}{field('Responsável Processo', row.resp_sub)}</div></div>
-            <div className="ms"><div className="ms-t">Cenário Atual</div>{row.cenario_atual && row.cenario_atual.trim() ? fieldText(null, row.cenario_atual) : <div style={{ fontSize: 12, color: '#C62828', fontStyle: 'italic', padding: '6px 10px', background: '#FFEBEE', borderLeft: '3px solid #C62828', borderRadius: 4 }}>— Não preenchido —</div>}</div>
-            <div className="ms"><div className="ms-t">Descrição do Risco</div>{fieldText(null, row.dr)}</div>
-            <div className="ms"><div className="ms-t">Descrição do Controle</div>{fieldText(null, row.dc)}</div>
+            <div className="ms"><div className="ms-t" style={{ display: 'flex', alignItems: 'center' }}>Cenário Atual{blocoBadge('cenario')}</div>{row.cenario_atual && row.cenario_atual.trim() ? fieldText(null, row.cenario_atual) : <div style={{ fontSize: 12, color: '#C62828', fontStyle: 'italic', padding: '6px 10px', background: '#FFEBEE', borderLeft: '3px solid #C62828', borderRadius: 4 }}>— Não preenchido —</div>}</div>
+            <div className="ms"><div className="ms-t" style={{ display: 'flex', alignItems: 'center' }}>Descrição do Risco{blocoBadge('risco')}</div>{fieldText(null, row.dr)}</div>
+            <div className="ms"><div className="ms-t" style={{ display: 'flex', alignItems: 'center' }}>Descrição do Controle{blocoBadge('controle')}</div>{fieldText(null, row.dc)}</div>
             <div className="ms"><div className="ms-t">Atributos do Controle</div><div className="mr3">{fieldTag('Categoria', row.cat)}{fieldTag('Frequência', row.freq)}{fieldTag('Natureza', row.nat)}</div><div className="mr3">{fieldTag('Característica', row.car)}{fieldTag('Sistema', row.sis)}{fieldTag('Controle Chave', row.chave)}</div>
               {!isDiagModal && (
                 <div className="mr" style={{ marginTop: 12 }}>
