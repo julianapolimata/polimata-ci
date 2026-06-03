@@ -236,7 +236,7 @@ function ColunasPanel({ visCols, setVisCols, open, onClose }) {
 const MRC_FASE_HDR = [
   { h: 'Fase 1\nDiagnóstico', bg: '#00203E' },
   { h: 'Fase 2\nE1 - Desenho', bg: '#1D3B5C' },
-  { h: 'Fase 2\nE2 - Efetividade', bg: '#1D3B5C' },
+  { h: 'Fase 2\nE2 - Aderência', bg: '#1D3B5C' },
   { h: 'Fase 3\nRevisão Integral', bg: '#660033' },
   { h: 'Fase 4\nAI - Ciclo 1', bg: '#660066' },
   { h: 'Fase 4\nAI - Ciclo 2', bg: '#660066' },

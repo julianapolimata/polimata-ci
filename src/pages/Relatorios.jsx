@@ -123,7 +123,7 @@ const SITUACAO_OPTIONS = [
 const FASE_OPTIONS = [
   { value: 'f1', label: 'F1 — Diagnóstico' },
   { value: 'f2e1', label: 'F2-E1 — Teste de Desenho' },
-  { value: 'f2e2', label: 'F2-E2 — Efetividade' },
+  { value: 'f2e2', label: 'F2-E2 — Aderência' },
   { value: 'f3', label: 'F3 — Revisão Integral' },
   { value: 'f4c1', label: 'F4-C1 — Auditoria Contínua' },
   { value: 'f4c2', label: 'F4-C2 — Auditoria Contínua' },

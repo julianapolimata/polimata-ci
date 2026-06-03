@@ -12,11 +12,14 @@
  * @param {Object} c - registro da MRC
  * @returns {Object} { codigo, numero, nome, label, resultado, cor, concluida? }
  */
+const NAO_CONTA = new Set(['teste não realizado', 'não iniciado', 'nao iniciado', 'n/a', ''])
+export const fezEtapa = (v) => !!v && !NAO_CONTA.has(String(v).trim().toLowerCase())
+
 export function getFaseInfo(c) {
   if (!c) return { ...FASES.F1 }
 
   // F5 concluída → ciclo completo
-  if (c.r_f5 && c.r_f5 !== 'Teste Não Realizado') {
+  if (fezEtapa(c.r_f5)) {
     return {
       codigo: 'F5', numero: 5,
       nome: 'Auditoria Independente',
@@ -28,7 +31,7 @@ export function getFaseInfo(c) {
   }
 
   // F4-C2 concluída → próxima é F5
-  if (c.r_f4c2 && c.r_f4c2 !== 'Teste Não Realizado') {
+  if (fezEtapa(c.r_f4c2)) {
     return {
       codigo: 'F5', numero: 5,
       nome: 'Auditoria Independente',
@@ -39,7 +42,7 @@ export function getFaseInfo(c) {
   }
 
   // F4-C1 concluída → próxima é F4-C2
-  if (c.r_f4c1 && c.r_f4c1 !== 'Teste Não Realizado') {
+  if (fezEtapa(c.r_f4c1)) {
     return {
       codigo: 'F4C2', numero: 4,
       nome: 'Auditoria Contínua',
@@ -50,7 +53,7 @@ export function getFaseInfo(c) {
   }
 
   // F3 concluída → próxima é F4-C1
-  if (c.r3 && c.r3 !== 'Teste Não Realizado') {
+  if (fezEtapa(c.r3)) {
     return {
       codigo: 'F4C1', numero: 4,
       nome: 'Auditoria Contínua',
@@ -61,7 +64,7 @@ export function getFaseInfo(c) {
   }
 
   // F2-E2 concluída → próxima é F3
-  if (c.r_ader && c.r_ader !== 'Teste Não Realizado') {
+  if (fezEtapa(c.r_ader)) {
     return {
       codigo: 'F3', numero: 3,
       nome: 'Revisão Integral',
@@ -72,7 +75,7 @@ export function getFaseInfo(c) {
   }
 
   // F2-E1 concluída → próxima é F2-E2
-  if (c.st_pa && c.st_pa !== '') {
+  if (fezEtapa(c.st_pa)) {
     return {
       codigo: 'F2E2', numero: 2,
       nome: 'Teste de Aderência',
@@ -83,7 +86,7 @@ export function getFaseInfo(c) {
   }
 
   // F1 concluída → depende do resultado
-  if (c.r1 && c.r1 !== 'Teste Não Realizado') {
+  if (fezEtapa(c.r1)) {
     // Atalho: F1 efetivo pula F2, vai direto para F3
     if (c.r1.toLowerCase() === 'efetivo') {
       return {

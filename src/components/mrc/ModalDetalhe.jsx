@@ -18,7 +18,7 @@ export function ModalDetalhe({ row, projeto, onClose, onEditar, primaryAction, s
   const isDiagModal = projeto?.f1_tem_teste === false
   const tabs = isDiagModal
     ? [{ id:'ident',label:'Identificação' },{ id:'f1',label:'Fase 1 · Diagnóstico Inicial' },{ id:'historico',label:'Histórico' }]
-    : [{ id:'ident',label:'Identificação' },{ id:'f1',label:'Fase 1 · Diagnóstico Inicial' },{ id:'f2e1',label:'Fase 2-E1 · Teste de Desenho' },{ id:'f2e2',label:'Fase 2-E2 · Teste de Aderência' },{ id:'f3',label:'Fase 3 · Revisão Controles Internos' },{ id:'f4c1',label:'Fase 4-C1 · Auditoria Contínua' },{ id:'f4c2',label:'Fase 4-C2 · Auditoria Contínua' },{ id:'f5',label:'Fase 5 · Auditoria Independente' },{ id:'historico',label:'Histórico' }]
+    : [{ id:'ident',label:'Identificação' },{ id:'f1',label:'Fase 1 · Diagnóstico Inicial' },{ id:'f2e1',label:'Fase 2-E1 · Teste de Desenho' },{ id:'f2e2',label:'Fase 2-E2 · Teste de Aderência' },{ id:'f3',label:'Fase 3 · Revisão Integral' },{ id:'f4c1',label:'Fase 4-C1 · Auditoria Contínua' },{ id:'f4c2',label:'Fase 4-C2 · Auditoria Contínua' },{ id:'f5',label:'Fase 5 · Auditoria Independente' },{ id:'historico',label:'Histórico' }]
   const field = (l, v, fw) => { if (!v || v === 'N/A' || v === '') return null; return <div style={fw ? { marginBottom: 12 } : {}}><div className="ml">{l}</div><div className="mv">{v}</div></div> }
   const fieldTag = (l, v) => { if (!v || v === 'N/A' || v === '') return null; return <div><div className="ml">{l}</div><div style={{ marginTop: 3 }}><span className="tag">{v}</span></div></div> }
   const fieldText = (l, v) => { if (!v || v === 'N/A' || v === '') return null; return <div style={{ marginBottom: 14 }}>{l && <div className="ml">{l}</div>}<div className="mv-t">{v}</div></div> }

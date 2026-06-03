@@ -25,7 +25,7 @@ const ACOES = [
 const CAMPO_LABELS = {
   r1: 'F1 — Diagnóstico',
   st_pa: 'F2-E1 — Teste de Desenho',
-  r_ader: 'F2-E2 — Efetividade',
+  r_ader: 'F2-E2 — Aderência',
   r3: 'F3 — Revisão Integral',
   r_f4c1: 'F4-C1 — Auditoria Contínua',
   r_f4c2: 'F4-C2 — Auditoria Contínua',

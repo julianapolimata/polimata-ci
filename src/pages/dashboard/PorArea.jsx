@@ -1,7 +1,7 @@
 import { useState, useMemo, useRef, useEffect } from 'react'
 import { useParams } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
-import { getResultadoVitrine, getFaseLabel, getStatusComputado, getFaseDisplayOverride, normalizeFaseValue } from '../../lib/fases'
+import { getResultadoVitrine, getFaseLabel, getFaseInfo, getStatusComputado, getFaseDisplayOverride, normalizeFaseValue, fezEtapa } from '../../lib/fases'
 import { formatNomeEmpresa } from '../../lib/formatNome'
 import { getNivelMaturidade } from '../../lib/calculoMaturidade'
 import { getStatusConfig, getProximaAcao } from '../../lib/statusWorkflow'
@@ -226,13 +226,13 @@ export default function PorArea({ projeto, areasCalc, todosControles, loading, n
   const fasesDisponiveis = [...new Set(area.controles.map(c => getFaseCodigo(c)).filter(v => v))].sort()
 
   function faseLabel(c) {
-    if (c.r_f5 && c.r_f5 !== 'Teste Não Realizado') return { f: 'Auditoria Independente', s: c.r_f5 }
-    if (c.r_f4c2 && c.r_f4c2 !== 'Teste Não Realizado') return { f: 'Auditoria Contínua — Ciclo 2', s: c.r_f4c2 }
-    if (c.r_f4c1 && c.r_f4c1 !== 'Teste Não Realizado') return { f: 'Auditoria Contínua — Ciclo 1', s: c.r_f4c1 }
-    if (c.r3 && c.r3 !== 'Teste Não Realizado') return { f: 'Revisão Controles Internos', s: c.r3 }
-    if (c.r_ader && c.r_ader !== 'Teste Não Realizado') return { f: 'Teste de Aderência', s: c.r_ader }
-    if (c.st_pa && c.st_pa !== '') return { f: 'Teste de Desenho', s: c.st_pa }
-    if (c.r1 && c.r1 !== 'Teste Não Realizado') return { f: 'Teste de Aderência', s: 'Teste Não Realizado' }
+    if (fezEtapa(c.r_f5)) return { f: 'Auditoria Independente', s: c.r_f5 }
+    if (fezEtapa(c.r_f4c2)) return { f: 'Auditoria Contínua — Ciclo 2', s: c.r_f4c2 }
+    if (fezEtapa(c.r_f4c1)) return { f: 'Auditoria Contínua — Ciclo 1', s: c.r_f4c1 }
+    if (fezEtapa(c.r3)) return { f: 'Revisão Integral', s: c.r3 }
+    if (fezEtapa(c.r_ader)) return { f: 'Teste de Aderência', s: c.r_ader }
+    if (fezEtapa(c.st_pa)) return { f: 'Teste de Desenho', s: c.st_pa }
+    if (fezEtapa(c.r1)) return String(c.r1).toLowerCase() === 'efetivo' ? { f: 'Revisão Integral', s: 'Teste Não Realizado' } : { f: 'Teste de Desenho', s: 'Teste Não Realizado' }
     return { f: 'Diagnóstico Inicial', s: 'Teste Não Realizado' }
   }
 
@@ -307,7 +307,7 @@ export default function PorArea({ projeto, areasCalc, todosControles, loading, n
   const FASE_HDR_FULL = [
     { h: 'Fase 1\nDiagnóstico', bg: '#00203E' },
     { h: 'Fase 2\nE1 - Desenho', bg: '#1D3B5C' },
-    { h: 'Fase 2\nE2 - Efetividade', bg: '#1D3B5C' },
+    { h: 'Fase 2\nE2 - Aderência', bg: '#1D3B5C' },
     { h: 'Fase 3\nRevisão Integral', bg: '#660033' },
     { h: 'Fase 4\nAI - Ciclo 1', bg: '#660066' },
     { h: 'Fase 4\nAI - Ciclo 2', bg: '#660066' },
@@ -320,9 +320,13 @@ export default function PorArea({ projeto, areasCalc, todosControles, loading, n
   // Width por fase: largura padrão 90; em diagnóstico, F1 fica 130 (cabe "INEXISTENTE")
   const FASE_W_PARA = (idx) => (isDiagnostico && idx === 0) ? 130 : 90
   // Render de cada fase para uma linha
+  const KEY_POR_FASE = { F1: 'r1', F2E1: 'st_pa', F2E2: 'r_ader', F3: 'r3', F4C1: 'r_f4c1', F4C2: 'r_f4c2', F5: 'r_f5' }
   function renderFaseCell(c, idx) {
     if (isDiagnostico && idx === 0) return badgeExistencia(c.existencia)
     const key = PA_FASE_KEYS[idx]
+    if (['teste_pendente', 'em_analise', 'em_revisao'].includes(c.status_workflow) && KEY_POR_FASE[getFaseInfo(c).codigo] === key && !fezEtapa(c[key])) {
+      return <span style={{ ...bdgS, color: '#92400E', background: 'rgba(234,179,8,0.15)' }}>Em Análise</span>
+    }
     return badgeFase(faseVal(c, key, c[key]))
   }
   const FASE_W = 90
