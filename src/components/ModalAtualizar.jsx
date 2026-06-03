@@ -387,7 +387,8 @@ const ModalAtualizar = ({ row, onClose, onSaved, areas, projeto }) => {
           )}
         </div>
 
-        {/* STEPPER */}
+        {/* STEPPER (oculto ao editar uma seção direto) */}
+        {blocosReabrir.length === 0 && (
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '12px 24px', gap: 0 }}>
           {[1, 2, 3, 4].map((s) => (
             <React.Fragment key={s}>
@@ -416,6 +417,7 @@ const ModalAtualizar = ({ row, onClose, onSaved, areas, projeto }) => {
             </React.Fragment>
           ))}
         </div>
+        )}
 
         {/* BODY */}
         <div style={{ flex: 1, padding: 24, overflow: 'y', overflowY: 'auto' }}>
