@@ -9,6 +9,7 @@ import { useConfirm } from './ConfirmDialog'
 
 const ModalNovoRisco = ({ onClose, onSaved, areas, projeto, areaFixa }) => {
   const isDiag = projeto?.f1_tem_teste === false
+  const FRASE_SEM_CONTROLE = 'Não identificamos controle para mitigação deste risco.'
   // ═══ STATE ═══
   const [step, setStep] = useState(1)
   const { confirm } = useConfirm()
@@ -31,11 +32,13 @@ const ModalNovoRisco = ({ onClose, onSaved, areas, projeto, areaFixa }) => {
   // PASSO 1: Identificação
   const [area, setArea] = useState(areaFixa?.id || '')
   const [subprocesso, setSubprocesso] = useState('')
+  const [cenarioAtual, setCenarioAtual] = useState('')
   const [descRisco, setDescRisco] = useState('')
   // gerencia e respSub vêm do cadastro da área (não editáveis)
 
   // PASSO 2: Características & Premissas
   const [descControle, setDescControle] = useState('')
+  const [existencia, setExistencia] = useState('')
   const [cat, setCat] = useState('')
   const [freq, setFreq] = useState('')
   const [nat, setNat] = useState('')
@@ -68,7 +71,7 @@ const ModalNovoRisco = ({ onClose, onSaved, areas, projeto, areaFixa }) => {
     const { data } = await supabase.auth.getUser()
     if (data.user) {
       const { data: profile } = await supabase
-        .from('profiles')
+        .from('perfis')
         .select('*')
         .eq('id', data.user.id)
         .single()
@@ -102,12 +105,28 @@ const ModalNovoRisco = ({ onClose, onSaved, areas, projeto, areaFixa }) => {
   // ═══ LÓGICA ═══
   const isAutomatic = car === 'Automatizado'
 
+  // Existência (diagnóstico): Inexistente preenche a descrição com a frase padrão
+  function handleExistencia(v) {
+    setExistencia(v)
+    if (v === 'Inexistente') {
+      setDescControle(FRASE_SEM_CONTROLE)
+    } else if (descControle === FRASE_SEM_CONTROLE) {
+      setDescControle('')
+    }
+  }
+
   // ═══ VALIDAÇÕES ═══
   const canAdvanceStep1 = area && subprocesso && descRisco.trim()
 
-  const canAdvanceStep2 = descControle.trim() && cat && freq && nat && car && sis && chave &&
+  const ehInexistente = isDiag && existencia === 'Inexistente'
+  const ehParcial = isDiag && existencia === 'Parcial'
+  const temRNA = [cat, freq, nat, car, sis].includes('Requisito Não Atendido')
+  const canAdvanceStep2 = (!isDiag || !!existencia) && descControle.trim() && (ehInexistente || (
+    cat && freq && nat && car && sis && chave &&
     (isAutomatic || quem.trim()) && quando.trim() && porque.trim() && como.trim() &&
-    onde.trim() && resultadoPremissa.trim()
+    onde.trim() && resultadoPremissa.trim() &&
+    (!ehParcial || temRNA)
+  ))
 
   // Passo 3: ao menos um passo com descrição preenchida
   const canSaveStep3 = passos.some(p => (p.descricao || '').trim() !== '')
@@ -145,6 +164,7 @@ const ModalNovoRisco = ({ onClose, onSaved, areas, projeto, areaFixa }) => {
         ger: areaObj?.gerente || '',
         resp_sub: areaObj?.resp_processo || '',
         dr: descRisco,
+        cenario_atual: cenarioAtual.trim() || null,
         area_id: area,
         projeto_id: projeto.id
       }
@@ -160,8 +180,22 @@ const ModalNovoRisco = ({ onClose, onSaved, areas, projeto, areaFixa }) => {
   }
 
   // ═══ AVANÇAR DO PASSO 2 ═══
-  function saveStep2() {
-    if (isDiag) { alert('\u2705 Risco e controle salvos!'); onSaved?.(); onClose?.(); return }
+  async function saveStep2() {
+    if (isDiag) {
+      setSaving(true)
+      try {
+        const saved = await salvarNoBanco()
+        if (!saved) throw new Error('Falha ao salvar no banco')
+        setNovoRiscoData(saved)
+        setComentarioFor({ controle: saved, acao: 'Risco e controle salvos' })
+      } catch (err) {
+        console.error('Erro ao salvar:', err)
+        alert('Erro ao salvar: ' + (err.message || err))
+      } finally {
+        setSaving(false)
+      }
+      return
+    }
     setStep(3)
   }
 
@@ -172,6 +206,7 @@ const ModalNovoRisco = ({ onClose, onSaved, areas, projeto, areaFixa }) => {
     const payload = {
       ...novoRiscoData,
       dc: descControle,
+      ...(isDiag ? { existencia: existencia || null } : {}),
       cat, freq, nat, car, sis, chave,
       premissa_quem: isAutomatic ? 'N/A' : quem,
       premissa_quando: quando,
@@ -182,6 +217,8 @@ const ModalNovoRisco = ({ onClose, onSaved, areas, projeto, areaFixa }) => {
       dt_implementacao: dtImplementacao || null,
       status_workflow: 'nao_iniciado',
       ativo: true,
+      atualizado_por: perfil?.id || null,
+      atualizado_em: new Date().toISOString(),
     }
 
     let saved
@@ -191,12 +228,12 @@ const ModalNovoRisco = ({ onClose, onSaved, areas, projeto, areaFixa }) => {
       if (error) throw error
       saved = updated?.[0] || novoRiscoData
     } else {
-      const { data: inserted, error } = await supabase.from('mrc').insert([payload]).select()
+      const { data: inserted, error } = await supabase.from('mrc').insert([{ ...payload, criado_por: perfil?.id || null }]).select()
       if (error) throw error
       saved = inserted?.[0] || null
     }
 
-    if (saved?.id) {
+    if (saved?.id && !isDiag) {
       try {
         await syncPassosESolicitacoes({ controle: saved, passos, projetoId: projeto.id })
       } catch (e) {
@@ -228,7 +265,7 @@ const ModalNovoRisco = ({ onClose, onSaved, areas, projeto, areaFixa }) => {
         baseData = {
           rr: refRisco, rc: refControle, sub: subprocesso, subprocesso_id: subObj?.id || null,
           ger: areaObj?.gerente || '', resp_sub: areaObj?.resp_processo || '',
-          dr: descRisco, area_id: area, projeto_id: projeto.id,
+          dr: descRisco, cenario_atual: cenarioAtual.trim() || null, area_id: area, projeto_id: projeto.id,
         }
       }
       // Payload: salva só os campos dos steps já visitados pelo usuário.
@@ -237,6 +274,7 @@ const ModalNovoRisco = ({ onClose, onSaved, areas, projeto, areaFixa }) => {
       const payload = { ...baseData, status_workflow: 'rascunho', ativo: true }
       if (step >= 2) {
         if (descControle) payload.dc = descControle
+        if (isDiag && existencia) payload.existencia = existencia
         if (cat) payload.cat = cat
         if (freq) payload.freq = freq
         if (nat) payload.nat = nat
@@ -363,9 +401,9 @@ const ModalNovoRisco = ({ onClose, onSaved, areas, projeto, areaFixa }) => {
 
         {/* BODY */}
         <div style={{ flex: 1, padding: 24, overflowY: 'auto' }}>
-          <StepIdentificacao step={step} area={area} setArea={setArea} subprocesso={subprocesso} setSubprocesso={setSubprocesso} descRisco={descRisco} setDescRisco={setDescRisco} areas={areas} areaFixa={areaFixa} subprocessos={subprocessos} />
+          <StepIdentificacao step={step} area={area} setArea={setArea} subprocesso={subprocesso} setSubprocesso={setSubprocesso} descRisco={descRisco} setDescRisco={setDescRisco} cenarioAtual={cenarioAtual} setCenarioAtual={setCenarioAtual} areas={areas} areaFixa={areaFixa} subprocessos={subprocessos} />
 
-          <StepCaracteristicas isAutomatic={isAutomatic} step={step} descControle={descControle} setDescControle={setDescControle} cat={cat} setCat={setCat} freq={freq} setFreq={setFreq} nat={nat} setNat={setNat} car={car} setCar={setCar} sis={sis} setSis={setSis} chave={chave} setChave={setChave} quem={quem} setQuem={setQuem} quando={quando} setQuando={setQuando} porque={porque} setPorque={setPorque} como={como} setComo={setComo} onde={onde} setOnde={setOnde} resultadoPremissa={resultadoPremissa} setResultadoPremissa={setResultadoPremissa} dtImplementacao={dtImplementacao} setDtImplementacao={setDtImplementacao} sistemas={sistemas} />
+          <StepCaracteristicas isAutomatic={isAutomatic} step={step} isDiag={isDiag} existencia={existencia} setExistencia={handleExistencia} descControle={descControle} setDescControle={setDescControle} cat={cat} setCat={setCat} freq={freq} setFreq={setFreq} nat={nat} setNat={setNat} car={car} setCar={setCar} sis={sis} setSis={setSis} chave={chave} setChave={setChave} quem={quem} setQuem={setQuem} quando={quando} setQuando={setQuando} porque={porque} setPorque={setPorque} como={como} setComo={setComo} onde={onde} setOnde={setOnde} resultadoPremissa={resultadoPremissa} setResultadoPremissa={setResultadoPremissa} dtImplementacao={dtImplementacao} setDtImplementacao={setDtImplementacao} sistemas={sistemas} />
 
           <StepPassos step={step} passos={passos} setPassos={setPassos} saving={saving} novoRiscoData={novoRiscoData} subprocesso={subprocesso} />
 

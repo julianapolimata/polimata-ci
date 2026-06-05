@@ -83,10 +83,11 @@ const ModalRevisar = ({ row, onClose, onAction, projeto }) => {
   }, [row?.id])
 
   useEffect(() => {
-    if (!row?.submetido_por) { setSubmetidoPorNome(null); return }
-    supabase.from('perfis').select('nome').eq('id', row.submetido_por).maybeSingle()
+    const autorId = row?.submetido_por || row?.criado_por
+    if (!autorId) { setSubmetidoPorNome(null); return }
+    supabase.from('perfis').select('nome').eq('id', autorId).maybeSingle()
       .then(({ data }) => setSubmetidoPorNome(data?.nome || null))
-  }, [row?.submetido_por])
+  }, [row?.submetido_por, row?.criado_por])
 
   useEffect(() => {
     if (!row?.consultor_id) { setConsultorResponsavelNome(null); return }
@@ -170,7 +171,7 @@ const ModalRevisar = ({ row, onClose, onAction, projeto }) => {
         else { updates.aprovado_por = user?.id; updates.aprovado_em = new Date().toISOString(); if (row.edicao_pendente) updates.edicao_pendente = false }
       }
       await supabase.from('mrc').update(updates).eq('id', row.id)
-      const destinatarioId = row.consultor_id || row.submetido_por
+      const destinatarioId = row.consultor_id || row.submetido_por || row.criado_por
 
       if (geral === 'reprovado') {
         const detalhe = reprovados.map(r => `${BLOCO_LABEL[r.b]}: ${r.ap?.nota || '(sem nota)'}`).join(' | ')
@@ -367,12 +368,12 @@ const ModalRevisar = ({ row, onClose, onAction, projeto }) => {
             </div>
           </div>
 
-          {/* Submissão */}
+          {/* Submissão / Criação */}
           <div style={S.section}>
-            <div style={S.sectionTitle}>Submissão</div>
+            <div style={S.sectionTitle}>{row?.submetido_por ? 'Submissão' : 'Criação'}</div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
-              <div><div style={S.label}>Submetido por</div><div style={S.value}>{submetidoPorNome || (row?.submetido_por ? '—' : '—')}</div></div>
-              <div><div style={S.label}>Submetido em</div><div style={S.value}>{row?.submetido_em ? new Date(row.submetido_em).toLocaleString('pt-BR') : '—'}</div></div>
+              <div><div style={S.label}>{row?.submetido_por ? 'Submetido por' : 'Criado por'}</div><div style={S.value}>{submetidoPorNome || '—'}</div></div>
+              <div><div style={S.label}>{row?.submetido_por ? 'Submetido em' : 'Criado em'}</div><div style={S.value}>{(row?.submetido_em || row?.criado_em) ? new Date(row.submetido_em || row.criado_em).toLocaleString('pt-BR') : '—'}</div></div>
               <div><div style={S.label}>Consultor responsável</div><div style={S.value}>{consultorResponsavelNome || '—'}</div></div>
             </div>
           </div>

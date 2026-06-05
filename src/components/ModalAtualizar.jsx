@@ -64,6 +64,9 @@ const ModalAtualizar = ({ row, onClose, onSaved, areas, projeto, irParaFicha }) 
   const [editCar, setEditCar] = useState(row.car || '')
   const [editSis, setEditSis] = useState(row.sis || '')
   const [editChave, setEditChave] = useState(row.chave || '')
+  const [existencia, setExistencia] = useState(row.existencia || '')
+  const [sistemas, setSistemas] = useState([])
+  const FRASE_SEM_CONTROLE = 'Não identificamos controle para mitigação deste risco.'
 
   // Premissas (Step 2)
   const [pq, setPq] = useState(row.premissa_porque || '')
@@ -107,7 +110,7 @@ const ModalAtualizar = ({ row, onClose, onSaved, areas, projeto, irParaFicha }) 
     const { data } = await supabase.auth.getUser()
     if (data.user) {
       const { data: profile } = await supabase
-        .from('profiles')
+        .from('perfis')
         .select('*')
         .eq('id', data.user.id)
         .single()
@@ -151,17 +154,47 @@ const ModalAtualizar = ({ row, onClose, onSaved, areas, projeto, irParaFicha }) 
     return true
   })()
 
+  // Sistemas cadastrados do cliente (corrige lista fixa que misturava clientes)
+  useEffect(() => {
+    if (!projeto?.cliente_id) return
+    supabase.from('sistemas').select('id, nome').eq('cliente_id', projeto.cliente_id).order('nome')
+      .then(({ data }) => { if (data) setSistemas(data) })
+  }, [projeto?.cliente_id])
+
+  // Existência (diagnóstico): Inexistente preenche a descrição com a frase padrão
+  function handleExistencia(v) {
+    setExistencia(v)
+    if (v === 'Inexistente') {
+      setCtrlDescChoice('sim')
+      setNovaDescControle(FRASE_SEM_CONTROLE)
+    } else if (novaDescControle === FRASE_SEM_CONTROLE) {
+      setNovaDescControle('')
+    }
+  }
+
   // Validação Step 2
   const canAdvanceStep2 = (() => {
+    if (isDiag && !existencia) return false
+    if (isDiag && existencia === 'Inexistente') return !!novaDescControle.trim()
     if (ctrlDescChoice === null) return false
     if (ctrlDescChoice === 'sim') {
       if (!novaDescControle.trim()) return false
       if (!editCat || !editFreq || !editNat || !editCar || !editSis || !editChave) return false
       if (!isAutomatic && !quem.trim()) return false
       if (!quando.trim() || !pq.trim() || !como.trim() || !onde.trim() || !resultado.trim()) return false
+      if (isDiag && existencia === 'Parcial' && ![editCat, editFreq, editNat, editCar, editSis].includes('Requisito Não Atendido')) return false
     }
     return true
   })()
+
+  // Validação por bloco (item 11): só valida os blocos efetivamente reabertos
+  const canEnviarRevisao = blocosReabrir.length > 0
+    ? blocosReabrir.every(b =>
+        b === 'risco' ? canAdvanceStep1 :
+        b === 'controle' ? canAdvanceStep2 :
+        b === 'cenario' ? cenarioAtual.trim().length > 0 :
+        true)
+    : (canAdvanceStep1 && canAdvanceStep2)
 
   // Validação Step 3 (Passos de Teste — Solicitações v2)
   // Não trava — passos são opcionais; usuário pode avançar sem nenhum.
@@ -331,6 +364,7 @@ const ModalAtualizar = ({ row, onClose, onSaved, areas, projeto, irParaFicha }) 
         premissa_como: como,
         premissa_resultado: resultado,
         cenario_atual: cenarioAtual.trim() || null,
+        ...(isDiag ? { existencia: existencia || null } : {}),
         dt_implementacao: dtImplementacao || null,
         status_workflow: 'teste_pendente',
         atualizado_em: new Date().toISOString(),
@@ -367,7 +401,7 @@ const ModalAtualizar = ({ row, onClose, onSaved, areas, projeto, irParaFicha }) 
 
   // ═══ SALVAR E ENVIAR PARA REVISÃO (edição de seção; sem ficha; exige nova ficha após aprovação) ═══
   async function handleSalvarEnviarRevisao() {
-    if (!canAdvanceStep1 || !canAdvanceStep2) { alert('Preencha os campos obrigatórios (Risco, Controle e Premissas) antes de enviar para revisão.'); return }
+    if (!canEnviarRevisao) { alert('Preencha os campos obrigatórios da(s) seção(ões) em edição antes de enviar para revisão.'); return }
     setSaving(true)
     try {
       const updates = {
@@ -377,6 +411,7 @@ const ModalAtualizar = ({ row, onClose, onSaved, areas, projeto, irParaFicha }) 
         premissa_porque: pq, premissa_quando: quando, premissa_onde: onde,
         premissa_quem: isAutomatic ? 'N/A' : quem, premissa_como: como, premissa_resultado: resultado,
         cenario_atual: cenarioAtual.trim() || null,
+        ...(isDiag ? { existencia: existencia || null } : {}),
         dt_implementacao: dtImplementacao || null,
         status_workflow: 'em_revisao',
         edicao_pendente: !isDiag,
@@ -392,6 +427,24 @@ const ModalAtualizar = ({ row, onClose, onSaved, areas, projeto, irParaFicha }) 
       for (const b of blocosReabrir) {
         try { await reabrirBloco({ mrcId: row.id, bloco: b, fase: faseDoBloco(b, row) }) } catch (e) { console.error('reabrirBloco:', e) }
       }
+      // Notificar revisores (admins): notificação interna + e-mail
+      try {
+        const { data: admins } = await supabase.from('perfis').select('id').eq('papel', 'admin_polimata').eq('ativo', true)
+        if (admins && admins.length > 0) {
+          await supabase.from('notificacoes').insert(admins.map(a => ({
+            para_id: a.id, de_id: perfil?.id, tipo: 'submissao',
+            titulo: `Edição submetida — ${row.rc || row.rr}`,
+            mensagem: `${row.rc} (${row.area}) foi enviado para revisão após edição${blocosReabrir.length ? ` (${blocosReabrir.map(b => SECAO_LABEL[b] || b).join(', ')})` : ''}.`,
+            lida: false, mrc_id: row.id,
+          })))
+          admins.forEach(a => {
+            if (a.id === perfil?.id) return
+            supabase.functions.invoke('send-email', {
+              body: { type: 'review_submitted', data: { revisor_id: a.id, autor_id: perfil?.id, ref: row.rc || row.rr, descricao: row.dc || '', area_id: row.area_id } }
+            }).catch(err => console.error('Erro ao enviar email de revisão:', err))
+          })
+        }
+      } catch (e) { console.error('Notificação de revisão:', e) }
       logAtualizarControle(row, row.projeto_id)
       alert('✅ Alterações salvas e enviadas para revisão. Após a aprovação, será necessário baixar uma nova ficha (Ficha Pendente).')
       onSaved?.()
@@ -501,9 +554,13 @@ const ModalAtualizar = ({ row, onClose, onSaved, areas, projeto, irParaFicha }) 
               )}
               {step === 2 && (
                 <>
-                  <SecaoCenarioAtual cenarioAtual={cenarioAtual} setCenarioAtual={setCenarioAtual} />
+                  {(blocosReabrir.length === 0 || blocosReabrir.includes('cenario')) && (
+                    <SecaoCenarioAtual cenarioAtual={cenarioAtual} setCenarioAtual={setCenarioAtual} />
+                  )}
+                  {(blocosReabrir.length === 0 || blocosReabrir.includes('controle')) && (
                   <StepControle
                   row={row}
+                  isDiag={isDiag} existencia={existencia} setExistencia={handleExistencia} sistemas={sistemas}
                   ctrlDescChoice={ctrlDescChoice} setCtrlDescChoice={setCtrlDescChoice}
                   novaDescControle={novaDescControle} setNovaDescControle={setNovaDescControle}
                   editCat={editCat} setEditCat={setEditCat}
@@ -521,6 +578,7 @@ const ModalAtualizar = ({ row, onClose, onSaved, areas, projeto, irParaFicha }) 
                   dtImplementacao={dtImplementacao} setDtImplementacao={setDtImplementacao}
                   isAutomatic={isAutomatic}
                   />
+                  )}
                 </>
               )}
               {step === 3 && (
@@ -575,7 +633,7 @@ const ModalAtualizar = ({ row, onClose, onSaved, areas, projeto, irParaFicha }) 
                 </>
               )}
               {(blocosReabrir.length > 0 || (isDiag && step === 2)) && (
-                <button onClick={handleSalvarEnviarRevisao} disabled={saving || !canAdvanceStep1 || !canAdvanceStep2} title={(!canAdvanceStep1 || !canAdvanceStep2) ? 'Preencha os campos obrigatórios (Risco, Controle e Premissas) antes de enviar.' : ''} style={{ flex: 2, padding: '10px 14px', border: 'none', borderRadius: 6, fontFamily: 'Montserrat, sans-serif', fontSize: 12, fontWeight: 700, cursor: (saving || !canAdvanceStep1 || !canAdvanceStep2) ? 'not-allowed' : 'pointer', background: '#15803D', color: 'white', opacity: (saving || !canAdvanceStep1 || !canAdvanceStep2) ? 0.5 : 1 }}>
+                <button onClick={handleSalvarEnviarRevisao} disabled={saving || !canEnviarRevisao} title={!canEnviarRevisao ? 'Preencha os campos obrigatórios da(s) seção(ões) em edição antes de enviar.' : ''} style={{ flex: 2, padding: '10px 14px', border: 'none', borderRadius: 6, fontFamily: 'Montserrat, sans-serif', fontSize: 12, fontWeight: 700, cursor: (saving || !canEnviarRevisao) ? 'not-allowed' : 'pointer', background: '#15803D', color: 'white', opacity: (saving || !canEnviarRevisao) ? 0.5 : 1 }}>
                   {saving ? 'Salvando...' : '✓ Salvar e enviar para revisão'}
                 </button>
               )}

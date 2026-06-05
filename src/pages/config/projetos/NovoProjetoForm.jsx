@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { supabase } from '../../../lib/supabase'
 import { formatNomeEmpresa } from '../../../lib/formatNome'
 import { FASES_LABEL, FASES_DETALHE } from './_consts'
+import { vincularResponsavelAoProjeto } from '../../../lib/vinculoConsultor'
 
 function NovoProjetoForm({ clientes, perfisPolimata, onSave, onCancel }) {
   const [form, setForm] = useState({
@@ -24,7 +25,7 @@ function NovoProjetoForm({ clientes, perfisPolimata, onSave, onCancel }) {
     }
     setSaving(true); setErro('')
     try {
-      const { error } = await supabase.from('projetos').insert({
+      const { data: novoProj, error } = await supabase.from('projetos').insert({
         nome: form.nome.trim(),
         cliente_id: form.cliente_id,
         descricao: form.descricao.trim() || null,
@@ -39,8 +40,13 @@ function NovoProjetoForm({ clientes, perfisPolimata, onSave, onCancel }) {
         sponsor_sobrenome: form.sponsor_sobrenome.trim() || null,
         sponsor_cargo: form.sponsor_cargo.trim() || null,
         sponsor_email: form.sponsor_email.trim() || null,
-      })
+      }).select('id').single()
       if (error) throw new Error(error.message)
+      // Consultor responsável: habilita acesso ao projeto + e-mail de aviso
+      if (form.consultor_responsavel_id && novoProj?.id) {
+        const consultorSel = perfisPolimata.find(x => x.id === form.consultor_responsavel_id)
+        await vincularResponsavelAoProjeto(consultorSel, novoProj.id)
+      }
       onSave()
     } catch(e) { setErro(e.message); setSaving(false) }
   }

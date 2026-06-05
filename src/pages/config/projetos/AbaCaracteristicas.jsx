@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 import { supabase } from '../../../lib/supabase'
 import { FASES_LABEL, FASES_DETALHE } from './_consts'
 import InfoCell from './InfoCell'
+import { vincularResponsavelAoProjeto } from '../../../lib/vinculoConsultor'
 
 function AbaCaracteristicas({ dados, perfisPolimata = [], onUpdate, editando, setEditando }) {
   const [form, setForm] = useState({})
@@ -84,6 +85,11 @@ function AbaCaracteristicas({ dados, perfisPolimata = [], onUpdate, editando, se
       }
       const { error } = await supabase.from('projetos').update(payload).eq('id', dados.id)
       if (error) throw new Error(error.message)
+      // Consultor responsável novo: habilita acesso ao projeto + e-mail de aviso
+      if (form.consultor_responsavel_id && form.consultor_responsavel_id !== (dados.consultor_responsavel_id || '')) {
+        const consultorSel = perfisPolimata.find(x => x.id === form.consultor_responsavel_id)
+        await vincularResponsavelAoProjeto(consultorSel, dados.id)
+      }
       setEditando(false); onUpdate()
     } catch(e) { setErro(e.message); setSaving(false) }
   }

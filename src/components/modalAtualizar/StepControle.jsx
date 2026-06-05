@@ -4,6 +4,7 @@ import React from 'react'
 
 export default function StepControle({
   row,
+  isDiag, existencia, setExistencia, sistemas = [],
   ctrlDescChoice, setCtrlDescChoice,
   novaDescControle, setNovaDescControle,
   editCat, setEditCat,
@@ -40,6 +41,22 @@ export default function StepControle({
           <div style={{ fontSize: 12, color: '#00203E', marginTop: 6, lineHeight: 1.6 }}>{row.dc}</div>
         </div>
       </div>
+
+      {/* Existência do Controle (diagnóstico) */}
+      {isDiag && (
+        <div style={{ marginBottom: 20 }}>
+          <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#00203E', marginBottom: 6 }}>Existência do Controle *</label>
+          <select value={existencia} onChange={(e) => setExistencia(e.target.value)} style={{ width: '100%', padding: 10, border: '1px solid #e5e7eb', borderRadius: 6, fontFamily: 'Montserrat, sans-serif', fontSize: 12 }}>
+            <option value="">Selecione...</option>
+            <option>Existente</option>
+            <option>Parcial</option>
+            <option>Inexistente</option>
+          </select>
+          {existencia === 'Parcial' && (
+            <div style={{ fontSize: 11, color: '#7A5C00', marginTop: 6 }}>Controle parcial: marque "Requisito Não Atendido" nas características em que o controle falha (pelo menos uma).</div>
+          )}
+        </div>
+      )}
 
       {/* Data de implementação (item 29) */}
       <div style={{ marginBottom: 20, background: '#FFF8E1', border: '1px solid #F0E0A8', borderRadius: 8, padding: '10px 12px' }}>
@@ -137,6 +154,7 @@ export default function StepControle({
                   <option>Segregação de Funções</option>
                   <option>Configuração</option>
                   <option>N/A</option>
+                  {isDiag && existencia === 'Parcial' && <option>Requisito Não Atendido</option>}
                 </select>
               </div>
               <div>
@@ -153,6 +171,7 @@ export default function StepControle({
                   <option>Semestral</option>
                   <option>Anual</option>
                   <option>N/A</option>
+                  {isDiag && existencia === 'Parcial' && <option>Requisito Não Atendido</option>}
                 </select>
               </div>
               <div>
@@ -162,6 +181,7 @@ export default function StepControle({
                   <option>Preventivo</option>
                   <option>Detectivo</option>
                   <option>N/A</option>
+                  {isDiag && existencia === 'Parcial' && <option>Requisito Não Atendido</option>}
                 </select>
               </div>
               <div>
@@ -172,16 +192,17 @@ export default function StepControle({
                   <option>Semi-Automatizado</option>
                   <option>Automatizado</option>
                   <option>N/A</option>
+                  {isDiag && existencia === 'Parcial' && <option>Requisito Não Atendido</option>}
                 </select>
               </div>
               <div>
                 <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#00203E', marginBottom: 6 }}>Sistema *</label>
                 <select value={editSis} onChange={(e) => setEditSis(e.target.value)} style={{ width: '100%', padding: 10, border: '1px solid #e5e7eb', borderRadius: 6, fontFamily: 'Montserrat, sans-serif', fontSize: 12 }}>
                   <option value="">Selecione...</option>
-                  <option>IBID</option>
-                  <option>Fluig</option>
-                  <option>Totvs Data Sul</option>
                   <option>N/A</option>
+                  {sistemas.map(sis => <option key={sis.id} value={sis.nome}>{sis.nome}</option>)}
+                  {editSis && editSis !== 'N/A' && editSis !== 'Requisito Não Atendido' && !sistemas.some(sis => sis.nome === editSis) && <option value={editSis}>{editSis}</option>}
+                  {isDiag && existencia === 'Parcial' && <option>Requisito Não Atendido</option>}
                 </select>
               </div>
               <div>

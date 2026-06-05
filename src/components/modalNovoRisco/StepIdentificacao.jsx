@@ -1,7 +1,7 @@
 // StepIdentificacao — bloco JSX extraído de ModalNovoRisco.jsx em 22/mai/2026 (fatiamento Etapa 5).
 import React from 'react'
 
-export default function StepIdentificacao({ step, area, setArea, subprocesso, setSubprocesso, descRisco, setDescRisco, areas, areaFixa, subprocessos }) {
+export default function StepIdentificacao({ step, area, setArea, subprocesso, setSubprocesso, cenarioAtual, setCenarioAtual, descRisco, setDescRisco, areas, areaFixa, subprocessos }) {
   return (
     <>
           {/* ─────────── PASSO 1 ─────────── */}
@@ -86,6 +86,35 @@ export default function StepIdentificacao({ step, area, setArea, subprocesso, se
                     <option key={s.id} value={s.nome}>{s.nome}</option>
                   ))}
                 </select>
+              </div>
+
+              <div style={{ marginBottom: '2rem' }}>
+                <label style={{
+                  display: 'block',
+                  fontSize: '13px',
+                  fontWeight: 500,
+                  color: '#00203E',
+                  marginBottom: '0.5rem',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.3px'
+                }}>
+                  Cenário Atual
+                </label>
+                <textarea
+                  value={cenarioAtual}
+                  onChange={e => setCenarioAtual(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '0.8rem',
+                    border: '1px solid #D0D0D0',
+                    borderRadius: '4px',
+                    fontFamily: 'Montserrat, sans-serif',
+                    fontSize: '14px',
+                    minHeight: '80px',
+                    resize: 'vertical'
+                  }}
+                  placeholder="Descreva como o processo é executado hoje."
+                />
               </div>
 
               <div style={{ marginBottom: '2rem' }}>

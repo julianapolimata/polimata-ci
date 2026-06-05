@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 import { supabase } from '../../../lib/supabase'
 import { formatNomeEmpresa } from '../../../lib/formatNome'
 import { PAPEIS } from './_consts'
+import { notificarVinculoConsultor } from '../../../lib/vinculoConsultor'
 
 function EditarUsuarioForm({ usuario, clientes, areas, projetos, onSave, onCancel }) {
   const [form, setForm] = useState({
@@ -11,6 +12,7 @@ function EditarUsuarioForm({ usuario, clientes, areas, projetos, onSave, onCance
   })
   const [clientesSel, setClientesSel] = useState([])
   const [projetosSel, setProjetosSel] = useState([])
+  const [projetosOrig, setProjetosOrig] = useState([])
   const [clienteId, setClienteId] = useState(usuario.cliente_id || '')
   const [projetoId, setProjetoId] = useState(usuario.projeto_id || '')
   const [areasSel, setAreasSel] = useState([])
@@ -33,6 +35,7 @@ function EditarUsuarioForm({ usuario, clientes, areas, projetos, onSave, onCance
     ]).then(([{ data: perms }, { data: pprojs }]) => {
       setAreasSel((perms || []).map(p => p.area_id))
       setProjetosSel((pprojs || []).map(p => p.projeto_id))
+      setProjetosOrig((pprojs || []).map(p => p.projeto_id))
       setClientesSel([...new Set((pprojs || []).map(p => p.projetos?.cliente_id).filter(Boolean))])
     })
   }, [])
@@ -56,6 +59,11 @@ function EditarUsuarioForm({ usuario, clientes, areas, projetos, onSave, onCance
       })
       if (error) throw new Error(error.message || 'Erro ao salvar')
       if (data?.error) throw new Error(data.error)
+      // Consultor ganhou projeto(s) novo(s): e-mail de aviso
+      if (isConsultor) {
+        const novos = projetosSel.filter(id => !projetosOrig.includes(id))
+        if (novos.length > 0) notificarVinculoConsultor(usuario.id, novos)
+      }
       onSave()
     } catch (e) { setErro(e.message); setSaving(false) }
   }

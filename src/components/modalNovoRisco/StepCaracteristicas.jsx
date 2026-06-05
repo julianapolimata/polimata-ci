@@ -1,7 +1,7 @@
 // StepCaracteristicas — bloco JSX extraído de ModalNovoRisco.jsx em 22/mai/2026 (fatiamento Etapa 5).
 import React from 'react'
 
-export default function StepCaracteristicas({ isAutomatic, step, descControle, setDescControle, cat, setCat, freq, setFreq, nat, setNat, car, setCar, sis, setSis, chave, setChave, quem, setQuem, quando, setQuando, porque, setPorque, como, setComo, onde, setOnde, resultadoPremissa, setResultadoPremissa, dtImplementacao, setDtImplementacao, sistemas }) {
+export default function StepCaracteristicas({ isAutomatic, step, isDiag, existencia, setExistencia, descControle, setDescControle, cat, setCat, freq, setFreq, nat, setNat, car, setCar, sis, setSis, chave, setChave, quem, setQuem, quando, setQuando, porque, setPorque, como, setComo, onde, setOnde, resultadoPremissa, setResultadoPremissa, dtImplementacao, setDtImplementacao, sistemas }) {
   return (
     <>
           {/* ─────────── PASSO 2 ─────────── */}
@@ -21,6 +21,42 @@ export default function StepCaracteristicas({ isAutomatic, step, descControle, s
                 }}>
                   1. Descrição do Controle
                 </div>
+                {isDiag && (
+                  <div style={{ marginBottom: '1.25rem' }}>
+                    <label style={{
+                      display: 'block',
+                      fontSize: '13px',
+                      fontWeight: 500,
+                      color: '#00203E',
+                      marginBottom: '0.5rem',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.3px'
+                    }}>
+                      Existência do Controle <span style={{ color: '#E24B4A' }}>*</span>
+                    </label>
+                    <select
+                      value={existencia}
+                      onChange={e => setExistencia(e.target.value)}
+                      style={{
+                        width: '100%',
+                        padding: '0.8rem',
+                        border: '1px solid #D0D0D0',
+                        borderRadius: '4px',
+                        fontFamily: 'Montserrat, sans-serif',
+                        fontSize: '14px',
+                        background: 'white'
+                      }}
+                    >
+                      <option value="">Selecionar...</option>
+                      <option value="Existente">Existente</option>
+                      <option value="Parcial">Parcial</option>
+                      <option value="Inexistente">Inexistente</option>
+                    </select>
+                    {existencia === 'Parcial' && (
+                      <div style={{ fontSize: 11, color: '#7A5C00', marginTop: 6 }}>Controle parcial: marque "Requisito Não Atendido" nas características em que o controle falha (pelo menos uma).</div>
+                    )}
+                  </div>
+                )}
                 <label style={{
                   display: 'block',
                   fontSize: '13px',
@@ -35,6 +71,7 @@ export default function StepCaracteristicas({ isAutomatic, step, descControle, s
                 <textarea
                   value={descControle}
                   onChange={e => setDescControle(e.target.value)}
+                  disabled={isDiag && existencia === 'Inexistente'}
                   style={{
                     width: '100%',
                     padding: '0.8rem',
@@ -43,13 +80,15 @@ export default function StepCaracteristicas({ isAutomatic, step, descControle, s
                     fontFamily: 'Montserrat, sans-serif',
                     fontSize: '14px',
                     minHeight: '80px',
-                    resize: 'vertical'
+                    resize: 'vertical',
+                    background: (isDiag && existencia === 'Inexistente') ? '#F5F5F5' : 'white'
                   }}
                   placeholder="Como o risco é mitigado?"
                 />
               </div>
 
-              {/* Seção: 6 Características (grid 2×3) */}
+              {/* Seção: 6 Características (grid 2×3) — ocultas se controle Inexistente */}
+              {!(isDiag && existencia === 'Inexistente') && (<>
               <div style={{ marginBottom: '2rem' }}>
                 <div style={{
                   fontSize: '12px',
@@ -69,9 +108,9 @@ export default function StepCaracteristicas({ isAutomatic, step, descControle, s
                     { label: 'Frequência', state: [freq, setFreq], options: ['Sob demanda', 'Múltiplas vezes ao dia', 'Diária', 'Semanal', 'Quinzenal', 'Mensal', 'Trimestral', 'Semestral', 'Anual', 'Bienal'] },
                     { label: 'Natureza', state: [nat, setNat], options: ['Preventivo', 'Detectivo', 'Corretivo'] },
                     { label: 'Característica', state: [car, setCar], options: ['Manual', 'Automático', 'Semi-automatizado'] },
-                    { label: 'Sistema', state: [sis, setSis], options: sistemas.map(s => s.nome) },
+                    { label: 'Sistema', state: [sis, setSis], options: ['N/A', ...sistemas.map(s => s.nome)] },
                     { label: 'Controle Chave', state: [chave, setChave], options: ['Controle Chave', 'Controle Compensatório'] }
-                  ].map((field, idx) => (
+                  ].map(f => (isDiag && existencia === 'Parcial' && f.label !== 'Controle Chave') ? { ...f, options: [...f.options, 'Requisito Não Atendido'] } : f).map((field, idx) => (
                     <div key={idx}>
                       <label style={{
                         display: 'block',
@@ -135,7 +174,7 @@ export default function StepCaracteristicas({ isAutomatic, step, descControle, s
                     { label: '4. Como faz?', state: [como, setComo], type: 'textarea' },
                     { label: '5. Onde faz?', state: [onde, setOnde], type: 'text' },
                     { label: '6. Qual o resultado?', state: [resultadoPremissa, setResultadoPremissa], type: 'textarea' }
-                  ].map((field, idx) => (
+                  ].map(f => (isDiag && existencia === 'Parcial' && f.label !== 'Controle Chave') ? { ...f, options: [...f.options, 'Requisito Não Atendido'] } : f).map((field, idx) => (
                     <div key={idx}>
                       <label style={{
                         display: 'block',
@@ -187,6 +226,7 @@ export default function StepCaracteristicas({ isAutomatic, step, descControle, s
                 </div>
               </div>
 
+            </>)}
             </div>
           )}
     </>
