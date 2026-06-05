@@ -5,7 +5,7 @@ import { fmtDate } from '../_shared'
 import { getFaseLabel, getResultadoVitrine, getStatusComputado } from '../../../lib/fases'
 
 export default function PorAreaTabela({ ctx }) {
-  const { FASE_HDR, FASE_KEYS_VISIVEIS, FASE_W_PARA, PA, PA_DATA_COLS, RegressaoBadge, Td, badgeCrit, badgeR, canEdit, canEditControle, canRevisar, cf, cfSorted, faseThS, getAlertas, getStatusBadge, idxFases, isAdmin, isCliente, isDiagnostico, projeto, renderFaseCell, setAtualizarFicha, setAtualizarRow, setModalRow, setRowRegistrarResultado, setRowRevisar, sortArrow, tableScrollRef, tdS, toggleSort } = ctx
+  const { FASE_HDR, FASE_KEYS_VISIVEIS, FASE_W_PARA, PA, PA_DATA_COLS, RegressaoBadge, Td, badgeCrit, badgeR, canEdit, canEditControle, canRevisar, cf, cfSorted, faseThS, getAlertas, getStatusBadge, idxFases, isAdmin, isCliente, isDiagnostico, projeto, renderFaseCell, setAtualizarFicha, setAtualizarRow, setDraftRow, setModalRow, setRowRegistrarResultado, setRowRevisar, sortArrow, tableScrollRef, tdS, toggleSort } = ctx
   return (
     <>
       {/* TABELA MRC */}
@@ -42,10 +42,10 @@ export default function PorAreaTabela({ ctx }) {
                         primary = { label: 'Revisar', color: '#1D4ED8', bg: 'rgba(59,130,246,0.12)', border: 'rgba(59,130,246,0.30)', onClick: () => setRowRevisar(c) }
                       } else if (st === 'em_revisao') {
                         // Em revisão: edição bloqueada até a revisora concluir
+                      } else if (podeEditarEste && st === 'rascunho') {
+                        primary = { label: '▶ Continuar', color: '#92400E', bg: 'rgba(234,179,8,0.15)', border: 'rgba(234,179,8,0.40)', onClick: () => setDraftRow(c) }
                       } else if (isDiagnostico && podeEditarEste) {
                         primary = { label: '✏ Editar', color: 'var(--copper-text)', bg: 'rgba(204,145,94,0.12)', border: 'rgba(204,145,94,0.30)', onClick: () => setAtualizarRow(c) }
-                      } else if (podeEditarEste && st === 'rascunho') {
-                        primary = { label: '▶ Continuar', color: '#92400E', bg: 'rgba(234,179,8,0.15)', border: 'rgba(234,179,8,0.40)', onClick: () => setAtualizarRow(c) }
                       } else if (podeEditarEste && st === 'em_analise') {
                         primary = { label: 'Registrar Resultado', color: '#15803D', bg: 'rgba(22,163,74,0.12)', border: 'rgba(22,163,74,0.35)', onClick: () => setRowRegistrarResultado(c) }
                         secondary = { label: '✏ Editar', onClick: () => setAtualizarRow(c) }

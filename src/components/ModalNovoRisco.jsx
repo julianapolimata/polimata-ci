@@ -7,7 +7,7 @@ import StepCaracteristicas from './modalNovoRisco/StepCaracteristicas'
 import StepPassos from './modalNovoRisco/StepPassos'
 import { useConfirm } from './ConfirmDialog'
 
-const ModalNovoRisco = ({ onClose, onSaved, areas, projeto, areaFixa }) => {
+const ModalNovoRisco = ({ onClose, onSaved, areas, projeto, areaFixa, draft }) => {
   const isDiag = projeto?.f1_tem_teste === false
   const FRASE_SEM_CONTROLE = 'Não identificamos controle para mitigação deste risco.'
   // ═══ STATE ═══
@@ -23,37 +23,37 @@ const ModalNovoRisco = ({ onClose, onSaved, areas, projeto, areaFixa }) => {
   }
   const [saving, setSaving] = useState(false)
   const [perfil, setPerfil] = useState(null)
-  const [novoRiscoData, setNovoRiscoData] = useState(null)
+  const [novoRiscoData, setNovoRiscoData] = useState(draft || null)
   const [comentarioFor, setComentarioFor] = useState(null)
   // responsaveis removido — não há resp. por subprocesso na metodologia
   const [sistemas, setSistemas] = useState([])
   const [subprocessos, setSubprocessos] = useState([])
 
   // PASSO 1: Identificação
-  const [area, setArea] = useState(areaFixa?.id || '')
-  const [subprocesso, setSubprocesso] = useState('')
-  const [cenarioAtual, setCenarioAtual] = useState('')
-  const [descRisco, setDescRisco] = useState('')
+  const [area, setArea] = useState(draft?.area_id || areaFixa?.id || '')
+  const [subprocesso, setSubprocesso] = useState(draft?.sub || '')
+  const [cenarioAtual, setCenarioAtual] = useState(draft?.cenario_atual || '')
+  const [descRisco, setDescRisco] = useState(draft?.dr || '')
   // gerencia e respSub vêm do cadastro da área (não editáveis)
 
   // PASSO 2: Características & Premissas
-  const [descControle, setDescControle] = useState('')
-  const [existencia, setExistencia] = useState('')
-  const [cat, setCat] = useState('')
-  const [freq, setFreq] = useState('')
-  const [nat, setNat] = useState('')
-  const [car, setCar] = useState('')
-  const [sis, setSis] = useState('')
-  const [chave, setChave] = useState('')
-  const [dtImplementacao, setDtImplementacao] = useState('')
+  const [descControle, setDescControle] = useState(draft?.dc || '')
+  const [existencia, setExistencia] = useState(draft?.existencia || '')
+  const [cat, setCat] = useState(draft?.cat || '')
+  const [freq, setFreq] = useState(draft?.freq || '')
+  const [nat, setNat] = useState(draft?.nat || '')
+  const [car, setCar] = useState(draft?.car || '')
+  const [sis, setSis] = useState(draft?.sis || '')
+  const [chave, setChave] = useState(draft?.chave || '')
+  const [dtImplementacao, setDtImplementacao] = useState(draft?.dt_implementacao ? String(draft.dt_implementacao).slice(0, 10) : '')
   
   // Premissas
-  const [quem, setQuem] = useState('')
-  const [quando, setQuando] = useState('')
-  const [porque, setPorque] = useState('')
-  const [como, setComo] = useState('')
-  const [onde, setOnde] = useState('')
-  const [resultadoPremissa, setResultadoPremissa] = useState('')
+  const [quem, setQuem] = useState(draft?.premissa_quem || '')
+  const [quando, setQuando] = useState(draft?.premissa_quando || '')
+  const [porque, setPorque] = useState(draft?.premissa_porque || '')
+  const [como, setComo] = useState(draft?.premissa_como || '')
+  const [onde, setOnde] = useState(draft?.premissa_onde || '')
+  const [resultadoPremissa, setResultadoPremissa] = useState(draft?.premissa_resultado || '')
   
   // PASSO 3: Passos de Teste (Solicitações v2)
   const [passos, setPassos] = useState([criarPassoVazio()])
@@ -133,6 +133,16 @@ const ModalNovoRisco = ({ onClose, onSaved, areas, projeto, areaFixa }) => {
 
   // ═══ SALVAR NOVO RISCO (Passo 1) ═══
   async function saveStep1() {
+    // Rascunho em continuação: mantém id/rr/rc, só atualiza os campos do passo 1
+    if (novoRiscoData?.rr) {
+      const subObj = subprocessos.find(x => x.nome === subprocesso)
+      setNovoRiscoData(prev => ({
+        ...prev, sub: subprocesso, subprocesso_id: subObj?.id || prev?.subprocesso_id || null,
+        dr: descRisco, cenario_atual: cenarioAtual.trim() || null, area_id: area,
+      }))
+      setStep(2)
+      return
+    }
     setSaving(true)
     try {
       const areaObj = areas.find(a => a.id === area)

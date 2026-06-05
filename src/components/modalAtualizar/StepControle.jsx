@@ -133,7 +133,8 @@ export default function StepControle({
             }}
           />
 
-          {/* CARACTERÍSTICAS */}
+          {/* CARACTERÍSTICAS — ocultas se controle Inexistente (diagnóstico) */}
+          {!(isDiag && existencia === 'Inexistente') && (<>
           <div style={{ marginBottom: 20 }}>
             <div style={{ fontSize: 13, fontWeight: 700, color: '#00203E', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
               <span style={{ width: 3, height: 16, background: '#CC915E', borderRadius: 2 }}></span>
@@ -290,6 +291,7 @@ export default function StepControle({
               </div>
             </div>
           </div>
+          </>)}
         </div>
       )}
     </div>

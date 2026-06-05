@@ -174,7 +174,7 @@ export default function StepCaracteristicas({ isAutomatic, step, isDiag, existen
                     { label: '4. Como faz?', state: [como, setComo], type: 'textarea' },
                     { label: '5. Onde faz?', state: [onde, setOnde], type: 'text' },
                     { label: '6. Qual o resultado?', state: [resultadoPremissa, setResultadoPremissa], type: 'textarea' }
-                  ].map(f => (isDiag && existencia === 'Parcial' && f.label !== 'Controle Chave') ? { ...f, options: [...f.options, 'Requisito Não Atendido'] } : f).map((field, idx) => (
+                  ].map((field, idx) => (
                     <div key={idx}>
                       <label style={{
                         display: 'block',
