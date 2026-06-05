@@ -75,8 +75,14 @@ export default function PorArea({ projeto, areasCalc, todosControles, loading, n
   const isCliente = papelAtivo === 'gestor_cliente' || papelAtivo === 'usuario_cliente'
   const canRevisar = isAdmin || isGerente
   const canEdit = isAdmin || isGerente || isConsultor
-  // SoD: admin/gerente só editam controles SEM consultor alocado; consultor sempre pode
-  const canEditControle = (c) => isConsultor || ((isAdmin || isGerente) && !c?.consultor_id)
+  // SoD: quem revisa não corrige. Admin/gerente só editam controles SEM dono
+  // (dono = consultor alocado, quem submeteu ou quem criou) ou de autoria própria.
+  const canEditControle = (c) => {
+    if (isConsultor) return true
+    if (!(isAdmin || isGerente)) return false
+    const donoId = c?.consultor_id || c?.submetido_por || c?.criado_por
+    return !donoId || donoId === perfil?.id
+  }
   const isRealAdmin = perfil?.papel === 'admin_polimata'
 
   // HOOKS devem ficar ANTES de qualquer early return (React rules of hooks)
