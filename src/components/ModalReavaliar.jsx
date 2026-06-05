@@ -26,10 +26,9 @@ const ModalReavaliar = ({ row, perfil, modo, onClose, onSaved }) => {
       if (error) throw error
       if (!upd || upd.length === 0) throw new Error('Não foi possível gravar (verifique permissões).')
       supabase.functions.invoke('send-email', {
-        body: { type: 'review_submitted_admins', data: {
-          autor_id: perfil?.id, ref: row.rc || row.rr, descricao: `Reavaliação solicitada: ${justificativa.trim()}`,
+        body: { type: 'reavaliacao_solicitada', data: {
+          autor_id: perfil?.id, ref: row.rc || row.rr, justificativa: justificativa.trim(),
           area_id: row.area_id, mrc_id: row.id,
-          titulo: `Reavaliação solicitada — ${row.rc || row.rr}`,
           mensagem: `${row.rc} (${row.area || ''}): reavaliação solicitada. Justificativa: ${justificativa.trim()}`,
         } }
       }).catch(err => console.error('Erro ao notificar reavaliação:', err))
@@ -66,7 +65,7 @@ const ModalReavaliar = ({ row, perfil, modo, onClose, onSaved }) => {
           lida: false, mrc_id: row.id,
         })
         supabase.functions.invoke('send-email', {
-          body: { type: 'review_completed', data: { autor_id: solicitante, revisor_id: perfil?.id, ref: row.rc || row.rr, resultado: aprovar ? 'aprovado' : 'reprovado', nota: aprovar ? 'Reavaliação aprovada — controle liberado para edição.' : 'Reavaliação recusada — controle permanece Concluído.', area_id: row.area_id } }
+          body: { type: 'reavaliacao_decidida', data: { autor_id: solicitante, revisor_id: perfil?.id, ref: row.rc || row.rr, aprovada: aprovar, area_id: row.area_id } }
         }).catch(err => console.error('Erro ao enviar email:', err))
       }
       onSaved?.(); onClose?.()
