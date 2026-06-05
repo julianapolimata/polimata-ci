@@ -185,6 +185,7 @@ const ModalAtualizar = ({ row, onClose, onSaved, areas, projeto, irParaFicha }) 
       if (!isAutomatic && !quem.trim()) return false
       if (!quando.trim() || !pq.trim() || !como.trim() || !onde.trim() || !resultado.trim()) return false
       if (isDiag && existencia === 'Parcial' && ![editCat, editFreq, editNat, editCar, editSis].includes('Requisito Não Atendido')) return false
+      if (!dtImplementacao) return false
     }
     return true
   })()

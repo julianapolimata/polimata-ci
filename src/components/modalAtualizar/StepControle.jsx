@@ -60,7 +60,7 @@ export default function StepControle({
 
       {/* Data de implementação (item 29) */}
       <div style={{ marginBottom: 20, background: '#FFF8E1', border: '1px solid #F0E0A8', borderRadius: 8, padding: '10px 12px' }}>
-        <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#00203E', marginBottom: 4 }}>Data de implementação do controle</label>
+        <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#00203E', marginBottom: 4 }}>Data de implementação do controle <span style={{ color: '#E24B4A' }}>*</span></label>
         <input type="date" value={dtImplementacao || ''} onChange={e => setDtImplementacao(e.target.value)} style={{ padding: '8px 10px', border: '1px solid #D0D0D0', borderRadius: 6, fontFamily: 'inherit', fontSize: 13 }} />
         <div style={{ fontSize: 11, color: '#7A5C00', marginTop: 6, lineHeight: 1.4 }}>Data em que o controle, no desenho atual, começou a operar. <strong>Se o desenho mudou, atualize esta data</strong> — ela define o período da amostra de teste.</div>
       </div>

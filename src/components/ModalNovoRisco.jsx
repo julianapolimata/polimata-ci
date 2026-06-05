@@ -23,7 +23,12 @@ const ModalNovoRisco = ({ onClose, onSaved, areas, projeto, areaFixa, draft }) =
   }
   const [saving, setSaving] = useState(false)
   const [perfil, setPerfil] = useState(null)
-  const [novoRiscoData, setNovoRiscoData] = useState(draft || null)
+  const [novoRiscoData, setNovoRiscoData] = useState(() => draft ? {
+    id: draft.id, rr: draft.rr, rc: draft.rc, sub: draft.sub,
+    subprocesso_id: draft.subprocesso_id || null, ger: draft.ger || '', resp_sub: draft.resp_sub || '',
+    dr: draft.dr, cenario_atual: draft.cenario_atual || null,
+    area_id: draft.area_id, projeto_id: draft.projeto_id,
+  } : null)
   const [comentarioFor, setComentarioFor] = useState(null)
   // responsaveis removido — não há resp. por subprocesso na metodologia
   const [sistemas, setSistemas] = useState([])
@@ -122,7 +127,7 @@ const ModalNovoRisco = ({ onClose, onSaved, areas, projeto, areaFixa, draft }) =
   const ehParcial = isDiag && existencia === 'Parcial'
   const temRNA = [cat, freq, nat, car, sis].includes('Requisito Não Atendido')
   const canAdvanceStep2 = (!isDiag || !!existencia) && descControle.trim() && (ehInexistente || (
-    cat && freq && nat && car && sis && chave &&
+    cat && freq && nat && car && sis && chave && dtImplementacao &&
     (isAutomatic || quem.trim()) && quando.trim() && porque.trim() && como.trim() &&
     onde.trim() && resultadoPremissa.trim() &&
     (!ehParcial || temRNA)
