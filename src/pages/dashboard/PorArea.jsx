@@ -188,6 +188,12 @@ export default function PorArea({ projeto, areasCalc, todosControles, loading, n
   }
 
   const controlesVisiveis = area.controles.filter(c => {
+    // Rascunho: visível só para quem criou (legado sem autor: só consultores)
+    if (c.status_workflow === 'rascunho') {
+      const meuRascunho = c.criado_por && c.criado_por === perfil?.id
+      const legadoConsultor = !c.criado_por && isConsultor
+      if (!meuRascunho && !legadoConsultor) return false
+    }
     const sr = (c.status_risco || '').toLowerCase()
     if (filtSit === 'existente') return sr === 'existente' || sr === 'ativo' || sr === '' || !c.status_risco
     if (filtSit === 'evitado') return sr === 'evitado'

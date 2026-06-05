@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
 import { supabase } from '../lib/supabase'
+import { useAuth } from '../contexts/AuthContext'
 import { exportarMRCExcel } from '../lib/exportMRC'
 import { getResultadoVitrine, getStatusComputado } from '../lib/fases'
 import { getProximaAcao, PROXIMA_ACAO_OPCOES } from '../lib/statusWorkflow'
@@ -16,6 +17,7 @@ export { ModalDetalhe }
 
 export default function MRCCompleta({ projetoId, projeto, clienteNome, projetoNome, notificacoes, papel }) {
   const isClienteMRC = papel === 'gestor_cliente' || papel === 'usuario_cliente'
+  const { perfil: perfilAuthMRC } = useAuth()
   const isDiagnostico = projeto?.f1_tem_teste === false
   const [mrc, setMrc] = useState([]); const [areas, setAreas] = useState([]); const [loading, setLoading] = useState(true); const [erro, setErro] = useState(null)
   const [busca, setBusca] = useState(''); const [filtroArea, setFiltroArea] = useState(''); const [filtroCrit, setFiltroCrit] = useState('')
@@ -76,6 +78,12 @@ export default function MRCCompleta({ projetoId, projeto, clienteNome, projetoNo
   }, [mrc])
 
   const mrcVisiveis = mrc.filter(r => {
+    // Rascunho: visível só para quem criou (legado sem autor: só consultores)
+    if (r.status_workflow === 'rascunho') {
+      const meuRascunho = r.criado_por && r.criado_por === perfilAuthMRC?.id
+      const legadoConsultor = !r.criado_por && papel === 'consultor_polimata'
+      if (!meuRascunho && !legadoConsultor) return false
+    }
     const sr = (r.status_risco || '').toLowerCase()
     if (filtroSit === 'existente') return sr === 'existente' || sr === 'ativo' || sr === '' || !r.status_risco
     if (filtroSit === 'evitado') return sr === 'evitado'
