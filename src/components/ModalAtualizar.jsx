@@ -478,8 +478,8 @@ const ModalAtualizar = ({ row, onClose, onSaved, areas, projeto, irParaFicha }) 
           </div>
         </div>
 
-        {/* Editar seção — navega direto e reabre para aprovação (item 11). Oculto na 1ª revisão (rascunho): tudo será aprovado pela primeira vez */}
-        {!ehPrimeiraRevisao && (
+        {/* Editar seção — navega direto e reabre para aprovação (item 11). Oculto só em rascunho */}
+        {row?.status_workflow !== 'rascunho' && (
         <div style={{ padding: '8px 24px', background: '#FFF8E1', borderBottom: '1px solid #F0E0A8', display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
           {(blocosReabrir.length === 0 || mostrarLista) ? (
             <>
