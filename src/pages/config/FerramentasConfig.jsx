@@ -39,10 +39,10 @@ export default function FerramentasConfig() {
     <div>
       <div className="cfg-area-block" style={{ maxWidth: 560 }}>
         <h3 style={{ margin: '0 0 8px', fontSize: 15, fontWeight: 600, color: 'var(--navy)' }}>
-          Limpar Base de Testes
+          Limpar Resultados do Projeto
         </h3>
         <p style={{ margin: '0 0 16px', fontSize: 13, color: 'var(--txt2)', lineHeight: 1.5 }}>
-          Remove todos os resultados de testes (F1 a F5), revisões e notificações de um projeto.
+          Remove todos os resultados das análises do projeto (F1 a F5) — testes, avaliações, revisões e notificações.
           A identificação dos controles (risco, controle, área) é mantida.
           <br /><strong style={{ color: '#DC2626' }}>Esta ação é irreversível.</strong>
         </p>

@@ -468,9 +468,9 @@ export default function ImportarMRC({ projetoId, projeto, areas, onImported, all
 
       {/* ══════ 3. LIMPAR BASE (admin only) ══════ */}
       {isAdmin && <div style={card}>
-        <div style={secTitle}>Limpar Base de Testes</div>
+        <div style={secTitle}>Limpar Resultados do Projeto</div>
         <div style={{ fontSize: 12, color: 'var(--lt-text2)', lineHeight: 1.5, marginBottom: 14 }}>
-          Remove todos os resultados de testes (F1 a F5), revisões e notificações de um projeto. A identificação dos controles (risco, controle, área) é <strong>mantida</strong>.
+          Remove todos os resultados das análises do projeto (F1 a F5) — testes, avaliações, revisões e notificações. A identificação dos controles (risco, controle, área) é <strong>mantida</strong>.
           <br /><strong style={{ color: '#DC2626' }}>Esta ação é irreversível.</strong>
         </div>
 
