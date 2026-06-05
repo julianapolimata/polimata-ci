@@ -12,7 +12,9 @@ import Relatorios from './Relatorios'
 import Solicitacoes from './Solicitacoes'
 import Documentos from './Documentos'
 import Mapeamentos from './Mapeamentos'
+import Hub from './Hub'
 import { formatNomeEmpresa } from '../lib/formatNome'
+import { moduloDaRota } from '../lib/modulos'
 import { getNivelMaturidade, getTipoEntrega } from '../lib/calculoMaturidade'
 import { carregarConstantes } from '../lib/constantesLoader'
 import { getUltimaAtualizacao, papelLabel, NoProjeto } from './dashboard/_shared'
@@ -161,7 +163,8 @@ export default function Dashboard() {
 
   const isAdmin = perfil?.papel === 'admin_polimata'
   const sw = sidebarOpen ? 260 : 56
-  const isHomeDash = location.pathname === '/'
+  const modulo = moduloDaRota(location.pathname)
+  const isHomeDash = location.pathname === '/ci'
   const mainLightClass = isHomeDash ? '' : 'main-light'
   const ultimaAtualizacao = useMemo(() => getUltimaAtualizacao(todosControles), [todosControles])
 
@@ -173,9 +176,13 @@ export default function Dashboard() {
   if (isAdmin && location.pathname.startsWith('/admin')) {
     return <AdminPanel />
   }
+  // Hub de produtos — porta de entrada do Sistema Polímata
+  if (modulo === 'hub') {
+    return <Hub />
+  }
   // Seletor de projetos — exibido quando nenhum projeto está selecionado
   if (!projetoAtivo && projetos.length > 0) {
-    return <ProjectSelector projetos={projetos} resumos={projetoResumos} perfil={perfil} onSelect={p => { try { localStorage.setItem('polimata_projeto_ativo_id', p.id) } catch (e) {} ; setProjetoAtivo(p); navigate('/') }} signOut={signOut} onAdmin={isAdmin ? () => navigate('/admin') : null} />
+    return <ProjectSelector projetos={projetos} resumos={projetoResumos} perfil={perfil} onSelect={p => { try { localStorage.setItem('polimata_projeto_ativo_id', p.id) } catch (e) {} ; setProjetoAtivo(p) }} signOut={signOut} onAdmin={isAdmin ? () => navigate('/admin') : null} />
   }
   if (!projetoAtivo && projetos.length === 0) {
     return <NoProjeto />
@@ -203,7 +210,7 @@ export default function Dashboard() {
                   </button>
                 )}
                 {projetos.length > 1 && (
-                  <button onClick={() => { try { localStorage.removeItem('polimata_projeto_ativo_id') } catch (e) {} ; setProjetoAtivo(null); navigate('/') }}
+                  <button onClick={() => { try { localStorage.removeItem('polimata_projeto_ativo_id') } catch (e) {} ; setProjetoAtivo(null) }}
                     style={{ background: 'none', border: 'none', color: 'var(--copper)', fontSize: 10, cursor: 'pointer', padding: 0, fontFamily: 'inherit' }}>
                     Trocar
                   </button>
@@ -219,8 +226,10 @@ export default function Dashboard() {
           </div>
         )}
         <nav style={{ flex: 1, overflowY: 'auto', padding: '8px 0', display: 'flex', flexDirection: 'column', gap: 1 }}>
+          <SideNavItem icon="⌂" label="Hub de produtos" active={false} onClick={() => navigate('/')} open={sidebarOpen} />
+          {modulo === 'ci' && (<>
           {sidebarOpen && <div className="sb-sep">Dashboards</div>}
-          <SideNavItem icon="📊" label="Dashboard" active={location.pathname === '/'} onClick={() => navigate('/')} open={sidebarOpen} />
+          <SideNavItem icon="📊" label="Dashboard" active={location.pathname === '/ci'} onClick={() => navigate('/ci')} open={sidebarOpen} />
           {sidebarOpen && (
             <div className="sb-sep" style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }} onClick={() => setAreaExpanded(x => !x)}>
               Por Área <span style={{ fontSize: 10 }}>{areaExpanded ? '▾' : '▸'}</span>
@@ -239,9 +248,13 @@ export default function Dashboard() {
           <SideNavItem icon="📄" label="Relatórios" active={location.pathname === '/relatorios'} onClick={() => navigate('/relatorios')} open={sidebarOpen} />
           {projetoAtivo?.f1_tem_teste !== false && <SideNavItem icon="📝" label="Solicitações" active={location.pathname === '/solicitacoes'} onClick={() => navigate('/solicitacoes')} open={sidebarOpen} />}
           {['admin_polimata', 'consultor_polimata'].includes(perfil?.papel) && <SideNavItem icon="📁" label="Documentos" active={location.pathname === '/documentos'} onClick={() => navigate('/documentos')} open={sidebarOpen} />}
-          {['admin_polimata', 'consultor_polimata'].includes(perfil?.papel) && <SideNavItem icon="🎙" label="Mapeamentos" active={location.pathname === '/mapeamentos'} onClick={() => navigate('/mapeamentos')} open={sidebarOpen} />}
           {isAdmin && (<>{sidebarOpen && <div className="sb-sep">Administração</div>}
             <SideNavItem icon="📥" label="Manutenção MRC" active={location.pathname === '/importar-mrc'} onClick={() => navigate('/importar-mrc')} open={sidebarOpen} /></>)}
+          </>)}
+          {modulo === 'mapeamento' && (<>
+          {sidebarOpen && <div className="sb-sep">Mapeamento de Processos</div>}
+          <SideNavItem icon="🎙" label="Mapeamentos" active={location.pathname === '/mapeamentos'} onClick={() => navigate('/mapeamentos')} open={sidebarOpen} />
+          </>)}
         </nav>
         <button onClick={() => setSidebarOpen(o => !o)} style={{ background: 'transparent', border: 'none', borderTop: '1px solid var(--brd)', color: 'var(--txt3)', padding: '10px', cursor: 'pointer', fontSize: 14, textAlign: 'center' }}>
           {sidebarOpen ? '◂' : '▸'}
@@ -278,7 +291,7 @@ export default function Dashboard() {
           </div>
         )}
         <Routes>
-          <Route path="/" element={
+          <Route path="/ci" element={
             getTipoEntrega(projetoAtivo) === 'diagnostico'
               ? <HomeDashDiagnostico projeto={projetoAtivo} areasCalc={areasCalc} todosControles={todosControles} loading={loading} ultimaAtualizacao={ultimaAtualizacao} loadDados={loadDados} />
               : <HomeDash projeto={projetoAtivo} areasCalc={areasCalc} todosControles={todosControles} loading={loading} ultimaAtualizacao={ultimaAtualizacao} loadDados={loadDados} />

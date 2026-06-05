@@ -11,7 +11,7 @@ export default function PorAreaTopo({ ctx }) {
       {/* HEADER — padrão MRC Completa */}
       <div className="mrc-header-bar">
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <button onClick={() => navigate('/')} style={PA.btnVoltar}>← VOLTAR</button>
+          <button onClick={() => navigate('/ci')} style={PA.btnVoltar}>← VOLTAR</button>
           <div>
             <div className="dash-eye">Matriz de Riscos e Controles</div>
             <div className="dash-ttl" style={{ marginBottom: 0, fontSize: 18 }}>{nome}</div>
