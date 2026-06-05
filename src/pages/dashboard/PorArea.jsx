@@ -122,11 +122,11 @@ export default function PorArea({ projeto, areasCalc, todosControles, loading, n
         label: isAdmin ? 'Revisar' : 'Pendente Aprovação', color: '#1D4ED8', bg: 'rgba(59,130,246,0.10)',
         onClick: isAdmin ? () => setRowRevisar(c) : null,
       })
-    } else if (faltaCriticidade && sw === 'aprovado') {
-      // Criticidade pendente: só faz sentido após aprovação (antes, o gargalo é aprovar)
+    } else if (faltaCriticidade && sw === 'aprovado' && !canEdit) {
+      // Criticidade pendente (informativo, só visão sem edição) — quem edita já vê o botão "Avaliar Criticidade"
       alertas.push({
         label: 'Criticidade Pendente', color: '#EA580C', bg: 'rgba(234,88,12,0.08)',
-        onClick: canEdit ? () => setRowCriticidade(c) : null,
+        onClick: null,
       })
     }
     return alertas
