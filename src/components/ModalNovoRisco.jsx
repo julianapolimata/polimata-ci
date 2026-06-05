@@ -127,7 +127,7 @@ const ModalNovoRisco = ({ onClose, onSaved, areas, projeto, areaFixa, draft }) =
   const ehParcial = isDiag && existencia === 'Parcial'
   const temRNA = [cat, freq, nat, car, sis].includes('Requisito Não Atendido')
   const canAdvanceStep2 = (!isDiag || !!existencia) && descControle.trim() && (ehInexistente || (
-    cat && freq && nat && car && sis && chave && dtImplementacao &&
+    cat && freq && nat && car && sis && chave && dtImplementacao && dtImplementacao <= new Date().toISOString().slice(0, 10) &&
     (isAutomatic || quem.trim()) && quando.trim() && porque.trim() && como.trim() &&
     onde.trim() && resultadoPremissa.trim() &&
     (!ehParcial || temRNA)
