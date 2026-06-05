@@ -422,9 +422,9 @@ const ModalRevisar = ({ row, onClose, onAction, projeto }) => {
             <div style={{ ...S.value, whiteSpace: 'pre-wrap' }}>{row?.dc || '—'}</div>
           </div>
 
-          {/* Atributos do Controle */}
+          {/* Características do Controle */}
           <div style={S.section}>
-            <div style={S.sectionTitle}>Atributos do Controle</div>
+            <div style={S.sectionTitle}>Características do Controle</div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
               <div><div style={S.label}>Categoria</div><div style={S.value}>{row?.cat || '—'}</div></div>
               <div><div style={S.label}>Frequência</div><div style={S.value}>{row?.freq || '—'}</div></div>

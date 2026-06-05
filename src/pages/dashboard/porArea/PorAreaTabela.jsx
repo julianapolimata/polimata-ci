@@ -5,7 +5,7 @@ import { fmtDate } from '../_shared'
 import { getFaseLabel, getResultadoVitrine, getStatusComputado } from '../../../lib/fases'
 
 export default function PorAreaTabela({ ctx }) {
-  const { FASE_HDR, FASE_KEYS_VISIVEIS, FASE_W_PARA, PA, PA_DATA_COLS, RegressaoBadge, Td, badgeCrit, badgeR, canEdit, canEditControle, canRevisar, cf, cfSorted, faseThS, getAlertas, getStatusBadge, idxFases, isAdmin, isCliente, isDiagnostico, projeto, renderFaseCell, setAtualizarFicha, setAtualizarRow, setDraftRow, setModalRow, setRowRegistrarResultado, setRowRevisar, sortArrow, tableScrollRef, tdS, toggleSort } = ctx
+  const { FASE_HDR, FASE_KEYS_VISIVEIS, FASE_W_PARA, PA, PA_DATA_COLS, RegressaoBadge, Td, badgeCrit, badgeR, canEdit, canEditControle, canRevisar, cf, cfSorted, faseThS, getAlertas, getStatusBadge, idxFases, isAdmin, isCliente, isDiagnostico, projeto, renderFaseCell, setAtualizarFicha, setAtualizarRow, setDraftRow, setModalRow, setRowCriticidade, setRowRegistrarResultado, setRowRevisar, sortArrow, tableScrollRef, tdS, toggleSort } = ctx
   return (
     <>
       {/* TABELA MRC */}
@@ -42,6 +42,8 @@ export default function PorAreaTabela({ ctx }) {
                         primary = { label: 'Revisar', color: '#1D4ED8', bg: 'rgba(59,130,246,0.12)', border: 'rgba(59,130,246,0.30)', onClick: () => setRowRevisar(c) }
                       } else if (st === 'em_revisao') {
                         // Em revisão: edição bloqueada até a revisora concluir
+                      } else if (st === 'aprovado' && !c.crit && canEdit) {
+                        primary = { label: 'Avaliar Criticidade', color: '#9A3412', bg: 'rgba(234,88,12,0.10)', border: 'rgba(234,88,12,0.30)', onClick: () => setRowCriticidade(c) }
                       } else if (podeEditarEste && st === 'rascunho') {
                         primary = { label: '▶ Continuar', color: '#92400E', bg: 'rgba(234,179,8,0.15)', border: 'rgba(234,179,8,0.40)', onClick: () => setDraftRow(c) }
                       } else if (isDiagnostico && podeEditarEste) {

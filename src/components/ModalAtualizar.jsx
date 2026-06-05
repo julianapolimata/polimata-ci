@@ -25,7 +25,7 @@ import StepPassos from './modalAtualizar/StepPassos'
 import StepFicha from './modalAtualizar/StepFicha'
 
 const SECAO_STEP = { cenario: 2, risco: 1, controle: 2, teste: 3 }
-const SECAO_LABEL = { cenario: 'Cenário Atual', risco: 'Descrição do Risco', controle: 'Descrição e Atributos do Controle', teste: 'Passos de Teste' }
+const SECAO_LABEL = { cenario: 'Cenário Atual', risco: 'Descrição do Risco', controle: 'Descrição e Características do Controle', teste: 'Passos de Teste' }
 
 const ModalAtualizar = ({ row, onClose, onSaved, areas, projeto, irParaFicha }) => {
   const { perfil: perfilAuth } = useAuth()
@@ -189,6 +189,22 @@ const ModalAtualizar = ({ row, onClose, onSaved, areas, projeto, irParaFicha }) 
     }
     return true
   })()
+
+  // Criticidade caduca: se qualquer campo do risco/controle mudar, a avaliação deve ser refeita
+  function mudouRiscoControle() {
+    const dtRow = row.dt_implementacao ? String(row.dt_implementacao).slice(0, 10) : ''
+    return (!!novaDescRisco.trim() && novaDescRisco !== row.dr) ||
+      (!!novaDescControle.trim() && novaDescControle !== row.dc) ||
+      editCat !== (row.cat || '') || editFreq !== (row.freq || '') || editNat !== (row.nat || '') ||
+      editCar !== (row.car || '') || editSis !== (row.sis || '') || editChave !== (row.chave || '') ||
+      (cenarioAtual.trim() || '') !== (row.cenario_atual || '') ||
+      pq !== (row.premissa_porque || '') || quando !== (row.premissa_quando || '') ||
+      onde !== (row.premissa_onde || '') || como !== (row.premissa_como || '') ||
+      (isAutomatic ? 'N/A' : quem) !== (row.premissa_quem || '') ||
+      resultado !== (row.premissa_resultado || '') ||
+      (isDiag && existencia !== (row.existencia || '')) ||
+      (dtImplementacao || '') !== dtRow
+  }
 
   // Validação por bloco (item 11): só valida os blocos efetivamente reabertos
   const canEnviarRevisao = (blocosReabrir.length > 0 && !ehPrimeiraRevisao)
@@ -370,6 +386,7 @@ const ModalAtualizar = ({ row, onClose, onSaved, areas, projeto, irParaFicha }) 
         ...(isDiag ? { existencia: existencia || null } : {}),
         dt_implementacao: dtImplementacao || null,
         status_workflow: 'teste_pendente',
+        ...((row.crit != null && mudouRiscoControle()) ? { imp: null, prob: null, crit: null } : {}),
         atualizado_em: new Date().toISOString(),
         atualizado_por: perfil?.id,
       }
@@ -418,6 +435,7 @@ const ModalAtualizar = ({ row, onClose, onSaved, areas, projeto, irParaFicha }) 
         dt_implementacao: dtImplementacao || null,
         status_workflow: 'em_revisao',
         edicao_pendente: !isDiag,
+        ...((row.crit != null && mudouRiscoControle()) ? { imp: null, prob: null, crit: null } : {}),
         submetido_por: perfil?.id,
         submetido_em: new Date().toISOString(),
         atualizado_em: new Date().toISOString(),
