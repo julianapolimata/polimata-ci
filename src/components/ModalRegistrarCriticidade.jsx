@@ -3,21 +3,27 @@ import { supabase } from '../lib/supabase'
 import { logAtualizarControle } from '../lib/auditLog'
 import { useConfirm } from './ConfirmDialog'
 
-// Tabela compartilhada de criticidade (replicada dos demais modais).
+// Convenção do sistema: imp/prob gravados como RÓTULOS; crit = nível 1-4 pela
+// POSIÇÃO na matriz de calor (não produto). Espelha HM_COLORS de mrc/badges.jsx.
+const IMP_NUM2LABEL = { 1: 'Baixo', 2: 'Moderado', 3: 'Alto', 4: 'Crítico' }
+const PROB_NUM2LABEL = { 1: 'Baixa', 2: 'Média', 3: 'Alta', 4: 'Extrema' }
+const IMP_LABEL2NUM = { 'Baixo': '1', 'Moderado': '2', 'Alto': '3', 'Crítico': '4' }
+const PROB_LABEL2NUM = { 'Baixa': '1', 'Média': '2', 'Alta': '3', 'Extrema': '4' }
+// linhas: imp 4→1 (Crítico→Baixo); colunas: prob 4→1 (Extrema→Baixa)
+const MATRIZ_CRIT = {
+  4: { 4: 4, 3: 4, 2: 3, 1: 2 },
+  3: { 4: 4, 3: 3, 2: 2, 1: 2 },
+  2: { 4: 3, 3: 2, 2: 2, 1: 1 },
+  1: { 4: 2, 3: 1, 2: 1, 1: 1 },
+}
+const CRIT_INFO = {
+  4: { label: 'Crítico',       color: '#FFEBEE', colorText: '#C62828' },
+  3: { label: 'Significativo', color: '#FFCC80', colorText: '#E65100' },
+  2: { label: 'Moderado',      color: '#FFF8E1', colorText: '#CA8A04' },
+  1: { label: 'Baixo',         color: '#E8F5E9', colorText: '#1B5E20' },
+}
 function getCriticidadeLabel(crit) {
-  if (!crit) return { label: '', color: '', colorText: '' }
-  const map = {
-    1:  { label: 'Baixo',         color: '#E8F5E9', colorText: '#1B5E20' },
-    2:  { label: 'Moderado',      color: '#FFCC80', colorText: '#E65100' },
-    3:  { label: 'Significativo', color: '#FFCC80', colorText: '#E65100' },
-    4:  { label: 'Crítico',       color: '#FFEBEE', colorText: '#C62828' },
-    6:  { label: 'Significativo', color: '#FFCC80', colorText: '#E65100' },
-    8:  { label: 'Crítico',       color: '#FFEBEE', colorText: '#C62828' },
-    9:  { label: 'Crítico',       color: '#FFEBEE', colorText: '#C62828' },
-    12: { label: 'Crítico',       color: '#FFEBEE', colorText: '#C62828' },
-    16: { label: 'Crítico',       color: '#FFEBEE', colorText: '#C62828' },
-  }
-  return map[crit] || { label: 'Moderado', color: '#FFCC80', colorText: '#E65100' }
+  return CRIT_INFO[crit] || { label: '', color: '', colorText: '' }
 }
 
 /**
@@ -27,8 +33,8 @@ function getCriticidadeLabel(crit) {
  * "Criticidade Pendente" da coluna Ação.
  */
 const ModalRegistrarCriticidade = ({ row, onClose, onSaved }) => {
-  const [impacto, setImpacto] = useState(row?.imp?.toString() || '')
-  const [probabilidade, setProbabilidade] = useState(row?.prob?.toString() || '')
+  const [impacto, setImpacto] = useState(IMP_LABEL2NUM[row?.imp] || (/^[0-4]$/.test(String(row?.imp)) ? String(row.imp) : ''))
+  const [probabilidade, setProbabilidade] = useState(PROB_LABEL2NUM[row?.prob] || (/^[0-4]$/.test(String(row?.prob)) ? String(row.prob) : ''))
   const [saving, setSaving] = useState(false)
   const { confirm } = useConfirm()
   const [dirty, setDirty] = useState(false)
@@ -40,7 +46,7 @@ const ModalRegistrarCriticidade = ({ row, onClose, onSaved }) => {
     onClose?.()
   }
 
-  const criticidade = impacto && probabilidade ? parseInt(impacto) * parseInt(probabilidade) : null
+  const criticidade = (impacto && probabilidade && impacto !== '0' && probabilidade !== '0') ? MATRIZ_CRIT[parseInt(impacto)]?.[parseInt(probabilidade)] ?? null : null
   const critLabel = getCriticidadeLabel(criticidade)
   const canSave = !!impacto && !!probabilidade
 
@@ -49,10 +55,10 @@ const ModalRegistrarCriticidade = ({ row, onClose, onSaved }) => {
     setSaving(true)
     try {
       const payload = {
-        imp: parseInt(impacto),
-        prob: parseInt(probabilidade),
+        imp: impacto === '0' ? 'N/A' : IMP_NUM2LABEL[parseInt(impacto)] || null,
+        prob: probabilidade === '0' ? 'N/A' : PROB_NUM2LABEL[parseInt(probabilidade)] || null,
         crit: criticidade,
-        crit_label: critLabel.label,
+        crit_label: critLabel.label || null,
         atualizado_em: new Date().toISOString(),
       }
       const { error } = await supabase.from('mrc').update(payload).eq('id', row.id)

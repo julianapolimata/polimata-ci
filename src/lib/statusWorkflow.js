@@ -22,6 +22,7 @@ export const STATUS = {
   EM_REVISAO: 'em_revisao',
   APROVADO: 'aprovado',
   REPROVADO: 'reprovado',
+  REAVALIACAO_PENDENTE: 'reavaliacao_pendente',
 }
 
 // ── Configuração visual por status ────────────────────────────────────────────
@@ -33,6 +34,7 @@ const CONFIG_PROFISSIONAL = {
   em_revisao:     { label: 'Em Revisão',     color: '#2563EB',          bg: 'rgba(59,130,246,0.08)' },
   aprovado:       { label: 'Aprovado',       color: 'var(--n4-vis)',          bg: 'rgba(34,197,94,0.1)' },
   reprovado:      { label: 'Em Correção',      color: 'var(--n1)',          bg: 'rgba(239,68,68,0.1)' },
+  reavaliacao_pendente: { label: 'Reavaliação Pendente', color: '#7C3AED', bg: 'rgba(124,58,237,0.08)' },
 }
 
 const CONFIG_CLIENTE = {
@@ -43,7 +45,12 @@ const CONFIG_CLIENTE = {
   em_revisao:     { label: 'Em Revisão',   color: '#2563EB',          bg: 'rgba(59,130,246,0.08)' },
   aprovado:       { label: 'Aprovado',     color: 'var(--n4-vis)',          bg: 'rgba(34,197,94,0.1)' },
   reprovado:      { label: 'Em Análise',   color: 'var(--copper)',     bg: 'rgba(204,145,94,0.1)' },
+  reavaliacao_pendente: { label: 'Aprovado', color: 'var(--n4-vis)', bg: 'rgba(34,197,94,0.1)' },
 }
+
+// Concluído (derivado): aprovado + criticidade avaliada
+export const CONFIG_CONCLUIDO = { label: 'Concluído', color: '#0F766E', bg: 'rgba(20,184,166,0.10)' }
+export function isConcluido(c) { return c?.status_workflow === 'aprovado' && c?.crit != null }
 
 // Fallback para status desconhecido
 const FALLBACK = { label: '—', color: 'var(--lt-text3)', bg: 'rgba(0,32,62,0.03)' }

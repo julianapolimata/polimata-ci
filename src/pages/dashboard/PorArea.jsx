@@ -4,7 +4,7 @@ import { useAuth } from '../../contexts/AuthContext'
 import { getResultadoVitrine, getFaseLabel, getFaseInfo, getStatusComputado, getFaseDisplayOverride, normalizeFaseValue, fezEtapa } from '../../lib/fases'
 import { formatNomeEmpresa } from '../../lib/formatNome'
 import { getNivelMaturidade } from '../../lib/calculoMaturidade'
-import { getStatusConfig, getProximaAcao } from '../../lib/statusWorkflow'
+import { getStatusConfig, CONFIG_CONCLUIDO, isConcluido, getProximaAcao } from '../../lib/statusWorkflow'
 import { exportarMRCExcel } from '../../lib/exportMRC'
 import { exportarSolicitacoesExcel } from '../../lib/exportSolicitacoes'
 import { supabase } from '../../lib/supabase'
@@ -15,6 +15,7 @@ import ModalAtualizar from '../../components/ModalAtualizar'
 import ModalNovoRisco from '../../components/ModalNovoRisco'
 import ModalRegistrarResultado from '../../components/ModalRegistrarResultado'
 import ModalRegistrarCriticidade from '../../components/ModalRegistrarCriticidade'
+import ModalReavaliar from '../../components/ModalReavaliar'
 import ModalRevisar from '../../components/ModalRevisar'
 import {
   isEfetivo, isInefetivo, isGap, precisaPlanoAcao, planoAcaoConcluido,
@@ -51,6 +52,7 @@ export default function PorArea({ projeto, areasCalc, todosControles, loading, n
   const [atualizarFicha, setAtualizarFicha] = useState(false)
   const [modalNovoRisco, setModalNovoRisco] = useState(false)
   const [draftRow, setDraftRow] = useState(null)
+  const [reavaliarRow, setReavaliarRow] = useState(null) // { c, modo }
   const [rowRegistrarResultado, setRowRegistrarResultado] = useState(null)
   const [rowCriticidade, setRowCriticidade] = useState(null)
   const [excelMenuAberto, setExcelMenuAberto] = useState(false)
@@ -99,7 +101,8 @@ export default function PorArea({ projeto, areasCalc, todosControles, loading, n
   }, [controles])
 
   // Retorna config de status (label, color, bg) baseado no perfil ativo (real ou simulado)
-  function getStatusBadge(sw) {
+  function getStatusBadge(sw, c) {
+    if (sw === 'aprovado' && c?.crit != null && !isCliente) return CONFIG_CONCLUIDO
     return getStatusConfig(sw, papelAtivo)
   }
 
@@ -362,7 +365,7 @@ export default function PorArea({ projeto, areasCalc, todosControles, loading, n
     projeto, renderFaseCell, rowCriticidade, rowRegistrarResultado, rowRevisar, setAtualizarRow,
     setBusca, setDashCollapsed, setExcelMenuAberto, setExpandirFiltros, setFiltAcao, setFiltCrit,
     setFiltFase, setFiltImp, setFiltRes, setFiltSit, setFiltStatus, setModalNovoRisco,
-    setModalRow, setRowCriticidade, setRowRegistrarResultado, setRowRevisar, setSimularPerfil, setSortCol,
+    setModalRow, setReavaliarRow, setRowCriticidade, setRowRegistrarResultado, setRowRevisar, setSimularPerfil, setSortCol,
     setSortDir, setDraftRow, simularPerfil, somaPesos, sortArrow, sortCol, sortDir,
     tableScrollRef, tdS, todosControles, toggleSort, ultAtualArea,
   }
@@ -375,6 +378,8 @@ export default function PorArea({ projeto, areasCalc, todosControles, loading, n
     if (canRevisar && st === 'em_revisao') return { primary: { label: 'Revisar', color: '#1D4ED8', bg: 'rgba(59,130,246,0.12)', border: 'rgba(59,130,246,0.30)', onClick: () => { setRowRevisar(c); setModalRow(null) } } }
     if (st === 'em_revisao') return { bloqueado: true } // em revisão: edição travada p/ quem não revisa
     if (st === 'aprovado' && !c.crit && canEdit) return { primary: { label: 'Avaliar Criticidade', color: '#9A3412', bg: 'rgba(234,88,12,0.10)', border: 'rgba(234,88,12,0.30)', onClick: () => { setRowCriticidade(c); setModalRow(null) } } }
+    if (st === 'aprovado' && c.crit != null) return canEdit ? { primary: { label: '↺ Reavaliar', color: '#0F766E', bg: 'rgba(20,184,166,0.10)', border: 'rgba(20,184,166,0.30)', onClick: () => { setReavaliarRow({ c, modo: 'solicitar' }); setModalRow(null) } } } : { bloqueado: true }
+    if (st === 'reavaliacao_pendente') return canRevisar ? { primary: { label: 'Decidir Reavaliação', color: '#7C3AED', bg: 'rgba(124,58,237,0.10)', border: 'rgba(124,58,237,0.30)', onClick: () => { setReavaliarRow({ c, modo: 'decidir' }); setModalRow(null) } } } : { bloqueado: true }
     if (isDiagnostico && podeEditarEste) return st === 'rascunho' ? { primary: { label: '▶ Continuar', color: '#92400E', bg: 'rgba(234,179,8,0.15)', border: 'rgba(234,179,8,0.40)', onClick: () => { setDraftRow(c); setModalRow(null) } } } : { primary: { label: '✏ Editar', color: 'var(--copper-text)', bg: 'rgba(204,145,94,0.12)', border: 'rgba(204,145,94,0.30)', onClick: () => { setAtualizarRow(c); setModalRow(null) } } }
     if (podeEditarEste && st === 'rascunho') return { primary: { label: '▶ Continuar', color: '#92400E', bg: 'rgba(234,179,8,0.15)', border: 'rgba(234,179,8,0.40)', onClick: () => { setDraftRow(c); setModalRow(null) } } }
     if (podeEditarEste && st === 'em_analise') return { primary: { label: 'Registrar Resultado', color: '#15803D', bg: 'rgba(22,163,74,0.12)', border: 'rgba(22,163,74,0.35)', onClick: () => { setRowRegistrarResultado(c); setModalRow(null) } }, secondary: { label: '✏ Editar', onClick: () => { setAtualizarRow(c); setModalRow(null) } } }
@@ -393,6 +398,7 @@ export default function PorArea({ projeto, areasCalc, todosControles, loading, n
       {modalNovoRisco && <ModalNovoRisco onClose={() => setModalNovoRisco(false)} onSaved={() => { setModalNovoRisco(false); if (projeto?.id) loadDados(projeto.id) }} areas={areasCalc} projeto={projeto} areaFixa={area} />}
       {draftRow && <ModalNovoRisco key={draftRow.id} draft={draftRow} onClose={() => setDraftRow(null)} onSaved={() => { setDraftRow(null); if (projeto?.id) loadDados(projeto.id) }} areas={areasCalc} projeto={projeto} areaFixa={area} />}
       {rowRegistrarResultado && <ModalRegistrarResultado row={rowRegistrarResultado} onClose={() => setRowRegistrarResultado(null)} onSaved={() => { setRowRegistrarResultado(null); if (projeto?.id) loadDados(projeto.id) }} responsaveis={[]} />}
+      {reavaliarRow && <ModalReavaliar row={reavaliarRow.c} perfil={perfil} modo={reavaliarRow.modo} onClose={() => setReavaliarRow(null)} onSaved={() => { setReavaliarRow(null); if (projeto?.id) loadDados(projeto.id) }} />}
       {rowCriticidade && <ModalRegistrarCriticidade row={rowCriticidade} onClose={() => setRowCriticidade(null)} onSaved={() => { setRowCriticidade(null); if (projeto?.id) loadDados(projeto.id) }} />}
       {rowRevisar && <ModalRevisar row={rowRevisar} projeto={projeto} onClose={() => setRowRevisar(null)} onAction={() => { setRowRevisar(null); if (projeto?.id) loadDados(projeto.id) }} />}
     </div>

@@ -5,7 +5,7 @@ import { fmtDate } from '../_shared'
 import { getFaseLabel, getResultadoVitrine, getStatusComputado } from '../../../lib/fases'
 
 export default function PorAreaTabela({ ctx }) {
-  const { FASE_HDR, FASE_KEYS_VISIVEIS, FASE_W_PARA, PA, PA_DATA_COLS, RegressaoBadge, Td, badgeCrit, badgeR, canEdit, canEditControle, canRevisar, cf, cfSorted, faseThS, getAlertas, getStatusBadge, idxFases, isAdmin, isCliente, isDiagnostico, projeto, renderFaseCell, setAtualizarFicha, setAtualizarRow, setDraftRow, setModalRow, setRowCriticidade, setRowRegistrarResultado, setRowRevisar, sortArrow, tableScrollRef, tdS, toggleSort } = ctx
+  const { FASE_HDR, FASE_KEYS_VISIVEIS, FASE_W_PARA, PA, PA_DATA_COLS, RegressaoBadge, Td, badgeCrit, badgeR, canEdit, canEditControle, canRevisar, cf, cfSorted, faseThS, getAlertas, getStatusBadge, idxFases, isAdmin, isCliente, isDiagnostico, projeto, renderFaseCell, setAtualizarFicha, setAtualizarRow, setDraftRow, setModalRow, setReavaliarRow, setRowCriticidade, setRowRegistrarResultado, setRowRevisar, sortArrow, tableScrollRef, tdS, toggleSort } = ctx
   return (
     <>
       {/* TABELA MRC */}
@@ -27,7 +27,7 @@ export default function PorAreaTabela({ ctx }) {
                 <td style={{ ...tdS, width: 90, minWidth: 90, textAlign: 'center' }}>{badgeR(getResultadoVitrine(c, projeto))}</td>
                 <td style={{ ...tdS, width: 110, minWidth: 110, textAlign: 'center' }}>{badgeCrit(c.crit)}</td>
                 <td style={{ ...tdS, width: 130, minWidth: 130, fontSize: 11, fontWeight: 500, textAlign: 'center' }}>{getFaseLabel(c)}{c.num_regressoes > 0 && <RegressaoBadge n={c.num_regressoes} />}</td>
-                <td style={{ ...tdS, width: 110, minWidth: 110, textAlign: 'center' }}>{(() => { const st = getStatusComputado(c); const cfg = getStatusBadge(st); const clicavel = st === 'teste_pendente' && canEditControle(c); if (clicavel) return <button onClick={e => { e.stopPropagation(); setAtualizarFicha(true); setAtualizarRow(c) }} title="Clique para baixar a ficha" style={{ fontSize: 10, fontWeight: 700, color: cfg.color, background: cfg.bg, padding: '3px 10px', borderRadius: 999, textTransform: 'uppercase', letterSpacing: 0.4, border: '1px solid rgba(204,145,94,0.45)', cursor: 'pointer', fontFamily: 'inherit' }}>📄 {cfg.label}</button>; return <span style={{ fontSize: 10, fontWeight: 700, color: cfg.color, background: cfg.bg, padding: '3px 10px', borderRadius: 999, textTransform: 'uppercase', letterSpacing: 0.4 }}>{cfg.label}</span> })()}</td>
+                <td style={{ ...tdS, width: 110, minWidth: 110, textAlign: 'center' }}>{(() => { const st = getStatusComputado(c); const cfg = getStatusBadge(st, c); const clicavel = st === 'teste_pendente' && canEditControle(c); if (clicavel) return <button onClick={e => { e.stopPropagation(); setAtualizarFicha(true); setAtualizarRow(c) }} title="Clique para baixar a ficha" style={{ fontSize: 10, fontWeight: 700, color: cfg.color, background: cfg.bg, padding: '3px 10px', borderRadius: 999, textTransform: 'uppercase', letterSpacing: 0.4, border: '1px solid rgba(204,145,94,0.45)', cursor: 'pointer', fontFamily: 'inherit' }}>📄 {cfg.label}</button>; return <span style={{ fontSize: 10, fontWeight: 700, color: cfg.color, background: cfg.bg, padding: '3px 10px', borderRadius: 999, textTransform: 'uppercase', letterSpacing: 0.4 }}>{cfg.label}</span> })()}</td>
                 {/* Colunas de fase */}
                 {idxFases.map(idx => { const w = FASE_W_PARA(idx); return (<td key={`fc${idx}`} style={{ ...tdS, width: w, minWidth: w, maxWidth: w, textAlign: 'center' }}>{renderFaseCell(c, idx)}</td>) })}
                 {!isCliente && <td style={{ ...tdS, textAlign: 'center', width: 120, minWidth: 120 }}>
@@ -44,6 +44,10 @@ export default function PorAreaTabela({ ctx }) {
                         // Em revisão: edição bloqueada até a revisora concluir
                       } else if (st === 'aprovado' && !c.crit && canEdit) {
                         primary = { label: 'Avaliar Criticidade', color: '#9A3412', bg: 'rgba(234,88,12,0.10)', border: 'rgba(234,88,12,0.30)', onClick: () => setRowCriticidade(c) }
+                      } else if (st === 'aprovado' && c.crit != null) {
+                        if (canEdit) primary = { label: '↺ Reavaliar', color: '#0F766E', bg: 'rgba(20,184,166,0.10)', border: 'rgba(20,184,166,0.30)', onClick: () => setReavaliarRow({ c, modo: 'solicitar' }) }
+                      } else if (st === 'reavaliacao_pendente') {
+                        if (canRevisar) primary = { label: 'Decidir Reavaliação', color: '#7C3AED', bg: 'rgba(124,58,237,0.10)', border: 'rgba(124,58,237,0.30)', onClick: () => setReavaliarRow({ c, modo: 'decidir' }) }
                       } else if (podeEditarEste && st === 'rascunho') {
                         primary = { label: '▶ Continuar', color: '#92400E', bg: 'rgba(234,179,8,0.15)', border: 'rgba(234,179,8,0.40)', onClick: () => setDraftRow(c) }
                       } else if (isDiagnostico && podeEditarEste) {
