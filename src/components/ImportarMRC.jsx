@@ -3,7 +3,6 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
 import { gerarTemplateMRC } from '../lib/templateMRC'
 import ExcelJS from 'exceljs'
-import { formatNomeEmpresa } from '../lib/formatNome'
 
 // ══════════════════════════════════════════════════════════════════════════════
 // MAPEAMENTO: coluna Excel (0-indexed) → campo Supabase
@@ -103,23 +102,19 @@ export default function ImportarMRC({ projetoId, projeto, areas, onImported, all
   const [consultorUnico, setConsultorUnico] = useState('')
   const [consultoresPorArea, setConsultoresPorArea] = useState({}) // { areaId: consultorId }
 
-  // Limpar Base state
-  const [projetos, setProjetos] = useState([])
-  const [lbProjeto, setLbProjeto] = useState('')
+  // Limpar Base state (atua SEMPRE no projeto ativo — sem lista de projetos)
   const [lbConfirm, setLbConfirm] = useState('')
   const [lbLoading, setLbLoading] = useState(false)
   const [lbResult, setLbResult] = useState(null)
 
   // Apagar TUDO state
-  const [atProjeto, setAtProjeto] = useState('')
   const [atConfirm, setAtConfirm] = useState('')
   const [atLoading, setAtLoading] = useState(false)
   const [atResult, setAtResult] = useState(null)
 
   const isAdmin = perfil?.papel === 'admin_polimata'
   useEffect(() => {
-    supabase.from('projetos').select('id, nome, clientes(nome)').order('nome')
-      .then(({ data }) => { if (data) setProjetos(data) })
+
   }, [])
 
 
@@ -268,15 +263,15 @@ export default function ImportarMRC({ projetoId, projeto, areas, onImported, all
   }
 
   // ── Limpar Base ──
-  const lbProjetoNome = projetos.find(p => p.id === lbProjeto)?.nome || ''
-  const canLimpar = lbProjeto && lbConfirm === 'LIMPAR'
+  const nomeProjetoAtivo = projeto?.nome || ''
+  const canLimpar = projetoId && lbConfirm === 'LIMPAR'
 
   async function handleLimparBase() {
     if (!canLimpar) return
-    if (!confirm(`Tem certeza que deseja limpar TODOS os resultados do projeto "${lbProjetoNome}"? Esta ação não pode ser desfeita.`)) return
+    if (!confirm(`Tem certeza que deseja limpar TODOS os resultados do projeto ATIVO "${nomeProjetoAtivo}"? Esta ação não pode ser desfeita.`)) return
     setLbLoading(true); setLbResult(null)
     try {
-      const { data, error } = await supabase.rpc('limpar_base_projeto', { p_projeto_id: lbProjeto })
+      const { data, error } = await supabase.rpc('limpar_base_projeto', { p_projeto_id: projetoId })
       if (error) throw error
       setLbResult({ ok: true, dados: data }); setLbConfirm('')
     } catch (err) { setLbResult({ ok: false, erro: err.message }) }
@@ -284,14 +279,13 @@ export default function ImportarMRC({ projetoId, projeto, areas, onImported, all
   }
 
   // ── Apagar TUDO ──
-  const atProjetoNome = projetos.find(p => p.id === atProjeto)?.nome || ''
-  const canApagarTudo = atProjeto && atConfirm === 'APAGAR TUDO'
+  const canApagarTudo = projetoId && atConfirm === 'APAGAR TUDO'
   async function handleApagarTudo() {
     if (!canApagarTudo) return
-    if (!confirm(`ATENÇÃO MÁXIMA: apagar TUDO do projeto "${atProjetoNome}"?\n\nVai remover todos os controles MRC (risco, controle, identificação, resultados). O projeto e as áreas continuam, mas começa do zero.\n\nIRREVERSÍVEL.`)) return
+    if (!confirm(`ATENÇÃO MÁXIMA: apagar TUDO do projeto ATIVO "${nomeProjetoAtivo}"?\n\nVai remover todos os controles MRC (risco, controle, identificação, resultados). O projeto e as áreas continuam, mas começa do zero.\n\nIRREVERSÍVEL.`)) return
     setAtLoading(true); setAtResult(null)
     try {
-      const { data, error } = await supabase.rpc('apagar_mrc_projeto', { p_projeto_id: atProjeto })
+      const { data, error } = await supabase.rpc('apagar_mrc_projeto', { p_projeto_id: projetoId })
       if (error) throw error
       setAtResult({ ok: true, dados: data }); setAtConfirm('')
     } catch (err) { setAtResult({ ok: false, erro: err.message }) }
@@ -479,14 +473,11 @@ export default function ImportarMRC({ projetoId, projeto, areas, onImported, all
         </div>
 
         <div style={{ marginBottom: 12 }}>
-          <div style={label}>Projeto</div>
-          <select style={selectS} value={lbProjeto} onChange={e => { setLbProjeto(e.target.value); setLbResult(null) }}>
-            <option value="">Selecione um projeto...</option>
-            {projetos.map(p => <option key={p.id} value={p.id}>{p.clientes?.nome ? `${formatNomeEmpresa(p.clientes.nome_fantasia || p.clientes.nome)} — ` : ''}{p.nome}</option>)}
-          </select>
+          <div style={label}>Projeto ativo (ação restrita a ele)</div>
+          <div style={{ ...inputS, background: '#F5F1E8', fontWeight: 600, color: '#00203E', cursor: 'default' }}>{nomeProjetoAtivo || '—'}</div>
         </div>
 
-        {lbProjeto && (
+        {projetoId && (
           <div style={{ marginBottom: 14 }}>
             <div style={label}>Digite <strong>LIMPAR</strong> para confirmar</div>
             <input style={inputS} value={lbConfirm} onChange={e => setLbConfirm(e.target.value)} placeholder="LIMPAR" />
@@ -516,13 +507,10 @@ export default function ImportarMRC({ projetoId, projeto, areas, onImported, all
           <br /><strong style={{ color: '#DC2626' }}>Esta ação é totalmente irreversível e não pode ser desfeita.</strong>
         </div>
         <div style={{ marginBottom: 12 }}>
-          <div style={label}>Projeto</div>
-          <select style={selectS} value={atProjeto} onChange={e => { setAtProjeto(e.target.value); setAtResult(null) }}>
-            <option value="">Selecione um projeto...</option>
-            {projetos.map(p => <option key={p.id} value={p.id}>{p.clientes?.nome ? `${formatNomeEmpresa(p.clientes.nome_fantasia || p.clientes.nome)} — ` : ''}{p.nome}</option>)}
-          </select>
+          <div style={label}>Projeto ativo (ação restrita a ele)</div>
+          <div style={{ ...inputS, background: '#F5F1E8', fontWeight: 600, color: '#00203E', cursor: 'default' }}>{nomeProjetoAtivo || '—'}</div>
         </div>
-        {atProjeto && (
+        {projetoId && (
           <div style={{ marginBottom: 14 }}>
             <div style={label}>Digite <strong>APAGAR TUDO</strong> para confirmar</div>
             <input style={inputS} value={atConfirm} onChange={e => setAtConfirm(e.target.value)} placeholder="APAGAR TUDO" />
