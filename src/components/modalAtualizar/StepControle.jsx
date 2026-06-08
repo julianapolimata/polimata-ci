@@ -1,6 +1,7 @@
 // Step 2 do ModalAtualizar — descritivo, características e premissas do controle.
 // Extraído em 22/mai/2026 (fatiamento Etapa 3). Diff-zero: visual idêntico.
 import React from 'react'
+import { CATEGORIAS, FREQUENCIAS, NATUREZAS, CARACTERISTICAS, CONTROLE_CHAVE, RNA } from '../../lib/opcoesControle'
 
 export default function StepControle({
   row,
@@ -147,55 +148,36 @@ export default function StepControle({
                 <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#00203E', marginBottom: 6 }}>Categoria *</label>
                 <select value={editCat} onChange={(e) => setEditCat(e.target.value)} style={{ width: '100%', padding: 10, border: '1px solid #e5e7eb', borderRadius: 6, fontFamily: 'Montserrat, sans-serif', fontSize: 12 }}>
                   <option value="">Selecione...</option>
-                  <option>Autorização</option>
-                  <option>Relatórios de Exceção</option>
-                  <option>Indicadores de Performance</option>
-                  <option>Interface/Conversão</option>
-                  <option>Revisão Gerencial</option>
-                  <option>Reconciliação</option>
-                  <option>Acesso</option>
-                  <option>Segregação de Funções</option>
-                  <option>Configuração</option>
-                  <option>N/A</option>
-                  {isDiag && existencia === 'Parcial' && <option>Requisito Não Atendido</option>}
+                  {CATEGORIAS.map(o => <option key={o}>{o}</option>)}
+                  {isDiag && existencia === 'Parcial' && <option>{RNA}</option>}
+                  {editCat && ![...CATEGORIAS, RNA].includes(editCat) && <option value={editCat}>{editCat}</option>}
                 </select>
               </div>
               <div>
                 <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#00203E', marginBottom: 6 }}>Frequência *</label>
                 <select value={editFreq} onChange={(e) => setEditFreq(e.target.value)} style={{ width: '100%', padding: 10, border: '1px solid #e5e7eb', borderRadius: 6, fontFamily: 'Montserrat, sans-serif', fontSize: 12 }}>
                   <option value="">Selecione...</option>
-                  <option>Sob demanda</option>
-                  <option>Diário</option>
-                  <option>Múltiplas vezes ao dia</option>
-                  <option>Semanal</option>
-                  <option>Quinzenal</option>
-                  <option>Mensal</option>
-                  <option>Trimestral</option>
-                  <option>Semestral</option>
-                  <option>Anual</option>
-                  <option>N/A</option>
-                  {isDiag && existencia === 'Parcial' && <option>Requisito Não Atendido</option>}
+                  {FREQUENCIAS.map(o => <option key={o}>{o}</option>)}
+                  {isDiag && existencia === 'Parcial' && <option>{RNA}</option>}
+                  {editFreq && ![...FREQUENCIAS, RNA].includes(editFreq) && <option value={editFreq}>{editFreq}</option>}
                 </select>
               </div>
               <div>
                 <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#00203E', marginBottom: 6 }}>Natureza *</label>
                 <select value={editNat} onChange={(e) => setEditNat(e.target.value)} style={{ width: '100%', padding: 10, border: '1px solid #e5e7eb', borderRadius: 6, fontFamily: 'Montserrat, sans-serif', fontSize: 12 }}>
                   <option value="">Selecione...</option>
-                  <option>Preventivo</option>
-                  <option>Detectivo</option>
-                  <option>N/A</option>
-                  {isDiag && existencia === 'Parcial' && <option>Requisito Não Atendido</option>}
+                  {NATUREZAS.map(o => <option key={o}>{o}</option>)}
+                  {isDiag && existencia === 'Parcial' && <option>{RNA}</option>}
+                  {editNat && ![...NATUREZAS, RNA].includes(editNat) && <option value={editNat}>{editNat}</option>}
                 </select>
               </div>
               <div>
                 <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#00203E', marginBottom: 6 }}>Característica *</label>
                 <select value={editCar} onChange={(e) => setEditCar(e.target.value)} style={{ width: '100%', padding: 10, border: '1px solid #e5e7eb', borderRadius: 6, fontFamily: 'Montserrat, sans-serif', fontSize: 12 }}>
                   <option value="">Selecione...</option>
-                  <option>Manual</option>
-                  <option>Semi-Automatizado</option>
-                  <option>Automatizado</option>
-                  <option>N/A</option>
-                  {isDiag && existencia === 'Parcial' && <option>Requisito Não Atendido</option>}
+                  {CARACTERISTICAS.map(o => <option key={o}>{o}</option>)}
+                  {isDiag && existencia === 'Parcial' && <option>{RNA}</option>}
+                  {editCar && ![...CARACTERISTICAS, RNA].includes(editCar) && <option value={editCar}>{editCar}</option>}
                 </select>
               </div>
               <div>
@@ -205,16 +187,15 @@ export default function StepControle({
                   <option>N/A</option>
                   {sistemas.map(sis => <option key={sis.id} value={sis.nome}>{sis.nome}</option>)}
                   {editSis && editSis !== 'N/A' && editSis !== 'Requisito Não Atendido' && !sistemas.some(sis => sis.nome === editSis) && <option value={editSis}>{editSis}</option>}
-                  {isDiag && existencia === 'Parcial' && <option>Requisito Não Atendido</option>}
+                  {isDiag && existencia === 'Parcial' && <option>{RNA}</option>}
                 </select>
               </div>
               <div>
                 <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#00203E', marginBottom: 6 }}>Controle Chave *</label>
                 <select value={editChave} onChange={(e) => setEditChave(e.target.value)} style={{ width: '100%', padding: 10, border: '1px solid #e5e7eb', borderRadius: 6, fontFamily: 'Montserrat, sans-serif', fontSize: 12 }}>
                   <option value="">Selecione...</option>
-                  <option>Controle Chave</option>
-                  <option>Controle Compensatório</option>
-                  <option>N/A</option>
+                  {CONTROLE_CHAVE.map(o => <option key={o}>{o}</option>)}
+                  {editChave && !CONTROLE_CHAVE.includes(editChave) && <option value={editChave}>{editChave}</option>}
                 </select>
               </div>
             </div>

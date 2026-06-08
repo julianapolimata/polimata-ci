@@ -1,3 +1,4 @@
+import { CATEGORIAS, FREQUENCIAS, NATUREZAS, CARACTERISTICAS, CONTROLE_CHAVE } from './opcoesControle'
 import ExcelJS from 'exceljs'
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -232,7 +233,7 @@ export async function gerarTemplateMRC(clienteNome, projeto) {
     for (let r = 13; r <= 62; r++) {
       ws.getCell(r, chaveCol).dataValidation = {
         type: 'list', allowBlank: true,
-        formulae: ['"Controle Chave,Controle Compensatório"'],
+        formulae: [`"${CONTROLE_CHAVE.join(',')}"`],
       }
     }
   }
@@ -243,7 +244,7 @@ export async function gerarTemplateMRC(clienteNome, projeto) {
     for (let r = 13; r <= 62; r++) {
       ws.getCell(r, carCol).dataValidation = {
         type: 'list', allowBlank: true,
-        formulae: ['"Manual,Automático,Semi-automatizado"'],
+        formulae: [`"${CARACTERISTICAS.join(',')}"`],
       }
     }
   }
@@ -254,7 +255,7 @@ export async function gerarTemplateMRC(clienteNome, projeto) {
     for (let r = 13; r <= 62; r++) {
       ws.getCell(r, freqCol).dataValidation = {
         type: 'list', allowBlank: true,
-        formulae: ['"Sob demanda,Múltiplas vezes ao dia,Diária,Semanal,Quinzenal,Mensal,Trimestral,Semestral,Anual,Bienal"'],
+        formulae: [`"${FREQUENCIAS.join(',')}"`],
       }
     }
   }
@@ -265,7 +266,7 @@ export async function gerarTemplateMRC(clienteNome, projeto) {
     for (let r = 13; r <= 62; r++) {
       ws.getCell(r, natCol).dataValidation = {
         type: 'list', allowBlank: true,
-        formulae: ['"Preventivo,Detectivo,Corretivo"'],
+        formulae: [`"${NATUREZAS.join(',')}"`],
       }
     }
   }
@@ -276,7 +277,7 @@ export async function gerarTemplateMRC(clienteNome, projeto) {
     for (let r = 13; r <= 62; r++) {
       ws.getCell(r, catCol).dataValidation = {
         type: 'list', allowBlank: true,
-        formulae: ['"Revisão gerencial,Reconciliação,Autorização,Formalização,Configuração,Segregação de função,Relatório de exceção,Acesso Sistêmico,Interface/conversão,Políticas/Procedimentos,Indicadores de Performance"'],
+        formulae: [`"${CATEGORIAS.join(',')}"`],
       }
     }
   }

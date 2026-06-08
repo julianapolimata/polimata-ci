@@ -1,5 +1,6 @@
 // StepCaracteristicas — bloco JSX extraído de ModalNovoRisco.jsx em 22/mai/2026 (fatiamento Etapa 5).
 import React from 'react'
+import { CATEGORIAS, FREQUENCIAS, NATUREZAS, CARACTERISTICAS, CONTROLE_CHAVE, RNA } from '../../lib/opcoesControle'
 
 export default function StepCaracteristicas({ isAutomatic, step, isDiag, existencia, setExistencia, descControle, setDescControle, cat, setCat, freq, setFreq, nat, setNat, car, setCar, sis, setSis, chave, setChave, quem, setQuem, quando, setQuando, porque, setPorque, como, setComo, onde, setOnde, resultadoPremissa, setResultadoPremissa, dtImplementacao, setDtImplementacao, sistemas }) {
   return (
@@ -104,13 +105,13 @@ export default function StepCaracteristicas({ isAutomatic, step, isDiag, existen
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1.5rem' }}>
                   {[
-                    { label: 'Categoria', state: [cat, setCat], options: ['Revisão gerencial', 'Reconciliação', 'Autorização', 'Formalização', 'Configuração', 'Segregação de função', 'Relatório de exceção', 'Acesso Sistêmico', 'Interface/conversão', 'Políticas/Procedimentos', 'Indicadores de Performance'] },
-                    { label: 'Frequência', state: [freq, setFreq], options: ['Sob demanda', 'Múltiplas vezes ao dia', 'Diária', 'Semanal', 'Quinzenal', 'Mensal', 'Trimestral', 'Semestral', 'Anual', 'Bienal'] },
-                    { label: 'Natureza', state: [nat, setNat], options: ['Preventivo', 'Detectivo', 'Corretivo'] },
-                    { label: 'Característica', state: [car, setCar], options: ['Manual', 'Automático', 'Semi-automatizado'] },
+                    { label: 'Categoria', state: [cat, setCat], options: CATEGORIAS },
+                    { label: 'Frequência', state: [freq, setFreq], options: FREQUENCIAS },
+                    { label: 'Natureza', state: [nat, setNat], options: NATUREZAS },
+                    { label: 'Característica', state: [car, setCar], options: CARACTERISTICAS },
                     { label: 'Sistema', state: [sis, setSis], options: ['N/A', ...sistemas.map(s => s.nome)] },
-                    { label: 'Controle Chave', state: [chave, setChave], options: ['Controle Chave', 'Controle Compensatório'] }
-                  ].map(f => (isDiag && existencia === 'Parcial' && f.label !== 'Controle Chave') ? { ...f, options: [...f.options, 'Requisito Não Atendido'] } : f).map((field, idx) => (
+                    { label: 'Controle Chave', state: [chave, setChave], options: CONTROLE_CHAVE }
+                  ].map(f => (isDiag && existencia === 'Parcial' && f.label !== 'Controle Chave') ? { ...f, options: [...f.options, RNA] } : f).map((field, idx) => (
                     <div key={idx}>
                       <label style={{
                         display: 'block',
