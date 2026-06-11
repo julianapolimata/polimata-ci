@@ -25,6 +25,7 @@ export default function Planejamento({ projeto }) {
   const isAdmin = perfil?.papel === 'admin_polimata'
   const [tab, setTab] = useState('painel')
   const [perspectivas, setPerspectivas] = useState([])
+  const [periodos, setPeriodos] = useState([])
   const [objetivos, setObjetivos] = useState([])
   const [krs, setKrs] = useState([])
   const [progresso, setProgresso] = useState([])      // v_pe_kr_progresso
@@ -38,18 +39,20 @@ export default function Planejamento({ projeto }) {
     setLoading(true); setErro('')
     try {
       const pid = projeto.id
-      const [pRes, oRes, kRes, prRes, soRes, spRes] = await Promise.all([
+      const [pRes, oRes, kRes, prRes, soRes, spRes, perRes] = await Promise.all([
         supabase.from('pe_perspectivas').select('*').eq('projeto_id', pid).order('ordem').order('nome'),
         supabase.from('pe_objetivos').select('*').eq('projeto_id', pid).order('criado_em'),
         supabase.from('pe_key_results').select('*').eq('projeto_id', pid).order('criado_em'),
         supabase.from('v_pe_kr_progresso').select('*').eq('projeto_id', pid),
         supabase.from('v_pe_objetivo_saude').select('*').eq('projeto_id', pid),
         supabase.from('v_pe_perspectiva_saude').select('*').eq('projeto_id', pid),
+        supabase.from('pe_periodos').select('*').eq('projeto_id', pid).order('data_inicio'),
       ])
       const firstErr = [pRes, oRes, kRes, prRes, soRes, spRes].find(r => r.error)
       if (firstErr) throw firstErr.error
       setPerspectivas(pRes.data || []); setObjetivos(oRes.data || []); setKrs(kRes.data || [])
       setProgresso(prRes.data || []); setSaudeObj(soRes.data || []); setSaudePersp(spRes.data || [])
+      setPeriodos(perRes.data || [])
     } catch (e) {
       console.error(e); setErro('Erro ao carregar o planejamento estratégico.')
     } finally { setLoading(false) }
@@ -85,8 +88,8 @@ export default function Planejamento({ projeto }) {
 
       {erro && <div style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.3)', color: '#991B1B', borderRadius: 8, padding: '8px 14px', fontSize: 12.5, marginBottom: 14 }}>{erro}</div>}
       {loading ? <div style={{ color: 'var(--lt-text3)', fontSize: 13, padding: 30 }}>Carregando…</div> : (<>
-        {tab === 'painel' && <TabPainel perspectivas={perspectivas} objetivos={objetivos} krs={krs} progPorKr={progPorKr} saudePorObj={saudePorObj} saudePorPersp={saudePorPersp} irParaEstrutura={() => setTab('estrutura')} />}
-        {tab === 'estrutura' && <TabEstrutura projeto={projeto} perspectivas={perspectivas} objetivos={objetivos} krs={krs} reload={loadTudo} canEdit={isPolimata} isAdmin={isAdmin} setErro={setErro} />}
+        {tab === 'painel' && <TabPainel perspectivas={perspectivas} objetivos={objetivos} krs={krs} progPorKr={progPorKr} saudePorObj={saudePorObj} saudePorPersp={saudePorPersp} irParaEstrutura={() => setTab('estrutura')} periodos={periodos} />}
+        {tab === 'estrutura' && <TabEstrutura projeto={projeto} perspectivas={perspectivas} objetivos={objetivos} krs={krs} periodos={periodos} reload={loadTudo} canEdit={isPolimata} isAdmin={isAdmin} setErro={setErro} />}
         {tab === 'checkins' && <TabCheckins projeto={projeto} perfil={perfil} perspectivas={perspectivas} objetivos={objetivos} krs={krs} progPorKr={progPorKr} reload={loadTudo} setErro={setErro} />}
       </>)}
     </div>
@@ -94,7 +97,8 @@ export default function Planejamento({ projeto }) {
 }
 
 // ─── Painel BSC ─────────────────────────────────────────────────────────────
-function TabPainel({ perspectivas, objetivos, krs, progPorKr, saudePorObj, saudePorPersp, irParaEstrutura }) {
+function TabPainel({ perspectivas, objetivos, krs, progPorKr, saudePorObj, saudePorPersp, irParaEstrutura, periodos }) {
+  const [filtroPeriodo, setFiltroPeriodo] = useState('')
   if (perspectivas.length === 0) {
     return (
       <div style={{ textAlign: 'center', padding: '50px 20px' }}>
@@ -106,11 +110,23 @@ function TabPainel({ perspectivas, objetivos, krs, progPorKr, saudePorObj, saude
       </div>
     )
   }
+  const objFiltrado = (o) => !filtroPeriodo || o.periodo_id === filtroPeriodo
+  const perNome = (id) => (periodos.find(x => x.id === id) || {}).nome
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+      {periodos.length > 0 && (
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center', justifyContent: 'flex-end' }}>
+          <label style={{ fontSize: 11.5, color: 'var(--lt-text3)' }}>Onda / Período</label>
+          <select className="input-light" style={{ width: 220, fontSize: 12 }} value={filtroPeriodo} onChange={e => setFiltroPeriodo(e.target.value)}>
+            <option value="">Todos</option>
+            {periodos.map(pe => <option key={pe.id} value={pe.id}>{pe.nome}</option>)}
+          </select>
+        </div>
+      )}
       {perspectivas.map(p => {
         const saude = Number(saudePorPersp[p.id]?.saude ?? 0)
-        const objs = objetivos.filter(o => o.perspectiva_id === p.id)
+        const objs = objetivos.filter(o => o.perspectiva_id === p.id).filter(objFiltrado)
+        if (filtroPeriodo && objs.length === 0) return null
         return (
           <div key={p.id} style={{ background: '#fff', border: '1px solid var(--lt-brd)', borderRadius: 12, overflow: 'hidden' }}>
             <div style={{ borderTop: '3px solid ' + COR, padding: '12px 18px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
@@ -124,7 +140,11 @@ function TabPainel({ perspectivas, objetivos, krs, progPorKr, saudePorObj, saude
               return (
                 <div key={o.id} style={{ borderTop: '1px solid var(--lt-brd)', padding: '10px 18px 12px' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginBottom: 6 }}>
-                    <div style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--lt-text)' }}>{o.titulo}</div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                      <span style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--lt-text)' }}>{o.titulo}</span>
+                      {o.classificacao && <Chip texto={o.classificacao === 'operacional' ? 'Operacional' : 'Estratégico'} />}
+                      {o.periodo_id && perNome(o.periodo_id) && <Chip texto={perNome(o.periodo_id)} />}
+                    </div>
                     <Badge valor={so} label="saúde" compact />
                   </div>
                   {oKrs.length === 0 && <div style={{ fontSize: 12, color: 'var(--lt-text3)' }}>Sem key results.</div>}
@@ -154,6 +174,10 @@ function TabPainel({ perspectivas, objetivos, krs, progPorKr, saudePorObj, saude
   )
 }
 
+function Chip({ texto }) {
+  return <span style={{ background: 'rgba(142,124,216,0.12)', color: '#5B4BA8', borderRadius: 999, padding: '2px 9px', fontSize: 10.5, fontWeight: 600, whiteSpace: 'nowrap' }}>{texto}</span>
+}
+
 function Badge({ valor, label, compact }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -166,7 +190,7 @@ function Badge({ valor, label, compact }) {
 }
 
 // ─── Estrutura (CRUD) ───────────────────────────────────────────────────────
-function TabEstrutura({ projeto, perspectivas, objetivos, krs, reload, canEdit, isAdmin, setErro }) {
+function TabEstrutura({ projeto, perspectivas, objetivos, krs, periodos, reload, canEdit, isAdmin, setErro }) {
   const [novaPersp, setNovaPersp] = useState('')
   const [novoObj, setNovoObj] = useState({})   // perspId -> titulo
   const [novoKr, setNovoKr] = useState({})     // objId -> { descricao, baseline, meta, direcao }
@@ -182,11 +206,28 @@ function TabEstrutura({ projeto, perspectivas, objetivos, krs, reload, canEdit, 
   }
 
   async function addObjetivo(perspId) {
-    const titulo = (novoObj[perspId] || '').trim()
+    const f = novoObj[perspId] || {}
+    const titulo = (f.titulo || '').trim()
     if (!titulo) return
-    const { error } = await supabase.from('pe_objetivos').insert({ projeto_id: projeto.id, perspectiva_id: perspId, titulo })
+    const { error } = await supabase.from('pe_objetivos').insert({
+      projeto_id: projeto.id, perspectiva_id: perspId, titulo,
+      classificacao: f.classificacao || null, entregavel: (f.entregavel || '').trim() || null,
+      periodo_id: f.periodo_id || null,
+    })
     if (error) { setErro('Erro ao criar objetivo: ' + error.message); return }
-    setNovoObj(prev => ({ ...prev, [perspId]: '' })); reload()
+    setNovoObj(prev => ({ ...prev, [perspId]: {} })); reload()
+  }
+  const uobj = (perspId, campo, v) => setNovoObj(prev => ({ ...prev, [perspId]: { ...(prev[perspId] || {}), [campo]: v } }))
+
+  const [novoPer, setNovoPer] = useState({ nome: '', inicio: '', fim: '' })
+  async function addPeriodo() {
+    if (!novoPer.nome.trim() || !novoPer.inicio || !novoPer.fim) { setErro('Período precisa de nome, início e fim.'); return }
+    const { error } = await supabase.from('pe_periodos').insert({
+      projeto_id: projeto.id, nome: novoPer.nome.trim(), tipo: 'custom',
+      data_inicio: novoPer.inicio, data_fim: novoPer.fim,
+    })
+    if (error) { setErro('Erro ao criar período: ' + error.message); return }
+    setNovoPer({ nome: '', inicio: '', fim: '' }); reload()
   }
 
   async function addKr(objId) {
@@ -195,6 +236,7 @@ function TabEstrutura({ projeto, perspectivas, objetivos, krs, reload, canEdit, 
     const { error } = await supabase.from('pe_key_results').insert({
       projeto_id: projeto.id, objetivo_id: objId, descricao: f.descricao.trim(),
       valor_baseline: Number(f.baseline || 0), valor_meta: Number(f.meta), direcao: f.direcao || 'aumentar',
+      como_medir: (f.como_medir || '').trim() || null, periodicidade: (f.periodicidade || '').trim() || null,
     })
     if (error) { setErro('Erro ao criar key result: ' + error.message); return }
     setNovoKr(prev => ({ ...prev, [objId]: {} })); reload()
@@ -221,6 +263,23 @@ function TabEstrutura({ projeto, perspectivas, objetivos, krs, reload, canEdit, 
 
   return (
     <div style={{ maxWidth: 900 }}>
+      {canEdit && (
+        <div style={{ background: '#fff', border: '1px solid var(--lt-brd)', borderRadius: 10, padding: '10px 14px', marginBottom: 14 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--lt-text3)', textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 6 }}>Ondas / Períodos do plano</div>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'flex-end', flexWrap: 'wrap' }}>
+            {periodos.map(pe => (
+              <span key={pe.id} style={{ background: 'rgba(142,124,216,0.12)', color: '#5B4BA8', borderRadius: 999, padding: '4px 12px', fontSize: 11.5, fontWeight: 600 }}>
+                {pe.nome}
+                {isAdmin && <button onClick={() => remover('pe_periodos', pe.id, 'o período "' + pe.nome + '"')} style={{ background: 'none', border: 'none', color: '#5B4BA8', cursor: 'pointer', marginLeft: 6, padding: 0, fontSize: 11 }}>×</button>}
+              </span>
+            ))}
+            <input className="input-light" style={{ width: 180, fontSize: 12 }} placeholder="Ex: 1ª Onda (0–8 meses)" value={novoPer.nome} onChange={e => setNovoPer(p => ({ ...p, nome: e.target.value }))} />
+            <input className="input-light" type="date" style={{ width: 135, fontSize: 12 }} value={novoPer.inicio} onChange={e => setNovoPer(p => ({ ...p, inicio: e.target.value }))} />
+            <input className="input-light" type="date" style={{ width: 135, fontSize: 12 }} value={novoPer.fim} onChange={e => setNovoPer(p => ({ ...p, fim: e.target.value }))} />
+            <button onClick={addPeriodo} style={btnSecundario()}>+ Período</button>
+          </div>
+        </div>
+      )}
       {canEdit && (
         <div style={{ display: 'flex', gap: 8, marginBottom: 18, alignItems: 'flex-end' }}>
           <div style={{ flex: 1 }}>
@@ -253,23 +312,29 @@ function TabEstrutura({ projeto, perspectivas, objetivos, krs, reload, canEdit, 
           <div style={{ padding: '0 16px 14px' }}>
             {objetivos.filter(o => o.perspectiva_id === p.id).map(o => (
               <div key={o.id} style={{ border: '1px solid var(--lt-brd)', borderRadius: 10, padding: '10px 14px', marginBottom: 10 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-                  <div style={{ fontSize: 13, fontWeight: 600 }}>🎯 {o.titulo}</div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 2 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                    <span style={{ fontSize: 13, fontWeight: 600 }}>🎯 {o.titulo}</span>
+                    {o.classificacao && <Chip texto={o.classificacao === 'operacional' ? 'Operacional' : 'Estratégico'} />}
+                    {o.periodo_id && (periodos.find(x => x.id === o.periodo_id) || {}).nome && <Chip texto={(periodos.find(x => x.id === o.periodo_id) || {}).nome} />}
+                  </div>
                   {isAdmin && <BtnExcluir onClick={() => remover('pe_objetivos', o.id, 'o objetivo "' + o.titulo + '"')} />}
                 </div>
+                {o.entregavel && <div style={{ fontSize: 11.5, color: 'var(--lt-text3)', marginBottom: 6 }}>📦 Entregável: {o.entregavel}</div>}
                 <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                  <thead><tr><th style={TH}>Key Result</th><th style={{ ...TH, textAlign: 'right' }}>Baseline</th><th style={{ ...TH, textAlign: 'right' }}>Meta</th><th style={TH}>Direção</th>{isAdmin && <th style={TH} />}</tr></thead>
+                  <thead><tr><th style={TH}>Key Result / Como medir</th><th style={{ ...TH, textAlign: 'right' }}>Baseline</th><th style={{ ...TH, textAlign: 'right' }}>Meta</th><th style={TH}>Direção</th><th style={TH}>Periodicidade</th>{isAdmin && <th style={TH} />}</tr></thead>
                   <tbody>
                     {krs.filter(k => k.objetivo_id === o.id).map(k => (
                       <tr key={k.id}>
-                        <td style={TD}>{k.descricao}</td>
+                        <td style={TD}>{k.descricao}{k.como_medir && <div style={{ fontSize: 11, color: 'var(--lt-text3)', marginTop: 2 }}>{k.como_medir}</div>}</td>
                         <td style={{ ...TD, textAlign: 'right' }}>{fmtNum(k.valor_baseline)}</td>
                         <td style={{ ...TD, textAlign: 'right' }}>{fmtNum(k.valor_meta)}</td>
                         <td style={TD}>{k.direcao === 'reduzir' ? '▼ reduzir' : '▲ aumentar'}</td>
+                        <td style={TD}>{k.periodicidade || '—'}</td>
                         {isAdmin && <td style={{ ...TD, textAlign: 'right' }}><BtnExcluir onClick={() => remover('pe_key_results', k.id, 'o key result "' + k.descricao + '"')} /></td>}
                       </tr>
                     ))}
-                    {krs.filter(k => k.objetivo_id === o.id).length === 0 && <tr><td colSpan={5} style={{ ...TD, color: 'var(--lt-text3)' }}>Sem key results ainda.</td></tr>}
+                    {krs.filter(k => k.objetivo_id === o.id).length === 0 && <tr><td colSpan={6} style={{ ...TD, color: 'var(--lt-text3)' }}>Sem key results ainda.</td></tr>}
                   </tbody>
                 </table>
                 {canEdit && (
@@ -281,16 +346,27 @@ function TabEstrutura({ projeto, perspectivas, objetivos, krs, reload, canEdit, 
                     <select className="input-light" style={{ width: 110, fontSize: 12 }} value={(novoKr[o.id] || {}).direcao || 'aumentar'} onChange={e => ukr(o.id, 'direcao', e.target.value)}>
                       <option value="aumentar">▲ aumentar</option><option value="reduzir">▼ reduzir</option>
                     </select>
+                    <input className="input-light" style={{ flex: '2 1 180px', fontSize: 12 }} placeholder="Como medir (fórmula)" value={(novoKr[o.id] || {}).como_medir || ''} onChange={e => ukr(o.id, 'como_medir', e.target.value)} />
+                    <input className="input-light" style={{ width: 130, fontSize: 12 }} placeholder="Periodicidade" value={(novoKr[o.id] || {}).periodicidade || ''} onChange={e => ukr(o.id, 'periodicidade', e.target.value)} />
                     <button onClick={() => addKr(o.id)} style={btnSecundario()}>+ KR</button>
                   </div>
                 )}
               </div>
             ))}
             {canEdit && (
-              <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
-                <input className="input-light" style={{ flex: 1, fontSize: 12.5 }} placeholder="Novo objetivo estratégico nesta perspectiva"
-                  value={novoObj[p.id] || ''} onChange={e => setNovoObj(prev => ({ ...prev, [p.id]: e.target.value }))}
+              <div style={{ display: 'flex', gap: 6, marginTop: 4, alignItems: 'flex-end', flexWrap: 'wrap' }}>
+                <input className="input-light" style={{ flex: '2 1 200px', fontSize: 12.5 }} placeholder="Novo objetivo / ação nesta perspectiva"
+                  value={(novoObj[p.id] || {}).titulo || ''} onChange={e => uobj(p.id, 'titulo', e.target.value)}
                   onKeyDown={e => e.key === 'Enter' && addObjetivo(p.id)} />
+                <select className="input-light" style={{ width: 130, fontSize: 12 }} value={(novoObj[p.id] || {}).classificacao || ''} onChange={e => uobj(p.id, 'classificacao', e.target.value)}>
+                  <option value="">Classif.</option><option value="estrategico">Estratégico</option><option value="operacional">Operacional</option>
+                </select>
+                <select className="input-light" style={{ width: 170, fontSize: 12 }} value={(novoObj[p.id] || {}).periodo_id || ''} onChange={e => uobj(p.id, 'periodo_id', e.target.value)}>
+                  <option value="">Onda / Período</option>
+                  {periodos.map(pe => <option key={pe.id} value={pe.id}>{pe.nome}</option>)}
+                </select>
+                <input className="input-light" style={{ flex: '1 1 160px', fontSize: 12 }} placeholder="Entregável esperado (opcional)"
+                  value={(novoObj[p.id] || {}).entregavel || ''} onChange={e => uobj(p.id, 'entregavel', e.target.value)} />
                 <button onClick={() => addObjetivo(p.id)} style={btnSecundario()}>+ Objetivo</button>
               </div>
             )}
