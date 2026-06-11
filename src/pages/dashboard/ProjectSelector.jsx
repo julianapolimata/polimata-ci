@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { formatNomeEmpresa } from '../../lib/formatNome'
 import { papelLabel } from './_shared'
 import { MODULOS } from '../../lib/modulos'
@@ -8,6 +9,14 @@ import { MODULOS } from '../../lib/modulos'
 
 export default function ProjectSelector({ projetos, resumos, perfil, onSelect, signOut, onAdmin }) {
   const nome = perfil?.nome?.split(' ')[0] || ''
+  const [busca, setBusca] = useState('')
+  const q = busca.trim().toLowerCase()
+  const filtrados = q
+    ? projetos.filter(p => {
+        const cli = formatNomeEmpresa(p.clientes?.nome_fantasia || p.clientes?.nome) || ''
+        return (p.nome || '').toLowerCase().includes(q) || cli.toLowerCase().includes(q)
+      })
+    : projetos
   return (
     <div style={{ height: '100vh', background: 'linear-gradient(145deg, #00112C 0%, #00203E 60%, #1D3B5C 100%)', display: 'flex', flexDirection: 'column', position: 'relative', overflow: 'hidden' }}>
       {/* Accent radial sutil — eco do login */}
@@ -16,7 +25,7 @@ export default function ProjectSelector({ projetos, resumos, perfil, onSelect, s
 
       <div style={{ flex: 1, width: '100%', overflowY: 'auto', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '40px 20px', position: 'relative', zIndex: 1 }}>
 
-      <div style={{ width: '100%', maxWidth: 380, margin: 'auto 0' }}>
+      <div style={{ width: '100%', maxWidth: 880, margin: 'auto 0' }}>
         <div style={{ textAlign: 'center', marginBottom: 24 }}>
           <img src="/logotipo-2cores.png" alt="Polímata GRC" style={{ height: 46, marginBottom: 14, objectFit: 'contain' }} />
           <h1 style={{ fontSize: 21, fontWeight: 200, color: 'var(--cream)', fontFamily: "'Raleway', sans-serif", letterSpacing: '.5px', margin: '0 0 6px' }}>
@@ -27,8 +36,15 @@ export default function ProjectSelector({ projetos, resumos, perfil, onSelect, s
           </p>
         </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          {projetos.map(p => {
+        <div style={{ position: 'relative', maxWidth: 420, margin: '0 auto 18px' }}>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--copper-soft)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ position: 'absolute', left: 13, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+          <input type="text" value={busca} onChange={e => setBusca(e.target.value)} placeholder="Buscar por cliente ou projeto..."
+            style={{ width: '100%', boxSizing: 'border-box', padding: '10px 14px 10px 38px', background: 'rgba(0,32,62,0.55)', border: '1px solid rgba(204,145,94,0.22)', borderRadius: 10, color: 'var(--cream)', fontFamily: 'inherit', fontSize: 13, outline: 'none' }} />
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(330px, 1fr))', gap: 12, alignItems: 'start' }}>
+          {filtrados.length === 0 && <div style={{ gridColumn: '1 / -1', textAlign: 'center', color: 'rgba(247,243,238,0.5)', fontSize: 13, padding: '20px 0' }}>Nenhum projeto encontrado.</div>}
+          {filtrados.map(p => {
             const r = resumos[p.id] || {}
             const clienteNome = formatNomeEmpresa(p.clientes?.nome_fantasia || p.clientes?.nome) || '—'
             const isMap = p.produto === 'mapeamento'
