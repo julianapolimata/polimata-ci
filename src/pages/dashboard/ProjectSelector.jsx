@@ -16,7 +16,7 @@ export default function ProjectSelector({ projetos, resumos, perfil, onSelect, s
 
       <div style={{ flex: 1, width: '100%', overflowY: 'auto', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '40px 20px', position: 'relative', zIndex: 1 }}>
 
-      <div style={{ width: '100%', maxWidth: 720, margin: 'auto 0' }}>
+      <div style={{ width: '100%', maxWidth: 380, margin: 'auto 0' }}>
         <div style={{ textAlign: 'center', marginBottom: 24 }}>
           <img src="/logotipo-2cores.png" alt="Polímata GRC" style={{ height: 46, marginBottom: 14, objectFit: 'contain' }} />
           <h1 style={{ fontSize: 21, fontWeight: 200, color: 'var(--cream)', fontFamily: "'Raleway', sans-serif", letterSpacing: '.5px', margin: '0 0 6px' }}>
@@ -27,7 +27,7 @@ export default function ProjectSelector({ projetos, resumos, perfil, onSelect, s
           </p>
         </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           {projetos.map(p => {
             const r = resumos[p.id] || {}
             const clienteNome = formatNomeEmpresa(p.clientes?.nome_fantasia || p.clientes?.nome) || '—'
@@ -44,7 +44,7 @@ export default function ProjectSelector({ projetos, resumos, perfil, onSelect, s
                 style={{
                   background: 'rgba(0,32,62,0.55)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)',
                   border: '1px solid rgba(204,145,94,0.18)', borderRadius: 12,
-                  padding: '6px 18px', cursor: 'pointer', transition: 'all .2s ease',
+                  padding: '8px 20px', cursor: 'pointer', transition: 'all .2s ease',
                   opacity: isAtivo ? 1 : 0.55, position: 'relative', overflow: 'hidden',
                 }}
                 onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(204,145,94,0.5)'; e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 12px 32px rgba(0,17,44,0.45)' }}
@@ -53,17 +53,47 @@ export default function ProjectSelector({ projetos, resumos, perfil, onSelect, s
                 {/* Linha de cor do produto no topo */}
                 <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 4, background: `linear-gradient(90deg, ${prodCor} 0%, transparent 100%)` }} />
 
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                  <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'baseline', gap: 10, flexWrap: 'wrap' }}>
-                    <span style={{ fontSize: 14, fontWeight: 300, color: 'var(--cream)', fontFamily: "'Raleway', sans-serif", letterSpacing: '.3px' }}>{clienteNome}</span>
-                    <span style={{ fontSize: 9, color: 'var(--copper-soft)', textTransform: 'uppercase', letterSpacing: '1.4px', fontWeight: 600 }}>{p.nome}</span>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16 }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    {/* Eyebrow: nome do projeto */}
+                    <div style={{ fontSize: 9.5, color: 'var(--copper-soft)', textTransform: 'uppercase', letterSpacing: '1.6px', fontWeight: 600, marginBottom: 1 }}>{p.nome}</div>
+                    {/* Título: nome do cliente */}
+                    <div style={{ fontSize: 15, fontWeight: 300, color: 'var(--cream)', fontFamily: "'Raleway', sans-serif", letterSpacing: '.3px', lineHeight: 1.15 }}>{clienteNome}</div>
+                    {r.ultimaAtividade && <div style={{ fontSize: 10.5, color: 'rgba(247,243,238,0.45)', marginTop: 2 }}>Últ. atividade: {r.ultimaAtividade}</div>}
                   </div>
-                  {r.ultimaAtividade && <span style={{ fontSize: 10, color: 'rgba(247,243,238,0.4)', flexShrink: 0, whiteSpace: 'nowrap' }}>{r.ultimaAtividade}</span>}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
-                    <span style={{ fontSize: 9.5, padding: '2px 10px', borderRadius: 999, fontWeight: 600, letterSpacing: 0.3, background: isAtivo ? 'rgba(34,197,94,0.15)' : 'rgba(255,255,255,0.08)', color: isAtivo ? '#4ADE80' : 'var(--txt3)', border: `1px solid ${isAtivo ? 'rgba(34,197,94,0.3)' : 'rgba(255,255,255,0.1)'}` }}>{isAtivo ? 'Ativo' : 'Concluído'}</span>
-                    {mat && !isDiagP && <span style={{ fontSize: 9.5, padding: '2px 10px', borderRadius: 999, fontWeight: 700, letterSpacing: 0.3, background: `${matColor}22`, color: matColor, border: `1px solid ${matColor}55` }} title={mat.nome}>{mat.nivel}</span>}
-                    {isDiagP && <span style={{ fontSize: 9.5, padding: '2px 10px', borderRadius: 999, fontWeight: 700, letterSpacing: 0.3, background: 'rgba(204,145,94,0.15)', color: 'var(--copper)', border: '1px solid rgba(204,145,94,0.4)' }} title="Diagnóstico Apenas (sem teste de efetividade)">Diagnóstico</span>}
-                    {isMap && <span style={{ fontSize: 9.5, padding: '2px 10px', borderRadius: 999, fontWeight: 700, letterSpacing: 0.3, background: 'rgba(204,145,94,0.15)', color: 'var(--copper)', border: '1px solid rgba(204,145,94,0.4)' }} title="Mapeamento de Processos">Mapeamento</span>}
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6, flexShrink: 0 }}>
+                    <span style={{
+                      fontSize: 10, padding: '3px 12px', borderRadius: 999, fontWeight: 600, letterSpacing: 0.3,
+                      background: isAtivo ? 'rgba(34,197,94,0.15)' : 'rgba(255,255,255,0.08)',
+                      color: isAtivo ? '#4ADE80' : 'var(--txt3)',
+                      border: `1px solid ${isAtivo ? 'rgba(34,197,94,0.3)' : 'rgba(255,255,255,0.1)'}`,
+                    }}>
+                      {isAtivo ? 'Ativo' : 'Concluído'}
+                    </span>
+                    {mat && !isDiagP && (
+                      <span style={{
+                        fontSize: 10, padding: '3px 12px', borderRadius: 999, fontWeight: 700, letterSpacing: 0.3,
+                        background: `${matColor}22`, color: matColor, border: `1px solid ${matColor}55`,
+                      }} title={mat.nome}>
+                        {mat.nivel}
+                      </span>
+                    )}
+                    {isDiagP && (
+                      <span style={{
+                        fontSize: 10, padding: '3px 12px', borderRadius: 999, fontWeight: 700, letterSpacing: 0.3,
+                        background: 'rgba(204,145,94,0.15)', color: 'var(--copper)', border: '1px solid rgba(204,145,94,0.4)',
+                      }} title="Diagnóstico Apenas (sem teste de efetividade)">
+                        Diagnóstico
+                      </span>
+                    )}
+                    {isMap && (
+                      <span style={{
+                        fontSize: 10, padding: '3px 12px', borderRadius: 999, fontWeight: 700, letterSpacing: 0.3,
+                        background: 'rgba(204,145,94,0.15)', color: 'var(--copper)', border: '1px solid rgba(204,145,94,0.4)',
+                      }} title="Mapeamento de Processos">
+                        Mapeamento
+                      </span>
+                    )}
                   </div>
                 </div>
 
