@@ -41,6 +41,7 @@ export default function ProjetosConfig({ projetoIdInicial }) {
     const { data: projs } = await supabase.from('projetos').select('*, clientes(id, nome, nome_fantasia)').order('nome')
     setProjetos(projs || [])
     const novo = (projs || []).find(x => x.id === novoId)
+    if (novo && (novo.produto || 'ci') !== 'ci') { fechar(); return }
     if (novo) { setProjetoSel(novo); setAbaInicial('estrutura'); setModo('detalhe') }
     else { fechar() }
   }

@@ -183,7 +183,15 @@ export default function Dashboard() {
   }
   // Seletor de projetos — exibido quando nenhum projeto está selecionado
   if (!projetoAtivo && projetos.length > 0) {
-    return <ProjectSelector projetos={projetos} resumos={projetoResumos} perfil={perfil} onSelect={p => { try { localStorage.setItem('polimata_projeto_ativo_id', p.id) } catch (e) {} ; setProjetoAtivo(p); navigate(p.produto === 'mapeamento' ? '/mapeamentos' : p.produto === 'orcamento' ? '/orcamento' : '/ci') }} signOut={signOut} onAdmin={isAdmin ? () => navigate('/admin') : null} onHub={isAdmin ? () => navigate('/') : null} />
+    return <ProjectSelector projetos={projetos} resumos={projetoResumos} perfil={perfil} produtoAlvo={['mapeamento', 'orcamento'].includes(modulo) ? modulo : null} onProjetoCriado={async (novoId) => {
+      const { data } = await supabase.from('projetos').select('*, clientes(nome, nome_fantasia, slug)').eq('id', novoId).single()
+      if (data) {
+        setProjetos(prev => [data, ...prev])
+        try { localStorage.setItem('polimata_projeto_ativo_id', data.id) } catch (e) { /* segue */ }
+        setProjetoAtivo(data)
+        navigate(data.produto === 'mapeamento' ? '/mapeamentos' : data.produto === 'orcamento' ? '/orcamento' : '/ci')
+      }
+    }} onSelect={p => { try { localStorage.setItem('polimata_projeto_ativo_id', p.id) } catch (e) {} ; setProjetoAtivo(p); navigate(p.produto === 'mapeamento' ? '/mapeamentos' : p.produto === 'orcamento' ? '/orcamento' : '/ci') }} signOut={signOut} onAdmin={isAdmin ? () => navigate('/admin') : null} onHub={isAdmin ? () => navigate('/') : null} />
   }
   if (!projetoAtivo && projetos.length === 0) {
     return <NoProjeto />

@@ -1,22 +1,41 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { formatNomeEmpresa } from '../../lib/formatNome'
 import { papelLabel } from './_shared'
 import { MODULOS } from '../../lib/modulos'
+import { supabase } from '../../lib/supabase'
+import NovoProjetoWizard from '../config/projetos/NovoProjetoWizard'
+import '../../styles/config.css'
 
 // ══════════════════════════════════════════════════════════════════════════════
 // SELETOR DE PROJETOS (tela pós-login)
 // ══════════════════════════════════════════════════════════════════════════════
 
-export default function ProjectSelector({ projetos, resumos, perfil, onSelect, signOut, onAdmin, onHub }) {
+export default function ProjectSelector({ projetos, resumos, perfil, onSelect, signOut, onAdmin, onHub, produtoAlvo, onProjetoCriado }) {
   const nome = perfil?.nome?.split(' ')[0] || ''
   const [busca, setBusca] = useState('')
+  const [verTodos, setVerTodos] = useState(false)
+  const [novoOpen, setNovoOpen] = useState(false)
+  const [clientes, setClientes] = useState([])
+  const [perfisPolimata, setPerfisPolimata] = useState([])
+  const isAdmin = perfil?.papel === 'admin_polimata'
+  const moduloAlvo = produtoAlvo ? MODULOS.find(m => m.id === produtoAlvo) : null
+
+  useEffect(() => {
+    if (!novoOpen || clientes.length) return
+    Promise.all([
+      supabase.from('clientes').select('id, nome, nome_fantasia').order('nome'),
+      supabase.from('perfis').select('id, nome, papel').in('papel', ['admin_polimata', 'consultor_polimata']).eq('ativo', true).order('nome'),
+    ]).then(([c, pf]) => { setClientes(c.data || []); setPerfisPolimata(pf.data || []) })
+  }, [novoOpen, clientes.length])
+
   const q = busca.trim().toLowerCase()
+  const base = (moduloAlvo && !verTodos) ? projetos.filter(p => (p.produto || 'ci') === produtoAlvo) : projetos
   const filtrados = q
-    ? projetos.filter(p => {
+    ? base.filter(p => {
         const cli = formatNomeEmpresa(p.clientes?.nome_fantasia || p.clientes?.nome) || ''
         return (p.nome || '').toLowerCase().includes(q) || cli.toLowerCase().includes(q)
       })
-    : projetos
+    : base
   return (
     <div style={{ height: '100vh', background: 'linear-gradient(145deg, #00112C 0%, #00203E 60%, #1D3B5C 100%)', display: 'flex', flexDirection: 'column', position: 'relative', overflow: 'hidden' }}>
       {/* Accent radial sutil — eco do login */}
@@ -42,12 +61,33 @@ export default function ProjectSelector({ projetos, resumos, perfil, onSelect, s
             style={{ width: '100%', boxSizing: 'border-box', padding: '10px 14px 10px 38px', background: 'rgba(0,32,62,0.55)', border: '1px solid rgba(204,145,94,0.22)', borderRadius: 10, color: 'var(--cream)', fontFamily: 'inherit', fontSize: 13, outline: 'none' }} />
         </div>
 
+        {moduloAlvo && (
+          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 10, marginBottom: 16, flexWrap: 'wrap' }}>
+            <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: 0.4, padding: '4px 14px', borderRadius: 999, background: `color-mix(in srgb, ${moduloAlvo.cor} 18%, transparent)`, color: moduloAlvo.cor, border: `1px solid color-mix(in srgb, ${moduloAlvo.cor} 45%, transparent)` }}>
+              {moduloAlvo.icone} {moduloAlvo.nome}
+            </span>
+            <button onClick={() => setVerTodos(v => !v)} style={{ background: 'none', border: 'none', color: 'rgba(247,243,238,0.55)', fontSize: 11, cursor: 'pointer', textDecoration: 'underline', fontFamily: 'inherit' }}>
+              {verTodos ? `Só ${moduloAlvo.nome}` : 'Ver todos os projetos'}
+            </button>
+            {isAdmin && onProjetoCriado && (
+              <button onClick={() => setNovoOpen(true)} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: `color-mix(in srgb, ${moduloAlvo.cor} 14%, transparent)`, border: `1px solid color-mix(in srgb, ${moduloAlvo.cor} 45%, transparent)`, color: moduloAlvo.cor, borderRadius: 8, padding: '5px 14px', fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
+                + Novo projeto de {moduloAlvo.nome}
+              </button>
+            )}
+          </div>
+        )}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(330px, 1fr))', gap: 12, alignItems: 'start' }}>
-          {filtrados.length === 0 && <div style={{ gridColumn: '1 / -1', textAlign: 'center', color: 'rgba(247,243,238,0.5)', fontSize: 13, padding: '20px 0' }}>Nenhum projeto encontrado.</div>}
+          {filtrados.length === 0 && (
+            <div style={{ gridColumn: '1 / -1', textAlign: 'center', color: 'rgba(247,243,238,0.5)', fontSize: 13, padding: '20px 0' }}>
+              {moduloAlvo && !verTodos && !q
+                ? `Nenhum projeto de ${moduloAlvo.nome} ainda.${isAdmin ? ' Crie o primeiro no botão acima.' : ''}`
+                : 'Nenhum projeto encontrado.'}
+            </div>
+          )}
           {filtrados.map(p => {
             const r = resumos[p.id] || {}
             const clienteNome = formatNomeEmpresa(p.clientes?.nome_fantasia || p.clientes?.nome) || '—'
-            const isMap = p.produto === 'mapeamento'
+            const prodNome = (p.produto && p.produto !== 'ci') ? (MODULOS.find(mm => mm.id === p.produto) || {}).nome : null
             const prodCor = (MODULOS.find(mm => mm.id === (p.produto || 'ci')) || {}).cor || 'var(--copper)'
             const isAtivo = p.ativo !== false
             const mat = r.maturidade
@@ -102,12 +142,12 @@ export default function ProjectSelector({ projetos, resumos, perfil, onSelect, s
                         Diagnóstico
                       </span>
                     )}
-                    {isMap && (
+                    {prodNome && (
                       <span style={{
                         fontSize: 10, padding: '3px 12px', borderRadius: 999, fontWeight: 700, letterSpacing: 0.3,
-                        background: 'rgba(204,145,94,0.15)', color: 'var(--copper)', border: '1px solid rgba(204,145,94,0.4)',
-                      }} title="Mapeamento de Processos">
-                        Mapeamento
+                        background: `color-mix(in srgb, ${prodCor} 16%, transparent)`, color: prodCor, border: `1px solid color-mix(in srgb, ${prodCor} 45%, transparent)`,
+                      }} title={prodNome}>
+                        {prodNome}
                       </span>
                     )}
                   </div>
@@ -154,6 +194,20 @@ export default function ProjectSelector({ projetos, resumos, perfil, onSelect, s
         </div>
       </div>
       </div>
+
+      {novoOpen && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,17,44,0.75)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }} onClick={e => { if (e.target === e.currentTarget) setNovoOpen(false) }}>
+          <div className="main-light" style={{ background: 'var(--lt-bg, #F5F6F8)', borderRadius: 16, maxWidth: 780, width: '100%', maxHeight: '90vh', overflowY: 'auto', padding: '20px 26px', boxShadow: '0 24px 64px rgba(0,0,0,0.45)' }}>
+            <NovoProjetoWizard
+              clientes={clientes}
+              perfisPolimata={perfisPolimata}
+              produtoInicial={produtoAlvo}
+              onCancel={() => setNovoOpen(false)}
+              onCreated={(novoId) => { setNovoOpen(false); onProjetoCriado(novoId) }}
+            />
+          </div>
+        </div>
+      )}
     </div>
   )
 }

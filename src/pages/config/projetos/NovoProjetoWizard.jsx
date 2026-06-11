@@ -6,22 +6,25 @@ import { useState } from 'react'
 import { supabase } from '../../../lib/supabase'
 import { formatNomeEmpresa } from '../../../lib/formatNome'
 import { FASES_LABEL, FASES_DETALHE } from './_consts'
+import { MODULOS } from '../../../lib/modulos'
 import { vincularResponsavelAoProjeto } from '../../../lib/vinculoConsultor'
 
-const PASSOS = ['Identificação', 'Metodologia', 'Equipe & Prazos', 'Revisão']
+const PASSOS_CI = ['Identificação', 'Metodologia', 'Equipe & Prazos', 'Revisão']
+const PASSOS_SIMPLES = ['Identificação', 'Equipe & Prazos', 'Revisão']
 
-export default function NovoProjetoWizard({ clientes, perfisPolimata, onCreated, onCancel }) {
+export default function NovoProjetoWizard({ clientes, perfisPolimata, onCreated, onCancel, produtoInicial }) {
   const [step, setStep] = useState(0)
   const [saving, setSaving] = useState(false)
   const [erro, setErro] = useState('')
   const [form, setForm] = useState({
-    nome: '', cliente_id: '', descricao: '', ativo: true,
+    nome: '', cliente_id: '', descricao: '', ativo: true, produto: produtoInicial || 'ci',
     num_fases: 5, matriz_tamanho: 4, f1_tem_teste: true,
     data_inicio: '', data_previsao_conclusao: '',
     consultor_responsavel_id: '',
     sponsor_nome: '', sponsor_sobrenome: '', sponsor_cargo: '', sponsor_email: '',
   })
   const u = (f, v) => setForm(p => ({ ...p, [f]: v }))
+  const PASSOS = form.produto === 'ci' ? PASSOS_CI : PASSOS_SIMPLES
 
   const cliObj = clientes.find(c => c.id === form.cliente_id)
   const clienteNome = formatNomeEmpresa(cliObj?.nome_fantasia || cliObj?.nome) || ''
@@ -29,7 +32,7 @@ export default function NovoProjetoWizard({ clientes, perfisPolimata, onCreated,
 
   const podeAvancar = (() => {
     if (step === 0) return !!form.nome.trim() && !!form.cliente_id
-    if (step === 2 && form.data_inicio && form.data_previsao_conclusao && form.data_previsao_conclusao < form.data_inicio) return false
+    if (PASSOS[step] === 'Equipe & Prazos' && form.data_inicio && form.data_previsao_conclusao && form.data_previsao_conclusao < form.data_inicio) return false
     return true
   })()
 
@@ -37,7 +40,7 @@ export default function NovoProjetoWizard({ clientes, perfisPolimata, onCreated,
     setErro('')
     if (step === 0 && !form.nome.trim()) { setErro('Informe o nome do projeto.'); return }
     if (step === 0 && !form.cliente_id) { setErro('Selecione o cliente.'); return }
-    if (step === 2 && form.data_inicio && form.data_previsao_conclusao && form.data_previsao_conclusao < form.data_inicio) {
+    if (PASSOS[step] === 'Equipe & Prazos' && form.data_inicio && form.data_previsao_conclusao && form.data_previsao_conclusao < form.data_inicio) {
       setErro('A previsão de conclusão não pode ser anterior ao início.'); return
     }
     setStep(s => Math.min(s + 1, PASSOS.length - 1))
@@ -49,6 +52,7 @@ export default function NovoProjetoWizard({ clientes, perfisPolimata, onCreated,
     try {
       const { data: novoProj, error } = await supabase.from('projetos').insert({
         nome: form.nome.trim(),
+        produto: form.produto,
         cliente_id: form.cliente_id,
         descricao: form.descricao.trim() || null,
         ativo: form.ativo,
@@ -103,8 +107,14 @@ export default function NovoProjetoWizard({ clientes, perfisPolimata, onCreated,
             </select>
             <span style={{ fontSize: 11, color: 'var(--lt-text3)', marginTop: 4, display: 'block' }}>O cliente é cadastrado no Polímata Gestão. Não aparece? Cadastre lá e aguarde a sincronização.</span>
           </div>
+          <div className="cfg-field" style={{ maxWidth: 280 }}><label>Produto <span className="req">*</span></label>
+            <select className="input-light" value={form.produto} onChange={e => u('produto', e.target.value)}>
+              {MODULOS.filter(m => m.ativo).map(m => <option key={m.id} value={m.id}>{m.nome}</option>)}
+            </select>
+            {form.produto !== 'ci' && <span style={{ fontSize: 11, color: 'var(--lt-text3)', marginTop: 4, display: 'block' }}>{(MODULOS.find(m => m.id === form.produto) || {}).descricao}</span>}
+          </div>
           <div className="cfg-field"><label>Nome do Projeto <span className="req">*</span></label>
-            <input className="input-light" value={form.nome} onChange={e => u('nome', e.target.value)} placeholder="Ex: Controles Internos 2026" />
+            <input className="input-light" value={form.nome} onChange={e => u('nome', e.target.value)} placeholder={form.produto === 'orcamento' ? 'Ex: Orçamento 2026' : 'Ex: Controles Internos 2026'} />
           </div>
           <div className="cfg-field"><label>Descrição</label>
             <textarea className="input-light" rows={2} value={form.descricao} onChange={e => u('descricao', e.target.value)} placeholder="Escopo, objetivo ou contexto do projeto (opcional)" style={{ resize: 'vertical', fontFamily: 'inherit' }} />
@@ -117,7 +127,7 @@ export default function NovoProjetoWizard({ clientes, perfisPolimata, onCreated,
         </div>
       )}
 
-      {step === 1 && (
+      {PASSOS[step] === 'Metodologia' && (
         <div className="cfg-group">
           <div className="cfg-group-title">Metodologia</div>
           <div className="cfg-form-sub" style={{ marginTop: -6, marginBottom: 4 }}>Define o escopo metodológico e como o projeto será avaliado.</div>
@@ -144,7 +154,7 @@ export default function NovoProjetoWizard({ clientes, perfisPolimata, onCreated,
         </div>
       )}
 
-      {step === 2 && (
+      {PASSOS[step] === 'Equipe & Prazos' && (
         <>
           <div className="cfg-group">
             <div className="cfg-group-title">Equipe Polímata</div>
@@ -182,23 +192,28 @@ export default function NovoProjetoWizard({ clientes, perfisPolimata, onCreated,
         </>
       )}
 
-      {step === 3 && (
+      {PASSOS[step] === 'Revisão' && (
         <div className="cfg-group">
           <div className="cfg-group-title">Revise antes de criar</div>
           <div className="usr-info-grid" style={{ marginBottom: 8 }}>
+            <Resumo label="Produto" value={(MODULOS.find(m => m.id === form.produto) || {}).nome} />
             <Resumo label="Cliente" value={clienteNome} />
             <Resumo label="Projeto" value={form.nome} />
             <Resumo label="Status" value={form.ativo ? 'Ativo' : 'Inativo'} />
+            {form.produto === 'ci' && (<>
             <Resumo label="Escopo" value={FASES_LABEL[form.num_fases]} />
             <Resumo label="Teste de efetividade" value={form.f1_tem_teste ? 'Sim' : 'Não — diagnóstico'} />
             <Resumo label="Matriz de calor" value={form.matriz_tamanho + ' × ' + form.matriz_tamanho} />
+            </>)}
             <Resumo label="Consultor" value={consultorNome || '— Não atribuído —'} />
             <Resumo label="Início" value={fmt(form.data_inicio)} />
             <Resumo label="Previsão" value={fmt(form.data_previsao_conclusao)} />
             <Resumo label="Sponsor" value={[form.sponsor_nome, form.sponsor_sobrenome].filter(Boolean).join(' ') || '—'} />
           </div>
           <div style={{ background: 'rgba(20,184,166,0.08)', border: '1px solid rgba(20,184,166,0.25)', borderRadius: 8, padding: '10px 14px', fontSize: 12, color: 'var(--lt-text2)', lineHeight: 1.5 }}>
-            Ao criar, você será levado direto para a <strong>Estrutura Organizacional</strong> do projeto para cadastrar as áreas, responsáveis e subprocessos — sem eles, o projeto fica vazio.
+            {form.produto === 'ci'
+              ? <>Ao criar, você será levado direto para a <strong>Estrutura Organizacional</strong> do projeto para cadastrar as áreas, responsáveis e subprocessos — sem eles, o projeto fica vazio.</>
+              : <>Ao criar, o projeto já aparece no seletor e leva direto ao módulo <strong>{(MODULOS.find(m => m.id === form.produto) || {}).nome}</strong>.</>}
           </div>
         </div>
       )}
