@@ -1,5 +1,6 @@
 import { formatNomeEmpresa } from '../../lib/formatNome'
 import { papelLabel } from './_shared'
+import { MODULOS } from '../../lib/modulos'
 
 // ══════════════════════════════════════════════════════════════════════════════
 // SELETOR DE PROJETOS (tela pós-login)
@@ -31,6 +32,7 @@ export default function ProjectSelector({ projetos, resumos, perfil, onSelect, s
             const r = resumos[p.id] || {}
             const clienteNome = formatNomeEmpresa(p.clientes?.nome_fantasia || p.clientes?.nome) || '—'
             const isMap = p.produto === 'mapeamento'
+            const prodCor = (MODULOS.find(mm => mm.id === (p.produto || 'ci')) || {}).cor || 'var(--copper)'
             const isAtivo = p.ativo !== false
             const mat = r.maturidade
             const isDiagP = r.isDiag === true
@@ -48,8 +50,8 @@ export default function ProjectSelector({ projetos, resumos, perfil, onSelect, s
                 onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(204,145,94,0.5)'; e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 12px 32px rgba(0,17,44,0.45)' }}
                 onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(204,145,94,0.18)'; e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = 'none' }}
               >
-                {/* Linha de cor da maturidade no topo */}
-                {matColor && <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3, background: `linear-gradient(90deg, ${matColor} 0%, ${matColor}88 60%, transparent 100%)` }} />}
+                {/* Linha de cor do produto no topo */}
+                <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 4, background: `linear-gradient(90deg, ${prodCor} 0%, transparent 100%)` }} />
 
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16 }}>
                   <div style={{ flex: 1, minWidth: 0 }}>

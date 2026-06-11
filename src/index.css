@@ -17,6 +17,12 @@
   --cream: #F3EEE4;
   --sand: #EBE4D8;
 
+  /* ── Cor por produto (acento do card no seletor / Hub) ── */
+  --prod-ci: #CC915E;            /* Controles Internos — cobre (assinatura) */
+  --prod-mapeamento: #5B8FF9;    /* Mapeamento de Processos — azul */
+  --prod-orcamento: #22B98A;     /* Gestão Orçamentária — verde-esmeralda */
+  --prod-planejamento: #8E7CD8;  /* Planejamento Estratégico — violeta */
+
   /* ── DARK tokens (dashboard, login, sidebar) ── */
   /* Navy-based backgrounds — NOT black — lighter, breathable */
   --bg0: #001530;

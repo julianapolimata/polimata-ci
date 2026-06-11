@@ -11,6 +11,7 @@ export const MODULOS = [
     descricao: 'Matriz de riscos e controles, dashboards de maturidade, fases F1–F5, solicitações e relatórios.',
     icone: '🛡️',
     rota: '/ci',
+    cor: 'var(--prod-ci)',
     ativo: true,
   },
   {
@@ -19,6 +20,7 @@ export const MODULOS = [
     descricao: 'Entrevista gravada → transcrição → POP, fluxograma BPMN e matriz de riscos COSO+ISO com RACI.',
     icone: '🎙',
     rota: '/mapeamentos',
+    cor: 'var(--prod-mapeamento)',
     ativo: true,
   },
   {
@@ -27,6 +29,7 @@ export const MODULOS = [
     descricao: 'Planejamento e acompanhamento orçamentário.',
     icone: '💰',
     rota: null,
+    cor: 'var(--prod-orcamento)',
     ativo: false, // em desenvolvimento
   },
   {
@@ -35,6 +38,7 @@ export const MODULOS = [
     descricao: 'Construção e monitoramento do plano estratégico.',
     icone: '🧭',
     rota: null,
+    cor: 'var(--prod-planejamento)',
     ativo: false, // em desenvolvimento
   },
 ]
