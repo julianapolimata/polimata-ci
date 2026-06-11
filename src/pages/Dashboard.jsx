@@ -182,7 +182,7 @@ export default function Dashboard() {
   }
   // Seletor de projetos — exibido quando nenhum projeto está selecionado
   if (!projetoAtivo && projetos.length > 0) {
-    return <ProjectSelector projetos={projetos} resumos={projetoResumos} perfil={perfil} onSelect={p => { try { localStorage.setItem('polimata_projeto_ativo_id', p.id) } catch (e) {} ; setProjetoAtivo(p); navigate(p.produto === 'mapeamento' ? '/mapeamentos' : '/ci') }} signOut={signOut} onAdmin={isAdmin ? () => navigate('/admin') : null} />
+    return <ProjectSelector projetos={projetos} resumos={projetoResumos} perfil={perfil} onSelect={p => { try { localStorage.setItem('polimata_projeto_ativo_id', p.id) } catch (e) {} ; setProjetoAtivo(p); navigate(p.produto === 'mapeamento' ? '/mapeamentos' : '/ci') }} signOut={signOut} onAdmin={isAdmin ? () => navigate('/admin') : null} onHub={isAdmin ? () => navigate('/') : null} />
   }
   if (!projetoAtivo && projetos.length === 0) {
     return <NoProjeto />
@@ -226,7 +226,7 @@ export default function Dashboard() {
           </div>
         )}
         <nav style={{ flex: 1, overflowY: 'auto', padding: '8px 0', display: 'flex', flexDirection: 'column', gap: 1 }}>
-          <SideNavItem icon="⌂" label="Hub de produtos" active={false} onClick={() => navigate('/')} open={sidebarOpen} />
+          {isAdmin && <SideNavItem icon="⌂" label="Hub de produtos" active={false} onClick={() => navigate('/')} open={sidebarOpen} />}
           {modulo === 'ci' && (<>
           {sidebarOpen && <div className="sb-sep">Dashboards</div>}
           <SideNavItem icon="📊" label="Dashboard" active={location.pathname === '/ci'} onClick={() => navigate('/ci')} open={sidebarOpen} />

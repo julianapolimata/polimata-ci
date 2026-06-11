@@ -7,7 +7,7 @@ import { MODULOS } from '../../lib/modulos'
 // SELETOR DE PROJETOS (tela pós-login)
 // ══════════════════════════════════════════════════════════════════════════════
 
-export default function ProjectSelector({ projetos, resumos, perfil, onSelect, signOut, onAdmin }) {
+export default function ProjectSelector({ projetos, resumos, perfil, onSelect, signOut, onAdmin, onHub }) {
   const nome = perfil?.nome?.split(' ')[0] || ''
   const [busca, setBusca] = useState('')
   const q = busca.trim().toLowerCase()
@@ -123,6 +123,17 @@ export default function ProjectSelector({ projetos, resumos, perfil, onSelect, s
             {papelLabel(perfil?.papel)} — {projetos.length} projeto{projetos.length !== 1 ? 's' : ''} disponíve{projetos.length !== 1 ? 'is' : 'l'}
           </p>
           <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
+            {onHub && (
+              <button onClick={onHub} style={{
+                display: 'inline-flex', alignItems: 'center', gap: 6,
+                background: 'rgba(204,145,94,0.08)', border: '1px solid rgba(204,145,94,0.25)', borderRadius: 8,
+                color: 'var(--copper)', fontSize: 11, padding: '6px 16px', cursor: 'pointer', fontFamily: 'inherit',
+                transition: 'all .15s',
+              }}>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/></svg>
+                Hub de produtos
+              </button>
+            )}
             {onAdmin && (
               <button onClick={onAdmin} style={{
                 display: 'inline-flex', alignItems: 'center', gap: 6,
