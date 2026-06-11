@@ -70,7 +70,7 @@ export default function Planejamento({ projeto }) {
           <div style={{ fontSize: 11, color: 'var(--lt-text3)', textTransform: 'uppercase', letterSpacing: 1.4, fontWeight: 600 }}>
             {formatNomeEmpresa(projeto.clientes?.nome_fantasia || projeto.clientes?.nome)} · {projeto.nome}
           </div>
-          <h1 style={{ fontFamily: "'Raleway', sans-serif", fontSize: 24, fontWeight: 700, color: 'var(--lt-text)', margin: '2px 0 0' }}>Planejamento Estratégico</h1>
+          <h1 style={{ fontFamily: 'Raleway, Montserrat, sans-serif', fontSize: 24, fontWeight: 300, color: '#00203E', letterSpacing: 0.3, margin: '2px 0 0' }}>Planejamento Estratégico</h1>
         </div>
       </div>
 
@@ -85,7 +85,7 @@ export default function Planejamento({ projeto }) {
 
       {erro && <div style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.3)', color: '#991B1B', borderRadius: 8, padding: '8px 14px', fontSize: 12.5, marginBottom: 14 }}>{erro}</div>}
       {loading ? <div style={{ color: 'var(--lt-text3)', fontSize: 13, padding: 30 }}>Carregando…</div> : (<>
-        {tab === 'painel' && <TabPainel perspectivas={perspectivas} objetivos={objetivos} krs={krs} progPorKr={progPorKr} saudePorObj={saudePorObj} saudePorPersp={saudePorPersp} />}
+        {tab === 'painel' && <TabPainel perspectivas={perspectivas} objetivos={objetivos} krs={krs} progPorKr={progPorKr} saudePorObj={saudePorObj} saudePorPersp={saudePorPersp} irParaEstrutura={() => setTab('estrutura')} />}
         {tab === 'estrutura' && <TabEstrutura projeto={projeto} perspectivas={perspectivas} objetivos={objetivos} krs={krs} reload={loadTudo} canEdit={isPolimata} isAdmin={isAdmin} setErro={setErro} />}
         {tab === 'checkins' && <TabCheckins projeto={projeto} perfil={perfil} perspectivas={perspectivas} objetivos={objetivos} krs={krs} progPorKr={progPorKr} reload={loadTudo} setErro={setErro} />}
       </>)}
@@ -94,11 +94,17 @@ export default function Planejamento({ projeto }) {
 }
 
 // ─── Painel BSC ─────────────────────────────────────────────────────────────
-function TabPainel({ perspectivas, objetivos, krs, progPorKr, saudePorObj, saudePorPersp }) {
+function TabPainel({ perspectivas, objetivos, krs, progPorKr, saudePorObj, saudePorPersp, irParaEstrutura }) {
   if (perspectivas.length === 0) {
-    return <div style={{ textAlign: 'center', padding: '50px 20px', color: 'var(--lt-text3)', fontSize: 14 }}>
-      Nenhuma perspectiva ainda. Monte o plano na aba <strong>Estrutura</strong> (ex.: Financeira, Clientes, Processos, Aprendizado).
-    </div>
+    return (
+      <div style={{ textAlign: 'center', padding: '50px 20px' }}>
+        <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--lt-text)', marginBottom: 8 }}>Seu plano estratégico começa aqui</div>
+        <div style={{ fontSize: 13, color: 'var(--lt-text3)', maxWidth: 520, margin: '0 auto 18px', lineHeight: 1.6 }}>
+          O caminho tem 4 passos: <strong>1.</strong> crie as perspectivas do BSC · <strong>2.</strong> defina os objetivos estratégicos de cada uma · <strong>3.</strong> crie os key results com baseline e meta · <strong>4.</strong> registre check-ins. O painel calcula progresso e saúde sozinho.
+        </div>
+        <button onClick={irParaEstrutura} style={btnPrimario(false)}>Montar a estrutura →</button>
+      </div>
+    )
   }
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
@@ -108,7 +114,7 @@ function TabPainel({ perspectivas, objetivos, krs, progPorKr, saudePorObj, saude
         return (
           <div key={p.id} style={{ background: '#fff', border: '1px solid var(--lt-brd)', borderRadius: 12, overflow: 'hidden' }}>
             <div style={{ borderTop: '3px solid ' + COR, padding: '12px 18px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-              <div style={{ fontFamily: "'Raleway', sans-serif", fontSize: 16, fontWeight: 700, color: 'var(--lt-text)' }}>{p.nome}</div>
+              <div style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 15, fontWeight: 600, color: '#00203E' }}>{p.nome}</div>
               <Badge valor={saude} label="saúde da perspectiva" />
             </div>
             {objs.length === 0 && <div style={{ padding: '0 18px 14px', fontSize: 12.5, color: 'var(--lt-text3)' }}>Sem objetivos nesta perspectiva.</div>}
@@ -203,6 +209,16 @@ function TabEstrutura({ projeto, perspectivas, objetivos, krs, reload, canEdit, 
 
   const ukr = (objId, campo, v) => setNovoKr(prev => ({ ...prev, [objId]: { ...(prev[objId] || {}), [campo]: v } }))
 
+  async function criarModeloBSC() {
+    setSalvando(true)
+    const padrao = ['Financeira', 'Clientes', 'Processos Internos', 'Aprendizado e Crescimento']
+    const { error } = await supabase.from('pe_perspectivas').insert(
+      padrao.map((nome, i) => ({ projeto_id: projeto.id, nome, ordem: i })))
+    setSalvando(false)
+    if (error) { setErro('Erro ao criar modelo: ' + error.message); return }
+    reload()
+  }
+
   return (
     <div style={{ maxWidth: 900 }}>
       {canEdit && (
@@ -214,11 +230,24 @@ function TabEstrutura({ projeto, perspectivas, objetivos, krs, reload, canEdit, 
           <button onClick={addPerspectiva} disabled={salvando || !novaPersp.trim()} style={btnPrimario(salvando || !novaPersp.trim())}>Adicionar</button>
         </div>
       )}
-      {perspectivas.length === 0 && <div style={{ color: 'var(--lt-text3)', fontSize: 13, padding: 20 }}>Nenhuma perspectiva cadastrada{canEdit ? ' — comece criando as perspectivas do Balanced Scorecard.' : '.'}</div>}
+      {perspectivas.length === 0 && (
+        <div style={{ background: '#fff', border: '1px dashed var(--lt-brd)', borderRadius: 12, padding: '26px 22px', textAlign: 'center' }}>
+          <div style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--lt-text)', marginBottom: 6 }}>Por onde começar</div>
+          <div style={{ fontSize: 12.5, color: 'var(--lt-text3)', maxWidth: 560, margin: '0 auto 8px', lineHeight: 1.6 }}>
+            As <strong>perspectivas</strong> são as lentes do Balanced Scorecard. Dentro de cada uma você cria <strong>objetivos estratégicos</strong>; cada objetivo ganha <strong>key results</strong> mensuráveis (baseline → meta); e as medições entram na aba <strong>Check-ins</strong>.
+          </div>
+          {canEdit ? (
+            <div style={{ display: 'flex', gap: 10, justifyContent: 'center', alignItems: 'center', marginTop: 12, flexWrap: 'wrap' }}>
+              <button onClick={criarModeloBSC} disabled={salvando} style={btnPrimario(salvando)}>Usar o modelo BSC clássico (4 perspectivas)</button>
+              <span style={{ fontSize: 12, color: 'var(--lt-text3)' }}>ou crie as suas no campo acima</span>
+            </div>
+          ) : <div style={{ fontSize: 12.5, color: 'var(--lt-text3)' }}>O consultor responsável montará a estrutura inicial.</div>}
+        </div>
+      )}
       {perspectivas.map(p => (
         <div key={p.id} style={{ background: '#fff', border: '1px solid var(--lt-brd)', borderRadius: 12, marginBottom: 14, overflow: 'hidden' }}>
           <div style={{ borderLeft: '4px solid ' + COR, padding: '10px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div style={{ fontFamily: "'Raleway', sans-serif", fontSize: 15, fontWeight: 700 }}>{p.nome}</div>
+            <div style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 14.5, fontWeight: 600, color: '#00203E' }}>{p.nome}</div>
             {isAdmin && <BtnExcluir onClick={() => remover('pe_perspectivas', p.id, 'a perspectiva "' + p.nome + '"')} />}
           </div>
           <div style={{ padding: '0 16px 14px' }}>
