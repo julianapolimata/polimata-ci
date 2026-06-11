@@ -182,7 +182,7 @@ export default function Dashboard() {
   }
   // Seletor de projetos — exibido quando nenhum projeto está selecionado
   if (!projetoAtivo && projetos.length > 0) {
-    return <ProjectSelector projetos={projetos} resumos={projetoResumos} perfil={perfil} onSelect={p => { try { localStorage.setItem('polimata_projeto_ativo_id', p.id) } catch (e) {} ; setProjetoAtivo(p); navigate('/ci') }} signOut={signOut} onAdmin={isAdmin ? () => navigate('/admin') : null} />
+    return <ProjectSelector projetos={projetos} resumos={projetoResumos} perfil={perfil} onSelect={p => { try { localStorage.setItem('polimata_projeto_ativo_id', p.id) } catch (e) {} ; setProjetoAtivo(p); navigate(p.produto === 'mapeamento' ? '/mapeamentos' : '/ci') }} signOut={signOut} onAdmin={isAdmin ? () => navigate('/admin') : null} />
   }
   if (!projetoAtivo && projetos.length === 0) {
     return <NoProjeto />

@@ -30,6 +30,7 @@ export default function ProjectSelector({ projetos, resumos, perfil, onSelect, s
           {projetos.map(p => {
             const r = resumos[p.id] || {}
             const clienteNome = formatNomeEmpresa(p.clientes?.nome_fantasia || p.clientes?.nome) || '—'
+            const isMap = p.produto === 'mapeamento'
             const isAtivo = p.ativo !== false
             const mat = r.maturidade
             const isDiagP = r.isDiag === true
@@ -82,10 +83,21 @@ export default function ProjectSelector({ projetos, resumos, perfil, onSelect, s
                         Diagnóstico
                       </span>
                     )}
+                    {isMap && (
+                      <span style={{
+                        fontSize: 10, padding: '3px 12px', borderRadius: 999, fontWeight: 700, letterSpacing: 0.3,
+                        background: 'rgba(204,145,94,0.15)', color: 'var(--copper)', border: '1px solid rgba(204,145,94,0.4)',
+                      }} title="Mapeamento de Processos">
+                        Mapeamento
+                      </span>
+                    )}
                   </div>
                 </div>
 
                 <div style={{ display: 'flex', gap: 16, fontSize: 11, color: 'rgba(247,243,238,0.55)', flexWrap: 'wrap', alignItems: 'center' }}>
+                  {isMap ? (
+                  <span>Entrevistas gravadas → POP, fluxograma BPMN e matriz de riscos</span>
+                  ) : (<>
                   <span><strong style={{ color: 'var(--cream)', fontWeight: 500 }}>{r.totalControles ?? '—'}</strong> controles</span>
                   <span><strong style={{ color: 'var(--cream)', fontWeight: 500 }}>{r.totalAreas ?? '—'}</strong> áreas</span>
                   {mat && !isDiagP && <span>Maturidade <strong style={{ color: matColor, fontWeight: 600 }}>{mat.nome}</strong></span>}
@@ -97,6 +109,7 @@ export default function ProjectSelector({ projetos, resumos, perfil, onSelect, s
                     </>
                   )}
                   {r.ultimaAtividade && <span>Últ. atividade: <strong style={{ color: 'var(--cream)', fontWeight: 500 }}>{r.ultimaAtividade}</strong></span>}
+                  </>)}
                 </div>
               </div>
             )

@@ -7,7 +7,7 @@ import { vincularResponsavelAoProjeto } from '../../../lib/vinculoConsultor'
 
 function NovoProjetoForm({ clientes, perfisPolimata, onSave, onCancel }) {
   const [form, setForm] = useState({
-    nome: '', cliente_id: '', descricao: '', ativo: true,
+    nome: '', cliente_id: '', descricao: '', ativo: true, produto: 'ci',
     num_fases: 5, matriz_tamanho: 4, f1_tem_teste: true,
     data_inicio: '', data_previsao_conclusao: '',
     consultor_responsavel_id: '',
@@ -27,6 +27,7 @@ function NovoProjetoForm({ clientes, perfisPolimata, onSave, onCancel }) {
     try {
       const { data: novoProj, error } = await supabase.from('projetos').insert({
         nome: form.nome.trim(),
+        produto: form.produto,
         cliente_id: form.cliente_id,
         descricao: form.descricao.trim() || null,
         ativo: form.ativo,
@@ -71,6 +72,12 @@ function NovoProjetoForm({ clientes, perfisPolimata, onSave, onCancel }) {
             </select>
           </div>
         </div>
+        <div className="cfg-field" style={{maxWidth:280}}><label>Produto <span className="req">*</span></label>
+          <select className="input-light" value={form.produto} onChange={e=>u('produto',e.target.value)}>
+            <option value="ci">Controles Internos</option>
+            <option value="mapeamento">Mapeamento de Processos</option>
+          </select>
+        </div>
         <div className="cfg-field"><label>Descrição</label>
           <textarea className="input-light" rows={2} value={form.descricao} onChange={e=>u('descricao',e.target.value)} placeholder="Escopo, objetivo ou contexto do projeto (opcional)" style={{resize:'vertical',fontFamily:'inherit'}} />
         </div>
@@ -81,6 +88,7 @@ function NovoProjetoForm({ clientes, perfisPolimata, onSave, onCancel }) {
         </div>
       </div>
 
+      {form.produto === 'ci' && (<>
       {/* ── Metodologia ── */}
       <div className="cfg-group">
         <div className="cfg-group-title">Metodologia</div>
@@ -106,6 +114,7 @@ function NovoProjetoForm({ clientes, perfisPolimata, onSave, onCancel }) {
           </div>
         </div>
       </div>
+      </>)}
 
       {/* ── Datas ── */}
       <div className="cfg-group">
