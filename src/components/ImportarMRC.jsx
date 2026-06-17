@@ -304,7 +304,7 @@ export default function ImportarMRC({ projetoId, projeto, areas, onImported, all
   const inputS = { ...selectS, maxWidth: 200 }
 
   return (
-    <div style={{ padding: '20px 28px', maxWidth: 900, fontFamily: "'Montserrat', sans-serif" }}>
+    <div style={{ padding: '20px 28px', maxWidth: 1100, fontFamily: "'Montserrat', sans-serif" }}>
 
       {/* ── Título ── */}
       <div style={{ marginBottom: 20 }}>
@@ -467,69 +467,73 @@ export default function ImportarMRC({ projetoId, projeto, areas, onImported, all
       </div>
 
       {/* ══════ 3. LIMPAR BASE (admin only) ══════ */}
-      {isAdmin && <div style={card}>
-        <div style={secTitle}>Limpar Resultados do Projeto</div>
-        <div style={{ fontSize: 12, color: 'var(--lt-text2)', lineHeight: 1.5, marginBottom: 14 }}>
-          Remove todos os resultados das análises do projeto (F1 a F5) — testes, avaliações, revisões e notificações. A identificação dos controles (risco, controle, área) é <strong>mantida</strong>.
-          <br /><strong style={{ color: '#DC2626' }}>Esta ação é irreversível.</strong>
-        </div>
-
-        <div style={{ marginBottom: 12 }}>
-          <div style={label}>Projeto ativo (ação restrita a ele)</div>
-          <div style={{ ...inputS, background: '#F5F1E8', fontWeight: 600, color: '#00203E', cursor: 'default' }}>{nomeProjetoAtivo || '—'}</div>
-        </div>
-
-        {projetoId && (
-          <div style={{ marginBottom: 14 }}>
-            <div style={label}>Digite <strong>LIMPAR</strong> para confirmar</div>
-            <input style={inputS} value={lbConfirm} onChange={e => setLbConfirm(e.target.value)} placeholder="LIMPAR" />
+      {isAdmin && <div style={{ ...card, display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 340px', gap: 28, alignItems: 'start' }}>
+        <div>
+          <div style={secTitle}>Limpar Resultados do Projeto</div>
+          <div style={{ fontSize: 12, color: 'var(--lt-text2)', lineHeight: 1.5 }}>
+            Remove todos os resultados das análises do projeto (F1 a F5) — testes, avaliações, revisões e notificações. A identificação dos controles (risco, controle, área) é <strong>mantida</strong>.
+            <br /><strong style={{ color: '#DC2626' }}>Esta ação é irreversível.</strong>
           </div>
-        )}
-
-        <button onClick={handleLimparBase} disabled={!canLimpar || lbLoading} style={{ background: canLimpar ? '#DC2626' : 'var(--lt-border)', color: canLimpar ? '#fff' : 'var(--lt-text3)', border: 'none', borderRadius: 6, padding: '10px 24px', fontSize: 12, fontWeight: 700, cursor: canLimpar ? 'pointer' : 'not-allowed', opacity: lbLoading ? 0.6 : 1, fontFamily: 'inherit' }}>
-          {lbLoading ? 'Limpando...' : 'Limpar Base'}
-        </button>
-
-        {lbResult && (
-          <div style={{ marginTop: 14, padding: '10px 14px', borderRadius: 6, border: '1px solid', fontSize: 12, background: lbResult.ok ? 'rgba(34,197,94,0.08)' : 'rgba(239,68,68,0.08)', borderColor: lbResult.ok ? 'rgba(34,197,94,0.2)' : 'rgba(239,68,68,0.2)' }}>
-            {lbResult.ok ? (
-              <div><strong style={{ color: '#16A34A' }}>Base limpa com sucesso!</strong><div style={{ marginTop: 4, color: 'var(--lt-text2)' }}>{lbResult.dados?.controles_resetados} controles resetados, {lbResult.dados?.revisoes_removidas} revisões removidas, {lbResult.dados?.notificacoes_removidas} notificações removidas.</div></div>
-            ) : (
-              <div><strong style={{ color: '#DC2626' }}>Erro:</strong> {lbResult.erro}</div>
-            )}
+        </div>
+        <div>
+          <div style={{ marginBottom: 12 }}>
+            <div style={label}>Projeto ativo (ação restrita a ele)</div>
+            <div style={{ ...inputS, maxWidth: '100%', background: '#F5F1E8', fontWeight: 600, color: '#00203E', cursor: 'default' }}>{nomeProjetoAtivo || '—'}</div>
           </div>
-        )}
+          {projetoId && (
+            <div style={{ marginBottom: 14 }}>
+              <div style={label}>Digite <strong>LIMPAR</strong> para confirmar</div>
+              <input style={{ ...inputS, maxWidth: '100%' }} value={lbConfirm} onChange={e => setLbConfirm(e.target.value)} placeholder="LIMPAR" />
+            </div>
+          )}
+          <button onClick={handleLimparBase} disabled={!canLimpar || lbLoading} style={{ width: '100%', background: canLimpar ? '#DC2626' : 'var(--lt-border)', color: canLimpar ? '#fff' : 'var(--lt-text3)', border: 'none', borderRadius: 6, padding: '10px 24px', fontSize: 12, fontWeight: 700, cursor: canLimpar ? 'pointer' : 'not-allowed', opacity: lbLoading ? 0.6 : 1, fontFamily: 'inherit' }}>
+            {lbLoading ? 'Limpando...' : 'Limpar Base'}
+          </button>
+          {lbResult && (
+            <div style={{ marginTop: 14, padding: '10px 14px', borderRadius: 6, border: '1px solid', fontSize: 12, background: lbResult.ok ? 'rgba(34,197,94,0.08)' : 'rgba(239,68,68,0.08)', borderColor: lbResult.ok ? 'rgba(34,197,94,0.2)' : 'rgba(239,68,68,0.2)' }}>
+              {lbResult.ok ? (
+                <div><strong style={{ color: '#16A34A' }}>Base limpa com sucesso!</strong><div style={{ marginTop: 4, color: 'var(--lt-text2)' }}>{lbResult.dados?.controles_resetados} controles resetados, {lbResult.dados?.revisoes_removidas} revisões removidas, {lbResult.dados?.notificacoes_removidas} notificações removidas.</div></div>
+              ) : (
+                <div><strong style={{ color: '#DC2626' }}>Erro:</strong> {lbResult.erro}</div>
+              )}
+            </div>
+          )}
+        </div>
       </div>}
 
       {/* ══════ 4. APAGAR TUDO (admin only) ══════ */}
-      {isAdmin && <div style={{ ...card, marginTop: 16, borderColor: '#DC2626', borderWidth: 2 }}>
-        <div style={{ ...secTitle, color: '#DC2626' }}>⚠ Apagar Tudo do Projeto</div>
-        <div style={{ fontSize: 12, color: 'var(--lt-text2)', lineHeight: 1.5, marginBottom: 14 }}>
-          Apaga <strong>TODOS os controles MRC</strong> do projeto — risco, controle, identificação, testes, resultados, recomendações, tudo. Áreas e subprocessos são mantidos. Como se o projeto começasse do zero, pronto pra nova importação.
-          <br /><strong style={{ color: '#DC2626' }}>Esta ação é totalmente irreversível e não pode ser desfeita.</strong>
-        </div>
-        <div style={{ marginBottom: 12 }}>
-          <div style={label}>Projeto ativo (ação restrita a ele)</div>
-          <div style={{ ...inputS, background: '#F5F1E8', fontWeight: 600, color: '#00203E', cursor: 'default' }}>{nomeProjetoAtivo || '—'}</div>
-        </div>
-        {projetoId && (
-          <div style={{ marginBottom: 14 }}>
-            <div style={label}>Digite <strong>APAGAR TUDO</strong> para confirmar</div>
-            <input style={inputS} value={atConfirm} onChange={e => setAtConfirm(e.target.value)} placeholder="APAGAR TUDO" />
+      {isAdmin && <div style={{ ...card, marginTop: 16, borderColor: '#DC2626', borderWidth: 2, display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 340px', gap: 28, alignItems: 'start' }}>
+        <div>
+          <div style={{ ...secTitle, color: '#DC2626' }}>⚠ Apagar Tudo do Projeto</div>
+          <div style={{ fontSize: 12, color: 'var(--lt-text2)', lineHeight: 1.5 }}>
+            Apaga <strong>TODOS os controles MRC</strong> do projeto — risco, controle, identificação, testes, resultados, recomendações, tudo. Áreas e subprocessos são mantidos. Como se o projeto começasse do zero, pronto pra nova importação.
+            <br /><strong style={{ color: '#DC2626' }}>Esta ação é totalmente irreversível e não pode ser desfeita.</strong>
           </div>
-        )}
-        <button onClick={handleApagarTudo} disabled={!canApagarTudo || atLoading} style={{ background: canApagarTudo ? '#991B1B' : 'var(--lt-border)', color: canApagarTudo ? '#fff' : 'var(--lt-text3)', border: 'none', borderRadius: 6, padding: '10px 24px', fontSize: 12, fontWeight: 700, cursor: canApagarTudo ? 'pointer' : 'not-allowed', opacity: atLoading ? 0.6 : 1, fontFamily: 'inherit' }}>
-          {atLoading ? 'Apagando tudo...' : 'Apagar Tudo'}
-        </button>
-        {atResult && (
-          <div style={{ marginTop: 14, padding: '10px 14px', borderRadius: 6, border: '1px solid', fontSize: 12, background: atResult.ok ? 'rgba(34,197,94,0.08)' : 'rgba(239,68,68,0.08)', borderColor: atResult.ok ? 'rgba(34,197,94,0.2)' : 'rgba(239,68,68,0.2)' }}>
+        </div>
+        <div>
+          <div style={{ marginBottom: 12 }}>
+            <div style={label}>Projeto ativo (ação restrita a ele)</div>
+            <div style={{ ...inputS, maxWidth: '100%', background: '#F5F1E8', fontWeight: 600, color: '#00203E', cursor: 'default' }}>{nomeProjetoAtivo || '—'}</div>
+          </div>
+          {projetoId && (
+            <div style={{ marginBottom: 14 }}>
+              <div style={label}>Digite <strong>APAGAR TUDO</strong> para confirmar</div>
+              <input style={{ ...inputS, maxWidth: '100%' }} value={atConfirm} onChange={e => setAtConfirm(e.target.value)} placeholder="APAGAR TUDO" />
+            </div>
+          )}
+          <button onClick={handleApagarTudo} disabled={!canApagarTudo || atLoading} style={{ width: '100%', background: canApagarTudo ? '#991B1B' : 'var(--lt-border)', color: canApagarTudo ? '#fff' : 'var(--lt-text3)', border: 'none', borderRadius: 6, padding: '10px 24px', fontSize: 12, fontWeight: 700, cursor: canApagarTudo ? 'pointer' : 'not-allowed', opacity: atLoading ? 0.6 : 1, fontFamily: 'inherit' }}>
+            {atLoading ? 'Apagando tudo...' : 'Apagar Tudo'}
+          </button>
+          {atResult && (
+            <div style={{ marginTop: 14, padding: '10px 14px', borderRadius: 6, border: '1px solid', fontSize: 12, background: atResult.ok ? 'rgba(34,197,94,0.08)' : 'rgba(239,68,68,0.08)', borderColor: atResult.ok ? 'rgba(34,197,94,0.2)' : 'rgba(239,68,68,0.2)' }}>
             {atResult.ok ? (
               <div><strong style={{ color: '#16A34A' }}>Projeto zerado!</strong><div style={{ marginTop: 4, color: 'var(--lt-text2)' }}>{atResult.dados?.controles_apagados} controles apagados, {atResult.dados?.revisoes_removidas} revisões, {atResult.dados?.notificacoes_removidas} notificações, {atResult.dados?.audit_removido} entradas de auditoria.</div></div>
             ) : (
               <div><strong style={{ color: '#DC2626' }}>Erro:</strong> {atResult.erro}</div>
             )}
           </div>
-        )}
+          )}
+        </div>
       </div>}
 
       {/* ══════ POP-UP CONFIRMAÇÃO ══════ */}
