@@ -47,13 +47,15 @@ export default function PorAreaFiltros({ ctx }) {
                       </button>
                       <div style={{ height: 1, background: 'var(--lt-border)' }} />
                       <button
-                        onClick={() => { setExcelMenuAberto(false); exportarSolicitacoesDaArea() }}
-                        style={{ display: 'block', width: '100%', textAlign: 'left', padding: '10px 14px', border: 'none', background: 'transparent', fontFamily: 'inherit', fontSize: 12, fontWeight: 600, color: 'var(--lt-text)', cursor: 'pointer' }}
-                        onMouseEnter={e => e.currentTarget.style.background = 'var(--lt-bg)'}
+                        disabled={projeto?.f1_tem_teste === false}
+                        onClick={() => { if (projeto?.f1_tem_teste === false) return; setExcelMenuAberto(false); exportarSolicitacoesDaArea() }}
+                        title={projeto?.f1_tem_teste === false ? 'Indisponível em projeto de diagnóstico (F1 sem teste)' : undefined}
+                        style={{ display: 'block', width: '100%', textAlign: 'left', padding: '10px 14px', border: 'none', background: 'transparent', fontFamily: 'inherit', fontSize: 12, fontWeight: 600, color: projeto?.f1_tem_teste === false ? 'var(--lt-text3)' : 'var(--lt-text)', cursor: projeto?.f1_tem_teste === false ? 'not-allowed' : 'pointer', opacity: projeto?.f1_tem_teste === false ? 0.55 : 1 }}
+                        onMouseEnter={e => { if (projeto?.f1_tem_teste !== false) e.currentTarget.style.background = 'var(--lt-bg)' }}
                         onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
                       >
                         Lista de Solicitações
-                        <div style={{ fontSize: 10, fontWeight: 500, color: 'var(--lt-text3)', marginTop: 2 }}>Solicitações dessa área (1 aba)</div>
+                        <div style={{ fontSize: 10, fontWeight: 500, color: 'var(--lt-text3)', marginTop: 2 }}>{projeto?.f1_tem_teste === false ? 'Indisponível em diagnóstico (F1 sem teste)' : 'Solicitações dessa área (1 aba)'}</div>
                       </button>
                     </div>
                   )}
