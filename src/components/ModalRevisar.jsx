@@ -416,9 +416,9 @@ const ModalRevisar = ({ row, onClose, onAction, projeto }) => {
             <div style={{ ...S.value, whiteSpace: 'pre-wrap' }}>{row?.dr || '—'}</div>
           </div>
 
-          {/* Descrição do Controle */}
+          {/* Controle — descrição + características + premissas agrupados sob a mesma aprovação (Opção 1) */}
           <div style={S.section}>
-            {renderBlocoHeader('controle', 'Descrição do Controle')}
+            {renderBlocoHeader('controle', 'Controle')}
             <div style={{ ...S.value, whiteSpace: 'pre-wrap' }}>{row?.dc || '—'}</div>
             {isDiag && (
               <div style={{ marginTop: 10, paddingTop: 10, borderTop: '1px solid #EAE4D8', display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -430,41 +430,45 @@ const ModalRevisar = ({ row, onClose, onAction, projeto }) => {
                 }}>{row?.existencia || 'Sem classificação'}</span>
               </div>
             )}
-          </div>
 
-          {/* Características do Controle */}
-          <div style={S.section}>
-            <div style={S.sectionTitle}>Características do Controle</div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
-              <div><div style={S.label}>Categoria</div><div style={S.value}>{row?.cat || '—'}</div></div>
-              <div><div style={S.label}>Frequência</div><div style={S.value}>{row?.freq || '—'}</div></div>
-              <div><div style={S.label}>Natureza</div><div style={S.value}>{row?.nat || '—'}</div></div>
-              <div><div style={S.label}>Característica</div><div style={S.value}>{row?.car || '—'}</div></div>
-              <div><div style={S.label}>Sistema</div><div style={S.value}>{row?.sis || '—'}</div></div>
-              <div><div style={S.label}>Controle Chave?</div><div style={S.value}>{row?.chave || '—'}</div></div>
+            <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid #EAE4D8' }}>
+              <div style={S.sectionTitle}>Características do Controle</div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
+                <div><div style={S.label}>Categoria</div><div style={S.value}>{row?.cat || '—'}</div></div>
+                <div><div style={S.label}>Frequência</div><div style={S.value}>{row?.freq || '—'}</div></div>
+                <div><div style={S.label}>Natureza</div><div style={S.value}>{row?.nat || '—'}</div></div>
+                <div><div style={S.label}>Característica</div><div style={S.value}>{row?.car || '—'}</div></div>
+                <div><div style={S.label}>Sistema</div><div style={S.value}>{row?.sis || '—'}</div></div>
+                <div><div style={S.label}>Controle Chave?</div><div style={S.value}>{row?.chave || '—'}</div></div>
+              </div>
+            </div>
+
+            <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid #EAE4D8' }}>
+              <div style={S.sectionTitle}>Premissas do Controle</div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
+                <div><div style={S.label}>Quem</div><div style={{ ...S.value, whiteSpace: 'pre-wrap' }}>{row?.premissa_quem || '—'}</div></div>
+                <div><div style={S.label}>Quando</div><div style={{ ...S.value, whiteSpace: 'pre-wrap' }}>{row?.premissa_quando || '—'}</div></div>
+                <div><div style={S.label}>Onde</div><div style={{ ...S.value, whiteSpace: 'pre-wrap' }}>{row?.premissa_onde || '—'}</div></div>
+                <div><div style={S.label}>Como</div><div style={{ ...S.value, whiteSpace: 'pre-wrap' }}>{row?.premissa_como || '—'}</div></div>
+                <div><div style={S.label}>Por que</div><div style={{ ...S.value, whiteSpace: 'pre-wrap' }}>{row?.premissa_porque || '—'}</div></div>
+                <div><div style={S.label}>Resultado esperado</div><div style={{ ...S.value, whiteSpace: 'pre-wrap' }}>{row?.premissa_resultado || '—'}</div></div>
+              </div>
+            </div>
+
+            {isDiag && (
+              <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid #EAE4D8' }}>
+                <div style={S.sectionTitle}>Recomendação / Melhoria</div>
+                <div style={{ ...S.value, whiteSpace: 'pre-wrap' }}>{row?.rec || row?.incons_ader || '—'}</div>
+              </div>
+            )}
+
+            <div style={{ marginTop: 12, fontSize: 11, color: '#9A6433', background: 'rgba(204,145,94,0.12)', borderRadius: 6, padding: '7px 10px' }}>
+              Ao aprovar este bloco, você aprova todo o controle: descrição, características{isDiag ? ', premissas e recomendação' : ' e premissas'}.
             </div>
           </div>
 
-          {/* Premissas */}
-          <div style={S.section}>
-            <div style={S.sectionTitle}>Premissas do Controle</div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
-              <div><div style={S.label}>Quem</div><div style={{ ...S.value, whiteSpace: 'pre-wrap' }}>{row?.premissa_quem || '—'}</div></div>
-              <div><div style={S.label}>Quando</div><div style={{ ...S.value, whiteSpace: 'pre-wrap' }}>{row?.premissa_quando || '—'}</div></div>
-              <div><div style={S.label}>Onde</div><div style={{ ...S.value, whiteSpace: 'pre-wrap' }}>{row?.premissa_onde || '—'}</div></div>
-              <div><div style={S.label}>Como</div><div style={{ ...S.value, whiteSpace: 'pre-wrap' }}>{row?.premissa_como || '—'}</div></div>
-              <div><div style={S.label}>Por que</div><div style={{ ...S.value, whiteSpace: 'pre-wrap' }}>{row?.premissa_porque || '—'}</div></div>
-              <div><div style={S.label}>Resultado esperado</div><div style={{ ...S.value, whiteSpace: 'pre-wrap' }}>{row?.premissa_resultado || '—'}</div></div>
-            </div>
-          </div>
-
-          {/* Resultado / Recomendação */}
-          {isDiag ? (
-            <div style={S.section}>
-              <div style={S.sectionTitle}>Recomendação / Melhoria</div>
-              <div style={{ ...S.value, whiteSpace: 'pre-wrap' }}>{row?.rec || row?.incons_ader || '—'}</div>
-            </div>
-          ) : (
+          {/* Resultado da Análise (projetos com teste) */}
+          {!isDiag && (
             <div style={S.section}>
               {renderBlocoHeader('teste', 'Resultado da Análise')}
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
