@@ -445,6 +445,19 @@ const ModalRevisar = ({ row, onClose, onAction, projeto }) => {
             </div>
           </div>
 
+          {/* Premissas */}
+          <div style={S.section}>
+            <div style={S.sectionTitle}>Premissas do Controle</div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
+              <div><div style={S.label}>Quem</div><div style={{ ...S.value, whiteSpace: 'pre-wrap' }}>{row?.premissa_quem || '—'}</div></div>
+              <div><div style={S.label}>Quando</div><div style={{ ...S.value, whiteSpace: 'pre-wrap' }}>{row?.premissa_quando || '—'}</div></div>
+              <div><div style={S.label}>Onde</div><div style={{ ...S.value, whiteSpace: 'pre-wrap' }}>{row?.premissa_onde || '—'}</div></div>
+              <div><div style={S.label}>Como</div><div style={{ ...S.value, whiteSpace: 'pre-wrap' }}>{row?.premissa_como || '—'}</div></div>
+              <div><div style={S.label}>Por que</div><div style={{ ...S.value, whiteSpace: 'pre-wrap' }}>{row?.premissa_porque || '—'}</div></div>
+              <div><div style={S.label}>Resultado esperado</div><div style={{ ...S.value, whiteSpace: 'pre-wrap' }}>{row?.premissa_resultado || '—'}</div></div>
+            </div>
+          </div>
+
           {/* Resultado / Recomendação */}
           {isDiag ? (
             <div style={S.section}>
@@ -464,19 +477,6 @@ const ModalRevisar = ({ row, onClose, onAction, projeto }) => {
               </div>
             </div>
           )}
-
-          {/* Premissas */}
-          <div style={S.section}>
-            <div style={S.sectionTitle}>Premissas do Controle</div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
-              <div><div style={S.label}>Quem</div><div style={{ ...S.value, whiteSpace: 'pre-wrap' }}>{row?.premissa_quem || '—'}</div></div>
-              <div><div style={S.label}>Quando</div><div style={{ ...S.value, whiteSpace: 'pre-wrap' }}>{row?.premissa_quando || '—'}</div></div>
-              <div><div style={S.label}>Onde</div><div style={{ ...S.value, whiteSpace: 'pre-wrap' }}>{row?.premissa_onde || '—'}</div></div>
-              <div><div style={S.label}>Como</div><div style={{ ...S.value, whiteSpace: 'pre-wrap' }}>{row?.premissa_como || '—'}</div></div>
-              <div><div style={S.label}>Por que</div><div style={{ ...S.value, whiteSpace: 'pre-wrap' }}>{row?.premissa_porque || '—'}</div></div>
-              <div><div style={S.label}>Resultado esperado</div><div style={{ ...S.value, whiteSpace: 'pre-wrap' }}>{row?.premissa_resultado || '—'}</div></div>
-            </div>
-          </div>
 
           {/* Teste de Desenho */}
           {row?.dem_pa && (
