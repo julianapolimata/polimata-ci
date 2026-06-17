@@ -554,7 +554,7 @@ export default function ImportarMRC({ projetoId, projeto, areas, onImported, all
                 ? <>Todos os controles do projeto serão <span style={{ color: '#DC2626', fontWeight: 700 }}>permanentemente apagados</span> e substituídos pelos <strong>{previewCount} controles</strong> do arquivo.</>
                 : <>Todos os controles existentes da área <strong>"{areaNome}"</strong> serão <span style={{ color: '#DC2626', fontWeight: 700 }}>permanentemente apagados</span> e substituídos pelos <strong>{previewCount} controles</strong> do arquivo.</>
               }
-              <br /><br />Fase: <strong>{faseLabel}</strong>
+              <br /><br />{clienteAtivo && <>Cliente: <strong>{clienteAtivo}</strong><br /></>}Fase: <strong>{faseLabel}</strong>
               <br /><br /><strong>Essa ação não pode ser desfeita.</strong>
             </div>
             <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
