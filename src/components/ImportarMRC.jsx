@@ -150,6 +150,11 @@ export default function ImportarMRC({ projetoId, projeto, areas, onImported, all
       const ws = wb.worksheets[0]
       if (!ws) throw new Error('Nenhuma aba encontrada no arquivo.')
       const rows = []
+      // Linha é "dados" se tiver Ref. Risco ou Ref. Controle. Os índices mudam no
+      // template de diagnóstico (Cenário Atual desloca rr/rc em +1).
+      const fileIsDiag = projeto?.f1_tem_teste === false
+      const rrIdx = fileIsDiag ? 6 : 5
+      const rcIdx = fileIsDiag ? 8 : 7
       for (let r = DATA_START_ROW; r <= ws.rowCount; r++) {
         const row = ws.getRow(r); const vals = []; let hasData = false
         row.eachCell({ includeEmpty: true }, (cell, colNumber) => {
@@ -159,7 +164,7 @@ export default function ImportarMRC({ projetoId, projeto, areas, onImported, all
           vals[colNumber - 1] = v
           if (v !== null && v !== undefined && String(v).trim() !== '') hasData = true
         })
-        if (hasData && vals[5]) rows.push(vals)
+        if (hasData && (vals[rrIdx] || vals[rcIdx])) rows.push(vals)
       }
       setPreview({ rows })
     } catch (err) { setErro(`Erro ao ler arquivo: ${err.message}`) }
