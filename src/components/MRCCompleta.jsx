@@ -1,12 +1,13 @@
 import { useState, useEffect, useMemo } from 'react'
 import { supabase } from '../lib/supabase'
+import { matrizSize, imps as mzImpsFn, probs as mzProbsFn, coresMatriz as mzCoresFn } from '../lib/matrizCalor'
 import { useAuth } from '../contexts/AuthContext'
 import { exportarMRCExcel } from '../lib/exportMRC'
 import { getResultadoVitrine, getStatusComputado } from '../lib/fases'
 import { getProximaAcao, PROXIMA_ACAO_OPCOES } from '../lib/statusWorkflow'
 import {
   getFaseInfo, NIVEIS, MAX_ROWS,
-  HM_IMPS, HM_PROBS, HM_COLORS, CRIT_LABELS_HM, CRIT_CORES_HM, impToIdx, probToIdx,
+  CRIT_LABELS_HM, CRIT_CORES_HM, impToIdx, probToIdx,
 } from './mrc/badges'
 import TabelaMRC from './mrc/TabelaMRC'
 import { ModalDetalhe } from './mrc/ModalDetalhe'
@@ -68,14 +69,18 @@ export default function MRCCompleta({ projetoId, projeto, clienteNome, projetoNo
     return { ef, inf, gap, pa, ex, pc, ix, crit }
   }, [mrc])
 
+  const mzSize = matrizSize(projeto)
+  const HM_IMPS = mzImpsFn(mzSize)
+  const HM_PROBS = mzProbsFn(mzSize)
+  const HM_COLORS = mzCoresFn(mzSize)
   const heatGrid = useMemo(() => {
-    const grid = Array.from({ length: 4 }, () => Array(4).fill(0))
+    const grid = Array.from({ length: mzSize }, () => Array(mzSize).fill(0))
     mrc.forEach(c => {
-      const ri = impToIdx(c.imp), ci = probToIdx(c.prob)
+      const ri = impToIdx(c.imp, mzSize), ci = probToIdx(c.prob, mzSize)
       if (ri >= 0 && ci >= 0) grid[ri][ci]++
     })
     return grid
-  }, [mrc])
+  }, [mrc, mzSize])
 
   const mrcVisiveis = mrc.filter(r => {
     // Rascunho: visível só para quem criou (legado sem autor: só consultores)

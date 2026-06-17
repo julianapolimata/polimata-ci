@@ -2,14 +2,15 @@ import { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
 import { getResultadoVitrine } from '../../lib/fases'
+import { matrizSize } from '../../lib/matrizCalor'
 import { formatNomeEmpresa } from '../../lib/formatNome'
 import { calcularIndiceEmpresa, getNivelMaturidade } from '../../lib/calculoMaturidade'
 import {
   NIVEL_CORES, COR_EFETIVO, COR_INEFETIVO, COR_GAP,
-  CRIT_CORES, CRIT_LABELS, IMP_LABELS, PROB_LABELS, HEAT_CORES,
+  CRIT_CORES, CRIT_LABELS,
   getCorNivel, getBarGradient,
   isEfetivo, isInefetivo, isGap, precisaPlanoAcao, planoAcaoConcluido,
-  impToIdx, probToIdx, critToIdx,
+  impToIdx, probToIdx, critToIdx, labelsImp, labelsProb, coresMz,
   Spinner, NoProjeto, EmptyProjectState,
   dashStyles,
 } from './_shared'
@@ -38,8 +39,9 @@ export default function HomeDash({ projeto, areasCalc, todosControles, loading, 
     return { ef, inf, gap, pa }
   }, [todosControles])
 
+  const mzSize = matrizSize(projeto)
   const heatmapData = useMemo(() => {
-    const grid = Array.from({ length: 4 }, () => Array(4).fill(0))
+    const grid = Array.from({ length: mzSize }, () => Array(mzSize).fill(0))
     const controles = areaFiltro
       ? todosControles.filter(c => {
           const area = areasCalc.find(a => a.nome === areaFiltro)
@@ -47,11 +49,14 @@ export default function HomeDash({ projeto, areasCalc, todosControles, loading, 
         })
       : todosControles
     controles.forEach(c => {
-      const ri = impToIdx(c.imp), ci = probToIdx(c.prob)
+      const ri = impToIdx(c.imp, mzSize), ci = probToIdx(c.prob, mzSize)
       if (ri >= 0 && ci >= 0) grid[ri][ci]++
     })
     return grid
-  }, [todosControles, areasCalc, areaFiltro])
+  }, [todosControles, areasCalc, areaFiltro, mzSize])
+  const mzImps = labelsImp(mzSize)
+  const mzProbs = labelsProb(mzSize)
+  const mzCores = coresMz(mzSize)
 
   const critPorArea = useMemo(() => {
     return ranking.map(a => {
@@ -159,13 +164,13 @@ export default function HomeDash({ projeto, areasCalc, todosControles, loading, 
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
             <div style={{ display: 'flex', flex: 1 }}>
               <div style={D.heatYLabels}>
-                {IMP_LABELS.map(l => <div key={l} style={D.heatYLabel}>{l}</div>)}
+                {mzImps.map(l => <div key={l} style={D.heatYLabel}>{l}</div>)}
               </div>
               <div style={D.heatBody}>
                 {heatmapData.map((row, ri) => (
                   <div key={ri} style={D.heatRow}>
                     {row.map((val, ci) => (
-                      <div key={ci} style={{ ...D.heatCell, background: val === 0 ? 'rgba(255,255,255,0.04)' : HEAT_CORES[ri][ci] }}>
+                      <div key={ci} style={{ ...D.heatCell, background: val === 0 ? 'rgba(255,255,255,0.04)' : mzCores[ri][ci] }}>
                         {val}
                       </div>
                     ))}
@@ -174,7 +179,7 @@ export default function HomeDash({ projeto, areasCalc, todosControles, loading, 
               </div>
             </div>
             <div style={D.heatXLabels}>
-              {PROB_LABELS.map(l => <div key={l} style={D.heatXLabel}>{l}</div>)}
+              {mzProbs.map(l => <div key={l} style={D.heatXLabel}>{l}</div>)}
             </div>
             <div style={{ textAlign: 'center', marginTop: 4, fontSize: 10, fontWeight: 600, letterSpacing: 1, textTransform: 'uppercase', color: 'rgba(247,243,238,0.55)' }}>Probabilidade →</div>
           </div>
