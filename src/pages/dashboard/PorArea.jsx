@@ -15,11 +15,12 @@ import ModalAtualizar from '../../components/ModalAtualizar'
 import ModalNovoRisco from '../../components/ModalNovoRisco'
 import ModalRegistrarResultado from '../../components/ModalRegistrarResultado'
 import ModalRegistrarCriticidade from '../../components/ModalRegistrarCriticidade'
+import { matrizSize } from '../../lib/matrizCalor'
 import ModalReavaliar from '../../components/ModalReavaliar'
 import ModalRevisar from '../../components/ModalRevisar'
 import {
   isEfetivo, isInefetivo, isGap, precisaPlanoAcao, planoAcaoConcluido,
-  impToIdx, probToIdx, getUltimaAtualizacao, Spinner, NoProjeto,
+  impToIdx, probToIdx, labelsImp, labelsProb, coresMz, getUltimaAtualizacao, Spinner, NoProjeto,
 } from './_shared'
 import { paStyles } from './porArea/styles'
 import PorAreaTopo from './porArea/PorAreaTopo'
@@ -91,14 +92,18 @@ export default function PorArea({ projeto, areasCalc, todosControles, loading, n
   // HOOKS devem ficar ANTES de qualquer early return (React rules of hooks)
   const controles = area?.controles || []
   const ultAtualArea = useMemo(() => getUltimaAtualizacao(controles), [controles])
+  const mzSize = matrizSize(projeto)
   const areaHeatmap = useMemo(() => {
-    const grid = Array.from({ length: 4 }, () => Array(4).fill(0))
+    const grid = Array.from({ length: mzSize }, () => Array(mzSize).fill(0))
     controles.forEach(c => {
-      const ri = impToIdx(c.imp), ci = probToIdx(c.prob)
+      const ri = impToIdx(c.imp, mzSize), ci = probToIdx(c.prob, mzSize)
       if (ri >= 0 && ci >= 0) grid[ri][ci]++
     })
     return grid
-  }, [controles])
+  }, [controles, mzSize])
+  const mzImps = labelsImp(mzSize)
+  const mzProbs = labelsProb(mzSize)
+  const mzCores = coresMz(mzSize)
 
   // Retorna config de status (label, color, bg) baseado no perfil ativo (real ou simulado)
   function getStatusBadge(sw, c) {
@@ -357,7 +362,7 @@ export default function PorArea({ projeto, areasCalc, todosControles, loading, n
   const ctx = {
     CRT_C, F1_HDR, FASE_HDR, FASE_HDR_FULL, FASE_KEYS_VISIVEIS, FASE_W, cf, cfSorted, crits, exportarSolicitacoesDaArea, ress,
     FASE_W_PARA, IMP_C, PA, PA_DATA_COLS, PA_FASE_KEYS, PRB_C,
-    RegressaoBadge, Td, area, areaHeatmap, areasCalc, atualizarRow,
+    RegressaoBadge, Td, area, areaHeatmap, mzImps, mzProbs, mzCores, areasCalc, atualizarRow,
     badgeCrit, badgeExistencia, badgeFase, badgeImp, badgeProb, badgeR,
     bdgS, busca, canEdit, canEditControle, canRevisar, controles, controlesVisiveis,
     dashCollapsed, efetivos, excelMenuAberto, excelMenuRef, expandirFiltros, exportarMRCExcel,
@@ -405,7 +410,7 @@ export default function PorArea({ projeto, areasCalc, todosControles, loading, n
       {draftRow && <ModalNovoRisco key={draftRow.id} draft={draftRow} onClose={() => setDraftRow(null)} onSaved={() => { setDraftRow(null); if (projeto?.id) loadDados(projeto.id) }} areas={areasCalc} projeto={projeto} areaFixa={area} />}
       {rowRegistrarResultado && <ModalRegistrarResultado row={rowRegistrarResultado} onClose={() => setRowRegistrarResultado(null)} onSaved={() => { setRowRegistrarResultado(null); if (projeto?.id) loadDados(projeto.id) }} responsaveis={[]} />}
       {reavaliarRow && <ModalReavaliar row={reavaliarRow.c} perfil={perfil} modo={reavaliarRow.modo} onClose={() => setReavaliarRow(null)} onSaved={() => { setReavaliarRow(null); if (projeto?.id) loadDados(projeto.id) }} />}
-      {rowCriticidade && <ModalRegistrarCriticidade row={rowCriticidade} onClose={() => setRowCriticidade(null)} onSaved={() => { setRowCriticidade(null); if (projeto?.id) loadDados(projeto.id) }} />}
+      {rowCriticidade && <ModalRegistrarCriticidade row={rowCriticidade} projeto={projeto} onClose={() => setRowCriticidade(null)} onSaved={() => { setRowCriticidade(null); if (projeto?.id) loadDados(projeto.id) }} />}
       {rowRevisar && <ModalRevisar row={rowRevisar} projeto={projeto} onClose={() => setRowRevisar(null)} onAction={() => { setRowRevisar(null); if (projeto?.id) loadDados(projeto.id) }} />}
     </div>
   )

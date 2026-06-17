@@ -2,20 +2,10 @@ import React, { useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { logAtualizarControle } from '../lib/auditLog'
 import { useConfirm } from './ConfirmDialog'
+import { matrizSize, impLabelFromNum, probLabelFromNum, critNivelByNum, impValor, probValor } from '../lib/matrizCalor'
 
 // Convenção do sistema: imp/prob gravados como RÓTULOS; crit = nível 1-4 pela
 // POSIÇÃO na matriz de calor (não produto). Espelha HM_COLORS de mrc/badges.jsx.
-const IMP_NUM2LABEL = { 1: 'Baixo', 2: 'Moderado', 3: 'Alto', 4: 'Crítico' }
-const PROB_NUM2LABEL = { 1: 'Baixa', 2: 'Média', 3: 'Alta', 4: 'Extrema' }
-const IMP_LABEL2NUM = { 'Baixo': '1', 'Moderado': '2', 'Alto': '3', 'Crítico': '4' }
-const PROB_LABEL2NUM = { 'Baixa': '1', 'Média': '2', 'Alta': '3', 'Extrema': '4' }
-// linhas: imp 4→1 (Crítico→Baixo); colunas: prob 4→1 (Extrema→Baixa)
-const MATRIZ_CRIT = {
-  4: { 4: 4, 3: 4, 2: 3, 1: 2 },
-  3: { 4: 4, 3: 3, 2: 2, 1: 2 },
-  2: { 4: 3, 3: 2, 2: 2, 1: 1 },
-  1: { 4: 2, 3: 1, 2: 1, 1: 1 },
-}
 const CRIT_INFO = {
   4: { label: 'Crítico',       color: '#FFEBEE', colorText: '#C62828' },
   3: { label: 'Significativo', color: '#FFCC80', colorText: '#E65100' },
@@ -32,9 +22,10 @@ function getCriticidadeLabel(crit) {
  * ModalRegistrarResultado e ganhou modal próprio, acessado pelo alerta
  * "Criticidade Pendente" da coluna Ação.
  */
-const ModalRegistrarCriticidade = ({ row, onClose, onSaved }) => {
-  const [impacto, setImpacto] = useState(IMP_LABEL2NUM[row?.imp] || (/^[0-4]$/.test(String(row?.imp)) ? String(row.imp) : ''))
-  const [probabilidade, setProbabilidade] = useState(PROB_LABEL2NUM[row?.prob] || (/^[0-4]$/.test(String(row?.prob)) ? String(row.prob) : ''))
+const ModalRegistrarCriticidade = ({ row, projeto, onClose, onSaved }) => {
+  const size = matrizSize(projeto)
+  const [impacto, setImpacto] = useState(() => { const n = impValor(row?.imp, size); return n ? String(n) : (/^[0-9]$/.test(String(row?.imp)) ? String(row.imp) : '') })
+  const [probabilidade, setProbabilidade] = useState(() => { const n = probValor(row?.prob, size); return n ? String(n) : (/^[0-9]$/.test(String(row?.prob)) ? String(row.prob) : '') })
   const [saving, setSaving] = useState(false)
   const { confirm } = useConfirm()
   const [dirty, setDirty] = useState(false)
@@ -46,7 +37,7 @@ const ModalRegistrarCriticidade = ({ row, onClose, onSaved }) => {
     onClose?.()
   }
 
-  const criticidade = (impacto && probabilidade && impacto !== '0' && probabilidade !== '0') ? MATRIZ_CRIT[parseInt(impacto)]?.[parseInt(probabilidade)] ?? null : null
+  const criticidade = (impacto && probabilidade && impacto !== '0' && probabilidade !== '0') ? critNivelByNum(impacto, probabilidade, size) : null
   const critLabel = getCriticidadeLabel(criticidade)
   const canSave = !!impacto && !!probabilidade
 
@@ -55,8 +46,8 @@ const ModalRegistrarCriticidade = ({ row, onClose, onSaved }) => {
     setSaving(true)
     try {
       const payload = {
-        imp: impacto === '0' ? 'N/A' : IMP_NUM2LABEL[parseInt(impacto)] || null,
-        prob: probabilidade === '0' ? 'N/A' : PROB_NUM2LABEL[parseInt(probabilidade)] || null,
+        imp: impacto === '0' ? 'N/A' : impLabelFromNum(impacto, size) || null,
+        prob: probabilidade === '0' ? 'N/A' : probLabelFromNum(probabilidade, size) || null,
         crit: criticidade,
         crit_label: critLabel.label || null,
         atualizado_em: new Date().toISOString(),
@@ -117,10 +108,7 @@ const ModalRegistrarCriticidade = ({ row, onClose, onSaved }) => {
               </label>
               <select value={impacto} onChange={e => setImpacto(e.target.value)} style={{ width: '100%', padding: '0.8rem', border: '1px solid #D0D0D0', borderRadius: 4, fontFamily: 'Montserrat, sans-serif', fontSize: 14 }}>
                 <option value="">Selecionar...</option>
-                <option value="1">Baixo</option>
-                <option value="2">Moderado</option>
-                <option value="3">Alto</option>
-                <option value="4">Crítico</option>
+                {Array.from({ length: size }, (_, k) => k + 1).map(n => <option key={n} value={n}>{impLabelFromNum(n, size)}</option>)}
                 <option value="0">N/A</option>
               </select>
             </div>
@@ -130,10 +118,7 @@ const ModalRegistrarCriticidade = ({ row, onClose, onSaved }) => {
               </label>
               <select value={probabilidade} onChange={e => setProbabilidade(e.target.value)} style={{ width: '100%', padding: '0.8rem', border: '1px solid #D0D0D0', borderRadius: 4, fontFamily: 'Montserrat, sans-serif', fontSize: 14 }}>
                 <option value="">Selecionar...</option>
-                <option value="1">Baixa</option>
-                <option value="2">Média</option>
-                <option value="3">Alta</option>
-                <option value="4">Extrema</option>
+                {Array.from({ length: size }, (_, k) => k + 1).map(n => <option key={n} value={n}>{probLabelFromNum(n, size)}</option>)}
                 <option value="0">N/A</option>
               </select>
             </div>

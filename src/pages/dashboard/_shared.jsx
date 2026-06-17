@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import ImportarMRC from '../../components/ImportarMRC'
 import { gerarTemplateMRC } from '../../lib/templateMRC'
+import { impToIdx as mzImpToIdx, probToIdx as mzProbToIdx, imps as mzImpsFn, probs as mzProbsFn, coresMatriz as mzCoresFn } from '../../lib/matrizCalor'
 
 // ══════════════════════════════════════════════════════════════════════════════
 // CONSTANTES COMPARTILHADAS — Dashboard, HomeDash, HomeDashDiagnostico, PorArea
@@ -89,8 +90,11 @@ export function fmtDate(v) {
 // ══════════════════════════════════════════════════════════════════════════════
 
 // Mapeia imp/prob string para index (0=mais grave)
-export function impToIdx(v) { return { 'Crítico': 0, 'Alto': 1, 'Moderado': 2, 'Baixo': 3 }[(v || '')] ?? -1 }
-export function probToIdx(v) { return { 'Extrema': 0, 'Alta': 1, 'Média': 2, 'Baixa': 3 }[(v || '')] ?? -1 }
+export function impToIdx(v, size = 4) { return mzImpToIdx(v, size) }
+export function probToIdx(v, size = 4) { return mzProbToIdx(v, size) }
+export function labelsImp(size) { return mzImpsFn(size) }
+export function labelsProb(size) { return mzProbsFn(size) }
+export function coresMz(size) { return mzCoresFn(size) }
 // crit integer to idx: 4→0 (Crítico), 3→1, 2→2, 1→3 (Baixo)
 export function critToIdx(c) { return Math.max(0, Math.min(3, 4 - (c || 1))) }
 

@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { getFaseInfo as getFaseInfoUtil, getResultadoVitrine, getFaseDisplayOverride, normalizeFaseValue, getStatusComputado, getFaseLabel } from '../../lib/fases'
+import { impToIdx as mzImpToIdx, probToIdx as mzProbToIdx } from '../../lib/matrizCalor'
 
 
 // ─── CONSTANTES ──────────────────────────────────────────────────────────────
@@ -12,8 +13,8 @@ const CRIT_MAP = {
 }
 
 const R1_MAP  = { Efetivo:'b-ef', efetivo:'b-ef', Inefetivo:'b-in', GAP:'b-gp', 'Em desenvolvimento':'b-pa', pendente:'b-pa', 'Teste Não Realizado':'b-tnr', 'N/A':'b-na' }
-const IMP_MAP = { Crítico:'i-crit', Alto:'i-alto', Moderado:'i-mod', Baixo:'i-bx', 'N/A':'i-na' }
-const PROB_MAP= { Extrema:'p-ext', Alta:'p-alt', Média:'p-med', Baixa:'p-bx' }
+const IMP_MAP = { Crítico:'i-crit', Alto:'i-alto', Moderado:'i-mod', Baixo:'i-bx', 'Muito alto':'i-crit', 'Muito baixo':'i-bx', 'N/A':'i-na' }
+const PROB_MAP= { Extrema:'p-ext', Alta:'p-alt', Média:'p-med', Baixa:'p-bx', 'Muito alta':'p-ext', 'Muito baixa':'p-bx' }
 
 const HM_IMPS   = ['Crítico', 'Alto', 'Moderado', 'Baixo']
 const HM_PROBS  = ['Extrema', 'Alta', 'Média', 'Baixa']
@@ -35,8 +36,8 @@ const HM_COLORS = [
 ]
 const CRIT_LABELS_HM = ['Crítico', 'Significativo', 'Moderado', 'Baixo']
 const CRIT_CORES_HM = ['#EF4444', '#F97316', '#EAB308', '#22C55E']
-function impToIdx(v) { return { 'Crítico': 0, 'Alto': 1, 'Moderado': 2, 'Baixo': 3 }[(v || '')] ?? -1 }
-function probToIdx(v) { return { 'Extrema': 0, 'Alta': 1, 'Média': 2, 'Baixa': 3 }[(v || '')] ?? -1 }
+function impToIdx(v, size = 4) { return mzImpToIdx(v, size) }
+function probToIdx(v, size = 4) { return mzProbToIdx(v, size) }
 
 const NIVEIS = [
   { id: 'N1', label: 'N1', nome: 'Inefetivo', cls: 'rn1', resultado: 'Inefetivo' },

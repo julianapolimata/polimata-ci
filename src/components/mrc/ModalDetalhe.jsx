@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react'
 import {
-  R1_MAP, IMP_MAP, PROB_MAP, HM_IMPS, HM_PROBS, HM_COLORS,
+  R1_MAP, IMP_MAP, PROB_MAP,
   badge, critBadge, badgeExistencia, getFaseInfo,
 } from './badges'
+import { imps as mImps, probs as mProbs, coresMatriz, matrizSize } from '../../lib/matrizCalor'
 import HistoricoControle from './HistoricoControle'
 import HistoricoTab from '../HistoricoTab'
 import MotivoReprovacao from './MotivoReprovacao'
@@ -18,6 +19,10 @@ export function ModalDetalhe({ row, projeto, onClose, onEditar, primaryAction, s
   useEffect(() => { if (verAprovacoes && row?.id) loadAprovacoes(row.id).then(setAprovacoes) }, [verAprovacoes, row?.id])
   if (!row) return null
   const isDiagModal = projeto?.f1_tem_teste === false
+  const _msize = matrizSize(projeto)
+  const HM_IMPS = mImps(_msize)
+  const HM_PROBS = mProbs(_msize)
+  const HM_COLORS = coresMatriz(_msize)
   const tabs = isDiagModal
     ? [{ id:'ident',label:'Identificação' },{ id:'f1',label:'Diagnóstico — Indagação' },{ id:'historico',label:'Histórico' }]
     : [{ id:'ident',label:'Identificação' },{ id:'f1',label:'Fase 1 · Diagnóstico Inicial' },{ id:'f2e1',label:'Fase 2-E1 · Teste de Desenho' },{ id:'f2e2',label:'Fase 2-E2 · Teste de Efetividade' },{ id:'f3',label:'Fase 3 · Revisão Integral' },{ id:'f4c1',label:'Fase 4-C1 · Auditoria Contínua' },{ id:'f4c2',label:'Fase 4-C2 · Auditoria Contínua' },{ id:'f5',label:'Fase 5 · Auditoria Independente' },{ id:'historico',label:'Histórico' }]
@@ -92,7 +97,7 @@ export function ModalDetalhe({ row, projeto, onClose, onEditar, primaryAction, s
                 <div style={{ display:'flex',gap:4,flexShrink:0 }}>
                   <div style={{ writingMode:'vertical-rl',transform:'rotate(180deg)',fontSize:9,fontWeight:700,letterSpacing:0.5,textTransform:'uppercase',color:'var(--txt3)',display:'flex',alignItems:'center',justifyContent:'center' }}>Impacto ↑</div>
                   <div>
-                    <div style={{ display:'grid',gridTemplateColumns:'60px repeat(4,1fr)',gap:3,maxWidth:260 }}>
+                    <div style={{ display:'grid',gridTemplateColumns:`60px repeat(${_msize},1fr)`,gap:3,maxWidth:260 }}>
                       {HM_IMPS.map((imp,ri) => (<div key={`row-${ri}`} style={{ display:'contents' }}><div style={{ fontSize:10,fontWeight:ri===impIdx?700:400,color:ri===impIdx?'var(--copper-text)':'var(--txt3)',display:'flex',alignItems:'center',justifyContent:'flex-end',paddingRight:6 }}>{imp}</div>{HM_PROBS.map((prob,ci) => { const bg=HM_COLORS[ri][ci]; const isThis=ri===impIdx&&ci===probIdx; return (<div key={`${ri}-${ci}`} style={{ background:bg,borderRadius:4,aspectRatio:'1',display:'flex',alignItems:'center',justifyContent:'center',opacity:isThis?1:0.35,outline:isThis?'3px solid var(--gold)':'none',outlineOffset:-2 }}>{isThis&&<div style={{ width:10,height:10,borderRadius:'50%',background:'#fff',boxShadow:'0 0 6px rgba(0,0,0,.4)' }}/>}</div>) })}</div>))}
                       <div/>{HM_PROBS.map((p,ci) => <div key={p} style={{ fontSize:9,fontWeight:ci===probIdx?700:400,color:ci===probIdx?'var(--copper-text)':'var(--txt3)',textAlign:'center',paddingTop:2 }}>{p}</div>)}
                     </div>

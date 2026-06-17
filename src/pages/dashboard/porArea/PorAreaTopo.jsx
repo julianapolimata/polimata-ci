@@ -1,11 +1,11 @@
 // PorAreaTopo — bloco JSX extraído de PorArea.jsx em 22/mai/2026 (fatiamento Etapa 6).
 // Diff-zero: cópia direta do parent. Recebe state e helpers via prop `ctx`.
 import React from 'react'
-import { CRIT_CORES, CRIT_LABELS, HEAT_CORES, IMP_LABELS, PROB_LABELS, NivelBadge } from '../_shared'
+import { CRIT_CORES, CRIT_LABELS, NivelBadge } from '../_shared'
 import NotificacoesPanel from '../../../components/NotificacoesPanel'
 
 export default function PorAreaTopo({ ctx }) {
-  const { PA, area, areaHeatmap, controles, dashCollapsed, efetivos, gaps, inefetivos, isDiagnostico, navigate, nome, nv, p, pa_crit, pa_ex, pa_ix, pa_pc, pa_pct, pa_total, pesoEmpresa, planosAcao, setDashCollapsed } = ctx
+  const { PA, area, areaHeatmap, controles, dashCollapsed, efetivos, gaps, inefetivos, isDiagnostico, navigate, nome, nv, p, pa_crit, pa_ex, pa_ix, pa_pc, pa_pct, pa_total, pesoEmpresa, planosAcao, setDashCollapsed, mzImps, mzProbs, mzCores } = ctx
   return (
     <>
       {/* HEADER — padrão MRC Completa */}
@@ -40,13 +40,13 @@ export default function PorAreaTopo({ ctx }) {
           <div style={PA.cardTitle}>Mapa de Calor — Impacto × Probabilidade</div>
           <div style={{ display: 'flex', flex: 1 }}>
             <div style={PA.heatYLabels}>
-              {IMP_LABELS.map(l => <div key={l} style={PA.heatYLabel}>{l}</div>)}
+              {mzImps.map(l => <div key={l} style={PA.heatYLabel}>{l}</div>)}
             </div>
             <div style={PA.heatGrid}>
               {areaHeatmap.map((row, ri) => (
                 <div key={ri} style={PA.heatRow}>
                   {row.map((val, ci) => (
-                    <div key={ci} style={{ ...PA.heatCell, background: val === 0 ? 'rgba(10,37,64,0.04)' : HEAT_CORES[ri][ci] }}>
+                    <div key={ci} style={{ ...PA.heatCell, background: val === 0 ? 'rgba(10,37,64,0.04)' : mzCores[ri][ci] }}>
                       {val}
                     </div>
                   ))}
@@ -55,7 +55,7 @@ export default function PorAreaTopo({ ctx }) {
             </div>
           </div>
           <div style={PA.heatXLabels}>
-            {PROB_LABELS.map(l => <div key={l} style={PA.heatXLabel}>{l}</div>)}
+            {mzProbs.map(l => <div key={l} style={PA.heatXLabel}>{l}</div>)}
           </div>
           <div style={{ textAlign: 'center', marginTop: 4, fontSize: 10, fontWeight: 600, letterSpacing: 1, textTransform: 'uppercase', color: 'var(--lt-text3)' }}>Probabilidade →</div>
           <div style={PA.heatLegend}>
