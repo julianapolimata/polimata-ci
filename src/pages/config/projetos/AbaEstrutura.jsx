@@ -9,6 +9,8 @@ function AbaEstrutura({ projetoId, areas, subprocessos, onReload }) {
   const [saving, setSaving] = useState(false)
   const [novoSub, setNovoSub] = useState({}) // { [areaId]: nome }
   const [expandido, setExpandido] = useState({}) // { [areaId]: bool }
+  const [dragSub, setDragSub] = useState(null)
+  const [dragOverSub, setDragOverSub] = useState(null)
 
   function toggleExpand(areaId) { setExpandido(p => ({...p, [areaId]: !p[areaId]})) }
 
@@ -75,8 +77,22 @@ function AbaEstrutura({ projetoId, areas, subprocessos, onReload }) {
     onReload()
   }
 
+  async function reordenarSub(areaId, dragId, dropId) {
+    if (!dragId || dragId === dropId) return
+    const lista = [...(subsMap[areaId] || [])]
+    const from = lista.findIndex(s => s.id === dragId)
+    const to = lista.findIndex(s => s.id === dropId)
+    if (from < 0 || to < 0) return
+    const [moved] = lista.splice(from, 1)
+    lista.splice(to, 0, moved)
+    // Persistir a nova ordem (1-based) dos subprocessos afetados
+    await Promise.all(lista.map((s, i) => supabase.from('subprocessos').update({ ordem: i + 1 }).eq('id', s.id)))
+    onReload()
+  }
+
   const subsMap = {}
   subprocessos.forEach(s => { if (!subsMap[s.area_id]) subsMap[s.area_id] = []; subsMap[s.area_id].push(s) })
+  Object.values(subsMap).forEach(list => list.sort((a, b) => (a.ordem || 0) - (b.ordem || 0)))
 
   return (
     <div>
@@ -169,7 +185,17 @@ function AbaEstrutura({ projetoId, areas, subprocessos, onReload }) {
                     {(subsMap[a.id]||[]).length > 0 ? (
                       <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'4px 20px',marginBottom:8}}>
                         {(subsMap[a.id]||[]).map((s, idx) => (
-                          <div key={s.id} style={{fontSize:12,color:'var(--txt2)',padding:'4px 0',display:'flex',alignItems:'center',gap:6}}>
+                          <div key={s.id}
+                            draggable
+                            onDragStart={e => { setDragSub(s.id); e.dataTransfer.effectAllowed = 'move' }}
+                            onDragEnd={() => { setDragSub(null); setDragOverSub(null) }}
+                            onDragOver={e => { e.preventDefault(); if (dragOverSub !== s.id) setDragOverSub(s.id) }}
+                            onDrop={e => { e.preventDefault(); reordenarSub(a.id, dragSub, s.id); setDragOverSub(null) }}
+                            style={{fontSize:12,color:'var(--txt2)',padding:'4px 6px',display:'flex',alignItems:'center',gap:6,borderRadius:6,transition:'background .1s',
+                              background: dragOverSub === s.id ? 'rgba(204,145,94,0.12)' : 'transparent',
+                              opacity: dragSub === s.id ? 0.4 : 1,
+                              borderTop: dragOverSub === s.id && dragSub !== s.id ? '2px solid var(--copper)' : '2px solid transparent'}}>
+                            <span title="Arraste para reordenar" style={{cursor:'grab',color:'var(--txt3)',fontSize:14,lineHeight:1,userSelect:'none'}}>⠿</span>
                             <span style={{display:'inline-block',minWidth:22,color:'var(--txt3)',fontWeight:600}}>{idx + 1}.</span>
                             <span style={{flex:1}}>{s.nome}</span>
                             <button

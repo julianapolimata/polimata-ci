@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../../lib/supabase'
 import { buscarAuditLogs } from '../../lib/auditLog'
+import { formatCampo, formatValor, nomeUsuario, isManutencaoSistema } from '../../lib/campoLabels'
 
 const TABELAS = [
   { value: '', label: 'Todas' },
@@ -21,30 +22,6 @@ const ACOES = [
   { value: 'LOGIN', label: 'Login' },
   { value: 'LOGOUT', label: 'Logout' },
 ]
-
-const CAMPO_LABELS = {
-  r1: 'F1 — Diagnóstico',
-  st_pa: 'F2-E1 — Teste de Desenho',
-  r_ader: 'F2-E2 — Efetividade',
-  r3: 'F3 — Revisão Integral',
-  r_f4c1: 'F4-C1 — Auditoria Contínua',
-  r_f4c2: 'F4-C2 — Auditoria Contínua',
-  r_f5: 'F5 — Auditoria Independente',
-  status_workflow: 'Status do workflow',
-  status_risco: 'Situação do risco',
-  controle: 'Nome do controle',
-  risco: 'Descrição do risco',
-  impacto: 'Impacto',
-  probabilidade: 'Probabilidade',
-  nome: 'Nome',
-  ficha_download: 'Download da ficha',
-  atualizar_controle: 'Atualização do controle',
-}
-
-function formatCampo(campo) {
-  if (!campo) return '—'
-  return CAMPO_LABELS[campo] || campo.replace(/_/g, ' ')
-}
 
 function formatAcao(acao) {
   const map = { UPDATE: 'Alteração', INSERT: 'Criação', DELETE: 'Exclusão', WORKFLOW: 'Workflow', LOGIN: 'Login', LOGOUT: 'Logout' }
@@ -241,14 +218,14 @@ export default function AuditLogConfig() {
                   onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
                 >
                   <td style={{ ...S.td, whiteSpace: 'nowrap', fontSize: 11 }}>{formatData(log.criado_em)}</td>
-                  <td style={{ ...S.td, fontWeight: 500 }}>{log.usuario_nome || '—'}</td>
+                  <td style={{ ...S.td, fontWeight: 500, ...(isManutencaoSistema(log) ? { color: 'var(--lt-text3)', fontStyle: 'italic', fontWeight: 400 } : {}) }}>{nomeUsuario(log)}</td>
                   <td style={S.td}>
                     <span style={S.badge(acaoStyle.bg, acaoStyle.color)}>{formatAcao(log.acao)}</span>
                   </td>
                   <td style={{ ...S.td, fontSize: 11 }}>{log.tabela}</td>
-                  <td style={S.td}>{formatCampo(log.campo)}</td>
-                  <td style={{ ...S.td, fontSize: 11, color: 'var(--lt-text3)' }}>{truncate(log.valor_anterior)}</td>
-                  <td style={{ ...S.td, fontSize: 11, fontWeight: 500 }}>{truncate(log.valor_novo)}</td>
+                  <td style={S.td}>{formatCampo(log.campo) || '—'}</td>
+                  <td style={{ ...S.td, fontSize: 11, color: 'var(--lt-text3)' }}>{truncate(formatValor(log.campo, log.valor_anterior))}</td>
+                  <td style={{ ...S.td, fontSize: 11, fontWeight: 500 }}>{truncate(formatValor(log.campo, log.valor_novo))}</td>
                   <td style={{ ...S.td, fontSize: 11, color: 'var(--lt-text3)' }}>
                     {log.detalhes?.descricao ? truncate(log.detalhes.descricao, 50) : '—'}
                   </td>

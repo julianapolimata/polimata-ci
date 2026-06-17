@@ -1,36 +1,14 @@
 import { useState, useEffect } from 'react'
 import { buscarHistorico } from '../lib/auditLog'
-
-const CAMPO_LABELS = {
-  r1: 'F1 — Diagnóstico',
-  st_pa: 'F2-E1 — Teste de Desenho',
-  r_ader: 'F2-E2 — Efetividade',
-  r3: 'F3 — Revisão Integral',
-  r_f4c1: 'F4-C1',
-  r_f4c2: 'F4-C2',
-  r_f5: 'F5 — Auditoria Independente',
-  status_workflow: 'Status workflow',
-  status_risco: 'Situação do risco',
-  controle: 'Nome do controle',
-  risco: 'Descrição do risco',
-  impacto: 'Impacto',
-  probabilidade: 'Probabilidade',
-  ficha_download: 'Download da ficha',
-  atualizar_controle: 'Atualização',
-}
-
-function formatCampo(campo) {
-  if (!campo) return ''
-  return CAMPO_LABELS[campo] || campo.replace(/_/g, ' ')
-}
+import { formatCampo, formatValor, isManutencaoSistema, nomeUsuario } from '../lib/campoLabels'
 
 function formatAcao(acao) {
-  const map = { UPDATE: 'Alteração', INSERT: 'Criação', DELETE: 'Exclusão', WORKFLOW: 'Ação', LOGIN: 'Login', LOGOUT: 'Logout' }
+  const map = { UPDATE: 'Alteração', INSERT: 'Criação', DELETE: 'Exclusão', WORKFLOW: 'Ação', LOGIN: 'Login', LOGOUT: 'Logout', REGRESSAO: 'Regressão' }
   return map[acao] || acao
 }
 
 function acaoIcon(acao) {
-  const map = { UPDATE: '✏️', INSERT: '➕', DELETE: '🗑️', WORKFLOW: '⚙️', LOGIN: '🔑', LOGOUT: '🚪' }
+  const map = { UPDATE: '✏️', INSERT: '➕', DELETE: '🗑️', WORKFLOW: '⚙️', LOGIN: '🔑', LOGOUT: '🚪', REGRESSAO: '↩️' }
   return map[acao] || '📋'
 }
 
@@ -60,15 +38,18 @@ const S = {
     alignItems: 'center', justifyContent: 'center', fontSize: 8,
     zIndex: 1,
   },
+  dotSis: { border: '2px solid var(--txt3)' },
   header: { display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 },
   badge: {
     display: 'inline-block', padding: '1px 6px', borderRadius: 4,
     fontSize: 10, fontWeight: 600, background: 'rgba(204,145,94,0.12)', color: '#CC915E',
   },
+  badgeSis: { background: 'rgba(120,130,140,0.14)', color: 'var(--txt3)' },
   user: { fontSize: 12, fontWeight: 600, color: 'var(--txt1)' },
+  userSis: { fontSize: 12, fontWeight: 500, color: 'var(--txt3)', fontStyle: 'italic' },
   date: { fontSize: 11, color: 'var(--txt3)', marginLeft: 'auto' },
   campo: { fontSize: 12, color: 'var(--txt2)', marginBottom: 4 },
-  valores: { display: 'flex', gap: 8, alignItems: 'center', fontSize: 11 },
+  valores: { display: 'flex', gap: 8, alignItems: 'center', fontSize: 11, flexWrap: 'wrap' },
   old: {
     background: 'rgba(244,67,54,0.06)', color: '#D32F2F', padding: '2px 6px',
     borderRadius: 4, textDecoration: 'line-through',
@@ -79,15 +60,23 @@ const S = {
     borderRadius: 4, fontWeight: 500,
   },
   detalhe: { fontSize: 11, color: 'var(--txt3)', marginTop: 4, fontStyle: 'italic' },
+  toggle: {
+    display: 'inline-flex', alignItems: 'center', gap: 6, marginTop: 4,
+    background: 'none', border: '1px solid var(--brd)', borderRadius: 6,
+    padding: '5px 12px', fontSize: 11, color: 'var(--txt3)', cursor: 'pointer',
+    fontFamily: 'inherit',
+  },
 }
 
 export default function HistoricoTab({ registroId }) {
   const [logs, setLogs] = useState([])
   const [loading, setLoading] = useState(true)
+  const [mostrarCompleto, setMostrarCompleto] = useState(false)
 
   useEffect(() => {
     if (!registroId) return
     setLoading(true)
+    setMostrarCompleto(false)
     buscarHistorico(registroId).then(data => {
       setLogs(data)
       setLoading(false)
@@ -97,34 +86,52 @@ export default function HistoricoTab({ registroId }) {
   if (loading) return <div style={S.loading}>Carregando histórico...</div>
   if (logs.length === 0) return <div style={S.empty}>Nenhuma alteração registrada para este controle</div>
 
+  const manutencaoCount = logs.filter(isManutencaoSistema).length
+  const visiveis = mostrarCompleto ? logs : logs.filter(l => !isManutencaoSistema(l))
+
   return (
     <div style={S.wrap}>
-      <div style={S.timeline}>
-        <div style={S.line} />
-        {logs.map(log => (
-          <div key={log.id} style={S.item}>
-            <div style={S.dot}>{acaoIcon(log.acao)}</div>
-            <div style={S.header}>
-              <span style={S.badge}>{formatAcao(log.acao)}</span>
-              <span style={S.user}>{log.usuario_nome || 'Sistema'}</span>
-              <span style={S.date}>{formatData(log.criado_em)}</span>
-            </div>
-            {log.campo && (
-              <div style={S.campo}>{formatCampo(log.campo)}</div>
-            )}
-            {(log.valor_anterior || log.valor_novo) && (
-              <div style={S.valores}>
-                {log.valor_anterior && <span style={S.old}>{log.valor_anterior}</span>}
-                {log.valor_anterior && log.valor_novo && <span style={S.arrow}>→</span>}
-                {log.valor_novo && <span style={S.novo}>{log.valor_novo}</span>}
+      {visiveis.length === 0 ? (
+        <div style={S.empty}>Nenhuma movimentação de usuário registrada</div>
+      ) : (
+        <div style={S.timeline}>
+          <div style={S.line} />
+          {visiveis.map(log => {
+            const sis = isManutencaoSistema(log)
+            return (
+              <div key={log.id} style={S.item}>
+                <div style={{ ...S.dot, ...(sis ? S.dotSis : {}) }}>{acaoIcon(log.acao)}</div>
+                <div style={S.header}>
+                  <span style={{ ...S.badge, ...(sis ? S.badgeSis : {}) }}>{formatAcao(log.acao)}</span>
+                  <span style={sis ? S.userSis : S.user}>{nomeUsuario(log)}</span>
+                  <span style={S.date}>{formatData(log.criado_em)}</span>
+                </div>
+                {log.campo && (
+                  <div style={S.campo}>{formatCampo(log.campo)}</div>
+                )}
+                {(log.valor_anterior || log.valor_novo) && (
+                  <div style={S.valores}>
+                    {log.valor_anterior && <span style={S.old}>{formatValor(log.campo, log.valor_anterior)}</span>}
+                    {log.valor_anterior && log.valor_novo && <span style={S.arrow}>→</span>}
+                    {log.valor_novo && <span style={S.novo}>{formatValor(log.campo, log.valor_novo)}</span>}
+                  </div>
+                )}
+                {log.detalhes?.descricao && (
+                  <div style={S.detalhe}>{log.detalhes.descricao}</div>
+                )}
               </div>
-            )}
-            {log.detalhes?.descricao && (
-              <div style={S.detalhe}>{log.detalhes.descricao}</div>
-            )}
-          </div>
-        ))}
-      </div>
+            )
+          })}
+        </div>
+      )}
+
+      {manutencaoCount > 0 && (
+        <button style={S.toggle} onClick={() => setMostrarCompleto(v => !v)}>
+          {mostrarCompleto
+            ? '▴ Ocultar manutenção do sistema'
+            : `▾ Ver log completo (+${manutencaoCount} de manutenção do sistema)`}
+        </button>
+      )}
     </div>
   )
 }

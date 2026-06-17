@@ -210,16 +210,19 @@ export default function NovoProjetoWizard({ clientes, perfisPolimata, onCreated,
             <Resumo label="Previsão" value={fmt(form.data_previsao_conclusao)} />
             <Resumo label="Sponsor" value={[form.sponsor_nome, form.sponsor_sobrenome].filter(Boolean).join(' ') || '—'} />
           </div>
-          <div style={{ background: 'rgba(20,184,166,0.08)', border: '1px solid rgba(20,184,166,0.25)', borderRadius: 8, padding: '10px 14px', fontSize: 12, color: 'var(--lt-text2)', lineHeight: 1.5 }}>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start', background: '#F3EEE4', border: '1px solid rgba(204,145,94,0.35)', borderRadius: 8, padding: '10px 14px', fontSize: 12, color: '#00203E', lineHeight: 1.5 }}>
+            <span style={{ color: '#CC915E', fontWeight: 700, lineHeight: 1.4 }} aria-hidden="true">ⓘ</span>
+            <span>
             {form.produto === 'ci'
-              ? <>Ao criar, você será levado direto para a <strong>Estrutura Organizacional</strong> do projeto para cadastrar as áreas, responsáveis e subprocessos — sem eles, o projeto fica vazio.</>
-              : <>Ao criar, o projeto já aparece no seletor e leva direto ao módulo <strong>{(MODULOS.find(m => m.id === form.produto) || {}).nome}</strong>.</>}
+              ? <>Ao criar, você será levado direto para a <strong style={{ color: '#9A6433' }}>Estrutura Organizacional</strong> do projeto para cadastrar as áreas, responsáveis e subprocessos — sem eles, o projeto fica vazio.</>
+              : <>Ao criar, o projeto já aparece no seletor e leva direto ao módulo <strong style={{ color: '#9A6433' }}>{(MODULOS.find(m => m.id === form.produto) || {}).nome}</strong>.</>}
+            </span>
           </div>
         </div>
       )}
 
       <div className="cfg-form-footer">
-        <button className="btn-cfg-cancel" onClick={step === 0 ? onCancel : voltar} disabled={saving}>{step === 0 ? 'Cancelar' : '← Anterior'}</button>
+        <button className="btn-cfg-cancel" style={{ border: '1px solid #00203E', color: '#00203E', fontWeight: 600 }} onClick={step === 0 ? onCancel : voltar} disabled={saving}>{step === 0 ? 'Cancelar' : '← Anterior'}</button>
         {step < PASSOS.length - 1
           ? <button className="btn-cfg-save" onClick={avancar} disabled={!podeAvancar}>Próximo →</button>
           : <button className="btn-cfg-save" onClick={criar} disabled={saving}>{saving ? 'Criando...' : '✓ Criar Projeto'}</button>}
