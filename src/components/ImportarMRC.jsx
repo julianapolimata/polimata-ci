@@ -21,13 +21,13 @@ const COL_MAP = {
 }
 
 // Mapeamento para template diagnóstico (TEMPLATE_COLS_DIAG em templateMRC.js)
-// Substitui colunas 17-20 de teste (passos_f1, r1, incons, rec) pela coluna
-// única Existência. Imp/Prob/Crit ficam nas colunas 20-22 (deslocadas).
+// Sem colunas de teste: tem Cenário Atual (15) + Existência (16) no lugar de
+// passos_f1/r1. Com isso imp/prob/crit (19/20/21) ficam alinhados ao template padrão.
 const COL_MAP_DIAG = {
   0: 'dt_ult', 1: 'ger', 2: 'resp_sub', 4: 'sub', 5: 'rr', 6: 'dr',
   7: 'rc', 8: 'dc', 9: 'cat', 10: 'freq', 11: 'nat', 12: 'car',
-  13: 'sis', 14: 'chave', 15: 'existencia', 16: 'incons', 17: 'rec',
-  18: 'imp', 19: 'prob', 20: 'crit_label', 21: 'dt_implementacao',
+  13: 'sis', 14: 'chave', 15: 'cenario_atual', 16: 'existencia', 17: 'incons', 18: 'rec',
+  19: 'imp', 20: 'prob', 21: 'crit_label', 22: 'dt_implementacao',
 }
 
 function parseCrit(val) {

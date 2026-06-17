@@ -68,6 +68,7 @@ const TEMPLATE_COLS_DIAG = [
   { header: 'Característica', width: 20, key: 'car', hint: 'Manual / Automático / Semi-automatizado' },
   { header: 'Sistema', width: 16, key: 'sis', hint: 'Ex: SAP, TOTVS, Excel' },
   { header: 'Tipo de Controle', width: 22, key: 'chave', hint: 'Controle Chave / Controle Compensatório' },
+  { header: 'Cenário Atual', width: 42, key: 'cenario_atual', hint: 'Como o controle opera hoje — situação atual declarada na Indagação' },
   { header: 'Existência', width: 18, key: 'existencia', hint: 'Existente / Parcial / Inexistente — declarada na Indagação' },
   { header: 'Inconsistência (opcional)', width: 36, key: 'incons', hint: 'Observação sobre lacunas, se houver' },
   { header: 'Recomendação (opcional)', width: 36, key: 'rec', hint: 'Recomendação específica adicional' },

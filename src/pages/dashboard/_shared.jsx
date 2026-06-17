@@ -137,7 +137,7 @@ export function EmptyProjectState({ navigate, isAdmin, projetoId, projeto, areas
           Este projeto ainda não possui riscos e controles cadastrados. Você pode importar em massa usando o template da MRC ou cadastrar um a um na visão por área.
         </p>
         <div style={{ display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap' }}>
-          <button onClick={() => gerarTemplateMRC()}
+          <button onClick={() => gerarTemplateMRC(undefined, projeto)}
             style={{ padding: '10px 20px', borderRadius: 8, background: 'transparent', color: 'var(--copper)', border: '1px solid var(--copper)', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', gap: 6 }}>
             📄 Baixar Template MRC
           </button>

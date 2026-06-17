@@ -89,9 +89,15 @@ export function ModalDetalhe({ row, projeto, onClose, onEditar, primaryAction, s
             </div>
             <div className="ms"><div className="ms-t">Posição no Mapa de Calor</div>
               <div style={{ display:'flex',gap:20,alignItems:'flex-start' }}>
-                <div style={{ display:'grid',gridTemplateColumns:'60px repeat(4,1fr)',gap:3,maxWidth:260,flexShrink:0 }}>
-                  {HM_IMPS.map((imp,ri) => (<div key={`row-${ri}`} style={{ display:'contents' }}><div style={{ fontSize:10,color:'var(--txt3)',display:'flex',alignItems:'center',justifyContent:'flex-end',paddingRight:6 }}>{imp}</div>{HM_PROBS.map((prob,ci) => { const bg=HM_COLORS[ri][ci]; const isThis=ri===impIdx&&ci===probIdx; return (<div key={`${ri}-${ci}`} style={{ background:bg,borderRadius:4,aspectRatio:'1',display:'flex',alignItems:'center',justifyContent:'center',opacity:isThis?1:0.35,outline:isThis?'3px solid var(--gold)':'none',outlineOffset:-2 }}>{isThis&&<div style={{ width:10,height:10,borderRadius:'50%',background:'#fff',boxShadow:'0 0 6px rgba(0,0,0,.4)' }}/>}</div>) })}</div>))}
-                  <div/>{HM_PROBS.map(p => <div key={p} style={{ fontSize:9,color:'var(--txt3)',textAlign:'center',paddingTop:2 }}>{p}</div>)}
+                <div style={{ display:'flex',gap:4,flexShrink:0 }}>
+                  <div style={{ writingMode:'vertical-rl',transform:'rotate(180deg)',fontSize:9,fontWeight:700,letterSpacing:0.5,textTransform:'uppercase',color:'var(--txt3)',display:'flex',alignItems:'center',justifyContent:'center' }}>Impacto ↑</div>
+                  <div>
+                    <div style={{ display:'grid',gridTemplateColumns:'60px repeat(4,1fr)',gap:3,maxWidth:260 }}>
+                      {HM_IMPS.map((imp,ri) => (<div key={`row-${ri}`} style={{ display:'contents' }}><div style={{ fontSize:10,fontWeight:ri===impIdx?700:400,color:ri===impIdx?'var(--copper-text)':'var(--txt3)',display:'flex',alignItems:'center',justifyContent:'flex-end',paddingRight:6 }}>{imp}</div>{HM_PROBS.map((prob,ci) => { const bg=HM_COLORS[ri][ci]; const isThis=ri===impIdx&&ci===probIdx; return (<div key={`${ri}-${ci}`} style={{ background:bg,borderRadius:4,aspectRatio:'1',display:'flex',alignItems:'center',justifyContent:'center',opacity:isThis?1:0.35,outline:isThis?'3px solid var(--gold)':'none',outlineOffset:-2 }}>{isThis&&<div style={{ width:10,height:10,borderRadius:'50%',background:'#fff',boxShadow:'0 0 6px rgba(0,0,0,.4)' }}/>}</div>) })}</div>))}
+                      <div/>{HM_PROBS.map((p,ci) => <div key={p} style={{ fontSize:9,fontWeight:ci===probIdx?700:400,color:ci===probIdx?'var(--copper-text)':'var(--txt3)',textAlign:'center',paddingTop:2 }}>{p}</div>)}
+                    </div>
+                    <div style={{ fontSize:9,fontWeight:700,letterSpacing:0.5,textTransform:'uppercase',color:'var(--txt3)',textAlign:'center',marginTop:4,paddingLeft:60 }}>Probabilidade →</div>
+                  </div>
                 </div>
                 <div style={{ flex:1,display:'flex',flexDirection:'column',justifyContent:'center',gap:6 }}>
                   <div style={{ display:'flex',alignItems:'center',gap:8,padding:'6px 10px',borderRadius:6,border:'1px solid var(--lt-border)',background:'var(--lt-bg)' }}>
