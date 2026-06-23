@@ -111,23 +111,16 @@ function faseInfoRaw(c) {
   return { ...FASES.F1 }
 }
 
-// Fase terminal de cada escopo (num_fases). Usado para "clampar" a fase atual
-// quando o projeto vai só até uma fase (ex.: F1 com teste, num_fases=1).
-const FASE_TERMINAL = {
-  1: { codigo: 'F1', numero: 1, nome: 'Diagnóstico Inicial', label: 'F1 — Diagnóstico', cor: 'var(--f1c, #6366F1)', campo: 'r1' },
-  2: { codigo: 'F2E2', numero: 2, nome: 'Teste de Efetividade', label: 'F2-E2 — Teste de Efetividade', cor: 'var(--f2e2c, #10B981)', campo: 'r_ader' },
-  3: { codigo: 'F3', numero: 3, nome: 'Revisão Integral', label: 'F3 — Revisão Integral', cor: 'var(--f3c, #F59E0B)', campo: 'r3' },
-  4: { codigo: 'F4C2', numero: 4, nome: 'Auditoria Contínua', label: 'F4-C2 — Auditoria Contínua', cor: 'var(--f4c, #0EA5E9)', campo: 'r_f4c2' },
-}
-
 // Fase atual respeitando o escopo do projeto (num_fases). A última fase do escopo
 // é terminal: um controle não avança para fora do que foi contratado.
 export function getFaseInfo(c, numFases, comTeste) {
   let info = faseInfoRaw(c)
   const nf = Number(numFases)
   if (c && nf >= 1 && nf < 5 && info.numero > nf) {
-    const t = FASE_TERMINAL[nf]
-    info = { codigo: t.codigo, numero: t.numero, nome: t.nome, label: t.label, cor: t.cor, resultado: c[t.campo] || '—', concluida: true }
+    // O controle passou da última fase do escopo contratado → CONCLUÍDO dentro do
+    // escopo. Como a fase é recalculada pelo num_fases, ele reabre sozinho na
+    // próxima fase (ex.: F3) se o escopo do projeto crescer depois.
+    info = { codigo: 'CONCLUIDO', numero: nf, nome: 'Concluído', label: 'Concluído', cor: 'var(--n5c, #15803D)', concluida: true, escopoConcluido: true }
   }
   // Projeto com teste na F1: a fase F1 é o Teste de Efetividade (não só Diagnóstico).
   if (comTeste === true && info.codigo === 'F1') {
