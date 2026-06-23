@@ -1,146 +1,114 @@
-// Importar Realizado — Excel do ERP → mapeamento conta→categoria (IA) → gravação por competência
+// Importar Realizado — template fixo do sistema → competência por linha → gravação por conta/mês
+// A natureza (receita/despesa) vem da conta no plano de contas; aqui só conta+data+valor+descrição.
 import { useState, useRef } from 'react'
-import ExcelJS from 'exceljs'
 import { supabase } from '../../lib/supabase'
-import { useOrcDados, PageHeader, Card, HelpTag, KPICard, KPIGrid, SeletorAno, Badge, BotaoVerde, BotaoSec, ErroBox, fmtBRL, MESES_ABREV, THL, TH, TDL, TD } from './_shared'
-import { iaCategorizar } from '../../lib/orcamento/ia'
+import { useOrcDados, PageHeader, Card, HelpTag, KPICard, KPIGrid, Badge, BotaoVerde, BotaoSec, ErroBox, fmtBRL, MESES_ABREV, THL, TH, TDL, TD } from './_shared'
+import { baixarTemplateRealizado, parseRealizado } from '../../lib/orcamento/templateRealizado'
+
+const compLabel = (c) => { const [y, m] = c.split('-'); return `${MESES_ABREV[parseInt(m, 10) - 1]}/${y}` }
 
 export default function Importar({ projeto }) {
-  const [ano, setAno] = useState(new Date().getFullYear())
-  const [mes, setMes] = useState(new Date().getMonth())
+  const ano = new Date().getFullYear()
   const d = useOrcDados(projeto, ano)
   const fileRef = useRef(null)
   const [arquivo, setArquivo] = useState(null)
-  const [linhas, setLinhas] = useState(null) // [{conta, descricao, valor, categoria_id, confianca, fonte}]
+  const [prev, setPrev] = useState(null)        // { parse, classe } — pré-visualização
   const [processando, setProcessando] = useState(false)
   const [gravando, setGravando] = useState(false)
   const [msg, setMsg] = useState('')
-  const [mostrar, setMostrar] = useState('pendentes')
   // lançamento manual
+  const [mAno, setMAno] = useState(ano); const [mMes, setMMes] = useState(new Date().getMonth())
   const [mCat, setMCat] = useState(''); const [mValor, setMValor] = useState(''); const [mDet, setMDet] = useState('')
 
   async function processarArquivo(file) {
-    setProcessando(true); setMsg(''); d.setErro('')
+    setProcessando(true); setMsg(''); d.setErro(''); setPrev(null)
     try {
-      const wb = new ExcelJS.Workbook()
-      await wb.xlsx.load(await file.arrayBuffer())
-      const ws = wb.worksheets[0]
-      // heurística: acha colunas por cabeçalho (conta/código, descrição/histórico, valor/total)
-      let headerRow = null, colConta = null, colDesc = null, colValor = null
-      ws.eachRow((row, n) => {
-        if (headerRow) return
-        const vals = row.values.map(v => String(v ?? '').toLowerCase())
-        const iConta = vals.findIndex(v => /conta|c[óo]digo|cod\b/.test(v))
-        const iDesc = vals.findIndex(v => /descri|hist[óo]rico|nome/.test(v))
-        const iValor = vals.findIndex(v => /valor|total|montante/.test(v))
-        if (iValor > 0 && (iConta > 0 || iDesc > 0)) { headerRow = n; colConta = iConta > 0 ? iConta : iDesc; colDesc = iDesc > 0 ? iDesc : iConta; colValor = iValor }
+      const parse = await parseRealizado(file)
+      if (!parse.linhas.length) { d.setErro('Nenhum lançamento válido no arquivo. Confira se usou o template padrão.'); return }
+      // mapa de contas (plano de contas já importado)
+      const { data: mapa } = await supabase.from('orc_contas_mapa').select('conta_erp, categoria_id, em_escopo').eq('projeto_id', projeto.id)
+      const byConta = new Map((mapa || []).map(m => [String(m.conta_erp), m]))
+
+      // agrega por (conta, competência)
+      const aggMap = new Map()
+      parse.linhas.forEach(l => {
+        const k = l.codigo + '|' + l.competencia
+        const a = aggMap.get(k) || { codigo: l.codigo, competencia: l.competencia, valor: 0, n: 0, detalhe: l.descricao }
+        a.valor += l.valor; a.n++; aggMap.set(k, a)
       })
-      if (!headerRow) throw new Error('Não achei cabeçalho com colunas de conta/descrição/valor. Confirme o layout do Excel.')
-      const porConta = {}
-      ws.eachRow((row, n) => {
-        if (n <= headerRow) return
-        const conta = String(row.getCell(colConta).value ?? '').trim()
-        const desc = String(row.getCell(colDesc).value ?? '').trim()
-        let v = row.getCell(colValor).value
-        if (v && typeof v === 'object' && 'result' in v) v = v.result
-        const valor = typeof v === 'number' ? v : parseFloat(String(v ?? '').replace(/\./g, '').replace(',', '.'))
-        if (!conta || !isFinite(valor) || valor === 0) return
-        porConta[conta] = porConta[conta] || { conta, descricao: desc, valor: 0, qtd: 0 }
-        porConta[conta].valor += valor; porConta[conta].qtd++
-      })
-      const contas = Object.values(porConta)
-      if (!contas.length) throw new Error('Nenhum lançamento válido encontrado no arquivo.')
-      // mapeamentos já conhecidos
-      const { data: mapa } = await supabase.from('orc_contas_mapa').select('*').eq('projeto_id', projeto.id)
-      const resultado = contas.map(c => {
-        const m = (mapa || []).find(x => x.conta_erp === c.conta)
-        return { ...c, categoria_id: m?.categoria_id || null, confianca: m ? 100 : null, fonte: m ? 'mapa' : null, em_escopo: m ? m.em_escopo !== false : true }
-      })
-      // IA para os não mapeados
-      const pendentes = resultado.filter(r => !r.categoria_id && r.em_escopo)
-      if (pendentes.length && d.catsAtivas.length) {
-        try {
-          const sug = await iaCategorizar(
-            pendentes.slice(0, 80).map(p => ({ conta_erp: p.conta, descricao_erp: p.descricao, total: p.valor })),
-            d.catsAtivas.map(c => ({ id: c.id, nome: c.nome, tipo: c.tipo })))
-          sug.forEach(s => {
-            const r = resultado.find(x => x.conta === s.conta_erp)
-            if (r) { r.categoria_id = s.categoria_id || null; r.confianca = s.confianca ?? null; r.fonte = 'ia'; r.em_escopo = s.em_escopo !== false }
-          })
-        } catch (e) { setMsg('IA indisponível (' + e.message + ') — categorize manualmente abaixo.') }
+      const aggs = [...aggMap.values()]
+
+      // classifica cada conta distinta
+      const naoEnc = new Set(), semCat = new Set(), foraEsc = new Set(), ok = new Set()
+      for (const codigo of new Set(parse.linhas.map(l => l.codigo))) {
+        const m = byConta.get(codigo)
+        if (!m) naoEnc.add(codigo)
+        else if (m.em_escopo === false) foraEsc.add(codigo)
+        else if (!m.categoria_id) semCat.add(codigo)
+        else ok.add(codigo)
       }
-      setLinhas(resultado); setArquivo(file.name)
+      const gravaveis = aggs.filter(a => ok.has(a.codigo)).map(a => ({ ...a, categoria_id: byConta.get(a.codigo).categoria_id }))
+      setPrev({ parse, gravaveis, naoEnc: [...naoEnc], semCat: [...semCat], foraEsc: [...foraEsc],
+        somaGrava: gravaveis.reduce((s, a) => s + a.valor, 0) })
+      setArquivo(file.name)
     } catch (e) { d.setErro(e.message) } finally { setProcessando(false) }
   }
 
   async function confirmar() {
-    if (!linhas) return
-    setGravando(true)
+    if (!prev?.gravaveis.length) { d.setErro('Nenhuma conta pronta pra gravar (sem categoria ou fora do escopo).'); return }
+    setGravando(true); d.setErro('')
     try {
-      const comp = `${ano}-${String(mes + 1).padStart(2, '0')}-01`
-      const validas = linhas.filter(l => l.em_escopo && l.categoria_id)
-      if (!validas.length) throw new Error('Nenhuma linha em escopo com categoria definida.')
+      const comps = [...new Set(prev.gravaveis.map(a => a.competencia))].sort()
       const { data: imp, error: e1 } = await supabase.from('orc_importacoes').insert({
-        projeto_id: projeto.id, arquivo_nome: arquivo, competencia_ini: comp, competencia_fim: comp, linhas: validas.length, status: 'concluida',
+        projeto_id: projeto.id, arquivo_nome: arquivo, competencia_ini: comps[0], competencia_fim: comps[comps.length - 1],
+        linhas: prev.gravaveis.length, status: 'concluida',
       }).select().single()
       if (e1) throw e1
-      // grava/atualiza o mapa de contas
-      const mapaRows = linhas.map(l => ({
-        projeto_id: projeto.id, conta_erp: l.conta, descricao_erp: l.descricao,
-        categoria_id: l.categoria_id, em_escopo: l.em_escopo, confianca_ia: l.fonte === 'ia' ? l.confianca : undefined,
-        origem_sugestao: l.fonte === 'ia' ? 'ia' : 'manual',
+      // substitui realizado importado dos meses afetados
+      await supabase.from('orc_realizado').delete().eq('projeto_id', projeto.id).eq('origem', 'import').in('competencia', comps)
+      const rows = prev.gravaveis.map(a => ({
+        projeto_id: projeto.id, categoria_id: a.categoria_id, competencia: a.competencia,
+        valor: Math.round(a.valor * 100) / 100, origem: 'import', importacao_id: imp.id,
+        conta_erp: a.codigo, detalhe: a.detalhe,
       }))
-      await supabase.from('orc_contas_mapa').upsert(mapaRows, { onConflict: 'projeto_id,conta_erp' })
-      // remove realizado import anterior da mesma competência e grava o novo
-      await supabase.from('orc_realizado').delete().eq('projeto_id', projeto.id).eq('competencia', comp).eq('origem', 'import')
-      const realRows = validas.map(l => ({
-        projeto_id: projeto.id, categoria_id: l.categoria_id, competencia: comp,
-        valor: Math.round(Math.abs(l.valor) * 100) / 100, origem: 'import', importacao_id: imp.id,
-        conta_erp: l.conta, detalhe: l.descricao,
-      }))
-      const { error: e2 } = await supabase.from('orc_realizado').insert(realRows)
+      const { error: e2 } = await supabase.from('orc_realizado').insert(rows)
       if (e2) throw e2
-      setMsg(`✓ ${realRows.length} contas gravadas em ${MESES_ABREV[mes]}/${ano} (total ${fmtBRL(realRows.reduce((a, r) => a + r.valor, 0))}).`)
-      setLinhas(null); setArquivo(null); d.reload()
+      const ign = prev.naoEnc.length + prev.semCat.length + prev.foraEsc.length
+      setMsg(`✓ ${rows.length} lançamentos gravados em ${comps.length} mês(es) — total ${fmtBRL(prev.somaGrava)}.` + (ign ? ` ${ign} conta(s) ignorada(s) — veja abaixo.` : ''))
+      setPrev(null); setArquivo(null); d.reload()
     } catch (e) { d.setErro(e.message) } finally { setGravando(false) }
   }
 
   async function lancarManual() {
     if (!mCat || mValor === '') return
-    const comp = `${ano}-${String(mes + 1).padStart(2, '0')}-01`
-    const { error } = await supabase.from('orc_realizado').insert({ projeto_id: projeto.id, categoria_id: mCat, competencia: comp, valor: Number(mValor), origem: 'manual', detalhe: mDet || null })
+    const comp = `${mAno}-${String(mMes + 1).padStart(2, '0')}-01`
+    const { error } = await supabase.from('orc_realizado').insert({ projeto_id: projeto.id, categoria_id: mCat, competencia: comp, valor: Math.abs(Number(mValor)), origem: 'manual', detalhe: mDet || null })
     if (error) { d.setErro(error.message); return }
-    setMValor(''); setMDet(''); setMsg('Lançamento manual gravado.'); d.reload()
+    setMValor(''); setMDet(''); setMsg(`Lançamento manual gravado em ${MESES_ABREV[mMes]}/${mAno}.`); d.reload()
   }
 
-  const kpis = linhas ? {
-    total: linhas.reduce((a, l) => a + Math.abs(l.valor), 0),
-    alta: linhas.filter(l => (l.confianca ?? 0) >= 90).length,
-    rev: linhas.filter(l => l.confianca !== null && l.confianca >= 70 && l.confianca < 90).length,
-    manual: linhas.filter(l => l.confianca === null || l.confianca < 70).length,
-  } : null
-  const visiveis = (linhas || []).filter(l =>
-    mostrar === 'todos' ? true : mostrar === 'alta' ? (l.confianca ?? 0) >= 90 : !((l.confianca ?? 0) >= 90))
+  const meses = prev ? Object.entries(prev.parse.resumo.meses) : []
 
   return (
     <div style={{ padding: '20px 28px 40px', maxWidth: 1180, margin: '0 auto' }}>
-      <PageHeader projeto={projeto} titulo="Importar Realizado" subtitulo={arquivo ? `Revisão de mapeamento — Arquivo: ${arquivo}` : 'Excel do ERP → categorização automática → gravação por competência'}>
-        <SeletorAno ano={ano} setAno={setAno} />
-        <select className="input-light" style={{ width: 110 }} value={mes} onChange={e => setMes(parseInt(e.target.value))}>{MESES_ABREV.map((m, i) => <option key={i} value={i}>{m}/{ano}</option>)}</select>
-        {linhas && <BotaoSec onClick={() => { setLinhas(null); setArquivo(null) }}>Cancelar</BotaoSec>}
-        {linhas
-          ? <BotaoVerde onClick={confirmar} disabled={gravando}>{gravando ? 'Gravando…' : 'Confirmar e Gravar'}</BotaoVerde>
-          : <BotaoVerde onClick={() => fileRef.current?.click()} disabled={processando}>{processando ? 'Processando…' : '↑ Escolher Excel do ERP'}</BotaoVerde>}
+      <PageHeader projeto={projeto} titulo="Importar Realizado" subtitulo={arquivo ? `Pré-visualização — ${arquivo}` : 'Template padrão → competência por linha → gravação por conta/mês'}>
+        <BotaoSec onClick={baixarTemplateRealizado}>⬇ Baixar Template</BotaoSec>
+        {prev && <BotaoSec onClick={() => { setPrev(null); setArquivo(null) }}>Cancelar</BotaoSec>}
+        {prev
+          ? <BotaoVerde onClick={confirmar} disabled={gravando || !prev.gravaveis.length}>{gravando ? 'Gravando…' : `Confirmar (${prev.gravaveis.length})`}</BotaoVerde>
+          : <BotaoVerde onClick={() => fileRef.current?.click()} disabled={processando}>{processando ? 'Processando…' : '↑ Importar Realizado'}</BotaoVerde>}
         <input ref={fileRef} type="file" accept=".xlsx,.xls" style={{ display: 'none' }} onChange={e => { const f = e.target.files?.[0]; if (f) processarArquivo(f); e.target.value = '' }} />
       </PageHeader>
       <ErroBox erro={d.erro} onClose={() => d.setErro('')} />
       {msg && <div style={{ background: 'rgba(34,185,138,0.08)', border: '1px solid rgba(34,185,138,0.35)', borderRadius: 8, padding: '8px 14px', fontSize: 12.5, marginBottom: 14 }}>{msg}</div>}
 
-      {!linhas && (
+      {!prev && (
         <>
-          <HelpTag><strong>Como funciona:</strong> envie o Excel do ERP (ex.: Relatório DFC e DRE da Terra). O sistema agrega os lançamentos por conta, aplica o mapeamento conta→categoria já conhecido e usa IA para sugerir categoria às contas novas — você só revisa as de confiança média/baixa e confirma. A competência gravada é a selecionada acima.</HelpTag>
-          <Card titulo="Lançamento manual (alternativa ao Excel)">
+          <HelpTag><strong>Como funciona:</strong> baixe o template, adapte o relatório de realizado do cliente a ele (Plano de Contas, Data, Valor, Descrição) e importe. O mês de cada lançamento vem da coluna Data — dá pra importar vários meses de uma vez. A conta liga ao plano de contas (importe-o antes); a natureza receita/despesa vem da categoria da conta.</HelpTag>
+          <Card titulo="Lançamento manual (alternativa ao template)">
             <div style={{ display: 'flex', gap: 8, alignItems: 'flex-end', flexWrap: 'wrap' }}>
+              <div><label style={{ fontSize: 11.5, color: 'var(--lt-text3)', display: 'block', marginBottom: 4 }}>Mês</label>
+                <select className="input-light" style={{ width: 120 }} value={mMes} onChange={e => setMMes(parseInt(e.target.value))}>{MESES_ABREV.map((m, i) => <option key={i} value={i}>{m}/{mAno}</option>)}</select></div>
               <div><label style={{ fontSize: 11.5, color: 'var(--lt-text3)', display: 'block', marginBottom: 4 }}>Categoria</label>
                 <select className="input-light" style={{ minWidth: 200 }} value={mCat} onChange={e => setMCat(e.target.value)}>
                   <option value="">Selecione…</option>{d.catsAtivas.map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}
@@ -149,57 +117,43 @@ export default function Importar({ projeto }) {
                 <input type="number" step="0.01" className="input-light" style={{ width: 130 }} value={mValor} onChange={e => setMValor(e.target.value)} /></div>
               <div style={{ flex: 1, minWidth: 150 }}><label style={{ fontSize: 11.5, color: 'var(--lt-text3)', display: 'block', marginBottom: 4 }}>Detalhe</label>
                 <input className="input-light" value={mDet} onChange={e => setMDet(e.target.value)} placeholder="opcional" /></div>
-              <BotaoVerde onClick={lancarManual} disabled={!mCat || mValor === ''}>Lançar em {MESES_ABREV[mes]}/{ano}</BotaoVerde>
+              <BotaoVerde onClick={lancarManual} disabled={!mCat || mValor === ''}>Lançar</BotaoVerde>
             </div>
           </Card>
         </>
       )}
 
-      {linhas && kpis && (
+      {prev && (
         <>
           <KPIGrid>
-            <KPICard label="Total do arquivo" value={fmtBRL(kpis.total)} tone="success" delta={`${linhas.length} contas agregadas`} />
-            <KPICard label="Alta confiança" value={kpis.alta + ' ✓'} tone="success" delta="≥ 90% — auto-aprovadas" />
-            <KPICard label="Para revisar" value={kpis.rev + ' ⚠'} tone={kpis.rev ? 'warning' : null} delta="70–89% de confiança" />
-            <KPICard label="Manuais" value={kpis.manual + ' ✗'} tone={kpis.manual ? 'danger' : null} delta="sem sugestão segura" />
+            <KPICard label="Vão gravar" value={fmtBRL(prev.somaGrava)} tone="success" delta={`${prev.gravaveis.length} conta×mês`} />
+            <KPICard label="Meses no arquivo" value={meses.length} delta={meses.map(([c]) => compLabel(c)).join(' · ')} />
+            <KPICard label="Sem categoria" value={prev.semCat.length + ' ⚠'} tone={prev.semCat.length ? 'warning' : null} delta="categorize no Plano de Contas" />
+            <KPICard label="Fora do plano" value={prev.naoEnc.length + ' ✗'} tone={prev.naoEnc.length ? 'danger' : null} delta="contas ausentes no plano" />
           </KPIGrid>
-          <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginBottom: 12, fontSize: 12 }}>
-            <label style={{ color: 'var(--lt-text3)' }}>Mostrar:</label>
-            <select className="input-light" style={{ width: 220 }} value={mostrar} onChange={e => setMostrar(e.target.value)}>
-              <option value="pendentes">Pendentes de revisão</option><option value="todos">Todos</option><option value="alta">Apenas alta confiança</option>
-            </select>
-          </div>
-          <Card titulo="Revisão de Mapeamento" pad={false}>
+
+          {(prev.naoEnc.length > 0 || prev.semCat.length > 0 || prev.foraEsc.length > 0 || prev.parse.erros.length > 0) && (
+            <Card titulo="Avisos">
+              {prev.parse.erros.length > 0 && <div style={{ fontSize: 12.5, marginBottom: 6 }}>• {prev.parse.erros.length} linha(s) ignorada(s) por dado inválido (linha {prev.parse.erros.slice(0, 8).map(e => e.linha).join(', ')}{prev.parse.erros.length > 8 ? '…' : ''}).</div>}
+              {prev.naoEnc.length > 0 && <div style={{ fontSize: 12.5, marginBottom: 6 }}>• <strong>{prev.naoEnc.length} conta(s) não existem no plano de contas</strong> — não serão gravadas. Importe-as no Plano de Contas. Ex.: {prev.naoEnc.slice(0, 6).join(', ')}{prev.naoEnc.length > 6 ? '…' : ''}</div>}
+              {prev.semCat.length > 0 && <div style={{ fontSize: 12.5, marginBottom: 6 }}>• <strong>{prev.semCat.length} conta(s) em escopo sem categoria</strong> — categorize no Plano de Contas (manual ou IA) e reimporte. Ex.: {prev.semCat.slice(0, 6).join(', ')}{prev.semCat.length > 6 ? '…' : ''}</div>}
+              {prev.foraEsc.length > 0 && <div style={{ fontSize: 12.5, color: 'var(--lt-text3)' }}>• {prev.foraEsc.length} conta(s) fora do escopo — ignoradas (esperado).</div>}
+            </Card>
+          )}
+
+          <Card titulo="Por mês" pad={false}>
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-              <thead><tr><th style={THL}>Conta do ERP</th><th style={TH}>Total</th><th style={THL}>Categoria Polímata</th><th style={TH}>Confiança IA</th><th style={{ ...TH, textAlign: 'center' }}>Em escopo</th></tr></thead>
+              <thead><tr><th style={THL}>Competência</th><th style={TH}>Lançamentos</th><th style={TH}>Total do arquivo</th></tr></thead>
               <tbody>
-                {visiveis.map((l) => (
-                  <tr key={l.conta} style={!l.categoria_id && l.em_escopo ? { background: 'rgba(239,68,68,0.04)' } : {}}>
-                    <td style={TDL}><div style={{ fontWeight: 600 }}>{l.descricao || l.conta}</div><div style={{ fontSize: 10.5, color: 'var(--lt-text3)', fontFamily: 'monospace' }}>{l.conta} • {l.qtd} lançamento{l.qtd > 1 ? 's' : ''}</div></td>
-                    <td style={{ ...TD, fontWeight: 600 }}>{fmtBRL(Math.abs(l.valor))}</td>
-                    <td style={TDL}>
-                      <select className="input-light" style={{ width: 230, padding: '4px 8px', fontSize: 12 }} value={l.categoria_id || ''} onChange={e => setLinhas(prev => prev.map(x => x.conta === l.conta ? { ...x, categoria_id: e.target.value || null, fonte: 'manual', confianca: e.target.value ? 100 : null } : x))}>
-                        <option value="">— Selecione —</option>
-                        {d.catsAtivas.map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}
-                      </select>
-                    </td>
-                    <td style={TD}>
-                      {l.confianca !== null
-                        ? <div style={{ minWidth: 90 }}>
-                            <div style={{ height: 5, background: 'var(--lt-brd)', borderRadius: 3 }}><div style={{ height: 5, borderRadius: 3, width: l.confianca + '%', background: l.confianca >= 90 ? '#15803D' : l.confianca >= 70 ? '#B45309' : '#B91C1C' }} /></div>
-                            <div style={{ fontSize: 10, marginTop: 2, color: l.confianca >= 90 ? '#15803D' : l.confianca >= 70 ? '#B45309' : '#B91C1C' }}>{l.confianca}%{l.fonte === 'mapa' ? ' (mapa salvo)' : l.fonte === 'manual' ? ' (manual)' : ''}</div>
-                          </div>
-                        : <Badge tone="danger">Manual</Badge>}
-                    </td>
-                    <td style={{ ...TD, textAlign: 'center' }}>
-                      <input type="checkbox" checked={l.em_escopo} onChange={e => setLinhas(prev => prev.map(x => x.conta === l.conta ? { ...x, em_escopo: e.target.checked } : x))} />
-                    </td>
-                  </tr>
+                {meses.map(([c, v]) => (
+                  <tr key={c}><td style={TDL}>{compLabel(c)}</td><td style={TD}>{v.qtd}</td><td style={{ ...TD, fontWeight: 600 }}>{fmtBRL(v.soma)}</td></tr>
                 ))}
-                {!visiveis.length && <tr><td colSpan={5} style={{ ...TDL, textAlign: 'center', padding: 24, color: 'var(--lt-text3)' }}>Nada neste filtro.</td></tr>}
               </tbody>
             </table>
           </Card>
+          <div style={{ marginTop: 10 }}>
+            <HelpTag>Só gravam as contas em escopo COM categoria no plano. Reimportar os mesmos meses substitui o realizado importado anterior (lançamentos manuais são preservados).</HelpTag>
+          </div>
         </>
       )}
     </div>
