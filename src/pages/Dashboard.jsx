@@ -37,6 +37,15 @@ import PorArea from './dashboard/PorArea'
 // SHELL — orquestra autenticação, carregamento de projetos/dados e roteamento
 // ══════════════════════════════════════════════════════════════════════════════
 
+// produto do projeto → módulo e rota base do módulo
+function produtoModulo(produto) {
+  if (produto === 'mapeamento') return 'mapeamento'
+  if (produto === 'orcamento') return 'orcamento'
+  if (produto === 'planejamento') return 'planejamento'
+  return 'ci'
+}
+const ROTA_BASE_MODULO = { ci: '/ci', mapeamento: '/mapeamentos', orcamento: '/orcamento', planejamento: '/planejamento' }
+
 export default function Dashboard() {
   const { perfil, signOut } = useAuth()
   const navigate = useNavigate()
@@ -139,6 +148,20 @@ export default function Dashboard() {
     window.addEventListener('polimata:areas-updated', handleAreasUpdated)
     return () => window.removeEventListener('polimata:areas-updated', handleAreasUpdated)
   }, [projetoAtivo])
+
+  // Mantém o módulo exibido coerente com o produto do projeto ativo.
+  // Sem isto, um projeto de orçamento aberto numa URL de GRC (/ci) exibe o chrome
+  // de Controles Internos (estado vazio "Importar Template MRC") em vez do orçamento.
+  useEffect(() => {
+    if (!projetoAtivo) return
+    const path = location.pathname
+    // rotas transversais — não atreladas a um produto
+    if (path === '/' || path.startsWith('/admin') || path.startsWith('/perfil') || path.startsWith('/configuracoes')) return
+    const modProjeto = produtoModulo(projetoAtivo.produto)
+    if (moduloDaRota(path) !== modProjeto) {
+      navigate(ROTA_BASE_MODULO[modProjeto], { replace: true })
+    }
+  }, [projetoAtivo, location.pathname])
 
   async function loadDados(pid) {
     setLoading(true)
