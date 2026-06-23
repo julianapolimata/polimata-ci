@@ -32,7 +32,7 @@ export default function StepRisco({
           </div>
           <div style={{ borderRight: '1px solid #e5e7eb', paddingRight: 12 }}>
             <div style={{ fontSize: 10, fontWeight: 700, color: '#7A8B9C', textTransform: 'uppercase', marginBottom: 4 }}>Fase Atual</div>
-            <div style={{ fontSize: 12, color: '#00203E', fontWeight: 500 }}>{getFaseLabel(row) || '—'}</div>
+            <div style={{ fontSize: 12, color: '#00203E', fontWeight: 500 }}>{getFaseLabel(row, projeto?.num_fases, projeto?.f1_tem_teste === true) || '—'}</div>
           </div>
           <div>
             <div style={{ fontSize: 10, fontWeight: 700, color: '#7A8B9C', textTransform: 'uppercase', marginBottom: 4 }}>Resultado</div>

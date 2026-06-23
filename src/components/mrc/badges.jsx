@@ -120,12 +120,12 @@ function ExpCell({ text, maxLen = 80, expanded = false }) {
 
 // ─── FASE ATUAL (centralizado em lib/fases.js) ─────────────────────────────
 
-function getFaseInfo(row) {
-  return getFaseInfoUtil(row)
+function getFaseInfo(row, numFases, comTeste) {
+  return getFaseInfoUtil(row, numFases, comTeste)
 }
 
 function FaseAtual({ row, projeto }) {
-  const { label, cor } = getFaseInfo(row)
+  const { label, cor } = getFaseInfo(row, projeto?.num_fases, projeto?.f1_tem_teste === true)
   const resultado = getResultadoVitrine(row, projeto)
   return (
     <div className="fase-atual-cell">
@@ -295,7 +295,7 @@ const MRC_FASE_KEYS = ['r1', 'st_pa', 'r_ader', 'r3', 'r_f4c1', 'r_f4c2', 'r_f5'
 function sortVal(row, k, projeto) {
   if (k === '_dt') return row.dt_ult || row.atualizado_em || row.criado_em || ''
   if (k === '_resultado') return getResultadoVitrine(row, projeto)
-  if (k === '_fase_atual') return getFaseLabel(row)
+  if (k === '_fase_atual') return getFaseLabel(row, projeto?.num_fases, projeto?.f1_tem_teste === true)
   if (k === '_status_atual') return getStatusComputado(row)
   return row[k] ?? ''
 }

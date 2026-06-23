@@ -39,7 +39,7 @@ const ModalRevisar = ({ row, onClose, onAction, projeto }) => {
   const isAutoRevisao = !!(row?.submetido_por && user?.id && row.submetido_por === user.id)
   const bloqueado = isAutoRevisao && !isAdmin
 
-  const faseAtual = getFaseAtual(row || {})
+  const faseAtual = getFaseAtual(row || {}, projeto?.num_fases, projeto?.f1_tem_teste === true)
   const isDiag = projeto?.f1_tem_teste === false
   const faseDisplay = isDiag ? 'Diagnóstico — Indagação' : faseAtual
 

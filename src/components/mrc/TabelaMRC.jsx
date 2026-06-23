@@ -60,7 +60,7 @@ function TabelaMRC({ rows, onOpenModal, isDiagnostico = false, projeto }) {
               <TdMRC w={200}>{row.dc}</TdMRC>
               {!isDiagnostico && <td style={{ ...mrcTdS, width: 90, minWidth: 90, textAlign: 'center' }}>{badgeResultado(getResultadoVitrine(row, projeto))}</td>}
               <td style={{ ...mrcTdS, width: 110, minWidth: 110, textAlign: 'center' }}>{critBadge(row.crit)}</td>
-              {!isDiagnostico && <td style={{ ...mrcTdS, width: 130, minWidth: 130, fontSize: 11, fontWeight: 500, textAlign: 'center' }}>{getFaseLabel(row)}{row.num_regressoes > 0 && <RegressaoBadgeMRC n={row.num_regressoes} />}</td>}
+              {!isDiagnostico && <td style={{ ...mrcTdS, width: 130, minWidth: 130, fontSize: 11, fontWeight: 500, textAlign: 'center' }}>{getFaseLabel(row, projeto?.num_fases, projeto?.f1_tem_teste === true)}{row.num_regressoes > 0 && <RegressaoBadgeMRC n={row.num_regressoes} />}</td>}
               <td style={{ ...mrcTdS, width: 110, minWidth: 110, textAlign: 'center' }}>{(() => { const st = getStatusComputado(row); const cfg = getStatusConfig(st); return <span style={{ fontSize: 10, fontWeight: 700, color: cfg.color, background: cfg.bg, padding: '3px 10px', borderRadius: 999, textTransform: 'uppercase', letterSpacing: 0.4 }}>{cfg.label}</span> })()}</td>
               {isDiagnostico ? (
                 <td style={{ ...mrcTdS, width: 130, minWidth: 130, maxWidth: 130, textAlign: 'center' }}>{badgeExistencia(row.existencia)}</td>

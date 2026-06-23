@@ -100,14 +100,14 @@ export default function MRCCompleta({ projetoId, projeto, clienteNome, projetoNo
       else if (getResultadoVitrine(r, projeto) !== filtroR1) return false
     }
     if (filtroNivel) { const nivel = NIVEIS.find(n => n.id === filtroNivel); if (nivel && getResultadoVitrine(r, projeto) !== nivel.resultado) return false }
-    if (filtroFase) { const fi = getFaseInfo(r); if (fi.label !== filtroFase) return false }
+    if (filtroFase) { const fi = getFaseInfo(r, projeto?.num_fases, projeto?.f1_tem_teste === true); if (fi.label !== filtroFase) return false }
     if (!isClienteMRC && filtroStatus) { if (getStatusComputado(r) !== filtroStatus) return false }
     if (!isClienteMRC && filtroAcao) { if (getProximaAcao(getStatusComputado(r)) !== filtroAcao) return false }
     if (busca) { const q = busca.toLowerCase(); return (r.rr||'').toLowerCase().includes(q)||(r.rc||'').toLowerCase().includes(q)||(r.area||'').toLowerCase().includes(q)||(r.sub||'').toLowerCase().includes(q)||(r.dr||'').toLowerCase().includes(q)||(r.dc||'').toLowerCase().includes(q)||(r.incons||'').toLowerCase().includes(q)||(r.passos_f1||'').toLowerCase().includes(q) }
     return true
   })
 
-  const fasesDisponiveis = [...new Set(mrc.map(r => getFaseInfo(r).label))].sort()
+  const fasesDisponiveis = [...new Set(mrc.map(r => getFaseInfo(r, projeto?.num_fases, projeto?.f1_tem_teste === true).label))].sort()
 
   const visibleRows = filtered.slice(0, MAX_ROWS); const isLimited = filtered.length > MAX_ROWS
   const handleHeatmapCell = (imp, prob, sel) => { if (sel) { setFiltroImp(''); setFiltroProb('') } else { setFiltroImp(imp); setFiltroProb(prob) } }

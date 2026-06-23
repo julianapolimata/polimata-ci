@@ -41,7 +41,7 @@ export function ModalDetalhe({ row, projeto, onClose, onEditar, primaryAction, s
       </span>
     )
   }
-  const faseInfo = getFaseInfo(row)
+  const faseInfo = getFaseInfo(row, projeto?.num_fases, projeto?.f1_tem_teste === true)
   const ultTeste = ultimaDataTeste(row)
   const fmtData = (v) => { if (!v) return null; const m = String(v).match(/^(\d{4})-(\d{2})-(\d{2})/); return m ? `${m[3]}/${m[2]}/${m[1]}` : String(v).slice(0,10) }
   const impIdx = HM_IMPS.indexOf(row.imp); const probIdx = HM_PROBS.indexOf(row.prob)
