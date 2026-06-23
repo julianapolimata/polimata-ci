@@ -7,6 +7,7 @@ import ExcelJS from 'exceljs'
 
 const NAVY = '00203E'
 const CREME = 'F3EEE4'
+const GOLD = 'CC915E'
 const HEADER_FILL = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF' + NAVY } }
 const HEADER_FONT = { name: 'Montserrat', bold: true, size: 10, color: { argb: 'FFFFFFFF' } }
 const BODY_FONT = { name: 'Montserrat', size: 10, color: { argb: 'FF333333' } }
@@ -49,12 +50,13 @@ export function montarWorkbookPlanoContas({ linhas = null } = {}) {
   ws.columns = COLS_PLANO.map(c => ({ header: c.header, key: c.key, width: c.width }))
   const head = ws.getRow(1)
   head.height = 26
-  head.eachCell(cell => { cell.font = HEADER_FONT; cell.fill = HEADER_FILL; cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true }; cell.border = BORDER })
+  head.eachCell(cell => { cell.font = HEADER_FONT; cell.fill = HEADER_FILL; cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true }; cell.border = { ...BORDER, bottom: { style: 'medium', color: { argb: 'FF' + GOLD } } } })
 
   const dados = linhas && linhas.length ? linhas : EXEMPLOS
-  dados.forEach(arr => {
+  dados.forEach((arr, di) => {
     const r = ws.addRow(arr)
-    r.eachCell(cell => { cell.font = BODY_FONT; cell.border = BORDER; cell.alignment = { vertical: 'middle' } })
+    const zebra = di % 2 === 1
+    r.eachCell(cell => { cell.font = BODY_FONT; cell.border = BORDER; cell.alignment = { vertical: 'middle' }; if (zebra) cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF' + CREME } } })
   })
 
   // validações (Em Escopo col D, Tipo col F) até 1000 linhas
@@ -67,7 +69,7 @@ export function montarWorkbookPlanoContas({ linhas = null } = {}) {
   const wi = wb.addWorksheet('Instruções')
   wi.getColumn(1).width = 26; wi.getColumn(2).width = 95
   const t = wi.getCell('A1'); t.value = 'Template — Plano de Contas (Gestão Orçamentária · Sistema Polímata)'
-  t.font = { name: 'Montserrat', bold: true, size: 13, color: { argb: 'FF' + NAVY } }
+  t.font = { name: 'Raleway', bold: true, size: 15, color: { argb: 'FF' + NAVY } }
   wi.addRow([])
   const cu = wi.addRow(['Como usar', 'Preencha a aba "Plano de Contas" adaptando o plano do seu cliente a estas colunas fixas. Não altere os nomes das colunas. Depois importe este arquivo no sistema: Gestão Orçamentária → Plano de Contas → Importar Plano de Contas.'])
   cu.getCell(1).font = { name: 'Montserrat', bold: true, size: 10, color: { argb: 'FF' + NAVY } }
