@@ -1,8 +1,9 @@
 // Plano de Contas — categorias gerenciais + mapeamento conta ERP → categoria (com IA)
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { supabase } from '../../lib/supabase'
-import { useOrcDados, PageHeader, Card, Badge, BotaoVerde, BotaoSec, ErroBox, TIPOS, TIPO_ORD, THL, TH, TDL, TD } from './_shared'
+import { useOrcDados, PageHeader, Card, HelpTag, Badge, BotaoVerde, BotaoSec, ErroBox, TIPOS, TIPO_ORD, THL, TH, TDL, TD } from './_shared'
 import { iaCategorizar } from '../../lib/orcamento/ia'
+import { baixarTemplatePlanoContas, parsePlanoContas } from '../../lib/orcamento/templatePlanoContas'
 
 export default function PlanoContas({ projeto }) {
   const ano = new Date().getFullYear()
@@ -15,6 +16,9 @@ export default function PlanoContas({ projeto }) {
   const [busca, setBusca] = useState('')
   const [rodandoIA, setRodandoIA] = useState(false)
   const [msg, setMsg] = useState('')
+  const fileRef = useRef(null)
+  const [prev, setPrev] = useState(null)        // resultado do parse do arquivo
+  const [importando, setImportando] = useState(false)
 
   useEffect(() => {
     if (!projeto?.id) return
@@ -63,6 +67,44 @@ export default function PlanoContas({ projeto }) {
     } catch (e) { d.setErro(e.message) } finally { setRodandoIA(false) }
   }
 
+  async function onArquivoPlano(file) {
+    setMsg(''); d.setErro('')
+    try {
+      const r = await parsePlanoContas(file)
+      setPrev(r)
+      if (!r.linhas.length) d.setErro('Nenhuma conta válida no arquivo. Confira se usou o template padrão.')
+    } catch (e) { d.setErro(e.message) }
+  }
+
+  async function confirmarImportPlano() {
+    if (!prev?.linhas.length) return
+    setImportando(true); setMsg(''); d.setErro('')
+    try {
+      // 1) resolve categorias — casa por nome, cria as que faltam
+      const existentes = d.categorias || []
+      const byNome = new Map(existentes.map(c => [c.nome.trim().toLowerCase(), c]))
+      const novas = prev.categorias.filter(c => !byNome.has(c.nome.toLowerCase()))
+      if (novas.length) {
+        const baseOrdem = existentes.length
+        const insert = novas.map((c, i) => ({ projeto_id: projeto.id, nome: c.nome, tipo: c.tipo_id, ordem: baseOrdem + i, ativo: true }))
+        const { data: criadas, error } = await supabase.from('orc_categorias').insert(insert).select()
+        if (error) throw error
+        ;(criadas || []).forEach(c => byNome.set(c.nome.trim().toLowerCase(), c))
+      }
+      // 2) upsert das contas no mapa (chave projeto_id+conta_erp)
+      const rows = prev.linhas.map(l => ({
+        projeto_id: projeto.id, conta_erp: l.codigo, descricao_erp: l.descricao,
+        grupo: l.grupo, em_escopo: l.em_escopo,
+        categoria_id: l.categoria ? (byNome.get(l.categoria.toLowerCase())?.id || null) : null,
+        origem_sugestao: 'import_plano',
+      }))
+      const { error: e2 } = await supabase.from('orc_contas_mapa').upsert(rows, { onConflict: 'projeto_id,conta_erp' })
+      if (e2) throw e2
+      setMsg(`✓ Plano de contas importado: ${rows.length} contas (${prev.resumo.emEscopo} em escopo) · ${novas.length} categorias novas.`)
+      setPrev(null); recarregarContas(); d.reload()
+    } catch (e) { d.setErro(e.message) } finally { setImportando(false) }
+  }
+
   const visiveis = (contas || []).filter(c => {
     if (filtroEscopo === 'em' && c.em_escopo === false) return false
     if (filtroEscopo === 'fora' && c.em_escopo !== false) return false
@@ -76,10 +118,40 @@ export default function PlanoContas({ projeto }) {
   return (
     <div style={{ padding: '20px 28px 40px', maxWidth: 1180, margin: '0 auto' }}>
       <PageHeader projeto={projeto} titulo="Plano de Contas — Categorização Gerencial" subtitulo={contas ? `${contas.length} contas do ERP | ${emEscopo} em escopo | ${contas.length - emEscopo} fora do escopo` : 'carregando…'}>
+        <BotaoSec onClick={baixarTemplatePlanoContas}>⬇ Baixar Template</BotaoSec>
+        <BotaoVerde onClick={() => fileRef.current?.click()}>↑ Importar Plano de Contas</BotaoVerde>
         <BotaoSec onClick={categorizarIA} disabled={rodandoIA}>{rodandoIA ? 'Categorizando…' : '🤖 Categorizar pendentes (IA)'}</BotaoSec>
+        <input ref={fileRef} type="file" accept=".xlsx,.xls" style={{ display: 'none' }} onChange={e => { const f = e.target.files?.[0]; if (f) onArquivoPlano(f); e.target.value = '' }} />
       </PageHeader>
       <ErroBox erro={d.erro} onClose={() => d.setErro('')} />
       {msg && <div style={{ background: 'rgba(34,185,138,0.08)', border: '1px solid rgba(34,185,138,0.35)', borderRadius: 8, padding: '8px 14px', fontSize: 12.5, marginBottom: 14 }}>{msg}</div>}
+
+      {prev && (
+        <Card titulo="Pré-visualização da importação" extra={<BotaoSec onClick={() => setPrev(null)}>Cancelar</BotaoSec>}>
+          <div style={{ display: 'flex', gap: 18, flexWrap: 'wrap', fontSize: 13, marginBottom: 10 }}>
+            <span><strong>{prev.resumo.total}</strong> contas</span>
+            <span><strong>{prev.resumo.emEscopo}</strong> em escopo</span>
+            <span><strong>{prev.resumo.foraEscopo}</strong> fora do escopo</span>
+            <span><strong>{prev.categorias.length}</strong> categorias no arquivo</span>
+          </div>
+          {prev.erros.length > 0 && (
+            <div style={{ background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: 8, padding: '8px 12px', fontSize: 12, marginBottom: 8 }}>
+              {prev.erros.length} linha(s) ignorada(s) por falta de Código/Descrição: linha(s) {prev.erros.slice(0, 12).map(e => e.linha).join(', ')}{prev.erros.length > 12 ? '…' : ''}
+            </div>
+          )}
+          {prev.resumo.duplicados.length > 0 && (
+            <div style={{ background: 'rgba(234,179,8,0.08)', border: '1px solid rgba(234,179,8,0.35)', borderRadius: 8, padding: '8px 12px', fontSize: 12, marginBottom: 8 }}>
+              ⚠ Código(s) repetido(s) no arquivo: {prev.resumo.duplicados.slice(0, 12).join(', ')}{prev.resumo.duplicados.length > 12 ? '…' : ''}. Vale o último.
+            </div>
+          )}
+          <div style={{ marginTop: 4 }}>
+            <BotaoVerde onClick={confirmarImportPlano} disabled={importando || !prev.linhas.length}>{importando ? 'Importando…' : `Confirmar e importar ${prev.linhas.length} contas`}</BotaoVerde>
+          </div>
+          <div style={{ marginTop: 10 }}>
+            <HelpTag>Contas com o mesmo Código são atualizadas; novas são criadas. Categorias inéditas entram automaticamente. Depois você ajusta a categorização na tabela abaixo (ou com a IA).</HelpTag>
+          </div>
+        </Card>
+      )}
 
       <Card titulo="Categorias Gerenciais" extra={<span style={{ fontSize: 11, color: 'var(--lt-text3)' }}>a estrutura do seu orçamento — as contas do ERP apontam para elas</span>}>
         <div style={{ display: 'flex', gap: 8, alignItems: 'flex-end', marginBottom: 12, flexWrap: 'wrap' }}>
