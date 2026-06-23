@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
 import { formatNomeEmpresa } from '../../lib/formatNome'
 import { calcularDiagnosticoProjeto } from '../../lib/calculoMaturidade'
+import ModalPromoverTeste from '../../components/ModalPromoverTeste'
 import {
   COR_EFETIVO, COR_INEFETIVO, COR_GAP,
   CRIT_CORES, CRIT_LABELS, IMP_LABELS, PROB_LABELS, HEAT_CORES,
@@ -21,6 +22,7 @@ export default function HomeDashDiagnostico({ projeto, areasCalc, todosControles
   const navigate = useNavigate()
   const { perfil } = useAuth()
   const [areaFiltro, setAreaFiltro] = useState(null)
+  const [showPromover, setShowPromover] = useState(false)
 
   const clienteNome = formatNomeEmpresa(projeto?.clientes?.nome_fantasia || projeto?.clientes?.nome) || 'Cliente'
 
@@ -109,6 +111,11 @@ export default function HomeDashDiagnostico({ projeto, areasCalc, todosControles
   // Critérios "prioritários": Inexistentes em risco Crítico ou Significativo
   const inexCritSig = (critPorExistencia[4]?.Inexistente || 0) + (critPorExistencia[3]?.Inexistente || 0)
 
+  const ativosDiag = todosControles.filter(c => c.ativo !== false)
+  const diagConcluido = ativosDiag.length > 0 && ativosDiag.every(c => c.status_workflow === 'aprovado' && c.crit != null)
+  const isClienteRole = perfil?.papel === 'gestor_cliente' || perfil?.papel === 'usuario_cliente'
+  const mostrarPromover = projeto?.f1_tem_teste === false && diagConcluido && !isClienteRole
+
   return (
     <div style={D.page}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 0 16px', flexShrink: 0 }}>
@@ -119,6 +126,20 @@ export default function HomeDashDiagnostico({ projeto, areasCalc, todosControles
         </div>
         <div style={{ fontSize: 10, color: 'rgba(247,243,238,0.72)', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 6, padding: '6px 14px', whiteSpace: 'nowrap' }}>Última atualização: {ultimaAtualizacao}</div>
       </div>
+
+      {mostrarPromover && (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', background: 'rgba(34,197,94,0.10)', border: '1px solid rgba(34,197,94,0.35)', borderRadius: 10, padding: '12px 16px', marginBottom: 14, flexShrink: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <span style={{ fontSize: 18, color: '#22C55E' }}>✓</span>
+            <div>
+              <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--cream)' }}>Diagnóstico concluído — pronto para promover para teste</div>
+              <div style={{ fontSize: 11, color: 'rgba(247,243,238,0.7)', marginTop: 2 }}>Todos os controles estão concluídos. Avance para o fluxo de teste (régua N1–N5). O diagnóstico é preservado.</div>
+            </div>
+          </div>
+          <button onClick={() => setShowPromover(true)} style={{ background: '#CC915E', color: '#fff', border: 'none', borderRadius: 8, padding: '9px 18px', fontSize: 13, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap', fontFamily: 'inherit' }}>↥ Promover para teste</button>
+        </div>
+      )}
+      {showPromover && <ModalPromoverTeste projeto={projeto} onClose={() => setShowPromover(false)} onPromoted={() => { setShowPromover(false); if (projeto?.id) loadDados(projeto.id) }} />}
 
       <div style={D.kpiRow}>
         <div style={{ ...D.kpiCard, borderTopColor: C_EXISTENTE }}>

@@ -4,6 +4,8 @@ import { supabase } from '../../../lib/supabase'
 import { FASES_LABEL, FASES_DETALHE } from './_consts'
 import InfoCell from './InfoCell'
 import { vincularResponsavelAoProjeto } from '../../../lib/vinculoConsultor'
+import ModalPromoverTeste from '../../../components/ModalPromoverTeste'
+import { resumoDiagnostico } from '../../../lib/promoverTeste'
 
 function AbaCaracteristicas({ dados, perfisPolimata = [], onUpdate, editando, setEditando }) {
   const [form, setForm] = useState({})
@@ -12,6 +14,8 @@ function AbaCaracteristicas({ dados, perfisPolimata = [], onUpdate, editando, se
   const [temControles, setTemControles] = useState(false)
   const [temResultadoTeste, setTemResultadoTeste] = useState(false)
   const [faseMinima, setFaseMinima] = useState(1)
+  const [showPromover, setShowPromover] = useState(false)
+  const [diagPendentes, setDiagPendentes] = useState(null)
 
   useEffect(() => {
     setForm({
@@ -47,6 +51,7 @@ function AbaCaracteristicas({ dados, perfisPolimata = [], onUpdate, editando, se
       }
       setFaseMinima(max)
       setTemResultadoTeste(temR1)
+      if (dados.f1_tem_teste === false) { const rd = await resumoDiagnostico(dados.id); setDiagPendentes(rd) } else setDiagPendentes(null)
     })()
   }, [dados])
 
@@ -127,6 +132,22 @@ function AbaCaracteristicas({ dados, perfisPolimata = [], onUpdate, editando, se
             <InfoCell label="Inclui teste de efetividade?" value={dados.f1_tem_teste === false ? 'Não — diagnóstico apenas' : 'Sim — F1 inclui teste'} />
             <InfoCell label="Matriz de Calor" value={`${dados.matriz_tamanho??4}×${dados.matriz_tamanho??4}`} />
           </div>
+          {dados.f1_tem_teste === false && (
+            <div style={{ marginTop: 14, paddingTop: 14, borderTop: '1px solid var(--lt-border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
+              <div>
+                <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--lt-text)' }}>Fase de teste</div>
+                <div style={{ fontSize: 11, color: 'var(--lt-text3)', marginTop: 2 }}>
+                  {diagPendentes == null ? 'Verificando diagnóstico…'
+                    : diagPendentes.total === 0 ? 'Sem controles cadastrados'
+                    : diagPendentes.pendentes > 0 ? `Faltam ${diagPendentes.pendentes} de ${diagPendentes.total} controles para concluir o diagnóstico`
+                    : 'Diagnóstico concluído — pronto para promover'}
+                </div>
+              </div>
+              <button className="btn-cfg-save" disabled={!diagPendentes || diagPendentes.pendentes > 0 || diagPendentes.total === 0}
+                onClick={() => setShowPromover(true)}
+                style={{ opacity: (!diagPendentes || diagPendentes.pendentes > 0 || diagPendentes.total === 0) ? 0.5 : 1, cursor: (diagPendentes && diagPendentes.pendentes === 0 && diagPendentes.total > 0) ? 'pointer' : 'not-allowed' }}>↥ Promover para teste</button>
+            </div>
+          )}
         </div>
         <div className="cfg-group">
           <div className="cfg-group-title">Datas</div>
@@ -149,6 +170,7 @@ function AbaCaracteristicas({ dados, perfisPolimata = [], onUpdate, editando, se
             <InfoCell label="Email" value={dados.sponsor_email} />
           </div>
         </div>
+        {showPromover && <ModalPromoverTeste projeto={dados} onClose={() => setShowPromover(false)} onPromoted={() => { setShowPromover(false); onUpdate && onUpdate() }} />}
       </div>
     )
   }
@@ -186,12 +208,13 @@ function AbaCaracteristicas({ dados, perfisPolimata = [], onUpdate, editando, se
           </div>
           <div className="cfg-field"><label>Inclui teste de efetividade?</label>
             <select className="input-light" value={form.f1_tem_teste?'sim':'nao'} onChange={e=>u('f1_tem_teste',e.target.value==='sim')}>
-              <option value="sim">Sim — F1 inclui teste</option>
+              <option value="sim" disabled={dados.f1_tem_teste === false}>Sim — F1 inclui teste</option>
               <option value="nao" disabled={!f1TestePodeMudarParaFalse}>
                 Não — diagnóstico apenas{!f1TestePodeMudarParaFalse?' (já há resultados)':''}
               </option>
             </select>
             {!form.f1_tem_teste && <span style={{fontSize:11,color:'var(--copper)',marginTop:4,display:'block'}}>Sem régua de maturidade — entrega = mapa + criticidade + existência</span>}
+            {dados.f1_tem_teste === false && <span style={{fontSize:11,color:'var(--lt-text3)',marginTop:4,display:'block'}}>Para virar para teste, use o botão "Promover para teste" na visão.</span>}
             {!f1TestePodeMudarParaFalse && form.f1_tem_teste && <span style={{fontSize:11,color:'var(--copper)',marginTop:4,display:'block'}}>Travado — já há resultados de teste registrados</span>}
           </div>
           <div className="cfg-field"><label>Matriz de Calor</label>
