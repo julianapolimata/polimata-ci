@@ -2,7 +2,7 @@
 // A natureza (receita/despesa) vem da conta no plano de contas; aqui só conta+data+valor+descrição.
 import { useState, useRef } from 'react'
 import { supabase } from '../../lib/supabase'
-import { useOrcDados, PageHeader, Card, HelpTag, KPICard, KPIGrid, Badge, BotaoVerde, BotaoSec, ErroBox, fmtBRL, MESES_ABREV, THL, TH, TDL, TD } from './_shared'
+import { useOrcDados, PageHeader, Card, HelpTag, KPICard, KPIGrid, BotaoVerde, BotaoSec, ErroBox, fmtBRL, MESES_ABREV, THL, TH, TDL, TD } from './_shared'
 import { baixarTemplateRealizado, parseRealizado } from '../../lib/orcamento/templateRealizado'
 
 const compLabel = (c) => { const [y, m] = c.split('-'); return `${MESES_ABREV[parseInt(m, 10) - 1]}/${y}` }
@@ -17,7 +17,7 @@ export default function Importar({ projeto }) {
   const [gravando, setGravando] = useState(false)
   const [msg, setMsg] = useState('')
   // lançamento manual
-  const [mAno, setMAno] = useState(ano); const [mMes, setMMes] = useState(new Date().getMonth())
+  const [mAno] = useState(ano); const [mMes, setMMes] = useState(new Date().getMonth())
   const [mCat, setMCat] = useState(''); const [mValor, setMValor] = useState(''); const [mDet, setMDet] = useState('')
 
   async function processarArquivo(file) {
