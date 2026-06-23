@@ -15,7 +15,7 @@
 const NAO_CONTA = new Set(['teste não realizado', 'não iniciado', 'nao iniciado', 'n/a', ''])
 export const fezEtapa = (v) => !!v && !NAO_CONTA.has(String(v).trim().toLowerCase())
 
-export function getFaseInfo(c) {
+function faseInfoRaw(c) {
   if (!c) return { ...FASES.F1 }
 
   // F5 concluída → ciclo completo
@@ -111,6 +111,27 @@ export function getFaseInfo(c) {
   return { ...FASES.F1 }
 }
 
+// Fase terminal de cada escopo (num_fases). Usado para "clampar" a fase atual
+// quando o projeto vai só até uma fase (ex.: F1 com teste, num_fases=1).
+const FASE_TERMINAL = {
+  1: { codigo: 'F1', numero: 1, nome: 'Diagnóstico Inicial', label: 'F1 — Diagnóstico', cor: 'var(--f1c, #6366F1)', campo: 'r1' },
+  2: { codigo: 'F2E2', numero: 2, nome: 'Teste de Efetividade', label: 'F2-E2 — Teste de Efetividade', cor: 'var(--f2e2c, #10B981)', campo: 'r_ader' },
+  3: { codigo: 'F3', numero: 3, nome: 'Revisão Integral', label: 'F3 — Revisão Integral', cor: 'var(--f3c, #F59E0B)', campo: 'r3' },
+  4: { codigo: 'F4C2', numero: 4, nome: 'Auditoria Contínua', label: 'F4-C2 — Auditoria Contínua', cor: 'var(--f4c, #0EA5E9)', campo: 'r_f4c2' },
+}
+
+// Fase atual respeitando o escopo do projeto (num_fases). A última fase do escopo
+// é terminal: um controle não avança para fora do que foi contratado.
+export function getFaseInfo(c, numFases) {
+  const info = faseInfoRaw(c)
+  const nf = Number(numFases)
+  if (c && nf >= 1 && nf < 5 && info.numero > nf) {
+    const t = FASE_TERMINAL[nf]
+    return { codigo: t.codigo, numero: t.numero, nome: t.nome, label: t.label, cor: t.cor, resultado: c[t.campo] || '—', concluida: true }
+  }
+  return info
+}
+
 /**
  * Retorna o resultado vitrine (último resultado válido, de F5 até F1).
  * Em projetos com f1_tem_teste=false, retorna a existência declarada na F1-E1.
@@ -146,8 +167,8 @@ export function getCategoriaRecomendacao(c, projeto) {
  * @param {Object} c - registro da MRC
  * @returns {string} nome da fase
  */
-export function getFaseAtual(c) {
-  return getFaseInfo(c).nome
+export function getFaseAtual(c, numFases) {
+  return getFaseInfo(c, numFases).nome
 }
 
 /**
@@ -155,8 +176,8 @@ export function getFaseAtual(c) {
  * @param {Object} c - registro da MRC
  * @returns {string} label da fase (ex: "F3 — Revisão Integral")
  */
-export function getFaseLabel(c) {
-  return getFaseInfo(c).label
+export function getFaseLabel(c, numFases) {
+  return getFaseInfo(c, numFases).label
 }
 
 /**
@@ -164,8 +185,8 @@ export function getFaseLabel(c) {
  * @param {Object} c - registro da MRC
  * @returns {number} número da fase
  */
-export function getFaseNumero(c) {
-  return getFaseInfo(c).numero
+export function getFaseNumero(c, numFases) {
+  return getFaseInfo(c, numFases).numero
 }
 
 /**

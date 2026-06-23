@@ -50,8 +50,13 @@ export function calcularPercentualArea(controlesArea, f1Concluida = true, option
   // Somar contribuições F2+
   const somaContribuicoes = detalhePorControle.reduce((sum, d) => sum + d.contribuicao, 0)
 
-  // Percentual total da área
-  const percentual = baseF1 + somaContribuicoes
+  // Percentual total da área.
+  // Quando o escopo vai só até a F1 (num_fases=1), a F1 é TERMINAL: a maturidade
+  // vem do resultado do teste da F1 (fração ponderada de controles Efetivos),
+  // e não do patamar fixo — senão concluir a F1 daria 100% indevidamente.
+  const percentual = (Number(options.numFases) === 1)
+    ? comPesos.reduce((s, p) => s + (isEfetivo(p.controle.r1) ? p.pesoControle : 0), 0)
+    : baseF1 + somaContribuicoes
 
   // Régua
   const { nivel, nome } = getNivelMaturidade(percentual)

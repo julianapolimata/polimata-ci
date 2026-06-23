@@ -226,7 +226,7 @@ export default function PorArea({ projeto, areasCalc, todosControles, loading, n
   const PA_FASE_KEYS = ['r1', 'st_pa', 'r_ader', 'r3', 'r_f4c1', 'r_f4c2', 'r_f5']
   const toggleSort = (k) => { if (sortCol === k) { setSortDir(d => d === 'asc' ? 'desc' : 'asc') } else { setSortCol(k); setSortDir('asc') } }
   const sortArrow = (k) => sortCol === k ? (sortDir === 'asc' ? ' ▲' : ' ▼') : ''
-  function paSortVal(row, k) { if (k === '_dt') return row.dt_ult || row.atualizado_em || row.criado_em || ''; if (k === '_resultado') return getResultadoVitrine(row, projeto); if (k === '_fase_atual') return getFaseLabel(row); if (k === '_status_atual') return getStatusComputado(row); return row[k] ?? '' }
+  function paSortVal(row, k) { if (k === '_dt') return row.dt_ult || row.atualizado_em || row.criado_em || ''; if (k === '_resultado') return getResultadoVitrine(row, projeto); if (k === '_fase_atual') return getFaseLabel(row, projeto?.num_fases); if (k === '_status_atual') return getStatusComputado(row); return row[k] ?? '' }
 
   const cfSorted = !sortCol ? cf : [...cf].sort((a, b) => {
     let va = paSortVal(a, sortCol), vb = paSortVal(b, sortCol)
@@ -340,7 +340,7 @@ export default function PorArea({ projeto, areasCalc, todosControles, loading, n
   function renderFaseCell(c, idx) {
     if (isDiagnostico && idx === 0) return badgeExistencia(c.existencia)
     const key = PA_FASE_KEYS[idx]
-    if (['teste_pendente', 'em_analise', 'em_revisao'].includes(c.status_workflow) && KEY_POR_FASE[getFaseInfo(c).codigo] === key && !fezEtapa(c[key])) {
+    if (['teste_pendente', 'em_analise', 'em_revisao'].includes(c.status_workflow) && KEY_POR_FASE[getFaseInfo(c, projeto?.num_fases).codigo] === key && !fezEtapa(c[key])) {
       return <span style={{ ...bdgS, color: '#92400E', background: 'rgba(234,179,8,0.15)' }}>Em Análise</span>
     }
     return badgeFase(faseVal(c, key, c[key]))
