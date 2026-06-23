@@ -57,8 +57,14 @@ function NovoUsuarioForm({ clientes, areas, projetos, onSave, onCancel }) {
       if (error) throw new Error(error.message || 'Erro ao criar usuário')
       if (data?.error) throw new Error(data.error)
 
-      setSucesso(`Usuário criado! Email de boas-vindas enviado para ${form.email}`)
-      setTimeout(() => onSave(), 1500)
+      if (data?.email_enviado === false) {
+        // não engole a falha: mostra o link pra envio manual e NÃO fecha sozinho
+        setSucesso(`Usuário criado, mas o e-mail NÃO saiu (${data.email_erro || 'erro desconhecido'}). Copie o link de acesso e envie manualmente: ${data.link || ''}`)
+        setSaving(false)
+      } else {
+        setSucesso(`Usuário criado! E-mail de boas-vindas enviado para ${form.email}`)
+        setTimeout(() => onSave(), 1500)
+      }
     } catch (e) { setErro(e.message); setSaving(false) }
   }
 
