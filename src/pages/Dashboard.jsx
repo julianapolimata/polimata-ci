@@ -61,31 +61,46 @@ export default function Dashboard() {
   const [areaExpanded, setAreaExpanded] = useState(true)
 
   useEffect(() => {
+    if (!perfil) return
     carregarConstantes()
       .then(() => loadProjetos())
       .catch(err => {
         console.error('Erro ao inicializar:', err)
         setProjetosLoaded(true)
       })
-  }, [])
+  }, [perfil?.id])
 
   async function loadProjetos() {
     try {
-      const { data, error } = await supabase.from('projetos').select('*, clientes(nome, nome_fantasia, slug)').eq('ativo', true).order('criado_em', { ascending: false })
+      const isCli = ['usuario_cliente', 'gestor_cliente'].includes(perfil?.papel)
+      let q = supabase.from('projetos').select('*, clientes(nome, nome_fantasia, slug)').eq('ativo', true)
+      if (isCli && perfil?.projeto_id) q = q.eq('id', perfil.projeto_id)
+      let { data, error } = await q.order('criado_em', { ascending: false })
       if (error) console.error('Erro ao carregar projetos:', error)
+      // Cliente: só enxerga projetos dos módulos liberados (defesa extra)
+      if (isCli && Array.isArray(perfil?.modulos)) {
+        data = (data || []).filter(p => perfil.modulos.includes(produtoModulo(p.produto)))
+      }
       if (data && data.length > 0) {
         setProjetos(data)
-        // Restaurar projeto ativo salvo (mantém usuária na mesma tela após F5)
-        try {
-          const savedId = localStorage.getItem('polimata_projeto_ativo_id')
-          if (savedId) {
-            const saved = data.find(p => p.id === savedId)
-            if (saved) setProjetoAtivo(saved)
-            else localStorage.removeItem('polimata_projeto_ativo_id') // projeto não existe mais
-          }
-        } catch (e) { /* localStorage indisponível — segue normal */ }
-        // Carregar resumos em background (não bloqueia a tela)
-        loadResumos(data).catch(err => console.error('Erro ao carregar resumos:', err))
+        if (isCli) {
+          // Cliente entra DIRETO no projeto vinculado — sem seletor, sem trocar
+          const alvo = data[0]
+          try { localStorage.setItem('polimata_projeto_ativo_id', alvo.id) } catch (e) {}
+          setProjetoAtivo(alvo)
+          navigate(ROTA_BASE_MODULO[produtoModulo(alvo.produto)], { replace: true })
+        } else {
+          // Restaurar projeto ativo salvo (mantém usuária na mesma tela após F5)
+          try {
+            const savedId = localStorage.getItem('polimata_projeto_ativo_id')
+            if (savedId) {
+              const saved = data.find(p => p.id === savedId)
+              if (saved) setProjetoAtivo(saved)
+              else localStorage.removeItem('polimata_projeto_ativo_id')
+            }
+          } catch (e) { /* localStorage indisponível — segue normal */ }
+          loadResumos(data).catch(err => console.error('Erro ao carregar resumos:', err))
+        }
       }
     } catch (err) {
       console.error('Erro ao carregar projetos:', err)
@@ -160,8 +175,15 @@ export default function Dashboard() {
     const modProjeto = produtoModulo(projetoAtivo.produto)
     if (moduloDaRota(path) !== modProjeto) {
       navigate(ROTA_BASE_MODULO[modProjeto], { replace: true })
+      return
     }
-  }, [projetoAtivo, location.pathname])
+    // Cliente de orçamento: acesso só às telas de consulta
+    const isCli = ['usuario_cliente', 'gestor_cliente'].includes(perfil?.papel)
+    if (isCli && modProjeto === 'orcamento') {
+      const permitido = ['/orcamento', '/orcamento/comparativo', '/orcamento/sobre', '/perfil']
+      if (!permitido.includes(path)) navigate('/orcamento', { replace: true })
+    }
+  }, [projetoAtivo, location.pathname, perfil?.papel])
 
   async function loadDados(pid) {
     setLoading(true)
@@ -195,8 +217,11 @@ export default function Dashboard() {
   }
 
   const isAdmin = perfil?.papel === 'admin_polimata'
+  const isCliente = ['usuario_cliente', 'gestor_cliente'].includes(perfil?.papel)
   const sw = sidebarOpen ? 260 : 56
   const modulo = moduloDaRota(location.pathname)
+  // sidebar/telas seguem o PRODUTO do projeto ativo (não a URL) — evita vazar GRC no orçamento
+  const moduloView = projetoAtivo ? produtoModulo(projetoAtivo.produto) : modulo
   const isHomeDash = location.pathname === '/ci'
   const mainLightClass = isHomeDash ? '' : 'main-light'
   const ultimaAtualizacao = useMemo(() => getUltimaAtualizacao(todosControles), [todosControles])
@@ -250,7 +275,7 @@ export default function Dashboard() {
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
                   </button>
                 )}
-                {projetos.length > 1 && (
+                {projetos.length > 1 && !isCliente && (
                   <button onClick={() => { try { localStorage.removeItem('polimata_projeto_ativo_id') } catch (e) {} ; setProjetoAtivo(null) }}
                     style={{ background: 'none', border: 'none', color: 'var(--copper)', fontSize: 10, cursor: 'pointer', padding: 0, fontFamily: 'inherit' }}>
                     Trocar
@@ -268,7 +293,7 @@ export default function Dashboard() {
         )}
         <nav style={{ flex: 1, overflowY: 'auto', padding: '8px 0', display: 'flex', flexDirection: 'column', gap: 1 }}>
           {isAdmin && <SideNavItem icon="⌂" label="Hub de produtos" active={false} onClick={() => navigate('/')} open={sidebarOpen} />}
-          {modulo === 'ci' && (<>
+          {moduloView === 'ci' && (<>
           {sidebarOpen && <div className="sb-sep">Dashboards</div>}
           <SideNavItem icon="📊" label="Dashboard" active={location.pathname === '/ci'} onClick={() => navigate('/ci')} open={sidebarOpen} />
           {sidebarOpen && (
@@ -292,14 +317,15 @@ export default function Dashboard() {
           {isAdmin && (<>{sidebarOpen && <div className="sb-sep">Administração</div>}
             <SideNavItem icon="📥" label="Manutenção MRC" active={location.pathname === '/importar-mrc'} onClick={() => navigate('/importar-mrc')} open={sidebarOpen} /></>)}
           </>)}
-          {modulo === 'mapeamento' && (<>
+          {moduloView === 'mapeamento' && (<>
           {sidebarOpen && <div className="sb-sep">Mapeamento de Processos</div>}
           <SideNavItem icon="🎙" label="Mapeamentos" active={location.pathname === '/mapeamentos'} onClick={() => navigate('/mapeamentos')} open={sidebarOpen} />
           </>)}
-          {modulo === 'orcamento' && (<>
+          {moduloView === 'orcamento' && (<>
           {sidebarOpen && <div className="sb-sep">Gestão Orçamentária</div>}
           <SideNavItem icon="📊" label="Dashboard Executivo" active={location.pathname === '/orcamento'} onClick={() => navigate('/orcamento')} open={sidebarOpen} />
           <SideNavItem icon="⚖️" label="Orçado vs Realizado" active={location.pathname === '/orcamento/comparativo'} onClick={() => navigate('/orcamento/comparativo')} open={sidebarOpen} />
+          {!isCliente && (<>
           {sidebarOpen && <div className="sb-sep">Planejamento</div>}
           <SideNavItem icon="⚡" label="Gerador de Sugestão" active={location.pathname === '/orcamento/gerador'} onClick={() => navigate('/orcamento/gerador')} open={sidebarOpen} />
           <SideNavItem icon="✏️" label="Cadastrar Orçado" active={location.pathname === '/orcamento/orcado'} onClick={() => navigate('/orcamento/orcado')} open={sidebarOpen} />
@@ -308,9 +334,10 @@ export default function Dashboard() {
           <SideNavItem icon="📥" label="Importar Realizado" active={location.pathname === '/orcamento/importar'} onClick={() => navigate('/orcamento/importar')} open={sidebarOpen} />
           <SideNavItem icon="🗂" label="Plano de Contas" active={location.pathname === '/orcamento/plano-contas'} onClick={() => navigate('/orcamento/plano-contas')} open={sidebarOpen} />
           <SideNavItem icon="🏭" label="Centros de Custo" active={location.pathname === '/orcamento/centros'} onClick={() => navigate('/orcamento/centros')} open={sidebarOpen} />
+          </>)}
           <SideNavItem icon="📖" label="Sobre o Sistema" active={location.pathname === '/orcamento/sobre'} onClick={() => navigate('/orcamento/sobre')} open={sidebarOpen} />
           </>)}
-          {modulo === 'planejamento' && (<>
+          {moduloView === 'planejamento' && (<>
           {sidebarOpen && <div className="sb-sep">Planejamento Estratégico</div>}
           <SideNavItem icon="🧭" label="Planejamento" active={location.pathname === '/planejamento'} onClick={() => navigate('/planejamento')} open={sidebarOpen} />
           </>)}
