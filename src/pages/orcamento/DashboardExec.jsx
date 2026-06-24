@@ -207,7 +207,7 @@ export default function DashboardExec({ projeto }) {
     setModal({ titulo: c.nome + ' · composição', corpo: (<>
       {barras}
       <div style={{ marginTop: 12, fontSize: 12.5, fontWeight: 600, color: 'var(--lt-text)' }}>Lançamentos no período ({lancs.length})</div>
-      <div style={{ maxHeight: 220, overflowY: 'auto', marginTop: 6 }}>
+      <div style={{ maxHeight: '46vh', overflowY: 'auto', marginTop: 6 }}>
         {lancs.length === 0 && <div style={{ fontSize: 12, color: 'var(--lt-text3)' }}>Sem lançamentos detalhados.</div>}
         {lancs.map((l, i) => (
           <div key={i} style={{ display: 'flex', justifyContent: 'space-between', gap: 8, fontSize: 11.5, padding: '4px 0', borderBottom: '1px solid var(--lt-brd)' }}>
@@ -368,9 +368,9 @@ export default function DashboardExec({ projeto }) {
 
       {modal && (
         <div onClick={e => { if (e.target === e.currentTarget) setModal(null) }} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: 16 }}>
-          <div style={{ width: 'min(460px, 94%)', maxHeight: '85vh', overflowY: 'auto', background: 'var(--lt-card, #fff)', border: '1px solid var(--lt-brd)', borderRadius: 12, padding: 18 }}>
+          <div style={{ width: 'min(860px, 95%)', maxHeight: '90vh', overflowY: 'auto', background: 'var(--lt-card, #fff)', border: '1px solid var(--lt-brd)', borderRadius: 14, padding: 24 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, marginBottom: 10 }}>
-              <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--lt-text)' }}>{modal.titulo}</div>
+              <div style={{ fontSize: 16, fontWeight: 600, color: 'var(--lt-text)' }}>{modal.titulo}</div>
               <button onClick={() => setModal(null)} aria-label="Fechar" style={{ border: '1px solid var(--lt-brd)', background: 'transparent', borderRadius: 8, cursor: 'pointer', width: 30, height: 28, color: 'var(--lt-text3)' }}>✕</button>
             </div>
             <div style={{ fontSize: 13, color: 'var(--lt-text3)', lineHeight: 1.55 }}>{modal.corpo}</div>
