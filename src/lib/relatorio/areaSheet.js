@@ -41,6 +41,29 @@ const DETAIL_COLUMNS = [
   { key: 'status_atual', header: 'Status', width: 16 },
 ]
 
+// Colunas para projetos SÓ DIAGNÓSTICO (f1_tem_teste=false) — espelha o template/
+// MRC diag: troca histórico F1–F5 / Resultado / Fase por 'Cenário Atual' + 'Existência'.
+const DETAIL_COLUMNS_DIAG = [
+  { key: 'rr', header: 'Ref. Risco', width: 12 },
+  { key: 'dr', header: 'Descrição do Risco', width: 40 },
+  { key: 'rc', header: 'Ref. Controle', width: 14 },
+  { key: 'dc', header: 'Descrição do Controle', width: 40 },
+  { key: 'sub', header: 'Subprocesso', width: 20 },
+  { key: 'cenario_atual', header: 'Cenário Atual', width: 40 },
+  { key: 'cat', header: 'Categoria', width: 16 },
+  { key: 'freq', header: 'Frequência', width: 14 },
+  { key: 'nat', header: 'Natureza', width: 12 },
+  { key: 'car', header: 'Característica', width: 14 },
+  { key: 'chave', header: 'Controle Chave?', width: 13 },
+  { key: 'existencia', header: 'Existência', width: 14 },
+  { key: '_vitrine_incons', header: 'Inconsistência', width: 40 },
+  { key: '_vitrine_rec', header: 'Recomendação', width: 40 },
+  { key: 'imp', header: 'Impacto', width: 12 },
+  { key: 'prob', header: 'Probabilidade', width: 14 },
+  { key: 'crit_label', header: 'Criticidade', width: 14 },
+  { key: 'status_atual', header: 'Status', width: 16 },
+]
+
 const RESULTADO_KEYS = new Set(['_vitrine_resultado', '_hist_f1', '_hist_f2d', '_hist_f2e', '_hist_f3', '_hist_f4c1', '_hist_f4c2', '_hist_f5'])
 
 export function getCellValue(row, col, numFases, comTeste) {
@@ -70,7 +93,8 @@ export function getCellValue(row, col, numFases, comTeste) {
 }
 
 function buildAreaSheet(wb, areaNome, controles, iconId, clienteNome, projetoNome, isDiag = false, numFases, comTeste) {
-  const lastCol = DETAIL_COLUMNS.length + 1
+  const COLS = isDiag ? DETAIL_COLUMNS_DIAG : DETAIL_COLUMNS
+  const lastCol = COLS.length + 1
   const sheetName = (areaNome || 'Sem Área').substring(0, 31)
   const ws = wb.addWorksheet(sheetName, {
     views: [{ state: 'frozen', ySplit: 4, xSplit: 1, showGridLines: false }],
@@ -79,7 +103,7 @@ function buildAreaSheet(wb, areaNome, controles, iconId, clienteNome, projetoNom
   })
 
   ws.getColumn(1).width = 4
-  DETAIL_COLUMNS.forEach((col, idx) => { ws.getColumn(idx + 2).width = col.width })
+  COLS.forEach((col, idx) => { ws.getColumn(idx + 2).width = col.width })
 
   buildHeader(ws, iconId, `DETALHAMENTO — ${(areaNome || '').toUpperCase()}`, '', infoLine(clienteNome, projetoNome, controles.length), lastCol)
 
@@ -87,7 +111,7 @@ function buildAreaSheet(wb, areaNome, controles, iconId, clienteNome, projetoNom
   const colHeaderRow = ws.getRow(4)
   ws.getCell(4, 1).fill = COL_HEADER_FILL
   ws.getCell(4, 1).border = { bottom: { style: 'medium', color: { argb: GOLD } } }
-  DETAIL_COLUMNS.forEach((col, idx) => {
+  COLS.forEach((col, idx) => {
     const cell = colHeaderRow.getCell(idx + 2)
     cell.value = col.header
     cell.fill = COL_HEADER_FILL
@@ -102,7 +126,7 @@ function buildAreaSheet(wb, areaNome, controles, iconId, clienteNome, projetoNom
     const excelRow = ws.getRow(rowIdx + 5)
     ws.getCell(rowIdx + 5, 1).fill = CREME_FILL
 
-    DETAIL_COLUMNS.forEach((col, colIdx) => {
+    COLS.forEach((col, colIdx) => {
       const cell = excelRow.getCell(colIdx + 2)
       const value = getCellValue(row, col, numFases, comTeste)
       cell.value = value
@@ -118,6 +142,11 @@ function buildAreaSheet(wb, areaNome, controles, iconId, clienteNome, projetoNom
       }
       if (col.key === 'crit_label') {
         const cor = getCritColor(row.crit)
+        if (cor) cell.font = { ...BODY_FONT, bold: true, color: cor }
+      }
+      if (col.key === 'existencia') {
+        const ev = (value || '').toLowerCase()
+        const cor = ev === 'existente' ? { argb: 'FF1B5E20' } : ev === 'parcial' ? { argb: 'FFE65100' } : ev === 'inexistente' ? { argb: 'FFB71C1C' } : null
         if (cor) cell.font = { ...BODY_FONT, bold: true, color: cor }
       }
     })
