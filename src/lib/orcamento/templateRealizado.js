@@ -25,20 +25,26 @@ export const COLS_REALIZADO = [
     hint: 'OBRIGATÓRIO. Valor JÁ RATEADO na conta (não o valor cheio do título quando ele é dividido entre contas). Use ponto/vírgula conforme o Excel.' },
   { header: 'Tipo', key: 'tipo', width: 12, obrig: false,
     hint: 'Opcional. Direção do lançamento: Pagar ou Receber.' },
+  { header: 'Situação', key: 'situacao', width: 14, obrig: false,
+    hint: 'Opcional (receitas). Faturado / A faturar / Sem nota. NÃO afeta o reconhecimento: a receita conta sempre pela data (fato gerador). Serve só para separar receita gerencial × faturada.' },
   { header: 'Nome', key: 'parceiro', width: 30, obrig: false,
     hint: 'Opcional. Nome do cliente ou fornecedor (parceiro de negócio).' },
   { header: 'Número do Documento', key: 'documento', width: 22, obrig: false,
     hint: 'Opcional. Número do documento (NF, título, boleto).' },
+  { header: 'Referência', key: 'referencia', width: 16, obrig: false,
+    hint: 'Opcional. Chave estável do evento (OS, orçamento ou nº interno). Ao reimportar, o sistema ATUALIZA a linha de mesma referência em vez de duplicar — útil quando a nota sai depois.' },
   { header: 'Descrição', key: 'descricao', width: 50, obrig: false,
     hint: 'Opcional. Histórico/descrição do lançamento — ajuda a rastrear.' },
 ]
+export const SITUACAO_OPCOES = ['Faturado', 'A faturar', 'Sem nota']
 
 export const TIPO_MOV_OPCOES = ['Pagar', 'Receber']
 
 const EXEMPLOS = [
-  ['11.01.003.001.008', '12/02/2026', 888.67, 'Pagar', 'JRMAC', 'NFE 33130', 'Vidros e espelhos (parc. 1/3)'],
-  ['44.01.001.001.003', '03/02/2026', 2619.44, 'Pagar', 'MILESI', 'NF 17531', 'Materiais para lustração'],
-  ['41.01.001', '20/02/2026', 38000.00, 'Receber', 'Cliente Exemplo Ltda', 'NF 1234', 'Venda de mobília sob medida'],
+  ['11.01.003.001.008', '12/02/2026', 888.67, 'Pagar', '', 'JRMAC', 'NFE 33130', '', 'Vidros e espelhos (parc. 1/3)'],
+  ['44.01.001.001.003', '03/02/2026', 2619.44, 'Pagar', '', 'MILESI', 'NF 17531', '', 'Materiais para lustração'],
+  ['33.01.001.001.002', '20/02/2026', 38000.00, 'Receber', 'Faturado', 'Cliente Exemplo Ltda', 'NF 1234', 'OS 1771', 'Venda de mobília fixa'],
+  ['33.01.001.001.001', '10/02/2026', 27000.00, 'Receber', 'A faturar', 'Cliente Exemplo 2', '', 'OS 1986', 'Entrega sem nota — fato gerador'],
 ]
 
 const canon = (s) => String(s ?? '').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
@@ -59,9 +65,10 @@ export function montarWorkbookRealizado({ linhas = null } = {}) {
     r.eachCell(cell => { cell.font = BODY_FONT; cell.border = BORDER; cell.alignment = { vertical: 'middle' }; if (zebra) cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF' + CREME } } })
     r.getCell(3).numFmt = '#,##0.00'
   })
-  // dropdown de Tipo (coluna D) até 2000 linhas
+  // dropdowns: Tipo (col D) e Situação (col E) até 2000 linhas
   for (let i = 2; i <= 2000; i++) {
     ws.getCell(`D${i}`).dataValidation = { type: 'list', allowBlank: true, formulae: ['"Pagar,Receber"'] }
+    ws.getCell(`E${i}`).dataValidation = { type: 'list', allowBlank: true, formulae: ['"Faturado,A faturar,Sem nota"'] }
   }
 
   // aba instruções (identidade Polímata: Montserrat)
@@ -70,7 +77,7 @@ export function montarWorkbookRealizado({ linhas = null } = {}) {
   const t = wi.getCell('A1'); t.value = 'Template — Realizado (Gestão Orçamentária · Sistema Polímata)'
   t.font = { name: 'Raleway', bold: true, size: 15, color: { argb: 'FF' + NAVY } }
   wi.addRow([])
-  const cu = wi.addRow(['Como usar', 'Adapte o relatório de realizado do cliente a estas colunas fixas e importe em Gestão Orçamentária → Importar Realizado. Importe quantos meses quiser de uma vez — o mês vem da coluna Data de cada linha. A natureza (receita/despesa) é definida pela conta no plano de contas, por isso não há coluna de tipo aqui. Importe o plano de contas ANTES do realizado.'])
+  const cu = wi.addRow(['Como usar', 'Adapte o relatório de realizado do cliente a estas colunas fixas e importe em Gestão Orçamentária → Importar Realizado. Importe quantos meses quiser de uma vez — o mês vem da coluna Data de cada linha. A natureza (receita/despesa) é definida pela conta no plano de contas. Receitas contam sempre pela data (fato gerador); use a coluna Situação para marcar Faturado, A faturar ou Sem nota. Importe o plano de contas ANTES do realizado.'])
   cu.getCell(1).font = { name: 'Montserrat', bold: true, size: 10, color: { argb: 'FF' + NAVY } }
   cu.getCell(2).font = BODY_FONT; cu.getCell(2).alignment = { wrapText: true, vertical: 'top' }
   wi.addRow([])
@@ -151,9 +158,11 @@ export async function parseRealizado(file) {
     const abs = Math.round(Math.abs(valor) * 100) / 100
     const tipoRaw = canon(txt(cellVal(row, 'tipo')))
     const tipo = tipoRaw.startsWith('receb') ? 'Receber' : tipoRaw.startsWith('pag') ? 'Pagar' : null
+    const sitRaw = canon(txt(cellVal(row, 'situacao')))
+    const situacao = sitRaw.startsWith('fatur') ? 'Faturado' : sitRaw.startsWith('a fatur') ? 'A faturar' : sitRaw.includes('sem') ? 'Sem nota' : null
     linhas.push({ linha: n, codigo, competencia: comp, valor: abs,
-      tipo, parceiro: txt(cellVal(row, 'parceiro')) || null, documento: txt(cellVal(row, 'documento')) || null,
-      descricao: txt(cellVal(row, 'descricao')) || null })
+      tipo, situacao, parceiro: txt(cellVal(row, 'parceiro')) || null, documento: txt(cellVal(row, 'documento')) || null,
+      referencia: txt(cellVal(row, 'referencia')) || null, descricao: txt(cellVal(row, 'descricao')) || null })
     contas.add(codigo)
     meses[comp] = meses[comp] || { qtd: 0, soma: 0 }
     meses[comp].qtd++; meses[comp].soma += abs

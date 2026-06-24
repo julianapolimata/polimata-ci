@@ -51,18 +51,23 @@ export default function Importar({ projeto }) {
     setGravando(true); d.setErro('')
     try {
       const comps = [...new Set(prev.gravaveis.map(a => a.competencia))].sort()
+      const refs = [...new Set(prev.gravaveis.map(a => a.referencia).filter(Boolean))]
       const { data: imp, error: e1 } = await supabase.from('orc_importacoes').insert({
         projeto_id: projeto.id, arquivo_nome: arquivo, competencia_ini: comps[0], competencia_fim: comps[comps.length - 1],
         linhas: prev.gravaveis.length, status: 'concluida',
       }).select().single()
       if (e1) throw e1
       // substitui realizado importado dos meses afetados
+      // substitui o realizado importado dos meses afetados…
       await supabase.from('orc_realizado').delete().eq('projeto_id', projeto.id).eq('origem', 'import').in('competencia', comps)
+      // …e remove lançamentos de mesma Referência (dedup: nota emitida depois atualiza, não duplica)
+      if (refs.length) await supabase.from('orc_realizado').delete().eq('projeto_id', projeto.id).eq('origem', 'import').in('referencia', refs)
       const rows = prev.gravaveis.map(l => ({
         projeto_id: projeto.id, categoria_id: l.categoria_id, competencia: l.competencia,
         valor: Math.round(l.valor * 100) / 100, origem: 'import', importacao_id: imp.id,
         conta_erp: l.codigo, detalhe: l.descricao,
-        tipo_mov: l.tipo || null, parceiro: l.parceiro || null, documento: l.documento || null,
+        tipo_mov: l.tipo || null, situacao: l.situacao || null, parceiro: l.parceiro || null,
+        documento: l.documento || null, referencia: l.referencia || null,
       }))
       const { error: e2 } = await supabase.from('orc_realizado').insert(rows)
       if (e2) throw e2
