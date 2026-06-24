@@ -3,9 +3,10 @@
 // (saldo: redistribuir × não acumula). Conta a história, não despeja matriz.
 import { useState, useMemo, useEffect } from 'react'
 import { useOrcDados, useItens, PageHeader, Card, KPICard, KPIGrid, fmtBRL, MESES_ABREV, ErroBox } from './_shared'
+import { iaInsight } from '../../lib/orcamento/ia'
 
 const ANO_ATUAL = new Date().getFullYear()
-const NAVY = '#00203E', COBRE = '#CC915E', VERDE = '#22B98A', RED = '#A32D2D'
+const COBRE = '#CC915E', VERDE = '#22B98A', RED = '#A32D2D'
 const LIM_PCT = 5, LIM_RS = 5000
 const pct = (n) => (n >= 0 ? '+' : '−') + Math.abs(n).toFixed(1) + '%'
 const MESES = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro']
@@ -17,6 +18,8 @@ export default function AnaliseMensal({ projeto }) {
   const { porCat } = useItens(cenario?.id)
   const [mes, setMes] = useState(null)
   const [modo, setModo] = useState('redistribuir')
+  const [iaTexto, setIaTexto] = useState('')
+  const [iaLoad, setIaLoad] = useState(false)
 
   const temOrcado = useMemo(() => Object.values(porCat || {}).some(p => (p.valores || []).some(v => v != null && v !== 0)), [porCat])
 
@@ -30,6 +33,8 @@ export default function AnaliseMensal({ projeto }) {
     })
     setMes(lastSaida >= 0 ? lastSaida : new Date().getMonth())
   }, [ano, d.realizado, d.categorias])
+
+  useEffect(() => { setIaTexto('') }, [mes, ano])
 
   const A = useMemo(() => {
     if (mes == null) return null
@@ -70,29 +75,46 @@ export default function AnaliseMensal({ projeto }) {
       const s = sit[r.situacao] !== undefined ? r.situacao : 'Sem nota'; sit[s] += Number(r.valor)
     })
 
-    // projeção do restante do ano (toggle saldo)
+    // projeção do restante do ano (modo: redistribuir / perde / rolling)
     const saidaCats = d.catsAtivas.filter(c => c.tipo !== 'receita')
+    const recCats = d.catsAtivas.filter(c => c.tipo === 'receita')
     let saldoRedistr = 0
     saidaCats.forEach(c => { const r = arrR(c.id), o = arrO(c.id); for (let m = 0; m <= mes; m++) if (o[m]) saldoRedistr += (o[m] - (r[m] || 0)) })
     const mesesFut = 11 - mes
-    const projSaida = (md) => {
+    const mm3 = (r) => { const ult = r.filter((v, i) => i <= mes && v).slice(-3); return ult.length ? ult.reduce((a, b) => a + b, 0) / ult.length : 0 }
+    const projTipo = (cats, md, isSaida) => {
       let tot = 0
-      saidaCats.forEach(c => {
+      cats.forEach(c => {
         const r = arrR(c.id), o = arrO(c.id)
         for (let m = 0; m <= mes; m++) tot += r[m] || 0
-        for (let m = mes + 1; m < 12; m++) tot += (o[m] || 0)
+        if (md === 'rolling') { const f = mm3(r); for (let m = mes + 1; m < 12; m++) tot += f }
+        else { for (let m = mes + 1; m < 12; m++) tot += o[m] || 0 }
       })
-      if (md === 'redistribuir') tot += saldoRedistr // re-espalha o saldo dos meses orçados já fechados
+      if (isSaida && md === 'redistribuir') tot += saldoRedistr
       return tot
     }
-    const recCats = d.catsAtivas.filter(c => c.tipo === 'receita')
-    let projRec = 0
-    recCats.forEach(c => { const r = arrR(c.id), o = arrO(c.id); for (let m = 0; m <= mes; m++) projRec += r[m] || 0; for (let m = mes + 1; m < 12; m++) projRec += o[m] || 0 })
-    const projSaidaAno = projSaida(modo)
+    const projRec = projTipo(recCats, modo, false)
+    const projSaidaAno = projTipo(saidaCats, modo, true)
     const projResAno = projRec - projSaidaAno
 
     return { recMes, saiMes, resMes, resAnt, recOrc, resOrc, top, alertas, sit, saldoRedistr, mesesFut, projRec, projSaidaAno, projResAno, temFuturoOrc: saidaCats.some(c => arrO(c.id).slice(mes + 1).some(v => v)) }
   }, [mes, ano, d.catsAtivas, d.categorias, d.realPorCat, d.realizado, porCat, modo])
+
+  async function gerarIA() {
+    if (!A) return
+    setIaLoad(true)
+    try {
+      const dados = {
+        mes: MESES[mes], ano, resultado_do_mes: Math.round(A.resMes),
+        resultado_mes_anterior: A.resAnt == null ? null : Math.round(A.resAnt),
+        receita: Math.round(A.recMes), saidas: Math.round(A.saiMes),
+        maiores_movimentos_vs_mes_anterior: A.top.slice(0, 5).map(m => ({ categoria: m.nome, variacao: Math.round(m.deltaMoM) })),
+        alertas_materialidade: A.alertas.map(m => ({ categoria: m.nome, desvio_pct: Math.round(m.orc ? m.pctOrc : m.pctMoM) })),
+        receita_por_situacao: { faturado: Math.round(A.sit.Faturado), a_faturar: Math.round(A.sit['A faturar']), sem_nota: Math.round(A.sit['Sem nota']) },
+      }
+      setIaTexto(await iaInsight('desvios', dados))
+    } catch (e) { d.setErro(e.message) } finally { setIaLoad(false) }
+  }
 
   const Seta = ({ up, cor }) => <span style={{ color: cor, fontWeight: 700 }}>{up ? '▲' : '▼'}</span>
   const sitTot = A ? (A.sit.Faturado + A.sit['A faturar'] + A.sit['Sem nota']) : 0
@@ -121,7 +143,9 @@ export default function AnaliseMensal({ projeto }) {
           <KPICard label="vs orçado do mês" value={A.resOrc == null ? 'sem orçado' : fmtBRL(A.resMes - A.resOrc)} delta={A.resOrc == null ? 'mês sem orçado' : 'orçado ' + fmtBRL(A.resOrc)} />
         </KPIGrid>
 
-        <Card titulo={`O que aconteceu em ${MESES[mes]}`}>
+        <Card titulo={`O que aconteceu em ${MESES[mes]}`} extra={
+          <button onClick={gerarIA} disabled={iaLoad} style={{ fontSize: 11.5, borderRadius: 999, padding: '5px 12px', cursor: iaLoad ? 'default' : 'pointer', border: '1px solid var(--lt-brd)', background: 'rgba(204,145,94,0.12)', color: 'var(--copper, #A6512F)' }}>{iaLoad ? 'Gerando…' : '✨ Comentar com IA'}</button>}>
+          {iaTexto && <p style={{ margin: '0 0 10px', fontSize: 13.5, lineHeight: 1.6, color: 'var(--lt-text)', borderLeft: '3px solid var(--copper, #CC915E)', paddingLeft: 12, fontStyle: 'italic' }}>{iaTexto}</p>}
           <p style={{ margin: 0, fontSize: 13.5, lineHeight: 1.6, color: 'var(--lt-text)' }}>
             O resultado de <strong>{MESES[mes]}</strong> foi <strong style={{ color: A.resMes < 0 ? RED : VERDE }}>{fmtBRL(A.resMes)}</strong>
             {A.resAnt != null && <> ({pct(A.resAnt ? (A.resMes - A.resAnt) / Math.abs(A.resAnt) * 100 : 0)} vs {MESES_ABREV[mes - 1]})</>}, com receita de {fmtBRL(A.recMes)} e saídas de {fmtBRL(A.saiMes)}.
@@ -173,20 +197,19 @@ export default function AnaliseMensal({ projeto }) {
 
         <Card titulo="Projeção do restante do ano" extra={
           <div style={{ display: 'flex', gap: 6 }}>
-            {[['redistribuir', 'Redistribuir saldo'], ['perde', 'Não acumula (perde)']].map(([id, lbl]) => (
+            {[['redistribuir', 'Redistribuir saldo'], ['perde', 'Não acumula (perde)'], ['rolling', 'Rolling (tendência)']].map(([id, lbl]) => (
               <button key={id} onClick={() => setModo(id)} style={{ fontSize: 11.5, borderRadius: 999, padding: '5px 12px', cursor: 'pointer', border: '1px solid var(--lt-brd)', background: modo === id ? 'rgba(204,145,94,0.14)' : 'transparent', color: modo === id ? 'var(--copper, #A6512F)' : 'var(--lt-text3)' }}>{lbl}</button>
             ))}
           </div>}>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 12, marginBottom: 8 }}>
             <KPICard label="Receita projetada (ano)" value={fmtBRL(A.projRec)} delta={`realizado + orçado`} />
-            <KPICard label="Saídas projetadas (ano)" value={fmtBRL(A.projSaidaAno)} delta={modo === 'redistribuir' ? 'com saldo redistribuído' : 'orçado original'} />
+            <KPICard label="Saídas projetadas (ano)" value={fmtBRL(A.projSaidaAno)} delta={modo === 'redistribuir' ? 'com saldo redistribuído' : modo === 'rolling' ? 'tendência dos meses fechados' : 'orçado original'} />
             <KPICard label="Resultado projetado (ano)" value={fmtBRL(A.projResAno)} delta={A.projRec ? pct(A.projResAno / A.projRec * 100) : ''} />
           </div>
           <p style={{ fontSize: 12, color: 'var(--lt-text3)', margin: '6px 2px 0', lineHeight: 1.5 }}>
-            {modo === 'redistribuir'
-              ? <><strong>Redistribuir:</strong> o saldo não consumido dos meses já orçados é re-espalhado nos meses a incorrer, mantendo o teto. </>
-              : <><strong>Não acumula:</strong> cada mês mantém seu teto; o que não foi gasto se perde e os meses futuros seguem o orçado original. </>}
-            {!temOrcado ? 'Cadastre/gere o orçado para a projeção ganhar base.' : (A.saldoRedistr === 0 ? 'Ainda não há saldo de meses orçados fechados para redistribuir — passa a valer quando os meses com orçado forem fechando.' : `Saldo a redistribuir: ${fmtBRL(A.saldoRedistr)} em ${A.mesesFut} mês(es).`)}
+            {modo === 'redistribuir' && <><strong>Redistribuir:</strong> o saldo não consumido dos meses já orçados é re-espalhado nos meses a incorrer, mantendo o teto. {!temOrcado ? 'Cadastre/gere o orçado para a projeção ganhar base.' : (A.saldoRedistr === 0 ? 'Ainda não há saldo de meses orçados fechados para redistribuir — passa a valer quando os meses com orçado forem fechando.' : `Saldo a redistribuir: ${fmtBRL(A.saldoRedistr)} em ${A.mesesFut} mês(es).`)}</>}
+            {modo === 'perde' && <><strong>Não acumula:</strong> cada mês mantém seu teto; o que não foi gasto se perde e os meses futuros seguem o orçado original. {!temOrcado && 'Cadastre/gere o orçado para a projeção ganhar base.'}</>}
+            {modo === 'rolling' && <><strong>Rolling:</strong> ignora o orçado e projeta os meses a incorrer pela tendência (média móvel) dos meses já fechados. Atualiza-se sozinho a cada mês que fecha — não depende de orçado cadastrado.</>}
           </p>
         </Card>
       </>)}

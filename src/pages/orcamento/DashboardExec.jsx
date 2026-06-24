@@ -81,6 +81,7 @@ export default function DashboardExec({ projeto }) {
   const [modal, setModal] = useState(null)
   const [cardsOn, setCardsOn] = useState(DEFAULT_ON)
   const [msg, setMsg] = useState('')
+  const [tabOpen, setTabOpen] = useState(false)
 
   useEffect(() => { try { const s = localStorage.getItem('orc_dash_v2_' + projeto.id); if (s) setCardsOn(JSON.parse(s)) } catch (e) { /* segue */ } }, [projeto?.id])
   function toggleCard(id) {
@@ -340,8 +341,8 @@ export default function DashboardExec({ projeto }) {
         </Card>
       </div>
 
-      <Card titulo={comp ? 'Orçado × Realizado por categoria' : 'Realizado por categoria'} extra={<span style={{ fontSize: 11, color: 'var(--lt-text3)' }}>{W.pReceitaLiq > 0 ? 'AV = % da receita líquida' : 'AV = % das saídas'} · AH = último mês vs anterior · clique p/ explodir</span>} pad={false}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12.5 }}>
+      <Card titulo={comp ? 'Orçado × Realizado por categoria' : 'Realizado por categoria'} extra={<span style={{ display: 'flex', gap: 10, alignItems: 'center', fontSize: 11, color: 'var(--lt-text3)' }}><span>{W.pReceitaLiq > 0 ? 'AV = % da receita líquida' : 'AV = % das saídas'} · AH = último mês vs anterior</span><button onClick={() => setTabOpen(o => !o)} style={{ fontSize: 11, borderRadius: 999, padding: '4px 12px', cursor: 'pointer', border: '1px solid var(--lt-brd)', background: tabOpen ? 'rgba(204,145,94,0.12)' : 'transparent', color: tabOpen ? 'var(--copper, #A6512F)' : 'var(--lt-text3)' }}>{tabOpen ? 'ocultar' : 'ver tabela (' + linhas.length + ')'}</button></span>} pad={false}>
+        {tabOpen && <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12.5 }}>
           <thead><tr style={{ background: 'var(--lt-bg2, #f3f3f3)' }}>
             <th style={{ textAlign: 'left', padding: '8px 12px', fontWeight: 600 }}>Categoria</th>
             {comp && <th style={{ textAlign: 'right', padding: '8px 8px', fontWeight: 600 }}>Orçado</th>}
@@ -365,7 +366,7 @@ export default function DashboardExec({ projeto }) {
             })}
             {linhas.length === 0 && <tr><td colSpan={comp ? 6 : 4} style={{ padding: 24, textAlign: 'center', color: 'var(--lt-text3)' }}>Sem dados no período. Importe o realizado ou ajuste o filtro.</td></tr>}
           </tbody>
-        </table>
+        </table>}
       </Card>
 
       {modal && (

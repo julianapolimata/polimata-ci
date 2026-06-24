@@ -11,6 +11,7 @@ export default function Comparativo({ projeto }) {
   const [busca, setBusca] = useState('')
   const [mesIni, setMesIni] = useState(0)
   const [mesFim, setMesFim] = useState(() => new Date().getMonth())
+  const [abertos, setAbertos] = useState({})
 
   const meses = useMemo(() => Array.from({ length: Math.max(0, mesFim - mesIni + 1) }, (_, i) => mesIni + i), [mesIni, mesFim])
   const q = busca.trim().toLowerCase()
@@ -64,8 +65,8 @@ export default function Comparativo({ projeto }) {
               {grupos.map(g => {
                 const totalCelula = (m) => g.cats.reduce((acc, c) => { const x = celula(c.id, m); return { o: acc.o + (x.o || 0), r: acc.r + (x.r || 0) } }, { o: 0, r: 0 })
                 return [
-                  <tr key={g.tipo.id} style={{ background: 'var(--lt-bg)' }}>
-                    <td style={{ padding: '7px 12px', fontSize: 11.5, fontWeight: 800, textTransform: 'uppercase', letterSpacing: 0.5, position: 'sticky', left: 0, zIndex: 2, background: 'var(--lt-bg)' }}>{g.tipo.id === 'receita' ? '' : '(-) '}{g.tipo.nome}</td>
+                  <tr key={g.tipo.id} onClick={() => setAbertos(a => ({ ...a, [g.tipo.id]: !a[g.tipo.id] }))} style={{ background: 'var(--lt-bg)', cursor: 'pointer' }}>
+                    <td style={{ padding: '7px 12px', fontSize: 11.5, fontWeight: 800, textTransform: 'uppercase', letterSpacing: 0.5, position: 'sticky', left: 0, zIndex: 2, background: 'var(--lt-bg)' }}>{abertos[g.tipo.id] ? '▾ ' : '▸ '}{g.tipo.id === 'receita' ? '' : '(-) '}{g.tipo.nome}</td>
                     {meses.map(m => {
                       const t = totalCelula(m); const pct = t.o ? ((t.r - t.o) / Math.abs(t.o)) * 100 : null
                       return ['o', 'r', 'p'].map(k => (
@@ -75,7 +76,7 @@ export default function Comparativo({ projeto }) {
                       ))
                     })}
                   </tr>,
-                  ...g.cats.map(c => (
+                  ...(abertos[g.tipo.id] ? g.cats : []).map(c => (
                     <tr key={c.id}>
                       <td style={{ padding: '6px 12px 6px 28px', fontSize: 12.5, borderBottom: '1px solid var(--lt-brd)', position: 'sticky', left: 0, zIndex: 2, background: '#fff' }}>{c.nome}</td>
                       {meses.map(m => {
@@ -95,7 +96,7 @@ export default function Comparativo({ projeto }) {
           </table>
         </div>
       </Card>
-      <div style={{ fontSize: 11, color: 'var(--lt-text3)' }}>Semáforo: 🟢 desvio ≤5% · 🟡 5–10% · 🔴 &gt;10% (sempre na direção desfavorável à natureza da categoria).</div>
+      <div style={{ fontSize: 11, color: 'var(--lt-text3)' }}>Clique num grupo (Receita, Custos…) para abrir as categorias. Semáforo: 🟢 desvio ≤5% · 🟡 5–10% · 🔴 &gt;10% (sempre na direção desfavorável à natureza da categoria).</div>
     </div>
   )
 }
