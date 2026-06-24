@@ -1,28 +1,9 @@
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
-import { useEffect, useState, useMemo } from 'react'
+import { useEffect, useState, useMemo, lazy, Suspense } from 'react'
 import { Routes, Route, useNavigate, useLocation } from 'react-router-dom'
-import Configuracoes from './Configuracoes'
 import AdminPanel from './AdminPanel'
-import Perfil from './Perfil'
-import MRCCompleta from '../components/MRCCompleta'
 import NotificacoesPanel from '../components/NotificacoesPanel'
-import ImportarMRC from '../components/ImportarMRC'
-import Relatorios from './Relatorios'
-import Solicitacoes from './Solicitacoes'
-import Documentos from './Documentos'
-import Mapeamentos from './Mapeamentos'
-import Planejamento from './Planejamento'
-import OrcDashboard from './orcamento/DashboardExec'
-import OrcAnalise from './orcamento/AnaliseMensal'
-import OrcComparativo from './orcamento/Comparativo'
-import OrcGerador from './orcamento/Gerador'
-import OrcCadastrar from './orcamento/CadastrarOrcado'
-import OrcImportar from './orcamento/Importar'
-import OrcCenarios from './orcamento/Cenarios'
-import OrcPlanoContas from './orcamento/PlanoContas'
-import OrcCentros from './orcamento/CentrosCusto'
-import OrcSobre from './orcamento/Sobre'
 import Hub from './Hub'
 import { formatNomeEmpresa } from '../lib/formatNome'
 import { moduloDaRota } from '../lib/modulos'
@@ -32,13 +13,49 @@ import { getUltimaAtualizacao, papelLabel, NoProjeto } from './dashboard/_shared
 import ProjectSelector from './dashboard/ProjectSelector'
 import HomeDash from './dashboard/HomeDash'
 import HomeDashDiagnostico from './dashboard/HomeDashDiagnostico'
-import PorArea from './dashboard/PorArea'
 
 // ══════════════════════════════════════════════════════════════════════════════
 // SHELL — orquestra autenticação, carregamento de projetos/dados e roteamento
 // ══════════════════════════════════════════════════════════════════════════════
 
 // produto do projeto → módulo e rota base do módulo
+// Carrega o pacote do módulo sob demanda. Se o chunk ficou desatualizado após um
+// deploy (erro de import dinâmico), recarrega a página UMA vez p/ pegar a versão nova.
+function retryImport(factory) {
+  return () => factory().catch((err) => {
+    const KEY = 'polimata_chunk_reload_ts'
+    let last = 0
+    try { last = Number(sessionStorage.getItem(KEY) || 0) } catch (e) {}
+    if (Date.now() - last > 10000) {
+      try { sessionStorage.setItem(KEY, String(Date.now())) } catch (e) {}
+      window.location.reload()
+      return new Promise(() => {})
+    }
+    throw err
+  })
+}
+
+const Configuracoes = lazy(retryImport(() => import('./Configuracoes')))
+const Perfil = lazy(retryImport(() => import('./Perfil')))
+const MRCCompleta = lazy(retryImport(() => import('../components/MRCCompleta')))
+const ImportarMRC = lazy(retryImport(() => import('../components/ImportarMRC')))
+const Relatorios = lazy(retryImport(() => import('./Relatorios')))
+const Solicitacoes = lazy(retryImport(() => import('./Solicitacoes')))
+const Documentos = lazy(retryImport(() => import('./Documentos')))
+const Mapeamentos = lazy(retryImport(() => import('./Mapeamentos')))
+const Planejamento = lazy(retryImport(() => import('./Planejamento')))
+const OrcDashboard = lazy(retryImport(() => import('./orcamento/DashboardExec')))
+const OrcAnalise = lazy(retryImport(() => import('./orcamento/AnaliseMensal')))
+const OrcComparativo = lazy(retryImport(() => import('./orcamento/Comparativo')))
+const OrcGerador = lazy(retryImport(() => import('./orcamento/Gerador')))
+const OrcCadastrar = lazy(retryImport(() => import('./orcamento/CadastrarOrcado')))
+const OrcImportar = lazy(retryImport(() => import('./orcamento/Importar')))
+const OrcCenarios = lazy(retryImport(() => import('./orcamento/Cenarios')))
+const OrcPlanoContas = lazy(retryImport(() => import('./orcamento/PlanoContas')))
+const OrcCentros = lazy(retryImport(() => import('./orcamento/CentrosCusto')))
+const OrcSobre = lazy(retryImport(() => import('./orcamento/Sobre')))
+const PorArea = lazy(retryImport(() => import('./dashboard/PorArea')))
+
 function produtoModulo(produto) {
   if (produto === 'mapeamento') return 'mapeamento'
   if (produto === 'orcamento') return 'orcamento'
@@ -386,6 +403,7 @@ export default function Dashboard() {
             <NotificacoesPanel />
           </div>
         )}
+        <Suspense fallback={<div className="loading-screen"><div className="spinner" /></div>}>
         <Routes>
           <Route path="/ci" element={
             getTipoEntrega(projetoAtivo) === 'diagnostico'
@@ -413,6 +431,7 @@ export default function Dashboard() {
           <Route path="/importar-mrc" element={<ImportarMRC projetoId={projetoAtivo?.id} projeto={projetoAtivo} areas={areasCalc} onImported={() => { if (projetoAtivo?.id) loadDados(projetoAtivo.id) }} />} />
           <Route path="/perfil" element={<Perfil />} />
         </Routes>
+        </Suspense>
       </main>
     </div>
   )
