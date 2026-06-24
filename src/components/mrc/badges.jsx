@@ -296,7 +296,7 @@ function sortVal(row, k, projeto) {
   if (k === '_dt') return row.dt_ult || row.atualizado_em || row.criado_em || ''
   if (k === '_resultado') return getResultadoVitrine(row, projeto)
   if (k === '_fase_atual') return getFaseLabel(row, projeto?.num_fases, projeto?.f1_tem_teste === true)
-  if (k === '_status_atual') return getStatusComputado(row)
+  if (k === '_status_atual') return getStatusComputado(row, projeto?.num_fases, projeto?.f1_tem_teste === true)
   return row[k] ?? ''
 }
 

@@ -159,7 +159,7 @@ export default function Relatorios({ projeto, areasCalc, todosControles, cliente
     }
 
     if (filtroStatus.length > 0) {
-      lista = lista.filter(c => filtroStatus.includes(getStatusComputado(c)))
+      lista = lista.filter(c => filtroStatus.includes(getStatusComputado(c, projeto?.num_fases, projeto?.f1_tem_teste === true)))
     }
 
     if (filtroFase.length > 0) {

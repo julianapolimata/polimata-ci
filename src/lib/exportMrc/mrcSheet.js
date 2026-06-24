@@ -170,7 +170,7 @@ function buildMRCSheet(wb, controles, tituloAba, iconId, clienteNome, projetoNom
       } else if (col.key === 'fase') {
         value = getFaseLabel(row, numFases, comTeste)
       } else if (col.key === 'status_atual') {
-        const cfg = getStatusConfig(getStatusComputado(row), 'admin_polimata')
+        const cfg = getStatusConfig(getStatusComputado(row, numFases, comTeste), 'admin_polimata')
         value = cfg.label || '—'
       } else if (col.key === 'crit_label') {
         value = row.crit_label || CRIT_LABEL_MAP[row.crit] || '—'

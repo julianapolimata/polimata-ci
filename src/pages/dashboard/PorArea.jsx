@@ -207,12 +207,12 @@ export default function PorArea({ projeto, areasCalc, todosControles, loading, n
     if (filtRes) { const rg = getResultadoGeral(c); if (!rg || rg !== filtRes) return false }
     if (filtFase) { const fc = getFaseCodigo(c); if (fc !== filtFase) return false }
     if (filtStatus) {
-      const sw = getStatusComputado(c)
+      const sw = getStatusComputado(c, projeto?.num_fases, projeto?.f1_tem_teste === true)
       if (isCliente && filtStatus === 'em_analise') {
         if (!['em_analise', 'teste_pendente', 'reprovado'].includes(sw)) return false
       } else if (sw !== filtStatus) return false
     }
-    if (!isCliente && filtAcao) { if (getProximaAcao(getStatusComputado(c)) !== filtAcao) return false }
+    if (!isCliente && filtAcao) { if (getProximaAcao(getStatusComputado(c, projeto?.num_fases, projeto?.f1_tem_teste === true)) !== filtAcao) return false }
     return true
   })
 
@@ -226,7 +226,7 @@ export default function PorArea({ projeto, areasCalc, todosControles, loading, n
   const PA_FASE_KEYS = ['r1', 'st_pa', 'r_ader', 'r3', 'r_f4c1', 'r_f4c2', 'r_f5']
   const toggleSort = (k) => { if (sortCol === k) { setSortDir(d => d === 'asc' ? 'desc' : 'asc') } else { setSortCol(k); setSortDir('asc') } }
   const sortArrow = (k) => sortCol === k ? (sortDir === 'asc' ? ' ▲' : ' ▼') : ''
-  function paSortVal(row, k) { if (k === '_dt') return row.dt_ult || row.atualizado_em || row.criado_em || ''; if (k === '_resultado') return getResultadoVitrine(row, projeto); if (k === '_fase_atual') return getFaseLabel(row, projeto?.num_fases, projeto?.f1_tem_teste === true); if (k === '_status_atual') return getStatusComputado(row); return row[k] ?? '' }
+  function paSortVal(row, k) { if (k === '_dt') return row.dt_ult || row.atualizado_em || row.criado_em || ''; if (k === '_resultado') return getResultadoVitrine(row, projeto); if (k === '_fase_atual') return getFaseLabel(row, projeto?.num_fases, projeto?.f1_tem_teste === true); if (k === '_status_atual') return getStatusComputado(row, projeto?.num_fases, projeto?.f1_tem_teste === true); return row[k] ?? '' }
 
   const cfSorted = !sortCol ? cf : [...cf].sort((a, b) => {
     let va = paSortVal(a, sortCol), vb = paSortVal(b, sortCol)

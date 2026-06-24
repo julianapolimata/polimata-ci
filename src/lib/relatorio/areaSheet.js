@@ -79,7 +79,7 @@ export function getCellValue(row, col, numFases, comTeste) {
   if (col.key === '_hist_f5') return fmtHist(row.r_f5)
   if (col.key === 'fase') return getFaseLabel(row, numFases, comTeste) || '—'
   if (col.key === 'status_atual') {
-    const cfg = getStatusConfig(getStatusComputado(row), 'admin_polimata')
+    const cfg = getStatusConfig(getStatusComputado(row, numFases, comTeste), 'admin_polimata')
     return cfg.label || '—'
   }
   if (col.key === 'crit_label') return row.crit_label || CRIT_LABEL_MAP[row.crit] || '—'

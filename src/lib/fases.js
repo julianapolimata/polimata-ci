@@ -219,14 +219,14 @@ function temDadosNaFase(c, codigoFase) {
  * @param {Object} c - registro da MRC
  * @returns {string} status computado (mesmo vocabulário de status_workflow)
  */
-export function getStatusComputado(c) {
+export function getStatusComputado(c, numFases, comTeste) {
   if (!c) return 'nao_iniciado'
 
   // Estados explícitos do workflow têm prioridade
   const sw = c.status_workflow
   if (sw === 'rascunho' || sw === 'em_revisao' || sw === 'aprovado' || sw === 'reprovado' || sw === 'em_analise' || sw === 'teste_pendente' || sw === 'reavaliacao_pendente') return sw
 
-  const info = getFaseInfo(c)
+  const info = getFaseInfo(c, numFases, comTeste)
 
   // Ciclo completo (F5 concluída)
   if (info.concluida) return 'aprovado'

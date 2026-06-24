@@ -17,6 +17,16 @@ function TabelaMRC({ rows, onOpenModal, isDiagnostico = false, projeto }) {
   const arrow = (k) => sortCol === k ? (sortDir === 'asc' ? ' ▲' : ' ▼') : ''
   const tableRef = useRef(null)
 
+  // Colunas de fase conforme o escopo do projeto (num_fases) — igual ao Por Área
+  const numFasesMRC = projeto?.num_fases ?? 5
+  const idxFases =
+    numFasesMRC >= 5 ? [0, 1, 2, 3, 4, 5, 6] :
+    numFasesMRC === 4 ? [0, 1, 2, 3, 4, 5] :
+    numFasesMRC === 3 ? [0, 1, 2, 3] :
+    numFasesMRC === 2 ? [0, 1, 2] :
+    numFasesMRC === 1 ? [0] :
+    [0, 1, 2, 3, 4, 5, 6]
+
   // Em diagnóstico: esconde "Resultado" (não há teste) e "Fase Atual" (sempre F1)
   const dataCols = isDiagnostico
     ? MRC_DATA_COLS.filter(c => c.k !== '_resultado' && c.k !== '_fase_atual')
@@ -25,8 +35,8 @@ function TabelaMRC({ rows, onOpenModal, isDiagnostico = false, projeto }) {
   // Em diagnóstico: só F1, renomeada "Existência"
   const faseHdr = isDiagnostico
     ? [{ h: 'Fase 1\nDiagnóstico', bg: '#00203E' }]
-    : MRC_FASE_HDR
-  const faseKeys = isDiagnostico ? ['existencia'] : MRC_FASE_KEYS
+    : idxFases.map(i => MRC_FASE_HDR[i])
+  const faseKeys = isDiagnostico ? ['existencia'] : idxFases.map(i => MRC_FASE_KEYS[i])
 
   const sorted = useMemo(() => {
     if (!sortCol) return rows
@@ -61,19 +71,14 @@ function TabelaMRC({ rows, onOpenModal, isDiagnostico = false, projeto }) {
               {!isDiagnostico && <td style={{ ...mrcTdS, width: 90, minWidth: 90, textAlign: 'center' }}>{badgeResultado(getResultadoVitrine(row, projeto))}</td>}
               <td style={{ ...mrcTdS, width: 110, minWidth: 110, textAlign: 'center' }}>{critBadge(row.crit)}</td>
               {!isDiagnostico && <td style={{ ...mrcTdS, width: 130, minWidth: 130, fontSize: 11, fontWeight: 500, textAlign: 'center' }}>{getFaseLabel(row, projeto?.num_fases, projeto?.f1_tem_teste === true)}{row.num_regressoes > 0 && <RegressaoBadgeMRC n={row.num_regressoes} />}</td>}
-              <td style={{ ...mrcTdS, width: 110, minWidth: 110, textAlign: 'center' }}>{(() => { const st = getStatusComputado(row); const cfg = getStatusConfig(st); return <span style={{ fontSize: 10, fontWeight: 700, color: cfg.color, background: cfg.bg, padding: '3px 10px', borderRadius: 999, textTransform: 'uppercase', letterSpacing: 0.4 }}>{cfg.label}</span> })()}</td>
+              <td style={{ ...mrcTdS, width: 110, minWidth: 110, textAlign: 'center' }}>{(() => { const st = getStatusComputado(row, projeto?.num_fases, projeto?.f1_tem_teste === true); const cfg = getStatusConfig(st); return <span style={{ fontSize: 10, fontWeight: 700, color: cfg.color, background: cfg.bg, padding: '3px 10px', borderRadius: 999, textTransform: 'uppercase', letterSpacing: 0.4 }}>{cfg.label}</span> })()}</td>
               {isDiagnostico ? (
                 <td style={{ ...mrcTdS, width: 130, minWidth: 130, maxWidth: 130, textAlign: 'center' }}>{badgeExistencia(row.existencia)}</td>
               ) : (
-                <>
-                  <td style={{ ...mrcTdS, width: FASE_W, minWidth: FASE_W, maxWidth: FASE_W, textAlign: 'center' }}>{badgeFaseMRC(faseValMRC(row, 'r1', row.r1))}</td>
-                  <td style={{ ...mrcTdS, width: FASE_W, minWidth: FASE_W, maxWidth: FASE_W, textAlign: 'center' }}>{badgeFaseMRC(faseValMRC(row, 'st_pa', row.st_pa))}</td>
-                  <td style={{ ...mrcTdS, width: FASE_W, minWidth: FASE_W, maxWidth: FASE_W, textAlign: 'center' }}>{badgeFaseMRC(faseValMRC(row, 'r_ader', row.r_ader))}</td>
-                  <td style={{ ...mrcTdS, width: FASE_W, minWidth: FASE_W, maxWidth: FASE_W, textAlign: 'center' }}>{badgeFaseMRC(faseValMRC(row, 'r3', row.r3))}</td>
-                  <td style={{ ...mrcTdS, width: FASE_W, minWidth: FASE_W, maxWidth: FASE_W, textAlign: 'center' }}>{badgeFaseMRC(faseValMRC(row, 'r_f4c1', row.r_f4c1))}</td>
-                  <td style={{ ...mrcTdS, width: FASE_W, minWidth: FASE_W, maxWidth: FASE_W, textAlign: 'center' }}>{badgeFaseMRC(faseValMRC(row, 'r_f4c2', row.r_f4c2))}</td>
-                  <td style={{ ...mrcTdS, width: FASE_W, minWidth: FASE_W, maxWidth: FASE_W, textAlign: 'center' }}>{badgeFaseMRC(faseValMRC(row, 'r_f5', row.r_f5))}</td>
-                </>
+                idxFases.map(i => {
+                  const fk = MRC_FASE_KEYS[i]
+                  return <td key={fk} style={{ ...mrcTdS, width: FASE_W, minWidth: FASE_W, maxWidth: FASE_W, textAlign: 'center' }}>{badgeFaseMRC(faseValMRC(row, fk, row[fk]))}</td>
+                })
               )}
             </tr>
           ))}
