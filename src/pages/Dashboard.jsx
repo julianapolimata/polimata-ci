@@ -242,7 +242,7 @@ export default function Dashboard() {
   }
   // Seletor de projetos — exibido quando nenhum projeto está selecionado
   if (!projetoAtivo && projetos.length > 0) {
-    return <ProjectSelector projetos={projetos} resumos={projetoResumos} perfil={perfil} produtoAlvo={['mapeamento', 'orcamento', 'planejamento'].includes(modulo) ? modulo : null} onProjetoCriado={async (novoId) => {
+    return <ProjectSelector projetos={projetos} resumos={projetoResumos} perfil={perfil} produtoAlvo={['ci', 'mapeamento', 'orcamento', 'planejamento'].includes(modulo) ? modulo : null} onProjetoCriado={async (novoId) => {
       const { data } = await supabase.from('projetos').select('*, clientes(nome, nome_fantasia, slug)').eq('id', novoId).single()
       if (data) {
         setProjetos(prev => [data, ...prev])

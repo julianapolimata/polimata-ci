@@ -29,6 +29,10 @@ export default function Hub({ onProjetos }) {
   const meusIds = meus.map(m => m.id)
   const isPolimata = ['admin_polimata', 'consultor_polimata'].includes(perfil?.papel)
   const visiveis = MODULOS.filter(m => meusIds.includes(m.id) || (isPolimata && !m.ativo))
+  // Linhas balanceadas: 4 cards => 2x2, 5 => 3+2, 1-3 => uma linha. Largura do
+  // container limita os cards por linha; justifyContent center centraliza a última linha.
+  const colsHub = visiveis.length === 4 ? 2 : Math.min(visiveis.length, 3)
+  const larguraHub = colsHub * 300 + (colsHub - 1) * 22 + 8 // +folga p/ não quebrar por arredondamento
 
   return (
     <div style={{ height: '100vh', overflowY: 'auto', background: 'var(--bg0, #00112C)', fontFamily: 'Montserrat', display: 'flex', flexDirection: 'column' }}>
@@ -59,7 +63,7 @@ export default function Hub({ onProjetos }) {
       </div>
 
       {/* Cards */}
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 22, justifyContent: 'center', padding: '48px 36px', maxWidth: 1100, margin: '0 auto' }}>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 22, justifyContent: 'center', padding: '48px 36px', maxWidth: larguraHub, margin: '0 auto' }}>
         {visiveis.map(m => (
           <button key={m.id} onClick={() => m.ativo && navigate(m.rota)} disabled={!m.ativo}
             style={{
