@@ -119,13 +119,22 @@ export function useOrcDados(projeto, ano) {
     if (!projeto?.id) return
     setLoading(true)
     try {
-      const [cat, cc, orc, rea] = await Promise.all([
+      const [cat, cc, orc] = await Promise.all([
         supabase.from('orc_categorias').select('*').eq('projeto_id', projeto.id).order('ordem').order('nome'),
         supabase.from('orc_centros_custo').select('*').eq('projeto_id', projeto.id).order('ordem').order('codigo'),
         supabase.from('orc_orcamentos').select('*').eq('projeto_id', projeto.id).eq('ano', ano).order('versao'),
-        supabase.from('orc_realizado').select('id, categoria_id, centro_custo_id, competencia, valor, origem, detalhe, conta_erp, situacao, tipo_mov').eq('projeto_id', projeto.id),
       ])
-      setCategorias(cat.data || []); setCentros(cc.data || []); setCenarios(orc.data || []); setRealizado(rea.data || [])
+      // realizado pode passar de 1000 linhas (limite por requisição do Supabase) → pagina
+      const COLS = 'id, categoria_id, centro_custo_id, competencia, valor, origem, detalhe, conta_erp, situacao, tipo_mov'
+      const PAG = 1000; let todos = [], ini = 0
+      for (;;) {
+        const { data, error } = await supabase.from('orc_realizado').select(COLS).eq('projeto_id', projeto.id).order('id').range(ini, ini + PAG - 1)
+        if (error) { setErro(error.message); break }
+        todos = todos.concat(data || [])
+        if (!data || data.length < PAG) break
+        ini += PAG
+      }
+      setCategorias(cat.data || []); setCentros(cc.data || []); setCenarios(orc.data || []); setRealizado(todos)
       if (cat.error) setErro(cat.error.message)
     } catch (e) { setErro(String(e.message || e)) } finally { setLoading(false) }
   }, [projeto?.id, ano])

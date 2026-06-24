@@ -14,13 +14,14 @@ const CATALOGO = [
   { id: 'receita', nome: 'Receita realizada', dep: 'receita', info: 'Total de receitas reconhecidas no período (pelo fato gerador, com ou sem nota).' },
   { id: 'margem', nome: 'Resultado operacional', dep: 'receita', info: 'Receita menos deduções, custos e despesas no período. É o que sobra (ou falta) da operação.' },
   { id: 'aFaturar', nome: 'Receita a faturar', dep: 'receita', info: 'Receita já reconhecida que ainda não tem nota fiscal emitida (situação "A faturar").' },
+  { id: 'margemPct', nome: 'Margem líquida', dep: 'receita', info: 'Resultado dividido pela receita do período — quanto sobra de cada real de receita.' },
   { id: 'bruta', nome: 'Margem bruta', dep: 'receita', info: 'Receita líquida menos o custo dos produtos vendidos (CPV) — quanto sobra da venda antes das despesas.' },
   { id: 'saidas', nome: 'Saídas realizadas', dep: 'none', info: 'Total de saídas (deduções + custos + despesas) no período.' },
   { id: 'burn', nome: 'Saída média mensal', dep: 'none', info: 'Ritmo médio de consumo de recursos: média de saídas por mês no período (burn rate).' },
   { id: 'maiorRub', nome: 'Maior rubrica de saída', dep: 'none', info: 'A categoria que mais consome recursos no período.' },
   { id: 'exec', nome: 'Execução orçamentária', dep: 'orcado', info: 'Percentual do orçado já consumido pelo realizado (realizado ÷ orçado).' },
 ]
-const DEFAULT_ON = ['receita', 'margem', 'aFaturar', 'saidas']
+const DEFAULT_ON = ['receita', 'aFaturar', 'margem', 'margemPct']
 const soma = (arr, de, ate) => (arr || []).slice(de, ate + 1).reduce((s, v) => s + (v || 0), 0)
 const pct = (n) => (n >= 0 ? '' : '−') + Math.abs(n).toFixed(1) + '%'
 
@@ -167,6 +168,7 @@ export default function DashboardExec({ projeto }) {
       case 'receita': return { v: fmtBRL(W.pReceita), s: 'receita reconhecida' }
       case 'margem': return { v: fmtBRL(W.pResultado), s: W.pReceita ? pct(W.pResultado / W.pReceita * 100) + ' da receita' : '' }
       case 'aFaturar': return { v: fmtBRL(W.sit['A faturar'] || 0), s: 'entregue, sem nota emitida' }
+      case 'margemPct': return { v: W.pReceita ? pct(W.pResultado / W.pReceita * 100) : '—', s: 'resultado ÷ receita' }
       case 'bruta': return { v: fmtBRL(W.pReceitaLiq - W.pCusto), s: 'receita líquida − CPV' }
       case 'saidas': return { v: fmtBRL(W.pSaida), s: MESES_ABREV[de] + '–' + MESES_ABREV[ate] }
       case 'burn': return { v: fmtBRL(Math.round(W.pSaida / W.nMes)), s: 'saída média por mês' }
