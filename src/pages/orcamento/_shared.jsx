@@ -123,7 +123,7 @@ export function useOrcDados(projeto, ano) {
         supabase.from('orc_categorias').select('*').eq('projeto_id', projeto.id).order('ordem').order('nome'),
         supabase.from('orc_centros_custo').select('*').eq('projeto_id', projeto.id).order('ordem').order('codigo'),
         supabase.from('orc_orcamentos').select('*').eq('projeto_id', projeto.id).eq('ano', ano).order('versao'),
-        supabase.from('orc_realizado').select('id, categoria_id, centro_custo_id, competencia, valor, origem, detalhe, conta_erp').eq('projeto_id', projeto.id),
+        supabase.from('orc_realizado').select('id, categoria_id, centro_custo_id, competencia, valor, origem, detalhe, conta_erp, situacao, tipo_mov').eq('projeto_id', projeto.id),
       ])
       setCategorias(cat.data || []); setCentros(cc.data || []); setCenarios(orc.data || []); setRealizado(rea.data || [])
       if (cat.error) setErro(cat.error.message)
