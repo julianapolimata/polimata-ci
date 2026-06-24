@@ -9,7 +9,7 @@
       "has": [
         {
           "type": "host",
-          "value": "polimata-ci.vercel.app"
+          "value": "polimata-app.vercel.app"
         }
       ],
       "destination": "https://app.polimatagrc.com.br/$1",
@@ -20,7 +20,7 @@
       "has": [
         {
           "type": "host",
-          "value": "polimata-ci-julianapolimatas-projects.vercel.app"
+          "value": "polimata-app-julianapolimatas-projects.vercel.app"
         }
       ],
       "destination": "https://app.polimatagrc.com.br/$1",
@@ -31,7 +31,7 @@
       "has": [
         {
           "type": "host",
-          "value": "polimata-ci-git-main-julianapolimatas-projects.vercel.app"
+          "value": "polimata-app-git-main-julianapolimatas-projects.vercel.app"
         }
       ],
       "destination": "https://app.polimatagrc.com.br/$1",

@@ -70,7 +70,7 @@ A pipeline do GitHub Actions (`.github/workflows/ci.yml`) bloqueia o merge se:
 
 ## Domínios
 
-- **Produção:** https://app.polimatagrc.com.br (Vercel project `polimata-ci`, branch `main`)
+- **Produção:** https://app.polimatagrc.com.br (Vercel project `polimata-app`, branch `main`)
 - **Dev (parado):** https://polimatadev.vercel.app (Vercel project `polimatadev`, branch `master`)
 
 ## Convenções de código

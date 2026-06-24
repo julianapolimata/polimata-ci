@@ -7,8 +7,8 @@
 ## Stack & Infra
 - **Frontend:** React + Vite
 - **Backend:** Supabase (PostgreSQL, Auth, Storage, RLS)
-- **Deploy:** Vercel (auto-deploy do master) → polimata-ci.vercel.app
-- **Repo:** github.com/julianapolimata/polimata-ci (público, branch master)
+- **Deploy:** Vercel (auto-deploy do master) → polimata-app.vercel.app
+- **Repo:** github.com/julianapolimata/polimata-app (público, branch master)
 - **Supabase project:** iqtkpyrpwxypwcwrhulx
 - **Local:** C:\projetos\polimata-fresh\polimata-ci
 - **Admin:** juliana@polimatagrc.com.br
@@ -168,7 +168,7 @@ CREATE TABLE responsaveis (
 ## GIT & DEPLOYMENT
 
 ### Deploy 10/04/2026 — ✅ COMPLETO
-- Todos os arquivos em produção (polimata-ci.vercel.app)
+- Todos os arquivos em produção (polimata-app.vercel.app)
 - Status: Live
 
 ---
