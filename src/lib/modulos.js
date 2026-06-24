@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════════════
-// modulos.js — registro dos produtos/módulos do Sistema Polímata.
+// modulos.js — registro dos produtos/módulos do Polímata App.
 // Para adicionar um novo produto: incluir aqui + criar as rotas/página.
 // O acesso por usuário é controlado pela coluna perfis.modulos (text[]).
 // ═══════════════════════════════════════════════════════════════════════════

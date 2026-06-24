@@ -237,7 +237,7 @@ export default function Dashboard() {
   if (isAdmin && location.pathname.startsWith('/admin')) {
     return <AdminPanel />
   }
-  // Hub de produtos — porta de entrada do Sistema Polímata
+  // Hub de produtos — porta de entrada do Polímata App
   if (modulo === 'hub') {
     return <Hub onProjetos={() => { try { localStorage.removeItem('polimata_projeto_ativo_id') } catch (e) {} ; setProjetoAtivo(null); navigate('/ci') }} />
   }

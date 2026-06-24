@@ -1,7 +1,7 @@
 import ExcelJS from 'exceljs'
 
 // ══════════════════════════════════════════════════════════════════════════════
-// TEMPLATE REALIZADO — modelo fixo do Sistema Polímata (Gestão Orçamentária)
+// TEMPLATE REALIZADO — modelo fixo do Polímata App (Gestão Orçamentária)
 // O consultor adapta o relatório de realizado do cliente a este layout.
 // Natureza (receita/despesa) NÃO vem aqui — é inferida da conta (plano de contas).
 // ══════════════════════════════════════════════════════════════════════════════
@@ -51,7 +51,7 @@ const canon = (s) => String(s ?? '').trim().toLowerCase().normalize('NFD').repla
 
 export function montarWorkbookRealizado({ linhas = null } = {}) {
   const wb = new ExcelJS.Workbook()
-  wb.creator = 'Sistema Polímata'
+  wb.creator = 'Polímata App'
 
   const ws = wb.addWorksheet('Realizado', { views: [{ state: 'frozen', ySplit: 1 }] })
   ws.columns = COLS_REALIZADO.map(c => ({ header: c.header, key: c.key, width: c.width }))
@@ -74,7 +74,7 @@ export function montarWorkbookRealizado({ linhas = null } = {}) {
   // aba instruções (identidade Polímata: Montserrat)
   const wi = wb.addWorksheet('Instruções')
   wi.getColumn(1).width = 22; wi.getColumn(2).width = 95
-  const t = wi.getCell('A1'); t.value = 'Template — Realizado (Gestão Orçamentária · Sistema Polímata)'
+  const t = wi.getCell('A1'); t.value = 'Template — Realizado (Gestão Orçamentária · Polímata App)'
   t.font = { name: 'Raleway', bold: true, size: 15, color: { argb: 'FF' + NAVY } }
   wi.addRow([])
   const cu = wi.addRow(['Como usar', 'Adapte o relatório de realizado do cliente a estas colunas fixas e importe em Gestão Orçamentária → Importar Realizado. Importe quantos meses quiser de uma vez — o mês vem da coluna Data de cada linha. A natureza (receita/despesa) é definida pela conta no plano de contas. Receitas contam sempre pela data (fato gerador); use a coluna Situação para marcar Faturado, A faturar ou Sem nota. Importe o plano de contas ANTES do realizado.'])

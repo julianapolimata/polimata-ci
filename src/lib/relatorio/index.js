@@ -9,7 +9,7 @@ import { fetchIconBase64 } from './_shared'
 
 export async function gerarRelatorioExcel({ controles, areas, secoes, clienteNome, projetoNome, projeto }) {
   const wb = new ExcelJS.Workbook()
-  wb.creator = 'CI Polímata'
+  wb.creator = 'Polímata App'
   wb.created = new Date()
 
   const iconBase64 = await fetchIconBase64()

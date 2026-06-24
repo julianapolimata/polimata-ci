@@ -8,7 +8,7 @@ import { fetchIconBase64 } from './_shared'
 
 export async function exportarMRCExcel(controles, nomeArquivo, tituloAba = 'MRC', clienteNome = '', projetoNome = '', projeto = null) {
   const wb = new ExcelJS.Workbook()
-  wb.creator = 'CI Polímata'
+  wb.creator = 'Polímata App'
   wb.created = new Date()
 
   const iconBase64 = await fetchIconBase64()

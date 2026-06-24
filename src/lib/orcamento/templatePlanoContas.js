@@ -1,7 +1,7 @@
 import ExcelJS from 'exceljs'
 
 // ══════════════════════════════════════════════════════════════════════════════
-// TEMPLATE PLANO DE CONTAS — modelo fixo do Sistema Polímata (Gestão Orçamentária)
+// TEMPLATE PLANO DE CONTAS — modelo fixo do Polímata App (Gestão Orçamentária)
 // Colunas padronizadas; o consultor adapta o plano de cada cliente neste layout.
 // ══════════════════════════════════════════════════════════════════════════════
 
@@ -43,7 +43,7 @@ const EXEMPLOS = [
 
 export function montarWorkbookPlanoContas({ linhas = null } = {}) {
   const wb = new ExcelJS.Workbook()
-  wb.creator = 'Sistema Polímata'
+  wb.creator = 'Polímata App'
 
   // ---- aba principal ----
   const ws = wb.addWorksheet('Plano de Contas', { views: [{ state: 'frozen', ySplit: 1 }] })
@@ -68,7 +68,7 @@ export function montarWorkbookPlanoContas({ linhas = null } = {}) {
   // ---- aba instruções (mesma identidade visual: Montserrat) ----
   const wi = wb.addWorksheet('Instruções')
   wi.getColumn(1).width = 26; wi.getColumn(2).width = 95
-  const t = wi.getCell('A1'); t.value = 'Template — Plano de Contas (Gestão Orçamentária · Sistema Polímata)'
+  const t = wi.getCell('A1'); t.value = 'Template — Plano de Contas (Gestão Orçamentária · Polímata App)'
   t.font = { name: 'Raleway', bold: true, size: 15, color: { argb: 'FF' + NAVY } }
   wi.addRow([])
   const cu = wi.addRow(['Como usar', 'Preencha a aba "Plano de Contas" adaptando o plano do seu cliente a estas colunas fixas. Não altere os nomes das colunas. Depois importe este arquivo no sistema: Gestão Orçamentária → Plano de Contas → Importar Plano de Contas.'])

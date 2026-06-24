@@ -66,7 +66,7 @@ function EditarUsuarioForm({ usuario, clientes, areas, projetos, onSave, onCance
         const novos = projetosSel.filter(id => !projetosOrig.includes(id))
         if (novos.length > 0) notificarVinculoConsultor(usuario.id, novos)
       }
-      // Acesso por módulo (Sistema Polímata)
+      // Acesso por módulo (Polímata App)
       if (form.papel !== 'admin_polimata') {
         const { error: errMod } = await supabase.from('perfis').update({ modulos: modulosSel }).eq('id', usuario.id)
         if (errMod) throw new Error('Usuário salvo, mas falhou ao gravar módulos: ' + errMod.message)
@@ -123,7 +123,7 @@ function EditarUsuarioForm({ usuario, clientes, areas, projetos, onSave, onCance
 
         {form.papel !== 'admin_polimata' && (
           <div className="cfg-field">
-            <label>Módulos do Sistema Polímata</label>
+            <label>Módulos do Polímata App</label>
             <div className="areas-check-grid">
               {MODULOS.filter(m => m.ativo).map(m => (
                 <label key={m.id} className="area-check">

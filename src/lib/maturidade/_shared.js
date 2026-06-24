@@ -1,7 +1,7 @@
 // Helpers e constantes compartilhadas do cálculo de maturidade.
 // Extraído de calculoMaturidade.js em 22/mai/2026 (fatiamento Etapa 7).
 
-// ─── ENGINE DE CÁLCULO — CI Polímata ────────────────────────────────────────
+// ─── ENGINE DE CÁLCULO — Polímata App ────────────────────────────────────────
 // Implementa METODOLOGIA_CALCULO.md v3 (validada 26/03/2026)
 // Módulo puro — sem dependências React
 // Constantes carregadas do banco via constantesLoader.js (com fallback local)

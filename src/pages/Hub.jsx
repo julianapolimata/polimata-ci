@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════════════
-// Hub.jsx — vitrine de produtos do Sistema Polímata, exibida após o login.
+// Hub.jsx — vitrine de produtos do Polímata App, exibida após o login.
 // Cada card é um módulo; o acesso vem de perfis.modulos (admin vê todos).
 // ═══════════════════════════════════════════════════════════════════════════
 import { useNavigate } from 'react-router-dom'
@@ -58,7 +58,7 @@ export default function Hub({ onProjetos }) {
 
       {/* Título */}
       <div style={{ textAlign: 'center', marginTop: 56 }}>
-        <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: 2.2, textTransform: 'uppercase', color: '#CC915E' }}>Sistema Polímata</div>
+        <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: 2.2, textTransform: 'uppercase', color: '#CC915E' }}>Polímata App</div>
         <div style={{ fontSize: 30, fontWeight: 200, color: '#F3EEE4', fontFamily: 'Raleway, Montserrat', marginTop: 8 }}>O que vamos fazer hoje?</div>
       </div>
 

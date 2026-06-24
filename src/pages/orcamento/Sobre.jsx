@@ -11,7 +11,7 @@ export default function Sobre({ projeto }) {
       <PageHeader projeto={projeto} titulo="📖 Sobre o Sistema" subtitulo="Manual da Gestão Orçamentária Polímata" />
 
       <Card titulo="1. Visão geral"><P>
-        A <strong>Gestão Orçamentária</strong> é o módulo do Sistema Polímata para empresas de pequeno e médio porte estruturarem, acompanharem e analisarem seu orçamento empresarial. Ele responde: quanto a empresa gastou no passado (histórico), quanto planeja gastar (orçado), quanto está gastando agora (realizado) e onde estão os desvios — com apoio de IA nas definições.</P>
+        A <strong>Gestão Orçamentária</strong> é o módulo do Polímata App para empresas de pequeno e médio porte estruturarem, acompanharem e analisarem seu orçamento empresarial. Ele responde: quanto a empresa gastou no passado (histórico), quanto planeja gastar (orçado), quanto está gastando agora (realizado) e onde estão os desvios — com apoio de IA nas definições.</P>
         <P>Por que existe: PMEs já superaram a planilha, mas não têm porte para sistemas corporativos (Treasy, Prophix, SAP BPC). Este módulo preenche a lacuna com identidade Polímata, IA integrada e custo acessível.</P>
       </Card>
 
