@@ -22,7 +22,7 @@ function IconeModulo({ id }) {
   )
 }
 
-export default function Hub({ onProjetos }) {
+export default function Hub({ onProjetos, onAbrirModulo }) {
   const { perfil, signOut } = useAuth()
   const navigate = useNavigate()
   const meus = modulosDoPerfil(perfil)
@@ -66,7 +66,7 @@ export default function Hub({ onProjetos }) {
       <div style={{ display: 'flex', justifyContent: 'center', padding: '48px 36px' }}>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 22, justifyContent: 'center', width: larguraHub, maxWidth: '100%' }}>
         {visiveis.map(m => (
-          <button key={m.id} onClick={() => m.ativo && navigate(m.rota)} disabled={!m.ativo}
+          <button key={m.id} onClick={() => m.ativo && (onAbrirModulo ? onAbrirModulo(m.rota) : navigate(m.rota))} disabled={!m.ativo}
             style={{
               width: 300, textAlign: 'left', padding: '26px 24px', borderRadius: 16,
               background: m.ativo ? 'rgba(243,238,228,0.04)' : 'rgba(243,238,228,0.02)',

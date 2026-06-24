@@ -239,7 +239,7 @@ export default function Dashboard() {
   }
   // Hub de produtos — porta de entrada do Polímata App
   if (modulo === 'hub') {
-    return <Hub onProjetos={() => { try { localStorage.removeItem('polimata_projeto_ativo_id') } catch (e) {} ; setProjetoAtivo(null); navigate('/ci') }} />
+    return <Hub onProjetos={() => { try { localStorage.removeItem('polimata_projeto_ativo_id') } catch (e) {} ; setProjetoAtivo(null); navigate('/ci') }} onAbrirModulo={(rota) => { if (projetoAtivo && produtoModulo(projetoAtivo.produto) !== moduloDaRota(rota)) { try { localStorage.removeItem('polimata_projeto_ativo_id') } catch (e) {} ; setProjetoAtivo(null) } navigate(rota) }} />
   }
   // Seletor de projetos — exibido quando nenhum projeto está selecionado
   if (!projetoAtivo && projetos.length > 0) {
