@@ -16,7 +16,7 @@ import SecaoPA from './modalRegistrarResultado/SecaoPA'
 import { calcularAmostra } from '../lib/amostragem'
 import ModalClassificacaoCausa from './ModalClassificacaoCausa'
 import { FASE_DESTINO_LABEL } from '../lib/amostragem'
-const ModalRegistrarResultado = ({ row, onClose, onSaved, responsaveis }) => {
+const ModalRegistrarResultado = ({ row, projeto, onClose, onSaved, responsaveis }) => {
   // ═══ STATE ═══
   const { user } = useAuth()
   const [saving, setSaving] = useState(false)
@@ -31,7 +31,7 @@ const ModalRegistrarResultado = ({ row, onClose, onSaved, responsaveis }) => {
   }
   const [submitting, setSubmitting] = useState(false)
   const [notaReprovacao, setNotaReprovacao] = useState(null)
-  const faseAtual = getFaseAtual(row || {})
+  const faseAtual = getFaseAtual(row || {}, projeto?.num_fases ?? 5, projeto?.f1_tem_teste === true)
   const faseInfo = getFaseInfo(row || {})
   const isReprovado = row?.status_workflow === 'reprovado'
   // Fases que causam regressão ao marcar Inefetivo/GAP

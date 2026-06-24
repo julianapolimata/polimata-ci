@@ -85,8 +85,8 @@ export function isYellowish(c) { return c === 'EAB308' || c === 'FACC15' }
 export function impToIdx(v) { return { 'Crítico': 0, 'Alto': 1, 'Moderado': 2, 'Baixo': 3 }[v] ?? -1 }
 export function probToIdx(v) { return { 'Extrema': 0, 'Alta': 1, 'Média': 2, 'Baixa': 3 }[v] ?? -1 }
 
-export function getFaseLabel(row) {
-  return getFaseLabelUtil(row)
+export function getFaseLabel(row, numFases, comTeste) {
+  return getFaseLabelUtil(row, numFases, comTeste)
 }
 
 export function getResultadoColor(valor) {

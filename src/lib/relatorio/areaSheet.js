@@ -43,7 +43,7 @@ const DETAIL_COLUMNS = [
 
 const RESULTADO_KEYS = new Set(['_vitrine_resultado', '_hist_f1', '_hist_f2d', '_hist_f2e', '_hist_f3', '_hist_f4c1', '_hist_f4c2', '_hist_f5'])
 
-export function getCellValue(row, col) {
+export function getCellValue(row, col, numFases, comTeste) {
   if (col.key === '_vitrine_resultado') return vitrineResultado(row)
   if (col.key === '_vitrine_incons') return vitrineIncons(row)
   if (col.key === '_vitrine_rec') return vitrineRec(row)
@@ -54,7 +54,7 @@ export function getCellValue(row, col) {
   if (col.key === '_hist_f4c1') return fmtHist(row.r_f4c1)
   if (col.key === '_hist_f4c2') return fmtHist(row.r_f4c2)
   if (col.key === '_hist_f5') return fmtHist(row.r_f5)
-  if (col.key === 'fase') return getFaseLabel(row) || '—'
+  if (col.key === 'fase') return getFaseLabel(row, numFases, comTeste) || '—'
   if (col.key === 'status_atual') {
     const cfg = getStatusConfig(getStatusComputado(row), 'admin_polimata')
     return cfg.label || '—'
@@ -69,7 +69,7 @@ export function getCellValue(row, col) {
   return raw != null && raw !== '' ? raw : '—'
 }
 
-function buildAreaSheet(wb, areaNome, controles, iconId, clienteNome, projetoNome, isDiag = false) {
+function buildAreaSheet(wb, areaNome, controles, iconId, clienteNome, projetoNome, isDiag = false, numFases, comTeste) {
   const lastCol = DETAIL_COLUMNS.length + 1
   const sheetName = (areaNome || 'Sem Área').substring(0, 31)
   const ws = wb.addWorksheet(sheetName, {
@@ -104,7 +104,7 @@ function buildAreaSheet(wb, areaNome, controles, iconId, clienteNome, projetoNom
 
     DETAIL_COLUMNS.forEach((col, colIdx) => {
       const cell = excelRow.getCell(colIdx + 2)
-      const value = getCellValue(row, col)
+      const value = getCellValue(row, col, numFases, comTeste)
       cell.value = value
       cell.font = { ...BODY_FONT }
       cell.alignment = { vertical: 'top', wrapText: true }

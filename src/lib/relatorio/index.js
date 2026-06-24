@@ -16,9 +16,11 @@ export async function gerarRelatorioExcel({ controles, areas, secoes, clienteNom
   const iconId = iconBase64 ? wb.addImage({ base64: iconBase64, extension: 'png' }) : null
 
   const isDiag = projeto?.f1_tem_teste === false
+  const numFases = projeto?.num_fases ?? 5
+  const comTeste = projeto?.f1_tem_teste === true
 
   if (secoes.resumo) {
-    buildResumoSheet(wb, controles, areas, iconId, clienteNome, projetoNome, isDiag)
+    buildResumoSheet(wb, controles, areas, iconId, clienteNome, projetoNome, isDiag, numFases, comTeste)
   }
 
   if (secoes.detalhamento) {
@@ -30,7 +32,7 @@ export async function gerarRelatorioExcel({ controles, areas, secoes, clienteNom
     })
     const sortedAreas = Object.values(areaMap).sort((a, b) => (a.nome || '').localeCompare(b.nome || ''))
     sortedAreas.forEach(a => {
-      buildAreaSheet(wb, a.nome, a.controles, iconId, clienteNome, projetoNome, isDiag)
+      buildAreaSheet(wb, a.nome, a.controles, iconId, clienteNome, projetoNome, isDiag, numFases, comTeste)
     })
   }
 
@@ -39,7 +41,7 @@ export async function gerarRelatorioExcel({ controles, areas, secoes, clienteNom
   }
 
   if (secoes.planos) {
-    buildPlanosSheet(wb, controles, iconId, clienteNome, projetoNome, isDiag)
+    buildPlanosSheet(wb, controles, iconId, clienteNome, projetoNome, isDiag, numFases, comTeste)
   }
 
   const buffer = await wb.xlsx.writeBuffer()

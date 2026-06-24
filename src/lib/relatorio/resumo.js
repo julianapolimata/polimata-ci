@@ -13,7 +13,7 @@ const {
   getResultadoColor, getCritColor,
 } = S
 
-function buildResumoSheet(wb, controles, areas, iconId, clienteNome, projetoNome, isDiag = false) {
+function buildResumoSheet(wb, controles, areas, iconId, clienteNome, projetoNome, isDiag = false, numFases, comTeste) {
   const lastCol = 8
   const ws = wb.addWorksheet('Resumo Executivo', {
     views: [{ showGridLines: false }],
@@ -86,7 +86,7 @@ function buildResumoSheet(wb, controles, areas, iconId, clienteNome, projetoNome
 
   const faseCount = {}
   controles.forEach(c => {
-    const label = getFaseLabel(c) || 'Não Iniciado'
+    const label = getFaseLabel(c, numFases, comTeste) || 'Não Iniciado'
     faseCount[label] = (faseCount[label] || 0) + 1
   })
 

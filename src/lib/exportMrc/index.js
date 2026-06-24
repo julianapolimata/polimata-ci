@@ -6,7 +6,7 @@ import { buildHeatmapSheet } from './heatmapSheet'
 import { buildMRCSheet } from './mrcSheet'
 import { fetchIconBase64 } from './_shared'
 
-export async function exportarMRCExcel(controles, nomeArquivo, tituloAba = 'MRC', clienteNome = '', projetoNome = '') {
+export async function exportarMRCExcel(controles, nomeArquivo, tituloAba = 'MRC', clienteNome = '', projetoNome = '', projeto = null) {
   const wb = new ExcelJS.Workbook()
   wb.creator = 'CI Polímata'
   wb.created = new Date()
@@ -40,7 +40,9 @@ export async function exportarMRCExcel(controles, nomeArquivo, tituloAba = 'MRC'
   }
 
   buildHeatmapSheet(wb, controles, iconId, clienteNome, projetoNome)
-  buildMRCSheet(wb, controles, tituloAba, iconId, clienteNome, projetoNome, regressoesMap)
+  const numFases = projeto?.num_fases ?? 5
+  const comTeste = projeto?.f1_tem_teste === true
+  buildMRCSheet(wb, controles, tituloAba, iconId, clienteNome, projetoNome, regressoesMap, numFases, comTeste)
 
   const buffer = await wb.xlsx.writeBuffer()
   const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })

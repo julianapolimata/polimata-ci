@@ -26,7 +26,7 @@ const PLANO_COLUMNS = [
   { key: 'fase', header: 'Fase Atual', width: 22 },
 ]
 
-function buildPlanosSheet(wb, controles, iconId, clienteNome, projetoNome, isDiag = false) {
+function buildPlanosSheet(wb, controles, iconId, clienteNome, projetoNome, isDiag = false, numFases, comTeste) {
   // Only controls that have inconsistencies or non-effective results
   const planosControles = controles.filter(c => {
     const resultado = (vitrineResultado(c) || '').toLowerCase()
@@ -68,7 +68,7 @@ function buildPlanosSheet(wb, controles, iconId, clienteNome, projetoNome, isDia
 
     PLANO_COLUMNS.forEach((col, colIdx) => {
       const cell = excelRow.getCell(colIdx + 2)
-      const value = getCellValue(row, col)
+      const value = getCellValue(row, col, numFases, comTeste)
       cell.value = value
       cell.font = { ...BODY_FONT }
       cell.alignment = { vertical: 'top', wrapText: true }

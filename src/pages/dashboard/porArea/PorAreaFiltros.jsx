@@ -37,7 +37,7 @@ export default function PorAreaFiltros({ ctx }) {
                   {excelMenuAberto && (
                     <div style={{ position: 'absolute', right: 0, top: 'calc(100% + 6px)', background: 'white', border: '1px solid var(--lt-border)', borderRadius: 8, boxShadow: '0 8px 24px rgba(0,0,0,0.08)', minWidth: 220, zIndex: 100, overflow: 'hidden' }}>
                       <button
-                        onClick={() => { setExcelMenuAberto(false); exportarMRCExcel(cf, `MRC_${nome.replace(/\s+/g, '_')}_${new Date().toISOString().slice(0,10)}`, nome, formatNomeEmpresa(projeto?.clientes?.nome_fantasia || projeto?.clientes?.nome) || '', projeto?.nome || '') }}
+                        onClick={() => { setExcelMenuAberto(false); exportarMRCExcel(cf, `MRC_${nome.replace(/\s+/g, '_')}_${new Date().toISOString().slice(0,10)}`, nome, formatNomeEmpresa(projeto?.clientes?.nome_fantasia || projeto?.clientes?.nome) || '', projeto?.nome || '', projeto) }}
                         style={{ display: 'block', width: '100%', textAlign: 'left', padding: '10px 14px', border: 'none', background: 'transparent', fontFamily: 'inherit', fontSize: 12, fontWeight: 600, color: 'var(--lt-text)', cursor: 'pointer' }}
                         onMouseEnter={e => e.currentTarget.style.background = 'var(--lt-bg)'}
                         onMouseLeave={e => e.currentTarget.style.background = 'transparent'}

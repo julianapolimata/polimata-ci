@@ -12,7 +12,7 @@ const {
   infoLine, fillCreme,
 } = S
 
-function buildMRCSheet(wb, controles, tituloAba, iconId, clienteNome, projetoNome, regressoesMap = {}) {
+function buildMRCSheet(wb, controles, tituloAba, iconId, clienteNome, projetoNome, regressoesMap = {}, numFases, comTeste) {
   // Determinar quantas colunas de regressão são necessárias
   const maxRegressoes = Math.max(0, ...controles.map(c => c.num_regressoes || 0))
   const regCols = []
@@ -167,7 +167,7 @@ function buildMRCSheet(wb, controles, tituloAba, iconId, clienteNome, projetoNom
         value = fmtHist(row.r_f5)
       // Campos computados — fase e status
       } else if (col.key === 'fase') {
-        value = getFaseLabel(row)
+        value = getFaseLabel(row, numFases, comTeste)
       } else if (col.key === 'status_atual') {
         const cfg = getStatusConfig(getStatusComputado(row), 'admin_polimata')
         value = cfg.label || '—'
