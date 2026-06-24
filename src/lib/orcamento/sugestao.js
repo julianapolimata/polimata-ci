@@ -70,7 +70,8 @@ export function sugerir(metodo, serieAnoAnterior, serieDoisAnosAtras, opts = {})
 // Métodos aplicáveis: media_movel, tendencia. Demais exigem ano anterior → retorna nulls.
 export function sugerirIntraAno(metodo, serieAnoCorrente, opts = {}) {
   const s = serieAnoCorrente || Array(12).fill(null)
-  const dados = mesesComDado(s)
+  const excl = opts.excluirMeses || [] // índices 0-based a ignorar da base (ex.: mês corrente em aberto)
+  const dados = mesesComDado(s).filter(x => !excl.includes(x.i))
   const out = Array(12).fill(null)
   const mesInicio = Number.isInteger(opts.mesInicio) ? opts.mesInicio : 6 // Jul
   if (!dados.length) return out

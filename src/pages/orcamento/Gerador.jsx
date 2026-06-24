@@ -21,6 +21,9 @@ export default function Gerador({ projeto }) {
   const ehIntra = base === 'intra'
   const defMet = ehIntra ? 'media_movel' : 'repeticao'
   const temAlgum = (serie) => !!(serie && serie.some(v => v !== null && v !== undefined))
+  // no ano corrente, ignora o mês em aberto (ainda não fechado) como base da projeção
+  const hojeRef = new Date()
+  const mesesExcluir = ehIntra && ano === hojeRef.getFullYear() ? [hojeRef.getMonth()] : []
 
   useEffect(() => { carregarIndices().then(setIndices).catch(() => setIndices([])) }, [])
   useEffect(() => {
@@ -56,7 +59,7 @@ export default function Gerador({ projeto }) {
           const serie = d.realPorCat[c.id]?.[ano]
           if (!temAlgum(serie)) return
           const met = METODOS.find(m => m.id === cfg.metodo)?.intraAno ? cfg.metodo : 'media_movel'
-          const vals = sugerirIntraAno(met, serie, { janela: cfg.params.janela, mesInicio: 6 })
+          const vals = sugerirIntraAno(met, serie, { janela: cfg.params.janela, mesInicio: 6, excluirMeses: mesesExcluir })
           if (!vals.some(v => v !== null && v !== undefined)) return
           linhas.push({ cat: c, vals, metodo: met, just: `Método ${METODOS.find(m => m.id === met)?.nome} — projeção do 2º semestre (Jul–Dez) sobre o realizado de ${ano}.`, conf: 70 })
           return
@@ -113,7 +116,7 @@ export default function Gerador({ projeto }) {
       <ErroBox erro={d.erro} onClose={() => d.setErro('')} />
       {msg && <div style={{ background: 'rgba(34,185,138,0.08)', border: '1px solid rgba(34,185,138,0.35)', borderRadius: 8, padding: '8px 14px', fontSize: 12.5, marginBottom: 14 }}>{msg}</div>}
       <HelpTag><strong>Ponto de partida inteligente:</strong> em vez de orçar do zero, o sistema analisa o realizado histórico, identifica padrões, busca índices de mercado e propõe valores. Você edita só o que precisa de ajuste.</HelpTag>
-      {ehIntra && <div style={{ background: 'rgba(204,145,94,0.10)', border: '1px solid rgba(204,145,94,0.4)', borderRadius: 8, padding: '9px 14px', fontSize: 12, margin: '0 0 14px' }}><strong>Modo completar o ano corrente:</strong> sem histórico de anos anteriores, o sistema projeta os meses de <strong>Jul–Dez</strong> a partir do que já foi realizado em {ano}. Aplicam-se <strong>Média móvel</strong> e <strong>Tendência linear</strong>; os demais métodos exigem um ano fechado e ficam indisponíveis. Com poucos meses, a tendência tende a oscilar — a média móvel costuma ser mais estável.</div>}
+      {ehIntra && <div style={{ background: 'rgba(204,145,94,0.10)', border: '1px solid rgba(204,145,94,0.4)', borderRadius: 8, padding: '9px 14px', fontSize: 12, margin: '0 0 14px' }}><strong>Modo completar o ano corrente:</strong> sem histórico de anos anteriores, o sistema projeta os meses de <strong>Jul–Dez</strong> a partir do que já foi realizado em {ano}. Aplicam-se <strong>Média móvel</strong> e <strong>Tendência linear</strong>; os demais métodos exigem um ano fechado e ficam indisponíveis. Com poucos meses, a tendência tende a oscilar — a média móvel costuma ser mais estável. O mês corrente em aberto é ignorado automaticamente como base, para não distorcer a projeção.</div>}
 
       <Card titulo="Configuração de Método por Categoria" extra={<span style={{ fontSize: 11, color: 'var(--lt-text3)' }}>Os 6 métodos têm o mesmo peso — escolha o que faz sentido para cada conta</span>} pad={false}>
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
