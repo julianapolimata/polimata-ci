@@ -59,6 +59,7 @@ const ModalRegistrarCriticidade = ({ row, onClose, onSaved }) => {
         prob: probabilidade === '0' ? 'N/A' : PROB_NUM2LABEL[parseInt(probabilidade)] || null,
         crit: criticidade,
         crit_label: critLabel.label || null,
+        crit_revalidar: false,
         atualizado_em: new Date().toISOString(),
       }
       const { error } = await supabase.from('mrc').update(payload).eq('id', row.id)

@@ -102,7 +102,7 @@ export default function PorArea({ projeto, areasCalc, todosControles, loading, n
 
   // Retorna config de status (label, color, bg) baseado no perfil ativo (real ou simulado)
   function getStatusBadge(sw, c) {
-    if (sw === 'aprovado' && c?.crit != null) return CONFIG_CONCLUIDO
+    if (sw === 'aprovado' && c?.crit != null && !c?.crit_revalidar) return CONFIG_CONCLUIDO
     return getStatusConfig(sw, papelAtivo)
   }
 
@@ -112,7 +112,7 @@ export default function PorArea({ projeto, areasCalc, todosControles, loading, n
     const alertas = []
     const sw = c.status_workflow
     const rv = (getResultadoVitrine(c, projeto) || '').toLowerCase()
-    const faltaCriticidade = rv && rv !== '—' && rv !== 'teste não realizado' && (!c.imp || !c.prob)
+    const faltaCriticidade = rv && rv !== '—' && rv !== 'teste não realizado' && (!c.imp || !c.prob || c.crit_revalidar)
     // Devolvido (reprovado na revisão) — prioridade máxima
     if (sw === 'reprovado' && !isCliente) alertas.push({ label: 'Em Correção', color: '#DC2626', bg: 'rgba(239,68,68,0.08)' })
     // Ficha pendente: salvou dados mas não baixou a ficha de teste
@@ -209,9 +209,9 @@ export default function PorArea({ projeto, areasCalc, todosControles, loading, n
     if (filtStatus) {
       const sw = getStatusComputado(c, projeto?.num_fases, projeto?.f1_tem_teste === true)
       if (filtStatus === 'criticidade_pendente') {
-        if (!(sw === 'aprovado' && c.crit == null)) return false
+        if (!(sw === 'aprovado' && (c.crit == null || c.crit_revalidar))) return false
       } else if (filtStatus === 'concluido') {
-        if (!(sw === 'aprovado' && c.crit != null)) return false
+        if (!(sw === 'aprovado' && c.crit != null && !c.crit_revalidar)) return false
       } else if (isCliente && filtStatus === 'em_analise') {
         if (!['em_analise', 'teste_pendente', 'reprovado'].includes(sw)) return false
       } else if (sw !== filtStatus) return false
@@ -387,8 +387,8 @@ export default function PorArea({ projeto, areasCalc, todosControles, loading, n
     const podeEditarEste = canEditControle(c)
     if (canRevisar && st === 'em_revisao') return { primary: { label: 'Revisar', color: '#1D4ED8', bg: 'rgba(59,130,246,0.12)', border: 'rgba(59,130,246,0.30)', onClick: () => { setRowRevisar(c); setModalRow(null) } } }
     if (st === 'em_revisao') return { bloqueado: true } // em revisão: edição travada p/ quem não revisa
-    if (st === 'aprovado' && !c.crit && canEdit) return { primary: { label: 'Avaliar Criticidade', color: '#9A3412', bg: 'rgba(234,88,12,0.10)', border: 'rgba(234,88,12,0.30)', onClick: () => { setRowCriticidade(c); setModalRow(null) } } }
-    if (st === 'aprovado' && c.crit != null) return canEdit ? { primary: { label: '↺ Reavaliar', color: '#0F766E', bg: 'rgba(20,184,166,0.10)', border: 'rgba(20,184,166,0.30)', onClick: () => { setReavaliarRow({ c, modo: 'solicitar' }); setModalRow(null) } } } : { bloqueado: true }
+    if (st === 'aprovado' && (!c.crit || c.crit_revalidar) && canEdit) return { primary: { label: 'Avaliar Criticidade', color: '#9A3412', bg: 'rgba(234,88,12,0.10)', border: 'rgba(234,88,12,0.30)', onClick: () => { setRowCriticidade(c); setModalRow(null) } } }
+    if (st === 'aprovado' && c.crit != null && !c.crit_revalidar) return canEdit ? { primary: { label: '↺ Reavaliar', color: '#0F766E', bg: 'rgba(20,184,166,0.10)', border: 'rgba(20,184,166,0.30)', onClick: () => { setReavaliarRow({ c, modo: 'solicitar' }); setModalRow(null) } } } : { bloqueado: true }
     if (st === 'reavaliacao_pendente') return canRevisar ? { primary: { label: 'Decidir Reavaliação', color: '#7C3AED', bg: 'rgba(124,58,237,0.10)', border: 'rgba(124,58,237,0.30)', onClick: () => { setReavaliarRow({ c, modo: 'decidir' }); setModalRow(null) } } } : { bloqueado: true }
     if (isDiagnostico && podeEditarEste) return st === 'rascunho' ? { primary: { label: '▶ Continuar', color: '#92400E', bg: 'rgba(234,179,8,0.15)', border: 'rgba(234,179,8,0.40)', onClick: () => { setDraftRow(c); setModalRow(null) } } } : { primary: { label: '✏ Editar', color: 'var(--copper-text)', bg: 'rgba(204,145,94,0.12)', border: 'rgba(204,145,94,0.30)', onClick: () => { setAtualizarRow(c); setModalRow(null) } } }
     if (podeEditarEste && st === 'rascunho') return { primary: { label: '▶ Continuar', color: '#92400E', bg: 'rgba(234,179,8,0.15)', border: 'rgba(234,179,8,0.40)', onClick: () => { setDraftRow(c); setModalRow(null) } } }
@@ -403,7 +403,7 @@ export default function PorArea({ projeto, areasCalc, todosControles, loading, n
 
       <PorAreaFiltros ctx={ctx} />
       <PorAreaTabela ctx={ctx} />
-      {modalRow && (() => { const acts = getModalActions(modalRow); return <ModalDetalhe row={modalRow} projeto={projeto} onClose={() => setModalRow(null)} onEditar={canEditControle(modalRow) && !acts.primary && !acts.bloqueado ? () => { setAtualizarRow(modalRow); setModalRow(null) } : undefined} primaryAction={acts.primary} secondaryAction={acts.secondary} onAnalisarCriticidade={canEdit && modalRow.status_workflow === 'aprovado' && modalRow.crit == null ? () => { setRowCriticidade(modalRow); setModalRow(null) } : undefined} verAprovacoes={!isCliente} /> })()}
+      {modalRow && (() => { const acts = getModalActions(modalRow); return <ModalDetalhe row={modalRow} projeto={projeto} onClose={() => setModalRow(null)} onEditar={canEditControle(modalRow) && !acts.primary && !acts.bloqueado ? () => { setAtualizarRow(modalRow); setModalRow(null) } : undefined} primaryAction={acts.primary} secondaryAction={acts.secondary} onAnalisarCriticidade={canEdit && modalRow.status_workflow === 'aprovado' && (modalRow.crit == null || modalRow.crit_revalidar) ? () => { setRowCriticidade(modalRow); setModalRow(null) } : undefined} verAprovacoes={!isCliente} /> })()}
       {atualizarRow && <ModalAtualizar row={atualizarRow} irParaFicha={atualizarFicha} onClose={() => { setAtualizarRow(null); setAtualizarFicha(false) }} onSaved={() => { setAtualizarRow(null); setAtualizarFicha(false); if (projeto?.id) loadDados(projeto.id) }} areas={areasCalc} projeto={projeto} />}
       {modalNovoRisco && <ModalNovoRisco onClose={() => setModalNovoRisco(false)} onSaved={() => { setModalNovoRisco(false); if (projeto?.id) loadDados(projeto.id) }} areas={areasCalc} projeto={projeto} areaFixa={area} />}
       {draftRow && <ModalNovoRisco key={draftRow.id} draft={draftRow} onClose={() => setDraftRow(null)} onSaved={() => { setDraftRow(null); if (projeto?.id) loadDados(projeto.id) }} areas={areasCalc} projeto={projeto} areaFixa={area} />}

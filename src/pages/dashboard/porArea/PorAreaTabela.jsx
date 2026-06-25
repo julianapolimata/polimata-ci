@@ -42,9 +42,9 @@ export default function PorAreaTabela({ ctx }) {
                         primary = { label: 'Revisar', color: '#1D4ED8', bg: 'rgba(59,130,246,0.12)', border: 'rgba(59,130,246,0.30)', onClick: () => setRowRevisar(c) }
                       } else if (st === 'em_revisao') {
                         // Em revisão: edição bloqueada até a revisora concluir
-                      } else if (st === 'aprovado' && !c.crit && canEdit) {
+                      } else if (st === 'aprovado' && (!c.crit || c.crit_revalidar) && canEdit) {
                         primary = { label: 'Avaliar Criticidade', color: '#9A3412', bg: 'rgba(234,88,12,0.10)', border: 'rgba(234,88,12,0.30)', onClick: () => setRowCriticidade(c) }
-                      } else if (st === 'aprovado' && c.crit != null) {
+                      } else if (st === 'aprovado' && c.crit != null && !c.crit_revalidar) {
                         if (canEdit) primary = { label: '↺ Reavaliar', color: '#0F766E', bg: 'rgba(20,184,166,0.10)', border: 'rgba(20,184,166,0.30)', onClick: () => setReavaliarRow({ c, modo: 'solicitar' }) }
                       } else if (st === 'reavaliacao_pendente') {
                         if (canRevisar) primary = { label: 'Decidir Reavaliação', color: '#7C3AED', bg: 'rgba(124,58,237,0.10)', border: 'rgba(124,58,237,0.30)', onClick: () => setReavaliarRow({ c, modo: 'decidir' }) }

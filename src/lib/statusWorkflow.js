@@ -50,7 +50,7 @@ const CONFIG_CLIENTE = {
 
 // Concluído (derivado): aprovado + criticidade avaliada
 export const CONFIG_CONCLUIDO = { label: 'Concluído', color: '#0F766E', bg: 'rgba(20,184,166,0.10)' }
-export function isConcluido(c) { return c?.status_workflow === 'aprovado' && c?.crit != null }
+export function isConcluido(c) { return c?.status_workflow === 'aprovado' && c?.crit != null && !c?.crit_revalidar }
 
 // Fallback para status desconhecido
 const FALLBACK = { label: '—', color: 'var(--lt-text3)', bg: 'rgba(0,32,62,0.03)' }
