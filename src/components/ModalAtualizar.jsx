@@ -388,7 +388,7 @@ const ModalAtualizar = ({ row, onClose, onSaved, areas, projeto, irParaFicha }) 
         ...(isDiag ? { existencia: existencia || null } : {}),
         dt_implementacao: dtImplementacao || null,
         status_workflow: 'teste_pendente',
-        ...((row.crit != null && (mudouRiscoControle() || row.reavaliacao_solicitada_por)) ? { imp: null, prob: null, crit: null } : {}),
+        ...((row.crit != null && mudouRiscoControle()) ? { imp: null, prob: null, crit: null } : {}),
         atualizado_em: new Date().toISOString(),
         atualizado_por: perfil?.id,
       }
@@ -437,7 +437,7 @@ const ModalAtualizar = ({ row, onClose, onSaved, areas, projeto, irParaFicha }) 
         dt_implementacao: dtImplementacao || null,
         status_workflow: podeAprovarDiag ? 'aprovado' : 'em_revisao',
         edicao_pendente: !isDiag,
-        ...((row.crit != null && (mudouRiscoControle() || row.reavaliacao_solicitada_por)) ? { imp: null, prob: null, crit: null } : {}),
+        ...((row.crit != null && mudouRiscoControle()) ? { imp: null, prob: null, crit: null } : {}),
         submetido_por: perfil?.id,
         submetido_em: new Date().toISOString(),
         atualizado_em: new Date().toISOString(),
