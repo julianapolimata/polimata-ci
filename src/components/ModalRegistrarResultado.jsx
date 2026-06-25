@@ -68,7 +68,7 @@ const ModalRegistrarResultado = ({ row, projeto, onClose, onSaved, responsaveis 
   const [paResp, setPaResp] = useState(row?.resp_pa || '')
   const [paPrazo, setPaPrazo] = useState(row?.dt_pa || '')
   const [paStatus, setPaStatus] = useState(row?.st_pa || 'pendente')
-  const [justificativaPA, setJustificativaPA] = useState('')
+  const [justificativaPA, setJustificativaPA] = useState(row?.pa_justificativa || '')
   const [classificacao, setClassificacao] = useState(row?.causa_raiz ? { causaRaiz: row.causa_raiz, destino: row.regressao_destino, nFalhas: row.n_falhas, nTestado: row.n_amostra, justificativa: row.regressao_justificativa || '' } : null)
   const [showClassif, setShowClassif] = useState(false)
 
@@ -111,6 +111,7 @@ const ModalRegistrarResultado = ({ row, projeto, onClose, onSaved, responsaveis 
       resp_pa: resultado !== 'efetivo' && temPA === 'sim' ? paResp : null,
       dt_pa: resultado !== 'efetivo' && temPA === 'sim' ? paPrazo : null,
       st_pa: resultado !== 'efetivo' && temPA === 'sim' ? paStatus : null,
+      pa_justificativa: resultado !== 'efetivo' && temPA === 'nao' ? (justificativaPA?.trim() || null) : null,
     }
     // Se é regressão, incrementar contador
     if (isRegressao) {
