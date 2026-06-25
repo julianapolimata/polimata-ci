@@ -208,10 +208,11 @@ export default function Dashboard() {
     setLoading(true)
     try {
       // Buscar áreas, controles e maturidade em paralelo (maturidade vem do banco via RPC)
-      const [areasRes, mrcRes, matRes] = await Promise.all([
+      const [areasRes, mrcRes, matRes, projRes] = await Promise.all([
         supabase.from('areas').select('id, nome, prefixo, peso, gerente, ordem').eq('projeto_id', pid).order('ordem'),
         supabase.from('mrc').select('*').eq('projeto_id', pid),
         supabase.from('vw_maturidade_areas').select('area_id, percentual, nivel, nome, total_controles, efetivos, inefetivos, gaps, regredidos').eq('projeto_id', pid),
+        supabase.from('projetos').select('*, clientes(nome, nome_fantasia, slug)').eq('id', pid).single(),
       ])
       const controles = mrcRes.data || [], areas = areasRes.data || []
       const matData = matRes.data || []
@@ -228,6 +229,10 @@ export default function Dashboard() {
       })
       const resOrdenado = [...res].sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'))
       setAreasCalc(resOrdenado); setTodosControles(controles)
+      // Atualiza o objeto do projeto se a config mudou (ex.: promoção liga f1_tem_teste/num_fases),
+      // pra a visão (e a barra de maturidade) trocar sozinha — sem F5. Mantém a referência se nada mudou (evita loop).
+      const proj = projRes?.data
+      if (proj) setProjetoAtivo(prev => (prev && prev.id === proj.id && prev.f1_tem_teste === proj.f1_tem_teste && prev.num_fases === proj.num_fases && prev.matriz_tamanho === proj.matriz_tamanho) ? prev : proj)
     } catch (err) {
       console.error('Erro ao carregar dados:', err)
     } finally {
