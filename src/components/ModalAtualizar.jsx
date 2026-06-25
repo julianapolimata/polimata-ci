@@ -56,7 +56,8 @@ const ModalAtualizar = ({ row, onClose, onSaved, areas, projeto, irParaFicha }) 
   const [saving, setSaving] = useState(false)
   const [perfil, setPerfil] = useState(null)
   const donoControle = row?.consultor_id || row?.submetido_por || row?.criado_por
-  const podeAprovarDiag = isDiag && ['admin_polimata', 'gerente_polimata'].includes(perfil?.papel) && (!donoControle || donoControle === perfil?.id)
+  const podeAprovarSolo = ['admin_polimata', 'gerente_polimata'].includes(perfil?.papel) && (!donoControle || donoControle === perfil?.id)
+  const podeAprovarDiag = isDiag && podeAprovarSolo
   const [showHistorico, setShowHistorico] = useState(false)
   // Solicitações v2: passos de teste com checkbox para gerar solicitação
   const [passos, setPassos] = useState([])
@@ -327,10 +328,16 @@ const ModalAtualizar = ({ row, onClose, onSaved, areas, projeto, irParaFicha }) 
       }
       // item 11: reabrir blocos selecionados para nova aprovação
       if (blocosReabrir.length) {
-        for (const b of blocosReabrir) {
-          try { await reabrirBloco({ mrcId: row.id, bloco: b, fase: faseDoBloco(b, row, projeto) }) } catch (e) { console.error('reabrirBloco:', e) }
+        if (podeAprovarSolo) {
+          for (const b of blocosReabrir) {
+            try { await setBlocoStatus({ mrcId: row.id, bloco: b, fase: faseDoBloco(b, row, projeto), status: 'aprovado', revisorId: perfil?.id }) } catch (e) { console.error('auto-aprovar bloco:', e) }
+          }
+        } else {
+          for (const b of blocosReabrir) {
+            try { await reabrirBloco({ mrcId: row.id, bloco: b, fase: faseDoBloco(b, row, projeto) }) } catch (e) { console.error('reabrirBloco:', e) }
+          }
+          await supabase.from('mrc').update({ status_workflow: 'em_revisao' }).eq('id', row.id)
         }
-        await supabase.from('mrc').update({ status_workflow: 'em_revisao' }).eq('id', row.id)
       }
       const ficha = await gerarFichaRiscoExcel({
         row,
@@ -406,10 +413,16 @@ const ModalAtualizar = ({ row, onClose, onSaved, areas, projeto, irParaFicha }) 
       logAtualizarControle(row, row.projeto_id)
       // item 11: reabrir blocos selecionados para nova aprovação
       if (blocosReabrir.length) {
-        for (const b of blocosReabrir) {
-          try { await reabrirBloco({ mrcId: row.id, bloco: b, fase: faseDoBloco(b, row, projeto) }) } catch (e) { console.error('reabrirBloco:', e) }
+        if (podeAprovarSolo) {
+          for (const b of blocosReabrir) {
+            try { await setBlocoStatus({ mrcId: row.id, bloco: b, fase: faseDoBloco(b, row, projeto), status: 'aprovado', revisorId: perfil?.id }) } catch (e) { console.error('auto-aprovar bloco:', e) }
+          }
+        } else {
+          for (const b of blocosReabrir) {
+            try { await reabrirBloco({ mrcId: row.id, bloco: b, fase: faseDoBloco(b, row, projeto) }) } catch (e) { console.error('reabrirBloco:', e) }
+          }
+          await supabase.from('mrc').update({ status_workflow: 'em_revisao' }).eq('id', row.id)
         }
-        await supabase.from('mrc').update({ status_workflow: 'em_revisao' }).eq('id', row.id)
       }
       alert('✅ Salvo com sucesso! Status: TESTE PENDENTE')
       setComentarioFor({ controleId: row?.id, acao: 'Controle atualizado' })
@@ -435,7 +448,7 @@ const ModalAtualizar = ({ row, onClose, onSaved, areas, projeto, irParaFicha }) 
         cenario_atual: cenarioAtual.trim() || null,
         ...(isDiag ? { existencia: existencia || null, rec: recomendacao || null } : {}),
         dt_implementacao: dtImplementacao || null,
-        status_workflow: podeAprovarDiag ? 'aprovado' : 'em_revisao',
+        status_workflow: podeAprovarSolo ? 'aprovado' : 'em_revisao',
         edicao_pendente: !isDiag,
         ...((row.crit != null && mudouRiscoControle()) ? { crit_revalidar: true } : {}),
         submetido_por: perfil?.id,
@@ -447,7 +460,7 @@ const ModalAtualizar = ({ row, onClose, onSaved, areas, projeto, irParaFicha }) 
       if (error) throw error
       if (!_u || _u.length === 0) throw new Error('Não foi possível gravar (0 registros — verifique permissões/conexão).')
       if (!isDiag) { try { await syncPassosESolicitacoes({ controle: row, passos, projetoId: row.projeto_id }) } catch (e) { console.error('syncPassos:', e) } }
-      if (podeAprovarDiag) {
+      if (podeAprovarSolo) {
         for (const b of blocosAplicaveis(projeto)) {
           try { await setBlocoStatus({ mrcId: row.id, bloco: b, fase: faseDoBloco(b, row, projeto), status: 'aprovado', revisorId: perfil?.id }) } catch (e) { console.error('aprovar bloco:', e) }
         }

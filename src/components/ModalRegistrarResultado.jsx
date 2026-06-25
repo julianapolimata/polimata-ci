@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase'
 import { useConfirm } from './ConfirmDialog'
 import { useAuth } from '../contexts/AuthContext'
 import { getFaseAtual } from '../lib/fases'
+import { setBlocoStatus, blocosAplicaveis, faseDoBloco } from '../lib/aprovacoesBloco'
 import { logRegistrarResultado, logRegressao } from '../lib/auditLog'
 import { getFaseInfo } from '../lib/fases'
 
@@ -18,7 +19,7 @@ import ModalClassificacaoCausa from './ModalClassificacaoCausa'
 import { FASE_DESTINO_LABEL } from '../lib/amostragem'
 const ModalRegistrarResultado = ({ row, projeto, onClose, onSaved, responsaveis }) => {
   // ═══ STATE ═══
-  const { user } = useAuth()
+  const { user, perfil } = useAuth()
   const [saving, setSaving] = useState(false)
   const { confirm } = useConfirm()
   const [dirty, setDirty] = useState(false)
@@ -32,6 +33,8 @@ const ModalRegistrarResultado = ({ row, projeto, onClose, onSaved, responsaveis 
   const [submitting, setSubmitting] = useState(false)
   const [notaReprovacao, setNotaReprovacao] = useState(null)
   const faseAtual = getFaseAtual(row || {}, projeto?.num_fases ?? 5, projeto?.f1_tem_teste === true)
+  const donoCtrl = row?.consultor_id || row?.submetido_por || row?.criado_por
+  const podeAprovar = ['admin_polimata', 'gerente_polimata'].includes(perfil?.papel) && (!donoCtrl || donoCtrl === perfil?.id)
   const faseInfo = getFaseInfo(row || {})
   const isReprovado = row?.status_workflow === 'reprovado'
   // Fases que causam regressão ao marcar Inefetivo/GAP
@@ -159,7 +162,7 @@ const ModalRegistrarResultado = ({ row, projeto, onClose, onSaved, responsaveis 
     setSubmitting(true)
     try {
       const payload = buildUpdatePayload()
-      payload.status_workflow = 'em_revisao'
+      payload.status_workflow = podeAprovar ? 'aprovado' : 'em_revisao'
       payload.submetido_por = user?.id || null
       payload.submetido_em = new Date().toISOString()
 
@@ -170,6 +173,13 @@ const ModalRegistrarResultado = ({ row, projeto, onClose, onSaved, responsaveis 
 
       if (error) throw error
 
+      // Solo (sem consultor/dono): auto-aprova os blocos aplicaveis na trilha
+      if (podeAprovar) {
+        for (const b of blocosAplicaveis(projeto)) {
+          try { await setBlocoStatus({ mrcId: row.id, bloco: b, fase: faseDoBloco(b, row, projeto), status: 'aprovado', revisorId: user?.id }) } catch (e) { console.error('auto-aprovar bloco:', e) }
+        }
+      }
+
       // Registrar na tabela de revisões
       const { error: revErr } = await supabase
         .from('revisoes')
@@ -179,14 +189,14 @@ const ModalRegistrarResultado = ({ row, projeto, onClose, onSaved, responsaveis 
           tipo: 'submissao',
           nota: null,
           status_antes: row.status_workflow || 'em_analise',
-          status_depois: 'em_revisao',
+          status_depois: podeAprovar ? 'aprovado' : 'em_revisao',
           fase: faseAtual,
         })
       if (revErr) console.error('Erro ao registrar revisão:', revErr)
 
       // Criar notificação para todos os admins
       const faseLbl = faseAtual
-      supabase.functions.invoke('send-email', {
+      if (!podeAprovar) supabase.functions.invoke('send-email', {
         body: { type: 'review_submitted_admins', data: {
           autor_id: user?.id, ref: row.rc || row.rr, descricao: row.dc || '',
           area_id: row.area_id, mrc_id: row.id,
