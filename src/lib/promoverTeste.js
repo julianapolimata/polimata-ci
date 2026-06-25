@@ -21,7 +21,7 @@ export async function resumoDiagnostico(projetoId) {
     .eq('ativo', true)
   if (error) return { total: 0, pendentes: 0, existentes: 0, parciais: 0, inexistentes: 0 }
   const rows = data || []
-  const concluido = c => c.status_workflow === 'aprovado' && c.crit != null
+  const concluido = c => c.status_workflow === 'aprovado' && c.crit != null && !c.crit_revalidar
   return {
     total: rows.length,
     pendentes: rows.filter(c => !concluido(c)).length,

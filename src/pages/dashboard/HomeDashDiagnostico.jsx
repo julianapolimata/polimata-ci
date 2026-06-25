@@ -112,7 +112,7 @@ export default function HomeDashDiagnostico({ projeto, areasCalc, todosControles
   const inexCritSig = (critPorExistencia[4]?.Inexistente || 0) + (critPorExistencia[3]?.Inexistente || 0)
 
   const ativosDiag = todosControles.filter(c => c.ativo !== false)
-  const diagConcluido = ativosDiag.length > 0 && ativosDiag.every(c => c.status_workflow === 'aprovado' && c.crit != null)
+  const diagConcluido = ativosDiag.length > 0 && ativosDiag.every(c => c.status_workflow === 'aprovado' && c.crit != null && !c.crit_revalidar)
   const isAdmin = perfil?.papel === 'admin_polimata'
   const mostrarPromover = projeto?.f1_tem_teste === false && diagConcluido && isAdmin
 
