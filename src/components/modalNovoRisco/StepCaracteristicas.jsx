@@ -2,7 +2,7 @@
 import React from 'react'
 import { CATEGORIAS, FREQUENCIAS, NATUREZAS, CARACTERISTICAS, CONTROLE_CHAVE, RNA } from '../../lib/opcoesControle'
 
-export default function StepCaracteristicas({ isAutomatic, step, isDiag, existencia, setExistencia, descControle, setDescControle, cat, setCat, freq, setFreq, nat, setNat, car, setCar, sis, setSis, chave, setChave, quem, setQuem, quando, setQuando, porque, setPorque, como, setComo, onde, setOnde, resultadoPremissa, setResultadoPremissa, dtImplementacao, setDtImplementacao, sistemas }) {
+export default function StepCaracteristicas({ isAutomatic, step, isDiag, existencia, setExistencia, descControle, setDescControle, cat, setCat, freq, setFreq, nat, setNat, car, setCar, sis, setSis, chave, setChave, quem, setQuem, quando, setQuando, porque, setPorque, como, setComo, onde, setOnde, resultadoPremissa, setResultadoPremissa, dtImplementacao, setDtImplementacao, recomendacao, setRecomendacao, sistemas }) {
   return (
     <>
           {/* ─────────── PASSO 2 ─────────── */}
@@ -145,6 +145,13 @@ export default function StepCaracteristicas({ isAutomatic, step, isDiag, existen
                   ))}
                 </div>
               </div>
+
+              {isDiag && (
+                <div style={{ marginBottom: '2rem' }}>
+                  <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#00203E', marginBottom: 4 }}>Recomendação / Melhoria</label>
+                  <textarea value={recomendacao || ''} onChange={e => setRecomendacao(e.target.value)} rows={3} placeholder="O que se recomenda para este controle (implementar, formalizar, melhorias)..." style={{ width: '100%', padding: 10, border: '1px solid #e5e7eb', borderRadius: 6, fontFamily: 'Montserrat, sans-serif', fontSize: 12, resize: 'vertical' }} />
+                </div>
+              )}
 
               {/* Data de implementação (item 29) */}
               {!(isDiag && existencia === 'Inexistente') && (<div style={{ marginBottom: '2rem', background: '#FFF8E1', border: '1px solid #F0E0A8', borderRadius: 8, padding: '10px 12px' }}>

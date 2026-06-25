@@ -8,6 +8,7 @@ export default function StepControle({
   isDiag, existencia, setExistencia, sistemas = [],
   ctrlDescChoice, setCtrlDescChoice,
   novaDescControle, setNovaDescControle,
+  recomendacao, setRecomendacao,
   editCat, setEditCat,
   editFreq, setEditFreq,
   editNat, setEditNat,
@@ -56,6 +57,13 @@ export default function StepControle({
           {existencia === 'Parcial' && (
             <div style={{ fontSize: 11, color: '#7A5C00', marginTop: 6 }}>Controle parcial: marque "Requisito Não Atendido" nas características em que o controle falha (pelo menos uma).</div>
           )}
+        </div>
+      )}
+
+      {isDiag && (
+        <div style={{ marginBottom: 20 }}>
+          <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#00203E', marginBottom: 6 }}>Recomendação / Melhoria</label>
+          <textarea value={recomendacao || ''} onChange={e => setRecomendacao(e.target.value)} rows={3} placeholder="O que se recomenda para este controle (implementar, formalizar, melhorias)..." style={{ width: '100%', padding: 10, border: '1px solid #e5e7eb', borderRadius: 6, fontFamily: 'Montserrat, sans-serif', fontSize: 12, resize: 'vertical' }} />
         </div>
       )}
 

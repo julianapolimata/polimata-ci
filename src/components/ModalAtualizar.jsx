@@ -52,6 +52,7 @@ const ModalAtualizar = ({ row, onClose, onSaved, areas, projeto, irParaFicha }) 
   const [motivoInativacao, setMotivoInativacao] = useState('')
   const [novaDescRisco, setNovaDescRisco] = useState('')
   const [novaDescControle, setNovaDescControle] = useState('')
+  const [recomendacao, setRecomendacao] = useState(row?.rec || '')
   const [saving, setSaving] = useState(false)
   const [perfil, setPerfil] = useState(null)
   const podeAprovarDiag = isDiag && ['admin_polimata', 'gerente_polimata'].includes(perfil?.papel) && !row?.consultor_id
@@ -431,7 +432,7 @@ const ModalAtualizar = ({ row, onClose, onSaved, areas, projeto, irParaFicha }) 
         premissa_porque: pq, premissa_quando: quando, premissa_onde: onde,
         premissa_quem: isAutomatic ? 'N/A' : quem, premissa_como: como, premissa_resultado: resultado,
         cenario_atual: cenarioAtual.trim() || null,
-        ...(isDiag ? { existencia: existencia || null } : {}),
+        ...(isDiag ? { existencia: existencia || null, rec: recomendacao || null } : {}),
         dt_implementacao: dtImplementacao || null,
         status_workflow: podeAprovarDiag ? 'aprovado' : 'em_revisao',
         edicao_pendente: !isDiag,
@@ -597,6 +598,7 @@ const ModalAtualizar = ({ row, onClose, onSaved, areas, projeto, irParaFicha }) 
                   como={como} setComo={setComo}
                   resultado={resultado} setResultado={setResultado}
                   dtImplementacao={dtImplementacao} setDtImplementacao={setDtImplementacao}
+                  recomendacao={recomendacao} setRecomendacao={setRecomendacao}
                   isAutomatic={isAutomatic}
                   />
                   )}

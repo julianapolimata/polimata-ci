@@ -53,6 +53,7 @@ const ModalNovoRisco = ({ onClose, onSaved, areas, projeto, areaFixa, draft }) =
   const [sis, setSis] = useState(draft?.sis || '')
   const [chave, setChave] = useState(draft?.chave || '')
   const [dtImplementacao, setDtImplementacao] = useState(draft?.dt_implementacao ? String(draft.dt_implementacao).slice(0, 10) : '')
+  const [recomendacao, setRecomendacao] = useState(draft?.rec || '')
   
   // Premissas
   const [quem, setQuem] = useState(draft?.premissa_quem || '')
@@ -223,7 +224,7 @@ const ModalNovoRisco = ({ onClose, onSaved, areas, projeto, areaFixa, draft }) =
     const payload = {
       ...novoRiscoData,
       dc: descControle,
-      ...(isDiag ? { existencia: existencia || null } : {}),
+      ...(isDiag ? { existencia: existencia || null, rec: recomendacao || null } : {}),
       cat, freq, nat, car, sis, chave,
       premissa_quem: isAutomatic ? 'N/A' : quem,
       premissa_quando: quando,
@@ -298,6 +299,7 @@ const ModalNovoRisco = ({ onClose, onSaved, areas, projeto, areaFixa, draft }) =
       if (step >= 2) {
         if (descControle) payload.dc = descControle
         if (isDiag && existencia) payload.existencia = existencia
+        if (isDiag && recomendacao) payload.rec = recomendacao
         if (cat) payload.cat = cat
         if (freq) payload.freq = freq
         if (nat) payload.nat = nat
@@ -426,7 +428,7 @@ const ModalNovoRisco = ({ onClose, onSaved, areas, projeto, areaFixa, draft }) =
         <div style={{ flex: 1, padding: 24, overflowY: 'auto' }}>
           <StepIdentificacao step={step} area={area} setArea={setArea} subprocesso={subprocesso} setSubprocesso={setSubprocesso} descRisco={descRisco} setDescRisco={setDescRisco} cenarioAtual={cenarioAtual} setCenarioAtual={setCenarioAtual} areas={areas} areaFixa={areaFixa} subprocessos={subprocessos} />
 
-          <StepCaracteristicas isAutomatic={isAutomatic} step={step} isDiag={isDiag} existencia={existencia} setExistencia={handleExistencia} descControle={descControle} setDescControle={setDescControle} cat={cat} setCat={setCat} freq={freq} setFreq={setFreq} nat={nat} setNat={setNat} car={car} setCar={setCar} sis={sis} setSis={setSis} chave={chave} setChave={setChave} quem={quem} setQuem={setQuem} quando={quando} setQuando={setQuando} porque={porque} setPorque={setPorque} como={como} setComo={setComo} onde={onde} setOnde={setOnde} resultadoPremissa={resultadoPremissa} setResultadoPremissa={setResultadoPremissa} dtImplementacao={dtImplementacao} setDtImplementacao={setDtImplementacao} sistemas={sistemas} />
+          <StepCaracteristicas isAutomatic={isAutomatic} step={step} isDiag={isDiag} existencia={existencia} setExistencia={handleExistencia} descControle={descControle} setDescControle={setDescControle} cat={cat} setCat={setCat} freq={freq} setFreq={setFreq} nat={nat} setNat={setNat} car={car} setCar={setCar} sis={sis} setSis={setSis} chave={chave} setChave={setChave} quem={quem} setQuem={setQuem} quando={quando} setQuando={setQuando} porque={porque} setPorque={setPorque} como={como} setComo={setComo} onde={onde} setOnde={setOnde} resultadoPremissa={resultadoPremissa} setResultadoPremissa={setResultadoPremissa} dtImplementacao={dtImplementacao} setDtImplementacao={setDtImplementacao} recomendacao={recomendacao} setRecomendacao={setRecomendacao} sistemas={sistemas} />
 
           <StepPassos step={step} passos={passos} setPassos={setPassos} saving={saving} novoRiscoData={novoRiscoData} subprocesso={subprocesso} />
 
