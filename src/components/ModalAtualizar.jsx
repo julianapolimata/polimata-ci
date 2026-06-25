@@ -326,7 +326,7 @@ const ModalAtualizar = ({ row, onClose, onSaved, areas, projeto, irParaFicha }) 
       // item 11: reabrir blocos selecionados para nova aprovação
       if (blocosReabrir.length) {
         for (const b of blocosReabrir) {
-          try { await reabrirBloco({ mrcId: row.id, bloco: b, fase: faseDoBloco(b, row) }) } catch (e) { console.error('reabrirBloco:', e) }
+          try { await reabrirBloco({ mrcId: row.id, bloco: b, fase: faseDoBloco(b, row, projeto) }) } catch (e) { console.error('reabrirBloco:', e) }
         }
         await supabase.from('mrc').update({ status_workflow: 'em_revisao' }).eq('id', row.id)
       }
@@ -405,7 +405,7 @@ const ModalAtualizar = ({ row, onClose, onSaved, areas, projeto, irParaFicha }) 
       // item 11: reabrir blocos selecionados para nova aprovação
       if (blocosReabrir.length) {
         for (const b of blocosReabrir) {
-          try { await reabrirBloco({ mrcId: row.id, bloco: b, fase: faseDoBloco(b, row) }) } catch (e) { console.error('reabrirBloco:', e) }
+          try { await reabrirBloco({ mrcId: row.id, bloco: b, fase: faseDoBloco(b, row, projeto) }) } catch (e) { console.error('reabrirBloco:', e) }
         }
         await supabase.from('mrc').update({ status_workflow: 'em_revisao' }).eq('id', row.id)
       }
@@ -446,7 +446,7 @@ const ModalAtualizar = ({ row, onClose, onSaved, areas, projeto, irParaFicha }) 
       if (!_u || _u.length === 0) throw new Error('Não foi possível gravar (0 registros — verifique permissões/conexão).')
       if (!isDiag) { try { await syncPassosESolicitacoes({ controle: row, passos, projetoId: row.projeto_id }) } catch (e) { console.error('syncPassos:', e) } }
       for (const b of blocosReabrir) {
-        try { await reabrirBloco({ mrcId: row.id, bloco: b, fase: faseDoBloco(b, row) }) } catch (e) { console.error('reabrirBloco:', e) }
+        try { await reabrirBloco({ mrcId: row.id, bloco: b, fase: faseDoBloco(b, row, projeto) }) } catch (e) { console.error('reabrirBloco:', e) }
       }
       // Notificar revisores (admins) via edge function — consultor não enxerga
       // a lista de admins pela RLS, então a resolução é feita no servidor.

@@ -26,7 +26,7 @@ export function ModalDetalhe({ row, projeto, onClose, onEditar, primaryAction, s
   const fieldText = (l, v) => { if (!v || v === 'N/A' || v === '') return null; return <div style={{ marginBottom: 14 }}>{l && <div className="ml">{l}</div>}<div className="mv-t">{v}</div></div> }
   const blocoBadge = (blocoKey) => {
     if (!verAprovacoes) return null
-    const f = faseDoBloco(blocoKey, row)
+    const f = faseDoBloco(blocoKey, row, projeto)
     const ap = aprovacoes.find(e => e.bloco === blocoKey && (e.fase || null) === (f || null))
     if (!ap) return null
     const st = ap.status

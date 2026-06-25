@@ -14,13 +14,13 @@ export function blocosAplicaveis(projeto) {
   return temTeste ? ['cenario', 'risco', 'controle', 'teste'] : ['cenario', 'risco', 'controle']
 }
 
-export function faseCodigoAtual(row) {
-  return getFaseInfo(row)?.codigo || 'F1'
+export function faseCodigoAtual(row, projeto) {
+  return getFaseInfo(row, projeto?.num_fases, projeto?.f1_tem_teste === true)?.codigo || 'F1'
 }
 
 // Risco/Controle: fase null. Teste: código da fase atual.
-export function faseDoBloco(bloco, row) {
-  return bloco === 'teste' ? faseCodigoAtual(row) : null
+export function faseDoBloco(bloco, row, projeto) {
+  return bloco === 'teste' ? faseCodigoAtual(row, projeto) : null
 }
 
 export async function loadAprovacoes(mrcId) {
@@ -45,7 +45,7 @@ export async function ensureBlocos(row, projeto) {
   const existentes = await loadAprovacoes(mrcId)
   const falta = []
   for (const b of blocos) {
-    const f = faseDoBloco(b, row)
+    const f = faseDoBloco(b, row, projeto)
     if (!achaBloco(existentes, b, f)) falta.push({ mrc_id: mrcId, bloco: b, fase: f, status: 'a_aprovar' })
   }
   if (falta.length) {
@@ -85,7 +85,7 @@ export async function reabrirBloco({ mrcId, bloco, fase }) {
 // Deriva o status geral a partir dos blocos aplicáveis da fase atual.
 export function deriveStatusGeral(aprovacoes, row, projeto) {
   const blocos = blocosAplicaveis(projeto)
-  const rel = blocos.map(b => achaBloco(aprovacoes, b, faseDoBloco(b, row)))
+  const rel = blocos.map(b => achaBloco(aprovacoes, b, faseDoBloco(b, row, projeto)))
   if (rel.some(r => r?.status === 'reprovado')) return 'reprovado'
   if (rel.length && rel.every(r => r?.status === 'aprovado')) return 'aprovado'
   return 'em_revisao'

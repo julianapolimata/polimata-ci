@@ -45,7 +45,7 @@ const ModalRevisar = ({ row, onClose, onAction, projeto }) => {
 
   // Cabeçalho de um card de bloco: título à esquerda; status + Aprovar/Reprovar à direita.
   const renderBlocoHeader = (blocoKey, titleNode) => {
-    const f = faseDoBloco(blocoKey, row)
+    const f = faseDoBloco(blocoKey, row, projeto)
     const ap = aprovacoes.find(e => e.bloco === blocoKey && (e.fase || null) === (f || null))
     const st = ap?.status || 'a_aprovar'
     const cfg = st === 'aprovado' ? { t: 'Aprovado', c: '#1B5E20', bg: '#E8F5E9' }
@@ -64,7 +64,7 @@ const ModalRevisar = ({ row, onClose, onAction, projeto }) => {
               <button onClick={() => { setBlocoAlvo(blocoKey); setNotaAprovar(''); setView('approve') }} style={{ fontSize: 10, fontWeight: 700, color: 'white', background: '#22C55E', border: '1px solid #22C55E', borderRadius: 6, padding: '3px 9px', cursor: 'pointer', fontFamily: 'inherit' }}>✅ Aprovar</button>
             </>
           ) : (
-            <button onClick={async () => { await reabrirBloco({ mrcId: row.id, bloco: blocoKey, fase: faseDoBloco(blocoKey, row) }); setAprovacoes(await loadAprovacoes(row.id)) }} title="Refazer esta decisão" style={{ fontSize: 10, fontWeight: 600, color: '#7A8B9C', background: 'white', border: '1px solid #D0D0D0', borderRadius: 6, padding: '3px 9px', cursor: 'pointer', fontFamily: 'inherit' }}>↺ Refazer</button>
+            <button onClick={async () => { await reabrirBloco({ mrcId: row.id, bloco: blocoKey, fase: faseDoBloco(blocoKey, row, projeto) }); setAprovacoes(await loadAprovacoes(row.id)) }} title="Refazer esta decisão" style={{ fontSize: 10, fontWeight: 600, color: '#7A8B9C', background: 'white', border: '1px solid #D0D0D0', borderRadius: 6, padding: '3px 9px', cursor: 'pointer', fontFamily: 'inherit' }}>↺ Refazer</button>
           ))}
         </div>
       </div>
@@ -111,7 +111,7 @@ const ModalRevisar = ({ row, onClose, onAction, projeto }) => {
     if (!blocoAlvo) return
     setProcessing(true)
     try {
-      await setBlocoStatus({ mrcId: row.id, bloco: blocoAlvo, fase: faseDoBloco(blocoAlvo, row), status: 'aprovado', revisorId: user?.id, nota: notaAprovar })
+      await setBlocoStatus({ mrcId: row.id, bloco: blocoAlvo, fase: faseDoBloco(blocoAlvo, row, projeto), status: 'aprovado', revisorId: user?.id, nota: notaAprovar })
       setAprovacoes(await loadAprovacoes(row.id))
       setNotaAprovar(''); setBlocoAlvo(null); setDirty(false); setView('review')
     } catch (err) {
@@ -128,7 +128,7 @@ const ModalRevisar = ({ row, onClose, onAction, projeto }) => {
     if (!nota.trim()) return alert('A nota de reprovação é obrigatória.')
     setProcessing(true)
     try {
-      await setBlocoStatus({ mrcId: row.id, bloco: blocoAlvo, fase: faseDoBloco(blocoAlvo, row), status: 'reprovado', revisorId: user?.id, nota })
+      await setBlocoStatus({ mrcId: row.id, bloco: blocoAlvo, fase: faseDoBloco(blocoAlvo, row, projeto), status: 'reprovado', revisorId: user?.id, nota })
       setAprovacoes(await loadAprovacoes(row.id))
       setNota(''); setBlocoAlvo(null); setDirty(false); setView('review')
     } catch (err) {
@@ -143,7 +143,7 @@ const ModalRevisar = ({ row, onClose, onAction, projeto }) => {
   async function concluirRevisao() {
     const blocos = blocosAplicaveis(projeto)
     const rel = blocos.map(b => {
-      const f = faseDoBloco(b, row)
+      const f = faseDoBloco(b, row, projeto)
       return { b, ap: aprovacoes.find(e => e.bloco === b && (e.fase || null) === (f || null)) }
     })
     const reprovados = rel.filter(r => r.ap?.status === 'reprovado')
