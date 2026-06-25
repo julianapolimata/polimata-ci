@@ -92,7 +92,6 @@ export const MRC_COLUMNS_DIAG = [
   { key: 'sis', header: 'Sistema', width: 14 },
   { key: 'chave', header: 'Controle Chave?', width: 14 },
   { key: 'existencia', header: 'Existência', width: 16 },
-  { key: '_vitrine_incons', header: 'Descrição da Inconsistência', width: 40, computed: true },
   { key: '_vitrine_rec', header: 'Recomendação / Melhoria', width: 40, computed: true },
   { key: 'imp', header: 'Impacto', width: 12 },
   { key: 'prob', header: 'Probabilidade', width: 14 },

@@ -1,7 +1,7 @@
 // buildAreaSheet — uma aba por área no relatório (detalhamento).
 // Extraído em 22/mai/2026 (fatiamento Etapa 4).
 import { getFaseLabel, getStatusComputado } from '../fases'
-import { getStatusConfig } from '../statusWorkflow'
+import { getStatusConfig, isConcluido, CONFIG_CONCLUIDO } from '../statusWorkflow'
 import * as S from './_shared'
 
 const {
@@ -56,7 +56,6 @@ const DETAIL_COLUMNS_DIAG = [
   { key: 'car', header: 'Característica', width: 14 },
   { key: 'chave', header: 'Controle Chave?', width: 13 },
   { key: 'existencia', header: 'Existência', width: 14 },
-  { key: '_vitrine_incons', header: 'Inconsistência', width: 40 },
   { key: '_vitrine_rec', header: 'Recomendação', width: 40 },
   { key: 'imp', header: 'Impacto', width: 12 },
   { key: 'prob', header: 'Probabilidade', width: 14 },
@@ -79,7 +78,7 @@ export function getCellValue(row, col, numFases, comTeste) {
   if (col.key === '_hist_f5') return fmtHist(row.r_f5)
   if (col.key === 'fase') return getFaseLabel(row, numFases, comTeste) || '—'
   if (col.key === 'status_atual') {
-    const cfg = getStatusConfig(getStatusComputado(row, numFases, comTeste), 'admin_polimata')
+    const cfg = isConcluido(row) ? CONFIG_CONCLUIDO : getStatusConfig(getStatusComputado(row, numFases, comTeste), 'admin_polimata')
     return cfg.label || '—'
   }
   if (col.key === 'crit_label') return row.crit_label || CRIT_LABEL_MAP[row.crit] || '—'

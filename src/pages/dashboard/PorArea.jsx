@@ -102,7 +102,7 @@ export default function PorArea({ projeto, areasCalc, todosControles, loading, n
 
   // Retorna config de status (label, color, bg) baseado no perfil ativo (real ou simulado)
   function getStatusBadge(sw, c) {
-    if (sw === 'aprovado' && c?.crit != null && !isCliente) return CONFIG_CONCLUIDO
+    if (sw === 'aprovado' && c?.crit != null) return CONFIG_CONCLUIDO
     return getStatusConfig(sw, papelAtivo)
   }
 

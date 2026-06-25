@@ -35,7 +35,6 @@ const PLANO_COLUMNS_DIAG = [
   { key: 'dc', header: 'Descrição do Controle', width: 40 },
   { key: 'cenario_atual', header: 'Cenário Atual', width: 40 },
   { key: 'existencia', header: 'Existência', width: 14 },
-  { key: '_vitrine_incons', header: 'Inconsistência', width: 45 },
   { key: '_vitrine_rec', header: 'Recomendação', width: 45 },
   { key: 'imp', header: 'Impacto', width: 12 },
   { key: 'prob', header: 'Probabilidade', width: 14 },
