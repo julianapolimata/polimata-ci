@@ -6,6 +6,7 @@ import StepIdentificacao from './modalNovoRisco/StepIdentificacao'
 import StepCaracteristicas from './modalNovoRisco/StepCaracteristicas'
 import StepPassos from './modalNovoRisco/StepPassos'
 import { useConfirm } from './ConfirmDialog'
+import { setBlocoStatus, blocosAplicaveis } from '../lib/aprovacoesBloco'
 
 const ModalNovoRisco = ({ onClose, onSaved, areas, projeto, areaFixa, draft }) => {
   const isDiag = projeto?.f1_tem_teste === false
@@ -23,6 +24,7 @@ const ModalNovoRisco = ({ onClose, onSaved, areas, projeto, areaFixa, draft }) =
   }
   const [saving, setSaving] = useState(false)
   const [perfil, setPerfil] = useState(null)
+  const podeAprovarDiag = ['admin_polimata', 'gerente_polimata'].includes(perfil?.papel)
   const [novoRiscoData, setNovoRiscoData] = useState(() => draft ? {
     id: draft.id, rr: draft.rr, rc: draft.rc, sub: draft.sub,
     subprocesso_id: draft.subprocesso_id || null, ger: draft.ger || '', resp_sub: draft.resp_sub || '',
@@ -230,7 +232,7 @@ const ModalNovoRisco = ({ onClose, onSaved, areas, projeto, areaFixa, draft }) =
       premissa_onde: onde,
       premissa_resultado: resultadoPremissa,
       dt_implementacao: dtImplementacao || null,
-      status_workflow: 'nao_iniciado',
+      status_workflow: isDiag ? (podeAprovarDiag ? 'aprovado' : 'em_revisao') : 'nao_iniciado',
       ativo: true,
       atualizado_por: perfil?.id || null,
       atualizado_em: new Date().toISOString(),
@@ -248,6 +250,12 @@ const ModalNovoRisco = ({ onClose, onSaved, areas, projeto, areaFixa, draft }) =
       saved = inserted?.[0] || null
     }
 
+    if (saved?.id && isDiag && podeAprovarDiag) {
+      for (const b of blocosAplicaveis(projeto)) {
+        try { await setBlocoStatus({ mrcId: saved.id, bloco: b, fase: null, status: 'aprovado', revisorId: perfil?.id }) }
+        catch (e) { console.error('auto-aprovar bloco:', e) }
+      }
+    }
     if (saved?.id && !isDiag) {
       try {
         await syncPassosESolicitacoes({ controle: saved, passos, projetoId: projeto.id })
@@ -286,7 +294,7 @@ const ModalNovoRisco = ({ onClose, onSaved, areas, projeto, areaFixa, draft }) =
       // Payload: salva só os campos dos steps já visitados pelo usuário.
       // Campos têm defaults (ex: resultado='inefetivo') que não devem
       // contaminar um rascunho de passo 1 que nunca viu o passo 3.
-      const payload = { ...baseData, status_workflow: 'rascunho', ativo: true }
+      const payload = { ...baseData, status_workflow: 'rascunho', ativo: true, criado_por: perfil?.id || null }
       if (step >= 2) {
         if (descControle) payload.dc = descControle
         if (isDiag && existencia) payload.existencia = existencia
@@ -439,7 +447,7 @@ const ModalNovoRisco = ({ onClose, onSaved, areas, projeto, areaFixa, draft }) =
           )}
           {step < 3 && (
             <button onClick={step === 1 ? saveStep1 : saveStep2} disabled={!canAdvanceStep1 || (step === 2 && !canAdvanceStep2) || saving} style={{ flex: 1, padding: '12px 16px', border: 'none', borderRadius: 6, fontFamily: 'Montserrat, sans-serif', fontSize: 13, fontWeight: 700, cursor: 'pointer', background: '#CC915E', color: 'white', opacity: saving || (step === 1 && !canAdvanceStep1) || (step === 2 && !canAdvanceStep2) ? 0.5 : 1 }}>
-              {saving ? 'Salvando...' : (isDiag && step === 2) ? '\u2713 Salvar' : 'Próximo →'}
+              {saving ? 'Salvando...' : (isDiag && step === 2) ? (podeAprovarDiag ? '\u2713 Salvar e aprovar' : '\u2713 Salvar e enviar p/ aprovação') : 'Próximo →'}
             </button>
           )}
           {step === 3 && (

@@ -208,7 +208,11 @@ export default function PorArea({ projeto, areasCalc, todosControles, loading, n
     if (filtFase) { const fc = getFaseCodigo(c); if (fc !== filtFase) return false }
     if (filtStatus) {
       const sw = getStatusComputado(c, projeto?.num_fases, projeto?.f1_tem_teste === true)
-      if (isCliente && filtStatus === 'em_analise') {
+      if (filtStatus === 'criticidade_pendente') {
+        if (!(sw === 'aprovado' && c.crit == null)) return false
+      } else if (filtStatus === 'concluido') {
+        if (!(sw === 'aprovado' && c.crit != null)) return false
+      } else if (isCliente && filtStatus === 'em_analise') {
         if (!['em_analise', 'teste_pendente', 'reprovado'].includes(sw)) return false
       } else if (sw !== filtStatus) return false
     }
