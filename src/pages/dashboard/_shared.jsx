@@ -59,7 +59,9 @@ export function getBarGradient(pct100) {
 export function isEfetivo(r) { return (r || '').toLowerCase() === 'efetivo' }
 export function isInefetivo(r) { return (r || '').toLowerCase() === 'inefetivo' }
 export function isGap(r) { const v = (r || '').toLowerCase(); return v === 'gap' || v === 'gap de processo' }
-export function precisaPlanoAcao(c) { return isInefetivo(c.r1) || isGap(c.r1) || isInefetivo(c.r_ader) || isGap(c.r_ader) || isInefetivo(c.r3) || isGap(c.r3) }
+// Tem plano de ação registrado (dem_pa). GAP/Inefetivo NÃO geram PA automático — a empresa
+// pode optar por conviver com o risco (temPA='não' -> dem_pa vazio).
+export function precisaPlanoAcao(c) { return !!(c && c.dem_pa && String(c.dem_pa).trim()) }
 export function planoAcaoConcluido(c) { const st = (c.st_pa || '').toLowerCase(); return st === 'efetivo' || st === 'concluído' || st === 'concluido' || st === 'ok' }
 
 // ══════════════════════════════════════════════════════════════════════════════
