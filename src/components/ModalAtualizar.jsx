@@ -177,7 +177,7 @@ const ModalAtualizar = ({ row, onClose, onSaved, areas, projeto, irParaFicha }) 
   // Validação Step 2
   const canAdvanceStep2 = (() => {
     if (isDiag && !existencia) return false
-    if (isDiag && existencia === 'Inexistente') return !!novaDescControle.trim()
+    if (isDiag && existencia === 'Inexistente') return true
     if (ctrlDescChoice === null) return false
     if (ctrlDescChoice === 'sim') {
       if (!novaDescControle.trim()) return false

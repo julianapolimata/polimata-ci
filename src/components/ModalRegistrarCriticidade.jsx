@@ -121,7 +121,6 @@ const ModalRegistrarCriticidade = ({ row, onClose, onSaved }) => {
                 <option value="2">Moderado</option>
                 <option value="3">Alto</option>
                 <option value="4">Crítico</option>
-                <option value="0">N/A</option>
               </select>
             </div>
             <div>
@@ -134,7 +133,6 @@ const ModalRegistrarCriticidade = ({ row, onClose, onSaved }) => {
                 <option value="2">Média</option>
                 <option value="3">Alta</option>
                 <option value="4">Extrema</option>
-                <option value="0">N/A</option>
               </select>
             </div>
           </div>
