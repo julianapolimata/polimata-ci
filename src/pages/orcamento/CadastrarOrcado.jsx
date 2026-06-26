@@ -1,7 +1,7 @@
 // Cadastrar Orçado — revisão das sugestões: Histórico | Tendência | Método | Sugerido 💡 | Final | Status
 import { useState, useMemo } from 'react'
 import { supabase } from '../../lib/supabase'
-import { useOrcDados, useItens, PageHeader, Card, KPICard, KPIGrid, SeletorAno, Badge, BotaoVerde, BotaoSec, ErroBox, fmtNum, fmtPct, TIPOS, THL, TH, TDL, TD } from './_shared'
+import { useOrcDados, useItens, PageHeader, Card, KPICard, KPIGrid, SeletorAno, Badge, BotaoVerde, BotaoSec, ErroBox, fmtNum, fmtPct, TIPOS, MESES_ABREV, THL, TH, TDL, TD } from './_shared'
 import { METODOS } from '../../lib/orcamento/sugestao'
 
 const ICONE_METODO = { repeticao: '📋', media_movel: '📊', tendencia: '📈', sazonalidade: '📅', indice: '💰', ia: '🤖', manual: '✎', hibrido: '🤖' }
@@ -21,6 +21,8 @@ export default function CadastrarOrcado({ projeto }) {
   const [filtroStatus, setFiltroStatus] = useState('todos')
   const [editCat, setEditCat] = useState(null)
   const [editVal, setEditVal] = useState('')
+  const [expandCat, setExpandCat] = useState(null)
+  const [mesEdit, setMesEdit] = useState([])
   const [msg, setMsg] = useState('')
 
   const linhas = useMemo(() => d.catsAtivas.map(c => {
@@ -73,6 +75,19 @@ export default function CadastrarOrcado({ projeto }) {
     const { error } = await supabase.from('orc_orcamento_itens').upsert(rows, { onConflict: 'orcamento_id,categoria_id,mes' })
     if (error) d.setErro(error.message)
     setEditCat(null); reloadItens()
+  }
+  function abrirMeses(catId) {
+    const it = porCat[catId]
+    setExpandCat(catId)
+    setMesEdit(Array.from({ length: 12 }, (_, m) => { const v = it?.valores?.[m]; return v === null || v === undefined ? '' : String(v) }))
+  }
+  async function salvarMes(catId, m, valStr) {
+    const v = valStr === '' ? 0 : Number(valStr)
+    if (!isFinite(v)) return
+    const it = porCat[catId]
+    const { error } = await supabase.from('orc_orcamento_itens').upsert([{ orcamento_id: cenario.id, categoria_id: catId, mes: m + 1, valor: Math.round(v * 100) / 100, sugerido: it?.sugerido?.[m] ?? null, metodo: 'manual', justificativa_ia: it?.just ?? null, confianca: it?.conf ?? null, status_revisao: 'editado' }], { onConflict: 'orcamento_id,categoria_id,mes' })
+    if (error) d.setErro(error.message)
+    reloadItens()
   }
   async function mudarStatusCenario(novo) {
     const { error } = await supabase.from('orc_orcamentos').update({ status: novo }).eq('id', cenario.id)
@@ -131,7 +146,7 @@ export default function CadastrarOrcado({ projeto }) {
               if (!doTipo.length) return null
               return [
                 <tr key={t.id} style={{ background: 'var(--lt-bg)' }}><td colSpan={8} style={{ padding: '6px 12px', fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: 0.5 }}>{t.id === 'receita' ? '' : '(-) '}{t.nome}</td></tr>,
-                ...doTipo.map(({ c, it, histMed, tend, totalSug, totalFinal, status }) => (
+                ...doTipo.flatMap(({ c, it, histMed, tend, totalSug, totalFinal, status }) => [
                   <tr key={c.id} style={status === 'revisar' ? { background: 'rgba(234,179,8,0.06)' } : {}}>
                     <td style={{ ...TDL, fontWeight: 600 }}>{c.nome}{status === 'revisar' ? ' ⚠' : ''}</td>
                     <td style={{ ...TD, color: 'var(--lt-text3)' }}>{fmtNum(histMed)}</td>
@@ -153,17 +168,37 @@ export default function CadastrarOrcado({ projeto }) {
                       {status === 'pendente' && <Badge>—</Badge>}
                     </td>
                     <td style={TD}>
+                      <button onClick={() => expandCat === c.id ? setExpandCat(null) : abrirMeses(c.id)} title="Editar mês a mês" disabled={!cenario} style={{ background: expandCat === c.id ? 'rgba(204,145,94,0.15)' : 'none', border: '1px solid var(--lt-brd)', borderRadius: 6, padding: '2px 7px', fontSize: 11, cursor: cenario ? 'pointer' : 'default', marginRight: 4 }}>📅</button>
                       {it && status !== 'aceito' && <button onClick={() => setStatusLinha(c.id, 'aceito')} title="Aceitar sugestão" style={{ background: 'none', border: '1px solid var(--lt-brd)', borderRadius: 6, padding: '2px 8px', fontSize: 11, cursor: 'pointer', color: '#15803D' }}>✓</button>}
                     </td>
-                  </tr>
-                )),
+                  </tr>,
+                  expandCat === c.id && (
+                    <tr key={c.id + '_m'}>
+                      <td colSpan={8} style={{ padding: '10px 14px', background: 'rgba(204,145,94,0.05)' }}>
+                        <div style={{ fontSize: 11, color: 'var(--lt-text3)', marginBottom: 6 }}>Orçado mês a mês — <strong>{c.nome}</strong> (edite cada mês; salva ao sair do campo)</div>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                          {MESES_ABREV.map((mn, m) => (
+                            <div key={m} style={{ display: 'flex', flexDirection: 'column', width: 80 }}>
+                              <label style={{ fontSize: 10, color: 'var(--lt-text3)' }}>{mn}</label>
+                              <input type="number" className="input-light" style={{ width: '100%', padding: '3px 5px', fontSize: 11.5, textAlign: 'right' }} value={mesEdit[m] ?? ''} onChange={e => setMesEdit(a => { const n = [...a]; n[m] = e.target.value; return n })} onBlur={e => salvarMes(c.id, m, e.target.value)} />
+                            </div>
+                          ))}
+                          <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', minWidth: 110 }}>
+                            <label style={{ fontSize: 10, color: 'var(--lt-text3)' }}>Total ano</label>
+                            <strong style={{ fontSize: 12.5 }}>{fmtNum(mesEdit.reduce((a, v) => a + (Number(v) || 0), 0))}</strong>
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+                  ),
+                ]),
               ]
             })}
             {!visiveis.length && <tr><td colSpan={8} style={{ ...TDL, textAlign: 'center', padding: 24, color: 'var(--lt-text3)' }}>Nada aqui — gere sugestões no Gerador ou ajuste o filtro.</td></tr>}
           </tbody>
         </table>
       </Card>
-      <div style={{ fontSize: 11, color: 'var(--lt-text3)' }}>O valor final anual é redistribuído pelos meses seguindo o perfil da sugestão (ou uniformemente, se não houver sugestão). A visão mês a mês fica em Orçado vs Realizado.</div>
+      <div style={{ fontSize: 11, color: 'var(--lt-text3)' }}>Edite o total anual (redistribuído pelo perfil da sugestão) ou clique em 📅 para ajustar mês a mês. A visão mês a mês também aparece em Orçado vs Realizado.</div>
     </div>
   )
 }
