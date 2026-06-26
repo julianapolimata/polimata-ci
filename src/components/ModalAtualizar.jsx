@@ -271,6 +271,8 @@ const ModalAtualizar = ({ row, onClose, onSaved, areas, projeto, irParaFicha }) 
         prob: row.prob,
         crit: row.crit,
         status_risco: 'existente',
+        status_workflow: 'nao_iniciado',
+        criado_por: perfil?.id || null,
         ativo: true,
         transferido_de: row.id,
       })
