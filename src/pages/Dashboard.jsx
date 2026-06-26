@@ -250,6 +250,8 @@ export default function Dashboard() {
   const isHomeDash = location.pathname === '/ci'
   const mainLightClass = isHomeDash ? '' : 'main-light'
   const ultimaAtualizacao = useMemo(() => getUltimaAtualizacao(todosControles), [todosControles])
+  // Contador da barra lateral: só controles ativos (exclui evitado/transferido/descontinuado), igual ao resto
+  const totalControlesAtivos = useMemo(() => (todosControles || []).filter(c => c.ativo !== false && String(c.status_risco || '').toLowerCase() !== 'descontinuado').length, [todosControles])
 
   // Aguardando carregamento inicial dos projetos
   if (!projetosLoaded) {
@@ -335,7 +337,7 @@ export default function Dashboard() {
           ))}
           {sidebarOpen && <div className="sb-sep">Operação</div>}
           <SideNavItem icon="📋" label="MRC Completa" active={location.pathname === '/mrc'} onClick={() => navigate('/mrc')} open={sidebarOpen}
-            badge={todosControles.length > 0 ? todosControles.length : null} />
+            badge={totalControlesAtivos > 0 ? totalControlesAtivos : null} />
           <SideNavItem icon="📄" label="Relatórios" active={location.pathname === '/relatorios'} onClick={() => navigate('/relatorios')} open={sidebarOpen} />
           {projetoAtivo?.f1_tem_teste !== false && <SideNavItem icon="📝" label="Solicitações" active={location.pathname === '/solicitacoes'} onClick={() => navigate('/solicitacoes')} open={sidebarOpen} />}
           {['admin_polimata', 'consultor_polimata'].includes(perfil?.papel) && <SideNavItem icon="📁" label="Documentos" active={location.pathname === '/documentos'} onClick={() => navigate('/documentos')} open={sidebarOpen} />}
