@@ -70,6 +70,7 @@ export default function PorAreaTabela({ ctx }) {
                         secondary = { label: '✏ Editar', onClick: () => setAtualizarRow(c) }
                       } else if (podeEditarEste && st === 'teste_pendente') {
                         primary = { label: '📄 Baixar Ficha', color: 'var(--copper-text)', bg: 'rgba(204,145,94,0.12)', border: 'rgba(204,145,94,0.45)', onClick: () => { setAtualizarFicha(true); setAtualizarRow(c) } }
+                        secondary = { label: '✏ Editar', onClick: () => setAtualizarRow(c) }
                       } else if (podeEditarEste && (st === 'nao_iniciado' || st === 'reprovado')) {
                         primary = { label: 'Atualizar', color: 'var(--copper-text)', bg: 'rgba(204,145,94,0.12)', border: 'rgba(204,145,94,0.30)', onClick: () => setAtualizarRow(c) }
                       }
