@@ -28,25 +28,14 @@ async function setStatus(id: string, fields: Record<string, unknown>) {
 }
 
 // ── Transcrição (Whisper) ──────────────────────────────────────────────────
-async function transcrever(map: Record<string, unknown>) {
-  const id = map.id as string;
-  if (!OPENAI_KEY) throw new Error("Secret OPENAI_API_KEY não configurado no Supabase.");
-  if (!map.audio_path) throw new Error("Mapeamento sem áudio enviado.");
-
-  await setStatus(id, { status: "transcrevendo", erro: null });
-
-  const { data: blob, error: dlErr } = await admin.storage.from("mapeamentos").download(map.audio_path as string);
-  if (dlErr || !blob) throw new Error("Falha ao baixar áudio: " + (dlErr?.message ?? "arquivo não encontrado"));
-  if (blob.size > 25 * 1024 * 1024) throw new Error("Áudio acima de 25 MB (limite do Whisper). Divida a gravação.");
-
+async function whisperUm(blob: Blob, nome: string) {
+  if (blob.size > 25 * 1024 * 1024) throw new Error("Parte de áudio acima de 25 MB (limite do Whisper).");
   const form = new FormData();
-  const nome = (map.audio_nome as string) || "audio.webm";
   form.append("file", blob, nome);
   form.append("model", "whisper-1");
   form.append("language", "pt");
   form.append("response_format", "verbose_json");
   form.append("prompt", "Entrevista de mapeamento de processos. Termos: GRC, COSO, ISO 31000, RACI, BPMN, compliance, requisição, alçada, workflow, SAP, ERP, NF, conciliação.");
-
   const r = await fetch("https://api.openai.com/v1/audio/transcriptions", {
     method: "POST",
     headers: { Authorization: `Bearer ${OPENAI_KEY}` },
@@ -54,13 +43,36 @@ async function transcrever(map: Record<string, unknown>) {
   });
   if (!r.ok) throw new Error(`Whisper falhou (${r.status}): ${(await r.text()).slice(0, 400)}`);
   const t = await r.json();
+  return { text: (t.text ?? "") as string, duration: t.duration ? Math.round(t.duration) : 0 };
+}
+
+async function transcrever(map: Record<string, unknown>) {
+  const id = map.id as string;
+  if (!OPENAI_KEY) throw new Error("Secret OPENAI_API_KEY não configurado no Supabase.");
+  const partes = (Array.isArray(map.audio_parts) && (map.audio_parts as string[]).length)
+    ? (map.audio_parts as string[])
+    : (map.audio_path ? [map.audio_path as string] : []);
+  if (!partes.length) throw new Error("Mapeamento sem áudio enviado.");
+
+  await setStatus(id, { status: "transcrevendo", erro: null });
+
+  let texto = "";
+  let dur = 0;
+  for (let i = 0; i < partes.length; i++) {
+    const { data: blob, error: dlErr } = await admin.storage.from("mapeamentos").download(partes[i]);
+    if (dlErr || !blob) throw new Error("Falha ao baixar áudio: " + (dlErr?.message ?? "arquivo não encontrado"));
+    const nome = (map.audio_nome as string) || `audio_${i + 1}`;
+    const r = await whisperUm(blob, partes.length > 1 ? `parte_${i + 1}_${nome}` : nome);
+    texto += (texto ? "\n\n" : "") + r.text;
+    dur += r.duration;
+  }
 
   await setStatus(id, {
     status: "transcrito",
-    transcricao: t.text ?? "",
-    audio_duracao_seg: t.duration ? Math.round(t.duration) : null,
+    transcricao: texto,
+    audio_duracao_seg: dur || (map.audio_duracao_seg as number ?? null),
   });
-  return t.text as string;
+  return texto;
 }
 
 // ── Estruturação (Claude) ──────────────────────────────────────────────────
