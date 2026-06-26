@@ -532,13 +532,15 @@ const ModalAtualizar = ({ row, onClose, onSaved, areas, projeto, irParaFicha }) 
           </div>
         </div>
 
-        {/* Editar seção — navega direto e reabre para aprovação (item 11). Oculto só em rascunho */}
+        {/* Editar/Ir para seção. Diagnóstico: reabre o bloco e envia p/ revisão (item 11).
+            Com teste: apenas NAVEGA para a etapa, mantendo o fluxo completo (passos/ficha/solicitações)
+            disponíveis antes de re-testar; a aprovação acontece depois, no registro do resultado. */}
         {row?.status_workflow !== 'rascunho' && (
         <div style={{ padding: '8px 24px', background: '#FFF8E1', borderBottom: '1px solid #F0E0A8', display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
           {(blocosReabrir.length === 0 || mostrarLista) ? (
             <>
-              <span style={{ fontSize: 11, fontWeight: 700, color: '#7A5C00', textTransform: 'uppercase', letterSpacing: 0.4, whiteSpace: 'nowrap' }}>Editar seção:</span>
-              <select value="" onChange={e => { const b = e.target.value; if (!b) return; setStep(SECAO_STEP[b] || 1); setBlocosReabrir(prev => prev.includes(b) ? prev : [...prev, b]); setMostrarLista(false) }} style={{ flex: 1, minWidth: 220, maxWidth: 320, padding: '6px 8px', border: '1px solid #E0C98A', borderRadius: 6, fontFamily: 'inherit', fontSize: 13, background: '#fff', color: '#00203E', cursor: 'pointer' }}>
+              <span style={{ fontSize: 11, fontWeight: 700, color: '#7A5C00', textTransform: 'uppercase', letterSpacing: 0.4, whiteSpace: 'nowrap' }}>{isDiag ? 'Editar seção:' : 'Ir para seção:'}</span>
+              <select value="" onChange={e => { const b = e.target.value; if (!b) return; setStep(SECAO_STEP[b] || 1); if (isDiag) { setBlocosReabrir(prev => prev.includes(b) ? prev : [...prev, b]); setMostrarLista(false) } }} style={{ flex: 1, minWidth: 220, maxWidth: 320, padding: '6px 8px', border: '1px solid #E0C98A', borderRadius: 6, fontFamily: 'inherit', fontSize: 13, background: '#fff', color: '#00203E', cursor: 'pointer' }}>
                 <option value="">— pular direto para a seção —</option>
                 {blocosAplicaveis(projeto).map(b => <option key={b} value={b}>{SECAO_LABEL[b] || b}</option>)}
               </select>
