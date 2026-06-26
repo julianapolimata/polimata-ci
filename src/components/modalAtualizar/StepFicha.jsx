@@ -14,6 +14,8 @@ export default function StepFicha({
   saving,
   handleSaveFicha,
   handleSaveSemFicha,
+  podeEnviarSemTeste,
+  handleEnviarAprovacao,
   amostraInfo,
 }) {
   return (
@@ -71,6 +73,19 @@ export default function StepFicha({
           <div style={{ fontSize: 11, color: '#6b7280' }}>Salva as alterações, mas o teste ficará marcado como pendente.</div>
         </div>
       </div>
+
+      {podeEnviarSemTeste && (
+        <div
+          onClick={!saving ? handleEnviarAprovacao : undefined}
+          style={{ background: '#ECFDF5', border: '1px solid #6EE7B7', padding: 16, borderRadius: 8, marginBottom: 16, display: 'flex', alignItems: 'center', gap: 14, cursor: saving ? 'wait' : 'pointer', transition: 'opacity .15s', opacity: saving ? 0.6 : 1 }}
+        >
+          <div style={{ background: '#15803D', color: '#fff', padding: '6px 10px', borderRadius: 6, fontSize: 11, fontWeight: 700, letterSpacing: 0.5, flexShrink: 0 }}>✓</div>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 13, fontWeight: 600, color: '#065F46', marginBottom: 2 }}>Enviar para aprovação (sem novo teste)</div>
+            <div style={{ fontSize: 11, color: '#047857' }}>Esta edição não altera o risco/controle nem os passos, então o teste atual continua válido. Vai direto para aprovação, mantendo o resultado.</div>
+          </div>
+        </div>
+      )}
 
       <div style={{ background: '#FEF3C7', borderLeft: '3px solid #F59E0B', padding: 12, borderRadius: 6, fontSize: 12, color: '#92400E' }}>
         <strong>📌 Importante:</strong> Ao salvar com ficha, o controle receberá o status <strong>EM ANÁLISE</strong> até que o resultado do teste seja registrado. Ao salvar sem ficha, o controle será marcado como <strong>TESTE PENDENTE</strong>.

@@ -62,6 +62,7 @@ const ModalAtualizar = ({ row, onClose, onSaved, areas, projeto, irParaFicha }) 
   const [showHistorico, setShowHistorico] = useState(false)
   // Solicitações v2: passos de teste com checkbox para gerar solicitação
   const [passos, setPassos] = useState([])
+  const [passosOriginais, setPassosOriginais] = useState(null)
 
   // Control fields (Step 2)
   const [editCat, setEditCat] = useState(row.cat || '')
@@ -106,7 +107,9 @@ const ModalAtualizar = ({ row, onClose, onSaved, areas, projeto, irParaFicha }) 
       if (cancelado) return
       // Se controle não tinha nenhum passo cadastrado, seedar uma linha em branco
       // (mas mantém os antigos com gerar_solicitacao desligado)
-      setPassos(lista.length ? lista : [criarPassoVazio()])
+      const seeded = lista.length ? lista : [criarPassoVazio()]
+      setPassos(seeded)
+      setPassosOriginais(JSON.stringify(seeded.map(x => ({ d: x.descricao || '', ds: x.documentacao_solicitada || '', g: !!x.gerar_solicitacao }))))
     }
     go()
     return () => { cancelado = true }
@@ -209,6 +212,16 @@ const ModalAtualizar = ({ row, onClose, onSaved, areas, projeto, irParaFicha }) 
       (isDiag && existencia !== (row.existencia || '')) ||
       (dtImplementacao || '') !== dtRow
   }
+
+  // Passos de teste mudaram? (compara com o snapshot carregado)
+  function passosMudaram() {
+    if (passosOriginais == null) return false
+    const atual = JSON.stringify(passos.map(x => ({ d: x.descricao || '', ds: x.documentacao_solicitada || '', g: !!x.gerar_solicitacao })))
+    return atual !== passosOriginais
+  }
+  // Edição que NÃO invalida o teste: nenhum campo de risco/controle/amostra nem os passos mudaram.
+  // Só então é permitido 'Enviar para aprovação' sem refazer o teste (ex.: ajuste de recomendação).
+  const podeEnviarSemTeste = !isDiag && !mudouRiscoControle() && !passosMudaram()
 
   // Validação por bloco (item 11): só valida os blocos efetivamente reabertos
   const canEnviarRevisao = (blocosReabrir.length > 0)
@@ -445,6 +458,58 @@ const ModalAtualizar = ({ row, onClose, onSaved, areas, projeto, irParaFicha }) 
     }
   }
 
+  // ═══ ENVIAR PARA APROVAÇÃO (edição que NÃO invalida o teste; preserva resultados) ═══
+  async function handleEnviarAprovacaoSemTeste() {
+    if (!podeEnviarSemTeste) { alert('Esta edição altera o risco/controle ou os passos — é preciso refazer o teste (baixar nova ficha).'); return }
+    setSaving(true)
+    try {
+      const updates = {
+        dr: novaDescRisco || row.dr,
+        dc: novaDescControle || row.dc,
+        cat: editCat, freq: editFreq, nat: editNat, car: editCar, sis: editSis, chave: editChave,
+        premissa_porque: pq, premissa_quando: quando, premissa_onde: onde,
+        premissa_quem: isAutomatic ? 'N/A' : quem, premissa_como: como, premissa_resultado: resultado,
+        cenario_atual: cenarioAtual.trim() || null,
+        rec: recomendacao || row.rec || null,
+        dt_implementacao: dtImplementacao || null,
+        status_workflow: podeAprovarSolo ? 'aprovado' : 'em_revisao',
+        edicao_pendente: false, // NÃO força novo teste após aprovação (resultados preservados)
+        submetido_por: perfil?.id,
+        submetido_em: new Date().toISOString(),
+        atualizado_em: new Date().toISOString(),
+        atualizado_por: perfil?.id,
+      }
+      const { data: _u, error } = await supabase.from('mrc').update(updates).eq('id', row.id).select('id')
+      if (error) throw error
+      if (!_u || _u.length === 0) throw new Error('Não foi possível gravar (0 registros — verifique permissões/conexão).')
+      if (podeAprovarSolo) {
+        for (const b of blocosAplicaveis(projeto)) {
+          try { await setBlocoStatus({ mrcId: row.id, bloco: b, fase: faseDoBloco(b, row, projeto), status: 'aprovado', revisorId: perfil?.id }) } catch (e) { console.error('aprovar bloco:', e) }
+        }
+      } else {
+        for (const b of blocosAplicaveis(projeto)) {
+          try { await reabrirBloco({ mrcId: row.id, bloco: b, fase: faseDoBloco(b, row, projeto) }) } catch (e) { console.error('reabrirBloco:', e) }
+        }
+        supabase.functions.invoke('send-email', {
+          body: { type: 'review_submitted_admins', data: {
+            autor_id: perfil?.id, ref: row.rc || row.rr, descricao: row.dc || '',
+            area_id: row.area_id, mrc_id: row.id,
+            titulo: `Edição submetida — ${row.rc || row.rr}`,
+            mensagem: `${row.rc} (${row.area}) foi enviado para aprovação após edição (sem novo teste).`,
+          } }
+        }).catch(err => console.error('Erro ao notificar revisão:', err))
+      }
+      logAtualizarControle(row, row.projeto_id)
+      alert(podeAprovarSolo ? '✅ Edição salva e aprovada (sem novo teste).' : '✅ Edição enviada para aprovação (sem novo teste).')
+      onSaved?.()
+      onClose?.()
+    } catch (err) {
+      alert('Erro: ' + err.message)
+    } finally {
+      setSaving(false)
+    }
+  }
+
   // ═══ SALVAR E ENVIAR PARA REVISÃO (edição de seção; sem ficha; exige nova ficha após aprovação) ═══
   async function handleSalvarEnviarRevisao() {
     if (!canEnviarRevisao) { alert('Preencha os campos obrigatórios da(s) seção(ões) em edição antes de enviar para revisão.'); return }
@@ -649,6 +714,8 @@ const ModalAtualizar = ({ row, onClose, onSaved, areas, projeto, irParaFicha }) 
                   saving={saving}
                   handleSaveFicha={handleSaveFicha}
                   handleSaveSemFicha={handleSaveSemFicha}
+                  podeEnviarSemTeste={podeEnviarSemTeste}
+                  handleEnviarAprovacao={handleEnviarAprovacaoSemTeste}
                   amostraInfo={amostraInfo}
                 />
               )}
