@@ -366,6 +366,7 @@ export default function Dashboard() {
           <SideNavItem icon="✏️" label="Cadastrar Orçado" active={location.pathname === '/orcamento/orcado'} onClick={() => navigate('/orcamento/orcado')} open={sidebarOpen} />
           <SideNavItem icon="🎭" label="Cenários" active={location.pathname === '/orcamento/cenarios'} onClick={() => navigate('/orcamento/cenarios')} open={sidebarOpen} />
           {sidebarOpen && <div className="sb-sep">Operação</div>}
+          <SideNavItem icon="🧾" label="Importar Títulos" active={location.pathname === '/orcamento/importar-titulos'} onClick={() => navigate('/orcamento/importar-titulos')} open={sidebarOpen} />
           <SideNavItem icon="📥" label="Importar Realizado" active={location.pathname === '/orcamento/importar'} onClick={() => navigate('/orcamento/importar')} open={sidebarOpen} />
           <SideNavItem icon="📈" label="Importar Orçado" active={location.pathname === '/orcamento/importar-orcado'} onClick={() => navigate('/orcamento/importar-orcado')} open={sidebarOpen} />
           <SideNavItem icon="🗂" label="Plano de Contas" active={location.pathname === '/orcamento/plano-contas'} onClick={() => navigate('/orcamento/plano-contas')} open={sidebarOpen} />
@@ -435,6 +436,7 @@ export default function Dashboard() {
           <Route path="/orcamento/cenarios" element={<OrcCenarios projeto={projetoAtivo} />} />
           <Route path="/orcamento/importar" element={<OrcImportar projeto={projetoAtivo} />} />
           <Route path="/orcamento/importar-orcado" element={<OrcImportarOrcado projeto={projetoAtivo} />} />
+          <Route path="/orcamento/importar-titulos" element={<OrcImportarTitulos projeto={projetoAtivo} />} />
           <Route path="/orcamento/plano-contas" element={<OrcPlanoContas projeto={projetoAtivo} />} />
           <Route path="/orcamento/centros" element={<OrcCentros projeto={projetoAtivo} />} />
           <Route path="/orcamento/sobre" element={<OrcSobre projeto={projetoAtivo} />} />
