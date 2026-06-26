@@ -5,6 +5,7 @@ import {
 } from './badges'
 import HistoricoControle from './HistoricoControle'
 import HistoricoTab from '../HistoricoTab'
+import LinhaDoTempo from '../LinhaDoTempo'
 import MotivoReprovacao from './MotivoReprovacao'
 import { loadAprovacoes, faseDoBloco } from '../../lib/aprovacoesBloco'
 import { ultimaDataTeste } from '../../lib/amostragem'
@@ -13,7 +14,7 @@ import { ultimaDataTeste } from '../../lib/amostragem'
 
 export function ModalDetalhe({ row, projeto, onClose, onEditar, primaryAction, secondaryAction, onAnalisarCriticidade, verAprovacoes }) {
   const [tab, setTab] = useState('ident')
-  const [histSubTab, setHistSubTab] = useState('comentarios')
+  const [histSubTab, setHistSubTab] = useState('linha')
   const [aprovacoes, setAprovacoes] = useState([])
   useEffect(() => { if (verAprovacoes && row?.id) loadAprovacoes(row.id).then(setAprovacoes) }, [verAprovacoes, row?.id])
   if (!row) return null
@@ -174,7 +175,7 @@ export function ModalDetalhe({ row, projeto, onClose, onEditar, primaryAction, s
             <div className="tp active">
               {verAprovacoes && (
                 <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
-                  {[['comentarios', 'Comentários'], ['log', 'Log de Auditoria']].map(([id, label]) => (
+                  {[['linha', 'Linha do tempo'], ['comentarios', 'Comentários'], ['log', 'Log de Auditoria']].map(([id, label]) => (
                     <button key={id} onClick={() => setHistSubTab(id)} style={{
                       padding: '6px 14px', borderRadius: 999, fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit',
                       border: histSubTab === id ? '1px solid #00203E' : '1px solid #D8D2C4',
@@ -186,6 +187,8 @@ export function ModalDetalhe({ row, projeto, onClose, onEditar, primaryAction, s
               )}
               {(verAprovacoes && histSubTab === 'log')
                 ? <HistoricoTab registroId={row.id} />
+                : (verAprovacoes && histSubTab === 'linha')
+                ? <LinhaDoTempo controle={row} projeto={projeto} />
                 : <HistoricoControle controleId={row.id} projetoId={projeto?.id} />}
             </div>
           )}
