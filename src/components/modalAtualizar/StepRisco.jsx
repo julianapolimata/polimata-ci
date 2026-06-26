@@ -200,8 +200,8 @@ export default function StepRisco({
                       style={{ width: '100%', padding: 10, border: '1px solid #e5e7eb', borderRadius: 6, fontFamily: 'Montserrat, sans-serif', fontSize: 12, opacity: !areaDestino ? 0.5 : 1 }}
                     >
                       <option value="">Selecione o subprocesso...</option>
-                      {subprocessosDestino && subprocessosDestino.map((sub, idx) => (
-                        <option key={idx} value={sub}>{sub}</option>
+                      {subprocessosDestino && subprocessosDestino.map((s) => (
+                        <option key={s.id} value={s.nome}>{s.nome}</option>
                       ))}
                     </select>
                   </div>

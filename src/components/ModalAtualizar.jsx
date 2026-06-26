@@ -128,16 +128,15 @@ const ModalAtualizar = ({ row, onClose, onSaved, areas, projeto, irParaFicha }) 
       setSubprocessosDestino([])
       return
     }
+    // Lê os subprocessos CADASTRADOS da área (igual ao cadastro de risco), não os derivados
+    // dos controles existentes — assim áreas novas (ainda sem controle) aparecem corretamente.
     const { data } = await supabase
-      .from('mrc')
-      .select('sub')
+      .from('subprocessos')
+      .select('id, nome')
       .eq('area_id', areaId)
-      .eq('projeto_id', row.projeto_id)
       .eq('ativo', true)
-    if (data) {
-      const unique = [...new Set(data.map(d => d.sub).filter(Boolean))].sort()
-      setSubprocessosDestino(unique)
-    }
+      .order('ordem')
+    setSubprocessosDestino(data || [])
   }
 
   // ═══ LOGIC ═══
@@ -263,6 +262,7 @@ const ModalAtualizar = ({ row, onClose, onSaved, areas, projeto, irParaFicha }) 
         rr: novaRef,
         rc: novaRef.replace('R.', 'C.'),
         sub: subDestino,
+        subprocesso_id: (subprocessosDestino.find(x => x.nome === subDestino)?.id) || null,
         ger: row.ger,
         resp_sub: row.resp_sub,
         dr: row.dr,
