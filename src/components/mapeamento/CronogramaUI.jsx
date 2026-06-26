@@ -96,7 +96,51 @@ export function Historico({ itens }) {
 async function registrar(mapId, acao, comentario) {
   const { data, error } = await supabase.rpc('mapeamento_registrar_aprovacao', { p_mapeamento_id: mapId, p_acao: acao, p_comentario: comentario || null })
   if (error) throw new Error(error.message)
+  // notifica o lado oposto (cliente/consultor) por e-mail — não bloqueia a UI
+  supabase.functions.invoke('mapeamento-notificar', { body: { mapeamento_id: mapId, acao, comentario: comentario || null } }).catch(() => {})
   return data
+}
+
+// ─── Resumo macro do projeto (visão de evolução geral p/ o cliente) ───────────
+function progressoDe(map) {
+  const stages = computeTimeline(map)
+  const ok = stages.filter((s) => s.estado === 'concluido').length
+  return ok / stages.length
+}
+export function ResumoProjeto({ lista }) {
+  if (!lista?.length) return null
+  const total = lista.length
+  const cont = { producao: 0, aprovacao: 0, ajustes: 0, vigente: 0 }
+  lista.forEach((m) => {
+    const e = m.etapa === 'vigente' ? 'vigente' : m.etapa === 'aprovacao' ? 'aprovacao' : m.etapa === 'ajustes' ? 'ajustes' : 'producao'
+    cont[e]++
+  })
+  const pct = Math.round((lista.reduce((a, m) => a + progressoDe(m), 0) / total) * 100)
+  const cards = [
+    { label: 'Em produção', n: cont.producao, cor: '#0E7490', bg: 'rgba(6,182,212,0.10)' },
+    { label: 'Aguardando você', n: cont.aprovacao, cor: '#92400E', bg: 'rgba(234,179,8,0.15)' },
+    { label: 'Em ajustes', n: cont.ajustes, cor: '#9A3412', bg: 'rgba(234,88,12,0.12)' },
+    { label: 'Vigentes', n: cont.vigente, cor: '#15803D', bg: 'rgba(34,197,94,0.12)' },
+  ]
+  return (
+    <div style={{ background: '#fff', borderRadius: 12, border: '1px solid rgba(0,32,62,0.08)', padding: 20, marginBottom: 16 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', flexWrap: 'wrap', gap: 8 }}>
+        <div style={{ fontSize: 11, fontWeight: 700, color: AZUL, textTransform: 'uppercase', letterSpacing: 0.6 }}>Evolução geral</div>
+        <div style={{ fontSize: 12, color: '#6B7280' }}><b style={{ color: AZUL, fontSize: 15 }}>{pct}%</b> concluído · {cont.vigente}/{total} vigentes</div>
+      </div>
+      <div style={{ height: 10, borderRadius: 999, background: 'rgba(0,32,62,0.08)', overflow: 'hidden', margin: '12px 0 16px' }}>
+        <div style={{ width: pct + '%', height: '100%', borderRadius: 999, background: `linear-gradient(90deg, ${COBRE}, #CC915E)`, transition: 'width .4s' }} />
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(130px,1fr))', gap: 10 }}>
+        {cards.map((c) => (
+          <div key={c.label} style={{ background: c.bg, borderRadius: 10, padding: '12px 14px' }}>
+            <div style={{ fontSize: 24, fontWeight: 700, color: c.cor, lineHeight: 1 }}>{c.n}</div>
+            <div style={{ fontSize: 11, fontWeight: 600, color: c.cor, marginTop: 4 }}>{c.label}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
 }
 
 // ─── Bloco de ações do consultor ──────────────────────────────────────────────
@@ -174,6 +218,8 @@ export function VisaoCliente({ projeto }) {
         <div style={{ fontSize: 22, fontWeight: 300, color: AZUL, fontFamily: 'Raleway, Montserrat' }}>Acompanhamento dos seus processos</div>
         <div style={{ fontSize: 12, color: '#6B7280', marginTop: 4 }}>Acompanhe a evolução de cada procedimento e aprove quando estiver pronto.</div>
       </div>
+
+      <ResumoProjeto lista={lista} />
 
       <div style={{ background: '#fff', borderRadius: 12, border: '1px solid rgba(0,32,62,0.08)', overflow: 'hidden' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
