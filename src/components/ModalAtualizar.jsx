@@ -254,13 +254,19 @@ const ModalAtualizar = ({ row, onClose, onSaved, areas, projeto, irParaFicha }) 
     if (!areaDestino || !subDestino) return alert('Preencha área e subprocesso de destino.')
     setSaving(true)
     try {
-      // Criar novo risco/controle na área destino
-      const novaRef = `${row.rr.split('.')[0]}.${areaDestino.substring(0, 3).toUpperCase()}.${Date.now().toString().slice(-3)}`
+      // Criar novo risco/controle na área destino — referência segue a numeração da área destino
+      const areaObjDest = (areas || []).find(a => a.id === areaDestino)
+      const prefixoDest = areaObjDest?.prefixo || 'UNKN'
+      const { data: existentesDest } = await supabase.from('mrc').select('rr').eq('projeto_id', row.projeto_id).like('rr', `R.${prefixoDest}.%`)
+      const numerosDest = (existentesDest || []).map(e => { const m = e.rr?.match(/\.(\d+)$/); return m ? parseInt(m[1]) : 0 }).filter(n => n > 0)
+      const nextNumDest = Math.max(0, ...numerosDest) + 1
+      const refRisco = `R.${prefixoDest}.${String(nextNumDest).padStart(2, '0')}`
+      const refControle = `C.${prefixoDest}.${String(nextNumDest).padStart(2, '0')}`
       await supabase.from('mrc').insert({
         projeto_id: row.projeto_id,
         area_id: areaDestino,
-        rr: novaRef,
-        rc: novaRef.replace('R.', 'C.'),
+        rr: refRisco,
+        rc: refControle,
         sub: subDestino,
         subprocesso_id: (subprocessosDestino.find(x => x.nome === subDestino)?.id) || null,
         ger: row.ger,
