@@ -199,7 +199,7 @@ export default function Dashboard() {
     // Cliente de orçamento (ou admin simulando): acesso só às telas de consulta
     const isCli = ['usuario_cliente', 'gestor_cliente'].includes(perfil?.papel) || (perfil?.papel === 'admin_polimata' && simularCliente)
     if (isCli && modProjeto === 'orcamento') {
-      const permitido = ['/orcamento', '/orcamento/analise', '/orcamento/fluxo', '/orcamento/comparativo', '/orcamento/sobre', '/perfil']
+      const permitido = ['/orcamento', '/orcamento/analise', '/orcamento/comparativo', '/orcamento/sobre', '/perfil']
       if (!permitido.includes(path)) navigate('/orcamento', { replace: true })
     }
   }, [projetoAtivo, location.pathname, perfil?.papel, simularCliente])
@@ -358,13 +358,13 @@ export default function Dashboard() {
           {sidebarOpen && <div className="sb-sep">Gestão Orçamentária</div>}
           <SideNavItem icon="📊" label="Dashboard Executivo" active={location.pathname === '/orcamento'} onClick={() => navigate('/orcamento')} open={sidebarOpen} />
           <SideNavItem icon="📅" label="Análise Mensal" active={location.pathname === '/orcamento/analise'} onClick={() => navigate('/orcamento/analise')} open={sidebarOpen} />
-          <SideNavItem icon="💵" label="Fluxo de Caixa" active={location.pathname === '/orcamento/fluxo'} onClick={() => navigate('/orcamento/fluxo')} open={sidebarOpen} />
           <SideNavItem icon="⚖️" label="Orçado vs Realizado" active={location.pathname === '/orcamento/comparativo'} onClick={() => navigate('/orcamento/comparativo')} open={sidebarOpen} />
           {!isCliente && (<>
           {sidebarOpen && <div className="sb-sep">Planejamento</div>}
           <SideNavItem icon="⚡" label="Gerador de Sugestão" active={location.pathname === '/orcamento/gerador'} onClick={() => navigate('/orcamento/gerador')} open={sidebarOpen} />
           <SideNavItem icon="✏️" label="Cadastrar Orçado" active={location.pathname === '/orcamento/orcado'} onClick={() => navigate('/orcamento/orcado')} open={sidebarOpen} />
           <SideNavItem icon="🎭" label="Cenários" active={location.pathname === '/orcamento/cenarios'} onClick={() => navigate('/orcamento/cenarios')} open={sidebarOpen} />
+          <SideNavItem icon="💵" label="Fluxo de Caixa" badge="em dev" active={location.pathname === '/orcamento/fluxo'} onClick={() => navigate('/orcamento/fluxo')} open={sidebarOpen} />
           {sidebarOpen && <div className="sb-sep">Operação</div>}
           <SideNavItem icon="🧾" label="Importar Títulos" active={location.pathname === '/orcamento/importar-titulos'} onClick={() => navigate('/orcamento/importar-titulos')} open={sidebarOpen} />
           <SideNavItem icon="📥" label="Importar Realizado" active={location.pathname === '/orcamento/importar'} onClick={() => navigate('/orcamento/importar')} open={sidebarOpen} />

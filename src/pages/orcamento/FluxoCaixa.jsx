@@ -126,6 +126,15 @@ export default function FluxoCaixa({ projeto }) {
       <ErroBox erro={erro} onClose={() => setErro('')} />
       {msg && <div style={{ background: 'rgba(34,185,138,0.08)', border: '1px solid rgba(34,185,138,0.35)', borderRadius: 8, padding: '8px 14px', fontSize: 12.5, marginBottom: 14 }}>{msg}</div>}
 
+      <div style={{ background: 'rgba(204,145,94,0.10)', border: '1px solid rgba(204,145,94,0.45)', borderRadius: 10, padding: '12px 16px', marginBottom: 14 }}>
+        <div style={{ fontSize: 13.5, fontWeight: 700, color: 'var(--copper, #A6512F)', marginBottom: 6 }}>🚧 Função em desenvolvimento — prévia interna (visão Polímata)</div>
+        <p style={{ margin: '0 0 6px', fontSize: 12.5, color: 'var(--lt-text)', lineHeight: 1.55 }}>
+          Esta tela já faz a <strong>base do fluxo de caixa</strong>: importa os títulos a pagar e a receber por <strong>data de vencimento</strong>, e mostra entradas, saídas, saldo do mês e <strong>saldo acumulado</strong>, separando o que já foi pago (realizado) do que está a vencer (previsto), com detalhamento por título.
+        </p>
+        <p style={{ margin: '0 0 6px', fontSize: 12.5, color: 'var(--lt-text)', lineHeight: 1.55 }}>
+          Um fluxo de caixa completo, porém, envolve mais do que contas pagas e recebidas. Ainda faltam: <strong>saldo inicial real por banco/conta</strong> (hoje é um único valor manual), <strong>aplicações e investimentos</strong> (aportes e resgates), <strong>conciliação bancária</strong> (extrato × títulos) e a <strong>ligação das entradas futuras à previsão de receita</strong> (vendas × prazo de recebimento). Enquanto isso não amadurece, a função fica <strong>oculta para o cliente</strong> e disponível apenas aqui, como prévia.
+        </p>
+      </div>
       <HelpTag><strong>Regime de caixa:</strong> aqui o critério é quando o dinheiro entra/sai (vencimento/pagamento) — diferente do resultado, que é por competência. "Pago" = caixa realizado; em aberto = a vencer (previsto).</HelpTag>
 
       {impOpen && (
