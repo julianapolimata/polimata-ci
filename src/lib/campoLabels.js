@@ -58,6 +58,10 @@ export const CAMPO_LABELS = {
   reavaliacao_justificativa: 'Reavaliação — justificativa',
   reavaliacao_solicitada_por: 'Reavaliação — solicitada por',
   reavaliacao_solicitada_em: 'Reavaliação — solicitada em',
+  // Reabertura
+  reabertura_justificativa: 'Reabertura — justificativa',
+  reabertura_solicitada_por: 'Reabertura — solicitada por',
+  reabertura_solicitada_em: 'Reabertura — solicitada em',
   // Estrutura (áreas / subprocessos / projetos)
   nome: 'Nome',
   ordem: 'Ordem',

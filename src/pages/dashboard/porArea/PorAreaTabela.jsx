@@ -5,7 +5,7 @@ import { fmtDate } from '../_shared'
 import { getFaseLabel, getResultadoVitrine, getStatusComputado } from '../../../lib/fases'
 
 export default function PorAreaTabela({ ctx }) {
-  const { FASE_HDR, FASE_KEYS_VISIVEIS, FASE_W_PARA, PA, PA_DATA_COLS, RegressaoBadge, Td, badgeCrit, badgeR, canEdit, canEditControle, canRevisar, cf, cfSorted, faseThS, getAlertas, getStatusBadge, idxFases, isAdmin, isCliente, isDiagnostico, projeto, renderFaseCell, setAtualizarFicha, setAtualizarRow, setDraftRow, setModalRow, setReavaliarRow, setRowCriticidade, setRowRegistrarResultado, setRowRevisar, sortArrow, tableScrollRef, tdS, toggleSort } = ctx
+  const { FASE_HDR, FASE_KEYS_VISIVEIS, FASE_W_PARA, PA, PA_DATA_COLS, RegressaoBadge, Td, badgeCrit, badgeR, canEdit, canEditControle, canRevisar, cf, cfSorted, faseThS, getAlertas, getStatusBadge, idxFases, isAdmin, isCliente, isDiagnostico, projeto, renderFaseCell, setAtualizarFicha, setAtualizarRow, setDraftRow, setModalRow, setReavaliarRow, setReabrirRow, setRowCriticidade, setRowRegistrarResultado, setRowRevisar, sortArrow, tableScrollRef, tdS, toggleSort } = ctx
   return (
     <>
       {/* TABELA MRC */}
@@ -35,6 +35,19 @@ export default function PorAreaTabela({ ctx }) {
                       const st = getStatusComputado(c, projeto?.num_fases, projeto?.f1_tem_teste === true)
                       // Define UMA ação primária por contexto (a "próxima ação" do workflow)
                       let primary = null, secondary = null
+                      const ehInativo = c.ativo === false || ['evitado','transferido','descontinuado'].includes((c.status_risco || '').toLowerCase())
+                      if (ehInativo) {
+                        const pend = !!c.reabertura_solicitada_por
+                        let act = null
+                        if (pend && canRevisar) act = { label: '⟳ Decidir Reabertura', color: '#7C3AED', bg: 'rgba(124,58,237,0.10)', border: 'rgba(124,58,237,0.30)', onClick: () => setReabrirRow({ c, modo: 'decidir' }) }
+                        else if (!pend && canEdit) act = { label: '⟳ Reabrir', color: '#0F766E', bg: 'rgba(20,184,166,0.10)', border: 'rgba(20,184,166,0.30)', onClick: () => setReabrirRow({ c, modo: 'solicitar' }) }
+                        return (
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 4, alignItems: 'center' }}>
+                            {act && <button onClick={e => { e.stopPropagation(); act.onClick() }} style={{ background: act.bg, border: `1px solid ${act.border}`, borderRadius: 6, padding: '6px 10px', fontSize: 11, fontWeight: 700, color: act.color, cursor: 'pointer', fontFamily: 'inherit', width: '100%' }}>{act.label}</button>}
+                            {pend && <span style={{ fontSize: 10, fontWeight: 700, color: '#92400E', background: 'rgba(234,179,8,0.12)', padding: '3px 8px', borderRadius: 999, textTransform: 'uppercase', letterSpacing: 0.4, whiteSpace: 'nowrap', lineHeight: 1.2 }}>Reabertura pendente</span>}
+                          </div>
+                        )
+                      }
                       // Em projeto diagnóstico (sem teste de efetividade), workflow simplificado:
                       // sempre permite editar o controle (existência, criticidade, etc.)
                       const podeEditarEste = canEditControle ? canEditControle(c) : canEdit
