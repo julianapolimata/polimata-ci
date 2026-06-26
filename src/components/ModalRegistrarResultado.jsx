@@ -36,6 +36,10 @@ const ModalRegistrarResultado = ({ row, projeto, onClose, onSaved, responsaveis 
   const donoCtrl = row?.consultor_id || row?.submetido_por || row?.criado_por
   const podeAprovar = ['admin_polimata', 'gerente_polimata'].includes(perfil?.papel) && (!donoCtrl || donoCtrl === perfil?.id)
   const faseInfo = getFaseInfo(row || {})
+  // Mapa fase→campo de resultado: o resultado do teste é gravado no campo da FASE EM CURSO,
+  // não sempre em r1. A maturidade (DB) e a regressão leem esses campos por fase.
+  const CAMPO_FASE = { F1: 'r1', F2E1: 'st_pa', F2E2: 'r_ader', F3: 'r3', F4C1: 'r_f4c1', F4C2: 'r_f4c2', F5: 'r_f5' }
+  const campoResultado = CAMPO_FASE[faseInfo.codigo] || 'r1'
   const isReprovado = row?.status_workflow === 'reprovado'
   // Fases que causam regressão ao marcar Inefetivo/GAP
   const FASES_REGRESSAO = ['F2E2', 'F3', 'F4C1', 'F4C2', 'F5']
@@ -67,7 +71,6 @@ const ModalRegistrarResultado = ({ row, projeto, onClose, onSaved, responsaveis 
   const [paDesc, setPaDesc] = useState(row?.dem_pa || '')
   const [paResp, setPaResp] = useState(row?.resp_pa || '')
   const [paPrazo, setPaPrazo] = useState(row?.dt_pa || '')
-  const [paStatus, setPaStatus] = useState(row?.st_pa || 'pendente')
   const [justificativaPA, setJustificativaPA] = useState(row?.pa_justificativa || '')
   const [classificacao, setClassificacao] = useState(row?.causa_raiz ? { causaRaiz: row.causa_raiz, destino: row.regressao_destino, nFalhas: row.n_falhas, nTestado: row.n_amostra, justificativa: row.regressao_justificativa || '' } : null)
   const [showClassif, setShowClassif] = useState(false)
@@ -102,7 +105,8 @@ const ModalRegistrarResultado = ({ row, projeto, onClose, onSaved, responsaveis 
   // ═══ DADOS COMUNS PARA SALVAR ═══
   function buildUpdatePayload() {
     const payload = {
-      r1: resultado,
+      // resultado do teste no campo da FASE EM CURSO (F1→r1, F2E1→st_pa, F2E2→r_ader, F3→r3, F4C1/C2, F5)
+      [campoResultado]: resultado,
       cenario_atual: cenarioAtual.trim() || null,
       incons: resultado !== 'efetivo' ? inconsistencia : null,
       melhoria: melhoria === 'sim' ? true : false,
@@ -110,7 +114,7 @@ const ModalRegistrarResultado = ({ row, projeto, onClose, onSaved, responsaveis 
       dem_pa: resultado !== 'efetivo' && temPA === 'sim' ? paDesc : null,
       resp_pa: resultado !== 'efetivo' && temPA === 'sim' ? paResp : null,
       dt_pa: resultado !== 'efetivo' && temPA === 'sim' ? paPrazo : null,
-      st_pa: resultado !== 'efetivo' && temPA === 'sim' ? paStatus : null,
+      // st_pa NÃO guarda mais status do Plano de Ação (PA não é monitorado); é resultado da F2-E1.
       pa_justificativa: resultado !== 'efetivo' && temPA === 'nao' ? (justificativaPA?.trim() || null) : null,
     }
     // Se é regressão, incrementar contador
@@ -291,7 +295,7 @@ const ModalRegistrarResultado = ({ row, projeto, onClose, onSaved, responsaveis 
           <SecaoCenarioAtual cenarioAtual={cenarioAtual} setCenarioAtual={setCenarioAtual} />
           <SecaoInconsistencia showInconsistencia={showInconsistencia} showInconsistenciaAlert={showInconsistenciaAlert} inconsistencia={inconsistencia} setInconsistencia={setInconsistencia} resultado={resultado} />
           <SecaoMelhoria showDescMelhoria={showDescMelhoria} melhoria={melhoria} setMelhoria={setMelhoria} descMelhoria={descMelhoria} setDescMelhoria={setDescMelhoria} />
-          <SecaoPA showPA={showPA} temPA={temPA} setTemPA={setTemPA} paDesc={paDesc} setPaDesc={setPaDesc} paResp={paResp} setPaResp={setPaResp} paPrazo={paPrazo} setPaPrazo={setPaPrazo} paStatus={paStatus} setPaStatus={setPaStatus} justificativaPA={justificativaPA} setJustificativaPA={setJustificativaPA} responsaveis={responsaveis} resultado={resultado} />
+          <SecaoPA showPA={showPA} temPA={temPA} setTemPA={setTemPA} paDesc={paDesc} setPaDesc={setPaDesc} paResp={paResp} setPaResp={setPaResp} paPrazo={paPrazo} setPaPrazo={setPaPrazo} justificativaPA={justificativaPA} setJustificativaPA={setJustificativaPA} responsaveis={responsaveis} resultado={resultado} />
         </div>
 
         {/* FASE ATUAL */}

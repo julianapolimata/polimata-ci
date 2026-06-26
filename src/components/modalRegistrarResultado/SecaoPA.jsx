@@ -1,7 +1,7 @@
 // SecaoPA — bloco JSX extraído de ModalRegistrarResultado.jsx em 22/mai/2026 (fatiamento Etapa 4).
 import React from 'react'
 
-export default function SecaoPA({ showPA, temPA, setTemPA, paDesc, setPaDesc, paResp, setPaResp, paPrazo, setPaPrazo, paStatus, setPaStatus, justificativaPA, setJustificativaPA, responsaveis, resultado }) {
+export default function SecaoPA({ showPA, temPA, setTemPA, paDesc, setPaDesc, paResp, setPaResp, paPrazo, setPaPrazo, justificativaPA, setJustificativaPA, responsaveis, resultado }) {
   return (
     <>
           {/* Teste de Desenho (se Inefetivo/GAP) */}
@@ -139,35 +139,6 @@ export default function SecaoPA({ showPA, temPA, setTemPA, paDesc, setPaDesc, pa
                         }}
                       />
                     </div>
-                  </div>
-                  <div>
-                    <label style={{
-                      display: 'block',
-                      fontSize: '13px',
-                      fontWeight: 500,
-                      color: '#00203E',
-                      marginBottom: '0.5rem',
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.3px'
-                    }}>
-                      Status <span style={{ color: '#E24B4A' }}>*</span>
-                    </label>
-                    <select
-                      value={paStatus}
-                      onChange={e => setPaStatus(e.target.value)}
-                      style={{
-                        width: '100%',
-                        padding: '0.8rem',
-                        border: '1px solid #D0D0D0',
-                        borderRadius: '4px',
-                        fontFamily: 'Montserrat, sans-serif',
-                        fontSize: '14px'
-                      }}
-                    >
-                      <option value="pendente">Pendente</option>
-                      <option value="desenvolvimento">Em Desenvolvimento</option>
-                      <option value="efetivo">Efetivo</option>
-                    </select>
                   </div>
                 </div>
               )}
