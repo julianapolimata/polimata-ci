@@ -14,12 +14,13 @@ const ModalReabrir = ({ row, perfil, modo, onClose, onSaved }) => {
   const donoCtrl = row?.consultor_id || row?.submetido_por || row?.criado_por
   const podeAprovar = ['admin_polimata', 'gerente_polimata'].includes(perfil?.papel) && (!donoCtrl || donoCtrl === perfil?.id)
 
-  // Reabre: volta a ATIVO + situação Existente, limpa os campos de reabertura.
-  // Não mexe no status_workflow — o controle retorna ao estado que tinha antes de ser inativado.
+  // Reabre: volta a ATIVO + situação Existente + início do fluxo (Não Iniciado → ação "Atualizar"),
+  // limpa os campos de reabertura. O consultor revisa/refaz o controle antes de seguir.
   function reativarUpdate(extra = {}) {
     return supabase.from('mrc').update({
       ativo: true,
       status_risco: 'existente',
+      status_workflow: 'nao_iniciado',
       reabertura_justificativa: null,
       reabertura_solicitada_por: null,
       reabertura_solicitada_em: null,
@@ -56,7 +57,7 @@ const ModalReabrir = ({ row, perfil, modo, onClose, onSaved }) => {
     const ok = await confirm({
       title: aprovar ? 'Reabrir o controle?' : 'Recusar reabertura?',
       message: aprovar
-        ? 'O controle volta a ficar ATIVO (situação Existente) e retorna ao fluxo normal, no estado que tinha antes de ser inativado.'
+        ? 'O controle volta a ficar ATIVO (situação Existente) e retorna ao início do fluxo (Não Iniciado), para ser atualizado.'
         : 'O controle permanece inativo, sem alterações.',
       confirmText: aprovar ? 'Reabrir' : 'Recusar', cancelText: 'Cancelar', variant: aprovar ? 'default' : 'danger',
     })
@@ -110,7 +111,7 @@ const ModalReabrir = ({ row, perfil, modo, onClose, onSaved }) => {
           {modo === 'solicitar' ? (
             <>
               <div style={{ fontSize: 12.5, color: '#444', lineHeight: 1.6, marginBottom: 14 }}>
-                Este controle está <strong>{sitLabel}</strong> (inativo). Para trazê-lo de volta é preciso justificar a reabertura — {podeAprovar ? 'ao confirmar, ele volta a ficar ativo na hora.' : 'o pedido segue para aprovação do gerente antes da reabertura.'}
+                Este controle está <strong>{sitLabel}</strong> (inativo). Para trazê-lo de volta é preciso justificar a reabertura — {podeAprovar ? 'ao confirmar, ele volta a ficar ativo na hora, no início do fluxo (ação Atualizar).' : 'o pedido segue para aprovação do gerente antes da reabertura.'}
               </div>
               <div style={lbl}>Justificativa <span style={{ color: '#E24B4A' }}>*</span></div>
               <textarea value={justificativa} onChange={e => setJustificativa(e.target.value)}
@@ -120,7 +121,7 @@ const ModalReabrir = ({ row, perfil, modo, onClose, onSaved }) => {
           ) : (
             <>
               <div style={{ fontSize: 12.5, color: '#444', lineHeight: 1.6, marginBottom: 14 }}>
-                Há uma solicitação de reabertura para este controle (<strong>{sitLabel}</strong>). Ao reabrir, ele volta a ficar <strong>ativo</strong> (situação Existente) e retorna ao fluxo normal.
+                Há uma solicitação de reabertura para este controle (<strong>{sitLabel}</strong>). Ao reabrir, ele volta a ficar <strong>ativo</strong> (situação Existente) e retorna ao início do fluxo (Não Iniciado), para ser atualizado.
               </div>
               <div style={lbl}>Justificativa apresentada</div>
               <div style={{ background: '#F3EEE4', borderRadius: 8, padding: 12, fontSize: 13, color: '#00203E', whiteSpace: 'pre-wrap', lineHeight: 1.5 }}>{row.reabertura_justificativa || '—'}</div>
