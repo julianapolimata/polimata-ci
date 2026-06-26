@@ -18,6 +18,10 @@ function formatData(iso) {
   return d.toLocaleDateString('pt-BR') + ' ' + d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
 }
 
+// Alteração 'vazia': campo que mudou de nada para nada (ruído de salvamento, sem informação).
+function vazio(v) { return v == null || String(v).trim() === '' }
+function isAlteracaoVazia(log) { return log.acao === 'UPDATE' && !!log.campo && vazio(log.valor_anterior) && vazio(log.valor_novo) }
+
 const S = {
   wrap: { padding: '16px 0' },
   loading: { textAlign: 'center', padding: 32, color: 'var(--txt3)', fontSize: 13 },
@@ -86,8 +90,9 @@ export default function HistoricoTab({ registroId }) {
   if (loading) return <div style={S.loading}>Carregando histórico...</div>
   if (logs.length === 0) return <div style={S.empty}>Nenhuma alteração registrada para este controle</div>
 
-  const manutencaoCount = logs.filter(isManutencaoSistema).length
-  const visiveis = mostrarCompleto ? logs : logs.filter(l => !isManutencaoSistema(l))
+  const ehRuido = (l) => isManutencaoSistema(l) || isAlteracaoVazia(l)
+  const ruidoCount = logs.filter(ehRuido).length
+  const visiveis = mostrarCompleto ? logs : logs.filter(l => !ehRuido(l))
 
   return (
     <div style={S.wrap}>
@@ -125,11 +130,11 @@ export default function HistoricoTab({ registroId }) {
         </div>
       )}
 
-      {manutencaoCount > 0 && (
+      {ruidoCount > 0 && (
         <button style={S.toggle} onClick={() => setMostrarCompleto(v => !v)}>
           {mostrarCompleto
-            ? '▴ Ocultar manutenção do sistema'
-            : `▾ Ver log completo (+${manutencaoCount} de manutenção do sistema)`}
+            ? '▴ Ocultar registros técnicos'
+            : `▾ Ver log completo (+${ruidoCount} registro${ruidoCount > 1 ? 's' : ''} técnico${ruidoCount > 1 ? 's' : ''}/de sistema)`}
         </button>
       )}
     </div>
