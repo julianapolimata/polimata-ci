@@ -633,7 +633,7 @@ const ModalAtualizar = ({ row, onClose, onSaved, areas, projeto, irParaFicha }) 
                 </>
               )}
               {step === 3 && (
-                <StepPassos row={row} passos={passos} setPassos={setPassos} saving={saving} />
+                <StepPassos row={row} passos={passos} setPassos={setPassos} saving={saving} amostraInfo={amostraInfo} />
               )}
               {step === 4 && (
                 <StepFicha
