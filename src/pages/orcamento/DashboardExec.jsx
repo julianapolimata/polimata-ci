@@ -255,7 +255,7 @@ export default function DashboardExec({ projeto }) {
 
   return (
     <div style={{ padding: '20px 28px 40px', maxWidth: 1180, margin: '0 auto' }}>
-      <PageHeader projeto={projeto} titulo="Visão Geral do Orçamento" subtitulo={`${projeto?.nome || ''} · ${MESES_ABREV[de]}–${MESES_ABREV[ate]}/${ano}`}>
+      <PageHeader projeto={projeto} titulo="Visão Geral do Orçamento" subtitulo={`${projeto?.nome || ''} · ${MESES_ABREV[de]}–${MESES_ABREV[ate]}/${ano} · regime de competência`}>
         <BotaoSec onClick={() => setLibOpen(o => !o)}>⊞ Personalizar</BotaoSec>
         <BotaoSec onClick={exportar}>↓ Exportar</BotaoSec>
       </PageHeader>

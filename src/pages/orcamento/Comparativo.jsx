@@ -29,7 +29,7 @@ export default function Comparativo({ projeto }) {
 
   return (
     <div style={{ padding: '20px 28px 40px', maxWidth: 1400, margin: '0 auto' }}>
-      <PageHeader projeto={projeto} titulo="Orçado vs Realizado" subtitulo={`Análise mensal de desvios — Exercício ${ano}${cenario ? ` | Cenário: ${cenario.nome || 'v' + cenario.versao}${cenario.status === 'aprovado' ? ' ★' : ''}` : ''}`}>
+      <PageHeader projeto={projeto} titulo="Orçado vs Realizado" subtitulo={`Análise mensal de desvios — Exercício ${ano} · regime de competência${cenario ? ` | Cenário: ${cenario.nome || 'v' + cenario.versao}${cenario.status === 'aprovado' ? ' ★' : ''}` : ''}`}>
         <SeletorAno ano={ano} setAno={setAno} />
       </PageHeader>
       <ErroBox erro={d.erro} onClose={() => d.setErro('')} />
@@ -96,7 +96,7 @@ export default function Comparativo({ projeto }) {
           </table>
         </div>
       </Card>
-      <div style={{ fontSize: 11, color: 'var(--lt-text3)' }}>Clique num grupo (Receita, Custos…) para abrir as categorias. Semáforo: 🟢 desvio ≤5% · 🟡 5–10% · 🔴 &gt;10% (sempre na direção desfavorável à natureza da categoria).</div>
+      <div style={{ fontSize: 11, color: 'var(--lt-text3)' }}>Critério: regime de competência (despesa/receita reconhecida quando ocorre — data de abertura, igual ao realizado). Clique num grupo (Receita, Custos…) para abrir as categorias. Semáforo: 🟢 desvio ≤5% · 🟡 5–10% · 🔴 &gt;10% (sempre na direção desfavorável à natureza da categoria).</div>
     </div>
   )
 }

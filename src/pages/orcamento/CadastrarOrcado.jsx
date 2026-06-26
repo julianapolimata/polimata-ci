@@ -198,7 +198,7 @@ export default function CadastrarOrcado({ projeto }) {
           </tbody>
         </table>
       </Card>
-      <div style={{ fontSize: 11, color: 'var(--lt-text3)' }}>Edite o total anual (redistribuído pelo perfil da sugestão) ou clique em 📅 para ajustar mês a mês. A visão mês a mês também aparece em Orçado vs Realizado.</div>
+      <div style={{ fontSize: 11, color: 'var(--lt-text3)' }}>Edite o total anual (redistribuído pelo perfil da sugestão) ou clique em 📅 para ajustar mês a mês. A visão mês a mês também aparece em Orçado vs Realizado. Critério: regime de competência (mesma base do realizado).</div>
     </div>
   )
 }

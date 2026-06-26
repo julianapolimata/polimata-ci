@@ -83,7 +83,7 @@ export default function ImportarOrcado({ projeto }) {
       <ErroBox erro={d.erro} onClose={() => d.setErro('')} />
       {msg && <div style={{ background: 'rgba(34,185,138,0.08)', border: '1px solid rgba(34,185,138,0.35)', borderRadius: 8, padding: '8px 14px', fontSize: 12.5, marginBottom: 14 }}>{msg}</div>}
 
-      <HelpTag><strong>Como funciona:</strong> baixe o template, adapte o orçamento do cliente (uma linha por conta do plano, um valor por mês) e suba aqui. O sistema agrega as contas por categoria gerencial e grava no cenário escolhido. Importe o <strong>plano de contas</strong> antes.</HelpTag>
+      <HelpTag><strong>Como funciona:</strong> baixe o template, adapte o orçamento do cliente (uma linha por conta do plano, um valor por mês) e suba aqui. O sistema agrega as contas por categoria gerencial e grava no cenário escolhido. Importe o <strong>plano de contas</strong> antes. <strong>Critério:</strong> orce em <strong>regime de competência</strong> (quando a despesa/receita ocorre), a mesma base do realizado — não por vencimento/pagamento (isso é fluxo de caixa).</HelpTag>
 
       <Card titulo="1 · Cenário de destino">
         <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap', fontSize: 12.5 }}>

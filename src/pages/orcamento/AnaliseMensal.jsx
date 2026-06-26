@@ -121,7 +121,7 @@ export default function AnaliseMensal({ projeto }) {
 
   return (
     <div style={{ padding: '20px 28px 40px', maxWidth: 1080, margin: '0 auto' }}>
-      <PageHeader projeto={projeto} titulo="Análise Mensal" subtitulo={`${projeto?.nome || ''} · fechamento do mês`} />
+      <PageHeader projeto={projeto} titulo="Análise Mensal" subtitulo={`${projeto?.nome || ''} · fechamento do mês · regime de competência`} />
       <ErroBox erro={d.erro} onClose={() => d.setErro('')} />
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 14, fontSize: 12.5 }}>
