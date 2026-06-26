@@ -10,6 +10,7 @@ import { formatNomeEmpresa } from '../lib/formatNome'
 import { gerarPOPDocx } from '../lib/mapeamento/gerarPOPDocx'
 import { gerarMatrizXlsx } from '../lib/mapeamento/gerarMatrizXlsx'
 import { gerarFluxoDrawio } from '../lib/mapeamento/gerarFluxoDrawio'
+import { prepararAudio } from '../lib/mapeamento/audio'
 import { VisaoCliente, BlocoConsultor } from '../components/mapeamento/CronogramaUI'
 
 const STATUS_CFG = {
@@ -56,9 +57,9 @@ function useGravador() {
   const resolveRef = useRef(null)
 
   const iniciar = async () => {
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true } })
     const mime = MediaRecorder.isTypeSupported('audio/webm;codecs=opus') ? 'audio/webm;codecs=opus' : 'audio/webm'
-    const rec = new MediaRecorder(stream, { mimeType: mime })
+    const rec = new MediaRecorder(stream, { mimeType: mime, audioBitsPerSecond: 28000 })
     chunksRef.current = []
     rec.ondataavailable = (ev) => { if (ev.data.size) chunksRef.current.push(ev.data) }
     rec.onstop = () => {
@@ -313,6 +314,7 @@ function ModalNovo({ projeto, areas, perfil, onFechar, onCriado, invocar }) {
   const [arquivo, setArquivo] = useState(null)
   const [blobGravado, setBlobGravado] = useState(null)
   const [enviando, setEnviando] = useState(false)
+  const [etapaEnvio, setEtapaEnvio] = useState('')
   const [erro, setErro] = useState('')
   const grav = useGravador()
 
@@ -321,10 +323,12 @@ function ModalNovo({ projeto, areas, perfil, onFechar, onCriado, invocar }) {
   const criar = async () => {
     if (!nome.trim()) { setErro('Informe o nome do processo.'); return }
     if (!audioPronto) { setErro('Grave ou anexe o áudio da entrevista.'); return }
-    const blob = arquivo || blobGravado
-    if (blob.size > 25 * 1024 * 1024) { setErro('Áudio acima de 25 MB. Divida a gravação ou comprima (mp3/m4a).'); return }
+    const baseBlob = arquivo || blobGravado
     setEnviando(true); setErro('')
     try {
+      setEtapaEnvio('Otimizando áudio…')
+      const { parts, ext, contentType, duracaoSeg } = await prepararAudio(baseBlob)
+
       const { data: row, error: insErr } = await supabase.from('mapeamentos').insert({
         projeto_id: projeto.id, area_id: areaId || null,
         nome_processo: nome.trim(), sigla_processo: sigla.trim().toUpperCase() || null,
@@ -333,16 +337,29 @@ function ModalNovo({ projeto, areas, perfil, onFechar, onCriado, invocar }) {
       if (insErr) throw insErr
 
       const nomeArq = arquivo ? arquivo.name : `gravacao_${Date.now()}.webm`
-      const path = `${projeto.id}/${row.id}/${Date.now()}_${nomeArq.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-zA-Z0-9._-]+/g, '_')}`
-      const { error: upErr } = await supabase.storage.from('mapeamentos').upload(path, blob, { contentType: arquivo?.type || 'audio/webm' })
-      if (upErr) throw upErr
+      const safe = nomeArq.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-zA-Z0-9._-]+/g, '_')
+      const semExt = safe.replace(/\.[^.]+$/, '')
+      const paths = []
+      for (let i = 0; i < parts.length; i++) {
+        setEtapaEnvio(parts.length > 1 ? `Enviando parte ${i + 1}/${parts.length}…` : 'Enviando áudio…')
+        const sufixo = parts.length > 1 ? `_p${i + 1}` : ''
+        const nomeParte = ext ? `${semExt}${sufixo}.${ext}` : `${safe}${sufixo}`
+        const path = `${projeto.id}/${row.id}/${Date.now()}_${nomeParte}`
+        const { error: upErr } = await supabase.storage.from('mapeamentos').upload(path, parts[i], { contentType })
+        if (upErr) throw upErr
+        paths.push(path)
+      }
 
-      await supabase.from('mapeamentos').update({ audio_path: path, audio_nome: nomeArq, status: 'audio_enviado' }).eq('id', row.id)
+      const upd = { audio_path: paths[0], audio_nome: nomeArq, status: 'audio_enviado' }
+      if (paths.length > 1) upd.audio_parts = paths
+      if (duracaoSeg) upd.audio_duracao_seg = duracaoSeg
+      await supabase.from('mapeamentos').update(upd).eq('id', row.id)
       await invocar(row.id, 'completo')
       onCriado(row.id)
     } catch (e2) {
       setErro('Falha: ' + e2.message)
       setEnviando(false)
+      setEtapaEnvio('')
     }
   }
 
@@ -391,7 +408,7 @@ function ModalNovo({ projeto, areas, perfil, onFechar, onCriado, invocar }) {
           </div>
           {blobGravado && <div style={{ fontSize: 12, color: '#15803D', marginTop: 10 }}>✓ Gravação pronta ({(blobGravado.size / 1024 / 1024).toFixed(1)} MB)</div>}
           {arquivo && <div style={{ fontSize: 12, color: '#15803D', marginTop: 10 }}>✓ {arquivo.name} ({(arquivo.size / 1024 / 1024).toFixed(1)} MB)</div>}
-          <div style={{ fontSize: 10, color: '#6B7280', marginTop: 8 }}>Limite 25 MB (≈ 50 min em m4a/mp3). Para entrevistas longas, divida em partes.</div>
+          <div style={{ fontSize: 10, color: '#6B7280', marginTop: 8 }}>Grave por quanto tempo precisar — áudios longos são otimizados e divididos automaticamente antes do envio.</div>
         </div>
 
         {erro && <div style={{ background: 'rgba(239,68,68,0.10)', color: '#991B1B', padding: '9px 12px', borderRadius: 8, fontSize: 12, marginBottom: 12 }}>{erro}</div>}
@@ -399,7 +416,7 @@ function ModalNovo({ projeto, areas, perfil, onFechar, onCriado, invocar }) {
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
           <button onClick={onFechar} style={{ background: 'transparent', border: '1px solid rgba(0,32,62,0.2)', color: '#00203E', borderRadius: 8, padding: '10px 18px', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'Montserrat' }}>Cancelar</button>
           <button onClick={criar} disabled={enviando} style={{ background: 'linear-gradient(135deg, #A6512F, #CC915E)', color: '#fff', border: 'none', borderRadius: 8, padding: '10px 22px', fontSize: 12, fontWeight: 600, cursor: enviando ? 'wait' : 'pointer', fontFamily: 'Montserrat', opacity: enviando ? 0.6 : 1 }}>
-            {enviando ? 'Enviando…' : 'Enviar e processar'}
+            {enviando ? (etapaEnvio || 'Enviando…') : 'Enviar e processar'}
           </button>
         </div>
       </div>
