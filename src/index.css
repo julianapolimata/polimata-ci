@@ -55,7 +55,7 @@
   --lt-hover: rgba(204,145,94,0.06);
   --lt-text: #00203E;
   --lt-text2: #3D5068;
-  --lt-text3: #5D6E80;          /* darker for WCAG AA — was #7A8B9C (3.05:1 fail) */
+  --lt-text3: #4A5A6E;          /* escurecido p/ legibilidade: 5,26:1 -> 6,6:1 (cliente reportou claro) */
   --lt-border: rgba(0,32,62,0.12);    /* was 0.08, too subtle on cream */
   --lt-border2: rgba(0,32,62,0.20);   /* was 0.15 */
   --lt-shadow-sm: 0 2px 8px rgba(0,32,62,0.08);  /* stronger for cream bg */
