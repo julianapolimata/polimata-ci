@@ -54,6 +54,9 @@ const OrcCenarios = lazy(retryImport(() => import('./orcamento/Cenarios')))
 const OrcPlanoContas = lazy(retryImport(() => import('./orcamento/PlanoContas')))
 const OrcCentros = lazy(retryImport(() => import('./orcamento/CentrosCusto')))
 const OrcSobre = lazy(retryImport(() => import('./orcamento/Sobre')))
+const OrcFluxo = lazy(retryImport(() => import('./orcamento/FluxoCaixa')))
+const OrcImportarTitulos = lazy(retryImport(() => import('./orcamento/ImportarTitulos')))
+const OrcImportarOrcado = lazy(retryImport(() => import('./orcamento/ImportarOrcado')))
 const PorArea = lazy(retryImport(() => import('./dashboard/PorArea')))
 
 function produtoModulo(produto) {

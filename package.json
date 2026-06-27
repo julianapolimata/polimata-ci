@@ -11,13 +11,13 @@
     "lint:strict": "eslint 'src/**/*.{js,jsx}' --max-warnings 0"
   },
   "dependencies": {
+    "@breezystack/lamejs": "^1.2.7",
     "@supabase/supabase-js": "^2.45.0",
     "docx": "^9.5.0",
     "exceljs": "^4.4.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "react-router-dom": "^6.26.0",
-    "@breezystack/lamejs": "^1.2.7"
+    "react-router-dom": "^6.26.0"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.3.1",
