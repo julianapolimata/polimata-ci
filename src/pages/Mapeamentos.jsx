@@ -35,6 +35,13 @@ function StatusBadge({ status }) {
 }
 function fmtDur(s) { if (!s && s !== 0) return '—'; const m = Math.floor(s / 60); return m ? `${m}min ${s % 60}s` : `${s}s` }
 function fmtData(d) { if (!d) return '—'; try { return new Date(d.length <= 10 ? d + 'T00:00:00' : d).toLocaleDateString('pt-BR') } catch { return '—' } }
+function msDe(d) { return new Date(d.length <= 10 ? d + 'T00:00:00' : d).getTime() }
+function siglaDeNome(nome) {
+  const limpo = (nome || '').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-zA-Z ]/g, '').trim()
+  const w = limpo.split(/\s+/).filter(Boolean)
+  if (w.length >= 2) return (w[0][0] + w[1][0] + (w[2] ? w[2][0] : '')).toUpperCase()
+  return (w[0] || 'PRO').slice(0, 3).toUpperCase()
+}
 
 function PrazoChip({ map }) {
   if (!map.prazo) return <span style={{ color: '#9CA3AF' }}>—</span>
@@ -165,32 +172,72 @@ export default function Mapeamentos({ projeto }) {
 }
 
 function CronogramaView({ lista, areas, loading, navigate }) {
-  const areaNome = (id) => areas.find((a) => a.id === id)?.nome || '—'
-  const ordenada = [...lista].sort((a, b) => (a.prazo || '9999').localeCompare(b.prazo || '9999'))
   return (
     <>
       <ResumoProjeto lista={lista} />
-      <div style={{ background: '#fff', borderRadius: 12, border: '1px solid rgba(0,32,62,0.08)', overflow: 'hidden' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
-          <thead><tr style={{ background: '#F3EEE4' }}>{['Processo', 'Área', 'Prazo', 'Etapa', 'Status', ''].map((h) => <th key={h} style={th}>{h}</th>)}</tr></thead>
-          <tbody>
-            {loading && <tr><td colSpan={6} style={{ padding: 24, textAlign: 'center', color: '#6B7280' }}>Carregando…</td></tr>}
-            {!loading && lista.length === 0 && <tr><td colSpan={6} style={{ padding: 36, textAlign: 'center', color: '#6B7280' }}>Nenhum processo cadastrado. Clique em <b>Cadastrar processo</b> para planejar o que será mapeado, com prazo.</td></tr>}
-            {ordenada.map((m) => (
-              <tr key={m.id} onClick={() => m.area_id && navigate('/mapeamentos/area/' + m.area_id)} style={{ borderTop: '1px solid rgba(0,32,62,0.06)', cursor: m.area_id ? 'pointer' : 'default' }}>
-                <td style={{ padding: '11px 14px', fontWeight: 600, color: AZUL }}>{m.nome_processo}</td>
-                <td style={{ padding: '11px 14px' }}>{areaNome(m.area_id)}</td>
-                <td style={{ padding: '11px 14px' }}><PrazoChip map={m} /></td>
-                <td style={{ padding: '11px 14px', color: '#6B7280' }}>{etapaAtualLabel(m)}</td>
-                <td style={{ padding: '11px 14px' }}><StatusBadge status={m.status} /></td>
-                <td style={{ padding: '11px 14px', color: COBRE, fontWeight: 600 }}>{m.area_id ? 'abrir ›' : ''}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-      {lista.length > 0 && <div style={{ fontSize: 11, color: '#9CA3AF', marginTop: 10 }}>Clique num processo para abrir a área e fazer o mapeamento.</div>}
+      {loading ? <div style={{ padding: 24, textAlign: 'center', color: '#6B7280' }}>Carregando…</div>
+        : lista.length === 0 ? <div style={{ background: '#fff', borderRadius: 12, border: '1px solid rgba(0,32,62,0.08)', padding: 36, textAlign: 'center', color: '#6B7280' }}>Nenhum processo cadastrado. Clique em <b>Cadastrar processo</b> para planejar o que será mapeado, com início e prazo.</div>
+        : <GanttCronograma lista={lista} areas={areas} navigate={navigate} />}
     </>
+  )
+}
+
+function GanttCronograma({ lista, areas, navigate }) {
+  const areaNome = (id) => areas.find((a) => a.id === id)?.nome || '—'
+  const itens = lista.map((m) => {
+    let ini = msDe(m.data_inicio || m.criado_em)
+    let fim = msDe(m.prazo || m.data_inicio || m.criado_em)
+    if (fim < ini) fim = ini
+    if (fim === ini) fim = ini + 7 * 86400000
+    return { m, ini, fim }
+  }).sort((a, b) => a.ini - b.ini)
+  const minMs = Math.min(...itens.map((x) => x.ini))
+  const maxMs = Math.max(...itens.map((x) => x.fim))
+  const sd = new Date(minMs), start = new Date(sd.getFullYear(), sd.getMonth(), 1).getTime()
+  const ed = new Date(maxMs), end = new Date(ed.getFullYear(), ed.getMonth() + 1, 1).getTime()
+  const total = Math.max(end - start, 1)
+  const pct = (ms) => ((ms - start) / total) * 100
+  const meses = []; let cur = new Date(start)
+  while (cur.getTime() < end) { meses.push(new Date(cur)); cur = new Date(cur.getFullYear(), cur.getMonth() + 1, 1) }
+  const hoje = Date.now()
+  const cor = (m) => {
+    if (m.etapa === 'vigente') return '#22C55E'
+    if (m.prazo && msDe(m.prazo) < hoje) return '#EF4444'
+    if (EM_PROCESSO.includes(m.status) || m.status === 'transcrito') return '#CC915E'
+    return COBRE
+  }
+  const LBL = 200
+  return (
+    <div style={{ background: '#fff', borderRadius: 12, border: '1px solid rgba(0,32,62,0.08)', padding: 16, overflowX: 'auto' }}>
+      <div style={{ minWidth: 680 }}>
+        <div style={{ display: 'flex' }}>
+          <div style={{ width: LBL, flexShrink: 0 }} />
+          <div style={{ position: 'relative', flex: 1, height: 22, borderBottom: '1px solid rgba(0,32,62,0.10)' }}>
+            {meses.map((mz, i) => (
+              <div key={i} style={{ position: 'absolute', left: pct(mz.getTime()) + '%', top: 0, fontSize: 10, color: '#6B7280', fontWeight: 600, textTransform: 'capitalize', paddingLeft: 4 }}>
+                {mz.toLocaleDateString('pt-BR', { month: 'short' })}{mz.getMonth() === 0 ? ' ' + mz.getFullYear() : ''}
+              </div>
+            ))}
+          </div>
+        </div>
+        {itens.map(({ m, ini, fim }) => (
+          <div key={m.id} onClick={() => m.area_id && navigate('/mapeamentos/area/' + m.area_id)} style={{ display: 'flex', alignItems: 'center', cursor: m.area_id ? 'pointer' : 'default', borderTop: '1px solid rgba(0,32,62,0.05)' }}>
+            <div style={{ width: LBL, flexShrink: 0, padding: '8px 10px 8px 0' }}>
+              <div style={{ fontSize: 12, fontWeight: 600, color: AZUL, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{m.nome_processo}</div>
+              <div style={{ fontSize: 10, color: '#9CA3AF' }}>{areaNome(m.area_id)}</div>
+            </div>
+            <div style={{ position: 'relative', flex: 1, height: 34 }}>
+              {meses.map((mz, i) => <div key={i} style={{ position: 'absolute', left: pct(mz.getTime()) + '%', top: 0, bottom: 0, width: 1, background: 'rgba(0,32,62,0.05)' }} />)}
+              {hoje >= start && hoje <= end && <div style={{ position: 'absolute', left: pct(hoje) + '%', top: 0, bottom: 0, width: 2, background: 'rgba(239,68,68,0.5)' }} />}
+              <div title={`${fmtData(m.data_inicio)} → ${fmtData(m.prazo)}`} style={{ position: 'absolute', left: pct(ini) + '%', width: Math.max(pct(fim) - pct(ini), 1.5) + '%', top: 8, height: 18, background: cor(m), borderRadius: 6, display: 'flex', alignItems: 'center', paddingLeft: 6, overflow: 'hidden', boxShadow: '0 1px 2px rgba(0,0,0,0.12)' }}>
+                <span style={{ fontSize: 9.5, color: '#fff', fontWeight: 600, whiteSpace: 'nowrap' }}>{etapaAtualLabel(m)}</span>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+      <div style={{ fontSize: 10, color: '#9CA3AF', marginTop: 10 }}>A linha vermelha marca hoje. Clique numa barra para abrir a área e fazer o mapeamento.</div>
+    </div>
   )
 }
 
@@ -338,20 +385,20 @@ function Detalhe({ map, projeto, perfil, clienteNome, invocar, carregar }) {
 }
 
 function PlanejarModal({ projeto, areas, perfil, onFechar, onCriado }) {
-  const [nome, setNome] = useState(''), [sigla, setSigla] = useState(''), [areaId, setAreaId] = useState(''), [prazo, setPrazo] = useState('')
+  const [nome, setNome] = useState(''), [areaId, setAreaId] = useState(''), [inicio, setInicio] = useState(''), [prazo, setPrazo] = useState('')
   const [salvando, setSalvando] = useState(false), [erro, setErro] = useState('')
   const criar = async () => {
     if (!nome.trim()) { setErro('Informe o nome do processo.'); return }
     setSalvando(true); setErro('')
-    const { error } = await supabase.from('mapeamentos').insert({ projeto_id: projeto.id, area_id: areaId || null, nome_processo: nome.trim(), sigla_processo: sigla.trim().toUpperCase() || null, prazo: prazo || null, status: 'rascunho', criado_por: perfil?.id || null })
+    const { error } = await supabase.from('mapeamentos').insert({ projeto_id: projeto.id, area_id: areaId || null, nome_processo: nome.trim(), sigla_processo: siglaDeNome(nome), data_inicio: inicio || null, prazo: prazo || null, status: 'rascunho', criado_por: perfil?.id || null })
     if (error) { setErro('Falha: ' + error.message); setSalvando(false); return }
     onCriado()
   }
   return (
-    <Modal titulo="Cadastrar processo a mapear" sub="Planeje o processo e o prazo. Depois abra a área para gravar/agendar a entrevista." onFechar={onFechar} onConfirmar={criar} salvando={salvando} confirmar={salvando ? 'Salvando…' : 'Cadastrar'} erro={erro}>
+    <Modal titulo="Cadastrar processo a mapear" sub="Planeje o processo e as datas. Depois abra a área para gravar/agendar a entrevista." onFechar={onFechar} onConfirmar={criar} salvando={salvando} confirmar={salvando ? 'Salvando…' : 'Cadastrar'} erro={erro}>
       <Campo label="Nome do processo *"><input style={inp} value={nome} onChange={(e) => setNome(e.target.value)} placeholder="ex.: Compras, Contas a Pagar" /></Campo>
       <div style={{ display: 'flex', gap: 12 }}>
-        <div style={{ flex: 1 }}><Campo label="Sigla"><input style={inp} value={sigla} onChange={(e) => setSigla(e.target.value.toUpperCase().slice(0, 4))} placeholder="ex.: COM" /></Campo></div>
+        <div style={{ flex: 1 }}><Campo label="Início"><input type="date" style={inp} value={inicio} onChange={(e) => setInicio(e.target.value)} /></Campo></div>
         <div style={{ flex: 1 }}><Campo label="Prazo"><input type="date" style={inp} value={prazo} onChange={(e) => setPrazo(e.target.value)} /></Campo></div>
       </div>
       <Campo label="Área"><select style={inp} value={areaId} onChange={(e) => setAreaId(e.target.value)}><option value="">—</option>{areas.map((a) => <option key={a.id} value={a.id}>{a.nome}</option>)}</select></Campo>
@@ -360,7 +407,7 @@ function PlanejarModal({ projeto, areas, perfil, onFechar, onCriado }) {
 }
 
 function ModalNovo({ projeto, areas, areaFixa, perfil, onFechar, onCriado, invocar }) {
-  const [nome, setNome] = useState(''), [sigla, setSigla] = useState(''), [areaId, setAreaId] = useState(areaFixa || ''), [prazo, setPrazo] = useState('')
+  const [nome, setNome] = useState(''), [areaId, setAreaId] = useState(areaFixa || ''), [inicio, setInicio] = useState(''), [prazo, setPrazo] = useState('')
   const [arquivo, setArquivo] = useState(null), [blobGravado, setBlobGravado] = useState(null)
   const [enviando, setEnviando] = useState(false), [etapaEnvio, setEtapaEnvio] = useState(''), [erro, setErro] = useState('')
   const grav = useGravador()
@@ -370,7 +417,7 @@ function ModalNovo({ projeto, areas, areaFixa, perfil, onFechar, onCriado, invoc
     if (!base) { setErro('Grave ou anexe o áudio da entrevista.'); return }
     setEnviando(true); setErro('')
     try {
-      const { data: row, error: insErr } = await supabase.from('mapeamentos').insert({ projeto_id: projeto.id, area_id: areaId || null, nome_processo: nome.trim(), sigla_processo: sigla.trim().toUpperCase() || null, prazo: prazo || null, status: 'rascunho', criado_por: perfil?.id || null }).select().single()
+      const { data: row, error: insErr } = await supabase.from('mapeamentos').insert({ projeto_id: projeto.id, area_id: areaId || null, nome_processo: nome.trim(), sigla_processo: siglaDeNome(nome), data_inicio: inicio || null, prazo: prazo || null, status: 'rascunho', criado_por: perfil?.id || null }).select().single()
       if (insErr) throw insErr
       await enviarAudio(row.id, projeto.id, base, arquivo?.name, setEtapaEnvio)
       await invocar(row.id, 'completo')
@@ -381,7 +428,7 @@ function ModalNovo({ projeto, areas, areaFixa, perfil, onFechar, onCriado, invoc
     <Modal titulo="Novo mapeamento de processo" sub="Grave a entrevista (ou anexe o áudio) e o sistema gera POP, fluxograma e matriz de riscos." onFechar={onFechar} onConfirmar={criar} salvando={enviando} confirmar={enviando ? (etapaEnvio || 'Enviando…') : 'Enviar e processar'} erro={erro}>
       <Campo label="Nome do processo *"><input style={inp} value={nome} onChange={(e) => setNome(e.target.value)} placeholder="ex.: Compras, Faturamento" /></Campo>
       <div style={{ display: 'flex', gap: 12 }}>
-        <div style={{ flex: 1 }}><Campo label="Sigla"><input style={inp} value={sigla} onChange={(e) => setSigla(e.target.value.toUpperCase().slice(0, 4))} placeholder="ex.: COM" /></Campo></div>
+        <div style={{ flex: 1 }}><Campo label="Início"><input type="date" style={inp} value={inicio} onChange={(e) => setInicio(e.target.value)} /></Campo></div>
         <div style={{ flex: 1 }}><Campo label="Prazo"><input type="date" style={inp} value={prazo} onChange={(e) => setPrazo(e.target.value)} /></Campo></div>
       </div>
       {!areaFixa && <Campo label="Área"><select style={inp} value={areaId} onChange={(e) => setAreaId(e.target.value)}><option value="">—</option>{areas.map((a) => <option key={a.id} value={a.id}>{a.nome}</option>)}</select></Campo>}
