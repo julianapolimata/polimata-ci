@@ -12,6 +12,7 @@ import { gerarMatrizXlsx } from '../lib/mapeamento/gerarMatrizXlsx'
 import { gerarFluxoDrawio } from '../lib/mapeamento/gerarFluxoDrawio'
 import { prepararAudio } from '../lib/mapeamento/audio'
 import { VisaoCliente, BlocoConsultor } from '../components/mapeamento/CronogramaUI'
+import { ConectarCalendario, AgendarEntrevista } from '../components/mapeamento/AgendarUI'
 
 const STATUS_CFG = {
   rascunho:      { label: 'Rascunho',          color: '#6B7280', bg: 'rgba(107,114,128,0.10)' },
@@ -142,9 +143,12 @@ export default function Mapeamentos({ projeto }) {
           <div style={{ fontSize: 22, fontWeight: 300, color: '#00203E', fontFamily: 'Raleway, Montserrat' }}>Mapeamento de Processos</div>
           <div style={{ fontSize: 12, color: '#6B7280', marginTop: 4 }}>Entrevista gravada → transcrição → POP, fluxograma BPMN e matriz de riscos COSO+ISO com RACI</div>
         </div>
-        <button onClick={() => setModalNovo(true)} style={{ background: 'linear-gradient(135deg, #A6512F, #CC915E)', color: '#fff', border: 'none', borderRadius: 999, padding: '11px 22px', fontSize: 12, fontWeight: 600, fontFamily: 'Montserrat', cursor: 'pointer' }}>
-          🎙 Novo mapeamento
-        </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
+          <ConectarCalendario perfil={perfil} />
+          <button onClick={() => setModalNovo(true)} style={{ background: 'linear-gradient(135deg, #A6512F, #CC915E)', color: '#fff', border: 'none', borderRadius: 999, padding: '11px 22px', fontSize: 12, fontWeight: 600, fontFamily: 'Montserrat', cursor: 'pointer' }}>
+            🎙 Novo mapeamento
+          </button>
+        </div>
       </div>
 
       {erroUi && <div style={{ background: 'rgba(239,68,68,0.10)', color: '#991B1B', padding: '10px 14px', borderRadius: 8, fontSize: 12, marginBottom: 14 }}>{erroUi}</div>}
@@ -181,14 +185,14 @@ export default function Mapeamentos({ projeto }) {
         </table>
       </div>
 
-      {sel && <Detalhe map={sel} clienteNome={clienteNome} invocar={invocar} carregar={carregar} />}
+      {sel && <Detalhe map={sel} perfil={perfil} clienteNome={clienteNome} invocar={invocar} carregar={carregar} />}
       {modalNovo && <ModalNovo projeto={projeto} areas={areas} perfil={perfil} onFechar={() => setModalNovo(false)} onCriado={(id) => { setModalNovo(false); setSelId(id); carregar() }} invocar={invocar} />}
     </div>
   )
 }
 
 // ─── Detalhe ────────────────────────────────────────────────────────────────
-function Detalhe({ map, clienteNome, invocar, carregar }) {
+function Detalhe({ map, perfil, clienteNome, invocar, carregar }) {
   const [transcricao, setTranscricao] = useState(map.transcricao || '')
   const [salvando, setSalvando] = useState(false)
   const [gerando, setGerando] = useState('')
@@ -301,6 +305,7 @@ function Detalhe({ map, clienteNome, invocar, carregar }) {
         </div>
       )}
 
+      <AgendarEntrevista map={map} perfil={perfil} onAgendado={carregar} />
       <BlocoConsultor map={map} onMudou={carregar} />
     </div>
   )
