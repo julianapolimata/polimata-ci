@@ -11,7 +11,7 @@ import { gerarPOPDocx } from '../lib/mapeamento/gerarPOPDocx'
 import { gerarMatrizXlsx } from '../lib/mapeamento/gerarMatrizXlsx'
 import { gerarFluxoDrawio } from '../lib/mapeamento/gerarFluxoDrawio'
 import { prepararAudio } from '../lib/mapeamento/audio'
-import { VisaoCliente, BlocoConsultor } from '../components/mapeamento/CronogramaUI'
+import { VisaoCliente, BlocoConsultor, ResumoProjeto } from '../components/mapeamento/CronogramaUI'
 import { ConectarCalendario, AgendarEntrevista } from '../components/mapeamento/AgendarUI'
 
 const STATUS_CFG = {
@@ -150,6 +150,8 @@ export default function Mapeamentos({ projeto }) {
           </button>
         </div>
       </div>
+
+      <ResumoProjeto lista={lista} />
 
       {erroUi && <div style={{ background: 'rgba(239,68,68,0.10)', color: '#991B1B', padding: '10px 14px', borderRadius: 8, fontSize: 12, marginBottom: 14 }}>{erroUi}</div>}
 
