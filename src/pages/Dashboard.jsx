@@ -349,7 +349,16 @@ export default function Dashboard() {
           </>)}
           {moduloView === 'mapeamento' && (<>
           {sidebarOpen && <div className="sb-sep">Mapeamento de Processos</div>}
-          <SideNavItem icon="🎙" label="Mapeamentos" active={location.pathname === '/mapeamentos'} onClick={() => navigate('/mapeamentos')} open={sidebarOpen} />
+          <SideNavItem icon="📅" label="Cronograma" active={location.pathname === '/mapeamentos'} onClick={() => navigate('/mapeamentos')} open={sidebarOpen} />
+          {sidebarOpen && <div className="sb-sep">Áreas</div>}
+          {sidebarOpen && areasCalc.length === 0 && <div style={{ padding: '6px 16px', fontSize: 11, color: 'var(--lt-text3, #94a3b8)' }}>Nenhuma área cadastrada.</div>}
+          {sidebarOpen && areasCalc.map(a => (
+            <button key={a.id} className={`nav-item${location.pathname === '/mapeamentos/area/' + a.id ? ' active' : ''}`}
+              onClick={() => navigate('/mapeamentos/area/' + a.id)}
+              style={{ padding: '8px 16px 8px 28px', fontSize: 13, gap: 6 }}>
+              <span style={{ fontSize: 12, color: 'var(--copper)' }}>›</span> {a.nome}
+            </button>
+          ))}
           </>)}
           {moduloView === 'orcamento' && (<>
           {isAdmin && sidebarOpen && (
@@ -429,6 +438,7 @@ export default function Dashboard() {
           <Route path="/solicitacoes" element={<Solicitacoes projeto={projetoAtivo} />} />
           <Route path="/documentos" element={<Documentos projeto={projetoAtivo} />} />
           <Route path="/mapeamentos" element={<Mapeamentos projeto={projetoAtivo} />} />
+          <Route path="/mapeamentos/area/:areaId" element={<Mapeamentos projeto={projetoAtivo} />} />
           <Route path="/planejamento" element={<Planejamento projeto={projetoAtivo} />} />
           <Route path="/orcamento" element={<OrcDashboard projeto={projetoAtivo} />} />
           <Route path="/orcamento/analise" element={<OrcAnalise projeto={projetoAtivo} />} />
