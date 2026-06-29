@@ -8,6 +8,11 @@ import { useOrcDados, useItens, PageHeader, Card, KPICard, KPIGrid, BotaoSec, fm
 const ANO_ATUAL = new Date().getFullYear()
 const NAVY = '#00203E', COBRE = '#CC915E', VERDE = '#22B98A', RED = '#A32D2D'
 const COBRE_L = 'rgba(204,145,94,0.4)', VERDE_L = 'rgba(34,185,138,0.4)'
+const AMBER = '#E0972F'
+const corCons = (pct, pace) => { const r = pace ? pct / pace : 0; if (pct > 100) return RED; if (r <= 1.05) return VERDE; if (r <= 1.45) return AMBER; return RED }
+const corReceita = (pct, pace) => { const r = pace ? pct / pace : 0; if (r >= 0.95) return VERDE; if (r >= 0.7) return AMBER; return RED }
+const polar = (cx, cy, r, deg) => { const a = deg * Math.PI / 180; return [cx + r * Math.cos(a), cy - r * Math.sin(a)] }
+const arcPath = (cx, cy, r, d0, d1) => { let p = '', n = Math.max(2, Math.round(Math.abs(d1 - d0))); for (let i = 0; i <= n; i++) { const d = d0 + (d1 - d0) * i / n, q = polar(cx, cy, r, d); p += (i ? 'L' : 'M') + q[0].toFixed(1) + ' ' + q[1].toFixed(1) + ' ' } return p }
 
 const CATALOGO = [
   { id: 'receita', nome: 'Receita realizada', dep: 'receita', info: 'Total de receitas reconhecidas no período (pelo fato gerador, com ou sem nota).' },
@@ -20,7 +25,7 @@ const CATALOGO = [
   { id: 'maiorRub', nome: 'Maior rubrica de saída', dep: 'none', info: 'A categoria que mais consome recursos no período.' },
   { id: 'exec', nome: 'Execução orçamentária', dep: 'orcado', info: 'Percentual do orçado já consumido pelo realizado (realizado ÷ orçado).' },
 ]
-const DEFAULT_ON = ['receita', 'aFaturar', 'margem', 'margemPct']
+const DEFAULT_ON = ['pnlConsumo', 'receita', 'aFaturar', 'margem', 'margemPct']
 const soma = (arr, de, ate) => (arr || []).slice(de, ate + 1).reduce((s, v) => s + (v || 0), 0)
 const pct = (n) => (n >= 0 ? '' : '−') + Math.abs(n).toFixed(1) + '%'
 
@@ -65,6 +70,58 @@ function Linha({ label, valor, w, cor, forte, sufixo }) {
       <span style={{ flex: 1 }}><span style={{ display: 'block', height: 16, width: Math.max(1.5, w) + '%', background: cor, borderRadius: 3 }} /></span>
       <span style={{ width: 150, flex: 'none', textAlign: 'right', fontWeight: forte ? 600 : 500, color: cor === RED ? RED : 'var(--lt-text)' }}>{fmtBRL(valor)}{sufixo || ''}</span>
     </div>
+  )
+}
+
+function BateriaHero({ pct, pace, real, orc, inv }) {
+  const WB = 230, HB = 64, fill = Math.min(Math.max(pct, 0), 100) / 100, paceX = 8 + (WB - 16) * pace / 100
+  const col = inv ? corReceita(pct, pace) : corCons(pct, pace)
+  return (
+    <div style={{ textAlign: 'center' }}>
+      <svg width="100%" viewBox="0 0 262 96" role="img" aria-label={`Bateria do orçamento: ${pct.toFixed(0)}% consumido`} style={{ maxWidth: 300, display: 'block', margin: '0 auto' }}>
+        <rect x="6" y="14" width={WB} height={HB} rx="11" fill="#fff" stroke={NAVY} strokeWidth="2.5" />
+        <rect x={WB + 6} y="30" width="9" height="34" rx="3" fill={NAVY} />
+        <rect x="10" y="18" width={(WB - 8) * fill} height={HB - 8} rx="7" fill={col} />
+        <line x1={paceX} y1="9" x2={paceX} y2={HB + 19} stroke={NAVY} strokeWidth="1.5" strokeDasharray="4 3" />
+        <text x={paceX} y="92" textAnchor="middle" fontSize="9.5" fill={NAVY}>ritmo {pace.toFixed(0)}%</text>
+        <text x={6 + WB / 2} y="53" textAnchor="middle" fontSize="22" fontWeight="700" fontFamily="'Raleway', sans-serif" fill={fill > 0.42 ? '#fff' : NAVY}>{pct.toFixed(0)}%</text>
+      </svg>
+      <div style={{ fontSize: 12, color: 'var(--lt-text3)', marginTop: 4 }}>{fmtBRL(real)} de {fmtBRL(orc)} consumidos</div>
+    </div>
+  )
+}
+
+function Anel({ nome, pct, pace, real, orc, onClick }) {
+  const R = 34, C = 2 * Math.PI * R, col = corCons(pct, pace)
+  const dash = Math.min(Math.max(pct, 0), 100) / 100 * C
+  const pt = polar(48, 48, R, 90 - pace / 100 * 360)
+  return (
+    <div onClick={onClick} style={{ width: 118, textAlign: 'center', cursor: onClick ? 'pointer' : 'default' }}>
+      <svg width="96" height="96" viewBox="0 0 96 96" role="img" aria-label={`${nome}: ${pct.toFixed(0)}% do orçado anual`}>
+        <circle cx="48" cy="48" r={R} fill="none" stroke="var(--lt-bg2, #eee)" strokeWidth="9" />
+        <circle cx="48" cy="48" r={R} fill="none" stroke={col} strokeWidth="9" strokeLinecap="round" strokeDasharray={`${dash.toFixed(1)} ${C.toFixed(1)}`} transform="rotate(-90 48 48)" />
+        <circle cx={pt[0].toFixed(1)} cy={pt[1].toFixed(1)} r="3.4" fill={NAVY} />
+        <text x="48" y="53" textAnchor="middle" fontSize="17" fontWeight="700" fontFamily="'Raleway', sans-serif" fill="var(--lt-text)">{pct.toFixed(0)}%</text>
+      </svg>
+      <div style={{ fontSize: 11.5, fontWeight: 600, lineHeight: 1.2, color: 'var(--lt-text)', minHeight: 28, marginTop: 2 }}>{nome}</div>
+      <div style={{ fontSize: 10.5, color: 'var(--lt-text3)' }}>{fmtBRL(real)} / {fmtBRL(orc)}</div>
+    </div>
+  )
+}
+
+function Velocimetro({ valor }) {
+  const max = 150, ang = v => 180 - Math.min(Math.max(v, 0), max) / max * 180
+  const col = valor > 120 ? RED : valor > 100 ? AMBER : VERDE
+  const nd = polar(80, 86, 52, ang(valor))
+  return (
+    <svg width="100%" viewBox="0 0 160 102" role="img" aria-label={`Projeção do ano: ${valor.toFixed(0)}% do orçado`} style={{ maxWidth: 220, display: 'block', margin: '0 auto' }}>
+      <path d={arcPath(80, 86, 60, 180, ang(100))} fill="none" stroke={VERDE} strokeWidth="13" strokeLinecap="round" />
+      <path d={arcPath(80, 86, 60, ang(100), ang(120))} fill="none" stroke={AMBER} strokeWidth="13" />
+      <path d={arcPath(80, 86, 60, ang(120), 0)} fill="none" stroke={RED} strokeWidth="13" strokeLinecap="round" />
+      <line x1="80" y1="86" x2={nd[0].toFixed(1)} y2={nd[1].toFixed(1)} stroke={NAVY} strokeWidth="3.5" strokeLinecap="round" />
+      <circle cx="80" cy="86" r="6" fill={NAVY} />
+      <text x="80" y="100" textAnchor="middle" fontSize="16" fontWeight="700" fontFamily="'Raleway', sans-serif" fill={col}>{valor.toFixed(0)}%</text>
+    </svg>
   )
 }
 
@@ -145,14 +202,23 @@ export default function DashboardExec({ projeto }) {
     const cats = d.catsAtivas.map(c => {
       const rArr = (d.realPorCat[c.id] && d.realPorCat[c.id][ano]) || []
       const oArr = (porCat[c.id] && porCat[c.id].valores) || []
-      return { id: c.id, nome: c.nome, tipo: c.tipo, real: soma(rArr, de, ate), orc: soma(oArr, de, ate), rArr, oArr }
+      return { id: c.id, nome: c.nome, tipo: c.tipo, real: soma(rArr, de, ate), orc: soma(oArr, de, ate), orcAno: soma(oArr, 0, 11), realYtd: soma(rArr, 0, 11), rArr, oArr }
     })
     const saidasCats = cats.filter(c => c.tipo !== 'receita')
     const topRub = saidasCats.filter(c => c.real > 0).sort((a, b) => b.real - a.real).slice(0, 6)
     const maior = topRub[0]
+    const mesesSaida = lastSaida + 1
+    const consumoCats = saidasCats.filter(c => c.orcAno > 0).sort((a, b) => b.orcAno - a.orcAno)
+    const semOrcCats = saidasCats.filter(c => c.orcAno === 0 && c.realYtd > 0).sort((a, b) => b.realYtd - a.realYtd)
+    const totOrcAno = saidasCats.reduce((sx, c) => sx + c.orcAno, 0)
+    const totRealYtd = saidasCats.reduce((sx, c) => sx + c.realYtd, 0)
+    const recCats = cats.filter(c => c.tipo === 'receita')
+    const receitaOrcAno = recCats.reduce((sx, c) => sx + c.orcAno, 0)
+    const receitaRealYtd = recCats.reduce((sx, c) => sx + soma(c.rArr, 0, lastSaida), 0)
 
     return {
       cats, saidasCats, topRub, maior, sit, lastReal, incompleto,
+      consumoCats, semOrcCats, totOrcAno, totRealYtd, mesesSaida, receitaOrcAno, receitaRealYtd,
       gReceita, gSaida, gRes,
       pReceita, pDeducao, pCusto, pDespesa, pSaida, pReceitaLiq, pLucroBruto, pResultado,
       aReceita, aDeducao, aCusto, aDespesa, aReceitaLiq, aLucroBruto, aResultado,
@@ -281,6 +347,9 @@ export default function DashboardExec({ projeto }) {
       {libOpen && (
         <Card titulo="Indicadores do topo" extra={<span style={{ fontSize: 11, color: 'var(--lt-text3)' }}>ligue/desligue · ⓘ explica cada um</span>}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <button onClick={() => toggleCard('pnlConsumo')} style={{ textAlign: 'left', fontSize: 12.5, padding: '6px 10px', borderRadius: 8, cursor: 'pointer', border: '1px solid var(--lt-brd)', background: cardsOn.includes('pnlConsumo') ? 'rgba(204,145,94,0.12)' : 'transparent', color: cardsOn.includes('pnlConsumo') ? 'var(--copper, #A6512F)' : 'var(--lt-text)', fontWeight: 600 }}>
+              {cardsOn.includes('pnlConsumo') ? '✓ ' : '+ '}Painel de consumo (baterias, anéis e velocímetro){!temOrcado && <span style={{ fontSize: 10.5, fontWeight: 400 }}> · requer orçado</span>}
+            </button>
             {CATALOGO.map(k => {
               const ok = appOk(k.dep), on = cardsOn.includes(k.id)
               return (
@@ -298,6 +367,91 @@ export default function DashboardExec({ projeto }) {
       <KPIGrid>
         {cardsVisiveis.map(k => { const r = indicador(k.id); return <KPICard key={k.id} label={k.nome} value={r.v} delta={r.s} /> })}
       </KPIGrid>
+
+      {temOrcado && cardsOn.includes('pnlConsumo') && (() => {
+        const paceP = W.mesesSaida / 12 * 100
+        const pctTot = W.totOrcAno ? W.totRealYtd / W.totOrcAno * 100 : 0
+        const annual = W.mesesSaida ? W.totRealYtd / W.mesesSaida * 12 : 0
+        const projPct = W.totOrcAno ? annual / W.totOrcAno * 100 : 0
+        const pctRec = W.receitaOrcAno ? W.receitaRealYtd / W.receitaOrcAno * 100 : 0
+        const annualRec = W.mesesSaida ? W.receitaRealYtd / W.mesesSaida * 12 : 0
+        const projRecPct = W.receitaOrcAno ? annualRec / W.receitaOrcAno * 100 : 0
+        const mesesRest = Math.max(0, 12 - W.mesesSaida)
+        const ritmoSaida = W.mesesSaida ? W.totRealYtd / W.mesesSaida : 0
+        const runSaida = mesesRest ? Math.max(0, W.totOrcAno - W.totRealYtd) / mesesRest : 0
+        const ritmoRec = W.mesesSaida ? W.receitaRealYtd / W.mesesSaida : 0
+        const runRec = mesesRest ? Math.max(0, W.receitaOrcAno - W.receitaRealYtd) / mesesRest : 0
+        const deltaSaida = ritmoSaida ? (runSaida - ritmoSaida) / ritmoSaida * 100 : 0
+        const deltaRec = ritmoRec ? (runRec - ritmoRec) / ritmoRec * 100 : 0
+        const sinalPct = (v) => (v >= 0 ? '+' : '−') + Math.abs(v).toFixed(0) + '%'
+        return (
+          <Card titulo="Consumo do orçamento — quanto do ano já foi gasto" extra={
+            <span style={{ display: 'flex', gap: 12, fontSize: 11, color: 'var(--lt-text3)', flexWrap: 'wrap', alignItems: 'center' }}>
+              <span><span style={{ display: 'inline-block', width: 9, height: 9, borderRadius: 2, background: VERDE, marginRight: 4 }} />no ritmo</span>
+              <span><span style={{ display: 'inline-block', width: 9, height: 9, borderRadius: 2, background: AMBER, marginRight: 4 }} />atenção</span>
+              <span><span style={{ display: 'inline-block', width: 9, height: 9, borderRadius: 2, background: RED, marginRight: 4 }} />acelerado</span>
+              <span style={{ opacity: 0.8 }}>tracejado = ritmo ({paceP.toFixed(0)}%) · receita abaixo do ritmo = vermelho</span>
+            </span>}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(230px, 1fr))', gap: 16, alignItems: 'start' }}>
+              {W.receitaOrcAno > 0 && (
+                <div>
+                  <div style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--lt-text)', marginBottom: 10 }}>Receita vs meta anual</div>
+                  <BateriaHero pct={pctRec} pace={paceP} real={W.receitaRealYtd} orc={W.receitaOrcAno} inv />
+                  <div style={{ fontSize: 11.5, color: projRecPct < 90 ? RED : 'var(--lt-text3)', textAlign: 'center', marginTop: 6 }}>
+                    {`Projeção ${fmtBRL(annualRec)} · ${projRecPct.toFixed(0)}% da meta`}
+                  </div>
+                </div>
+              )}
+              <div>
+                <div style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--lt-text)', marginBottom: 10 }}>Orçamento anual de saídas</div>
+                <BateriaHero pct={pctTot} pace={paceP} real={W.totRealYtd} orc={W.totOrcAno} />
+              </div>
+              <div>
+                <div style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--lt-text)', marginBottom: 10 }}>Projeção do ano (ritmo atual)</div>
+                <Velocimetro valor={projPct} />
+                <div style={{ fontSize: 11.5, color: projPct > 100 ? RED : 'var(--lt-text3)', textAlign: 'center', marginTop: 2 }}>
+                  {projPct > 100 ? `Fecha em ${fmtBRL(annual)} · ${pct(projPct - 100)} acima do orçado` : `Projeção ${fmtBRL(annual)} · dentro do orçado`}
+                </div>
+              </div>
+            </div>
+            <div style={{ marginTop: 14, padding: '12px 14px', background: 'rgba(0,32,62,0.04)', border: '1px solid var(--lt-brd)', borderRadius: 10 }}>
+              <div style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--lt-text)', marginBottom: 8 }}>Cenário redistribuição <span style={{ fontWeight: 400, fontSize: 11, color: 'var(--lt-text3)' }}>· manter o teto/meta do ano nos {mesesRest} meses restantes</span></div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(230px, 1fr))', gap: 12 }}>
+                <div style={{ fontSize: 12 }}>
+                  <span style={{ color: 'var(--lt-text3)' }}>Saídas — cabe por mês: </span>
+                  <span style={{ fontWeight: 700 }}>{fmtBRL(runSaida)}</span>
+                  <div style={{ fontSize: 11, color: deltaSaida < 0 ? RED : 'var(--lt-text3)' }}>ritmo atual {fmtBRL(ritmoSaida)}/mês · precisa {sinalPct(deltaSaida)}</div>
+                </div>
+                {W.receitaOrcAno > 0 && (
+                  <div style={{ fontSize: 12 }}>
+                    <span style={{ color: 'var(--lt-text3)' }}>Receita — precisa por mês: </span>
+                    <span style={{ fontWeight: 700 }}>{fmtBRL(runRec)}</span>
+                    <div style={{ fontSize: 11, color: deltaRec > 0 ? RED : 'var(--lt-text3)' }}>ritmo atual {fmtBRL(ritmoRec)}/mês · precisa {sinalPct(deltaRec)}</div>
+                  </div>
+                )}
+              </div>
+            </div>
+            {W.consumoCats.length > 0 && (
+              <>
+                <div style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--lt-text)', margin: '20px 0 12px' }}>Por categoria <span style={{ fontWeight: 400, color: 'var(--lt-text3)', fontSize: 11 }}>· % do orçado anual consumido · clique p/ explodir</span></div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
+                  {W.consumoCats.map(c => <Anel key={c.id} nome={c.nome} pct={c.orcAno ? c.realYtd / c.orcAno * 100 : 0} pace={paceP} real={c.realYtd} orc={c.orcAno} onClick={() => drill(c)} />)}
+                </div>
+              </>
+            )}
+            {W.semOrcCats.length > 0 && (
+              <div style={{ marginTop: 16, padding: '12px 14px', background: 'rgba(204,145,94,0.08)', border: '1px solid rgba(204,145,94,0.3)', borderRadius: 10 }}>
+                <div style={{ fontSize: 12.5, fontWeight: 600, color: '#A6512F', marginBottom: 6 }}>Gasto sem orçado <span style={{ fontWeight: 400, fontSize: 11, color: 'var(--lt-text3)' }}>· realizado sem linha no orçamento — vale orçar nos próximos ciclos</span></div>
+                {W.semOrcCats.map(c => (
+                  <div key={c.id} onClick={() => drill(c)} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, padding: '5px 0', cursor: 'pointer', borderBottom: '1px solid var(--lt-brd)' }}>
+                    <span>{c.nome}</span><span style={{ fontWeight: 600, color: '#A6512F' }}>{fmtBRL(c.realYtd)}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </Card>
+        )
+      })()}
 
       <Card titulo="Evolução mensal — receita, saídas e resultado" extra={
         <span style={{ display: 'flex', gap: 12, fontSize: 11, color: 'var(--lt-text3)', flexWrap: 'wrap' }}>
