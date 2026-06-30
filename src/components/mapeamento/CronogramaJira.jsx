@@ -61,8 +61,7 @@ export default function CronogramaJira({ lista, projeto, carregar, onEditar, onA
   const rows = []; let y = 0; const tops = {}
   grupos.forEach((g) => {
     const key = g || 'sem'
-    rows.push({ type: 'area', aid: key, nome: g || 'Sem área' })
-    y += AH
+    if (g) { rows.push({ type: 'area', aid: key, nome: g }); y += AH }
     if (!collapsed[key]) {
       ordered.filter((p) => (p.area_nome || null) === g).forEach((p) => {
         rows.push({ type: 'proc', p, top: y }); tops[p.id] = y + PH / 2; y += PH

@@ -81,6 +81,7 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true)
   const [areaExpanded, setAreaExpanded] = useState(true)
   const [simularCliente, setSimularCliente] = useState(false)  // admin pré-visualiza a visão do cliente
+  const [mapProcessos, setMapProcessos] = useState([])  // processos do módulo Mapeamento (sidebar)
 
   useEffect(() => {
     if (!perfil) return
@@ -184,6 +185,18 @@ export default function Dashboard() {
     }
     window.addEventListener('polimata:areas-updated', handleAreasUpdated)
     return () => window.removeEventListener('polimata:areas-updated', handleAreasUpdated)
+  }, [projetoAtivo])
+
+  // Lista de processos do módulo Mapeamento para a barra lateral (atualiza sozinha)
+  useEffect(() => {
+    const carregarMapProc = () => {
+      if (!projetoAtivo?.id || produtoModulo(projetoAtivo.produto) !== 'mapeamento') { setMapProcessos([]); return }
+      supabase.from('mapeamentos').select('id, nome_processo, area_nome, ordem, criado_em').eq('projeto_id', projetoAtivo.id)
+        .then(({ data }) => setMapProcessos((data || []).slice().sort((a, b) => (a.ordem ?? 1e9) - (b.ordem ?? 1e9) || (new Date(a.criado_em) - new Date(b.criado_em)))))
+    }
+    carregarMapProc()
+    window.addEventListener('polimata:mapeamentos-updated', carregarMapProc)
+    return () => window.removeEventListener('polimata:mapeamentos-updated', carregarMapProc)
   }, [projetoAtivo])
 
   // Mantém o módulo exibido coerente com o produto do projeto ativo.
@@ -353,7 +366,15 @@ export default function Dashboard() {
           </>)}
           {moduloView === 'mapeamento' && (<>
           {sidebarOpen && <div className="sb-sep">Mapeamento de Processos</div>}
-          <SideNavItem icon="📅" label="Cronograma" active={location.pathname === '/mapeamentos'} onClick={() => navigate('/mapeamentos')} open={sidebarOpen} />
+          <SideNavItem icon="📅" label="Cronograma" active={location.pathname === '/mapeamentos' && !location.search} onClick={() => navigate('/mapeamentos')} open={sidebarOpen} />
+          {sidebarOpen && mapProcessos.map(pr => (
+            <button key={pr.id} className={`nav-item${location.search === '?p=' + pr.id ? ' active' : ''}`}
+              onClick={() => navigate('/mapeamentos?p=' + pr.id)}
+              style={{ padding: '8px 16px 8px 28px', fontSize: 13, gap: 6, textAlign: 'left' }}>
+              <span style={{ fontSize: 12, color: 'var(--copper)' }}>›</span> <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{pr.nome_processo}</span>
+            </button>
+          ))}
+          {sidebarOpen && mapProcessos.length === 0 && <div style={{ padding: '6px 16px', fontSize: 11, color: 'var(--lt-text3, #94a3b8)' }}>Nenhum processo cadastrado.</div>}
           </>)}
           {moduloView === 'orcamento' && (<>
           {isAdmin && sidebarOpen && (

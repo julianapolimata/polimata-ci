@@ -4,7 +4,7 @@
 // Área (workspace de mapeamento: gravar/agendar → transcrição → POP/fluxo/matriz).
 // ═══════════════════════════════════════════════════════════════════════════
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams, useNavigate, useLocation } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
 import { formatNomeEmpresa } from '../lib/formatNome'
@@ -116,6 +116,7 @@ export default function Mapeamentos({ projeto, simularCliente, onSimular }) {
   const { perfil } = useAuth()
   const { areaId } = useParams()
   const navigate = useNavigate()
+  const location = useLocation()
   const isPolimata = ['admin_polimata', 'consultor_polimata'].includes(perfil?.papel)
   const [lista, setLista] = useState([])
   const [areas, setAreas] = useState([])
@@ -134,9 +135,11 @@ export default function Mapeamentos({ projeto, simularCliente, onSimular }) {
     const { data, error } = await supabase.from('mapeamentos').select('*').eq('projeto_id', projeto.id).order('criado_em', { ascending: false })
     if (!error) setLista(data || [])
     setLoading(false)
+    window.dispatchEvent(new Event('polimata:mapeamentos-updated'))
   }, [projeto?.id])
 
   useEffect(() => { setLoading(true); carregar() }, [carregar])
+  useEffect(() => { const pid = new URLSearchParams(location.search).get('p'); if (pid) setSelId(pid) }, [location.search])
   useEffect(() => { if (!lista.some((m) => EM_PROCESSO.includes(m.status))) return; const t = setInterval(carregar, 6000); return () => clearInterval(t) }, [lista, carregar])
 
   const invocar = async (id, etapa = 'completo') => {
