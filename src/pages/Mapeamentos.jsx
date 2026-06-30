@@ -103,6 +103,7 @@ async function enviarAudio(mapId, projetoId, baseBlob, nomeBase, setEtapa) {
 }
 
 const btnPrim = { background: `linear-gradient(135deg, ${COBRE}, #CC915E)`, color: '#fff', border: 'none', borderRadius: 999, padding: '11px 22px', fontSize: 12, fontWeight: 600, fontFamily: 'Montserrat', cursor: 'pointer' }
+const btnGhost = { background: '#fff', color: COBRE, border: `1px solid ${COBRE}`, borderRadius: 999, padding: '10px 20px', fontSize: 12, fontWeight: 600, fontFamily: 'Montserrat', cursor: 'pointer' }
 const th = { textAlign: 'left', padding: '10px 14px', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.6, color: AZUL }
 const inp = { width: '100%', boxSizing: 'border-box', fontFamily: 'Montserrat', fontSize: 13, padding: '10px 12px', borderRadius: 8, border: '1px solid rgba(0,32,62,0.15)' }
 
@@ -118,6 +119,7 @@ export default function Mapeamentos({ projeto }) {
   const [planejar, setPlanejar] = useState(false)
   const [selId, setSelId] = useState(null)
   const [erroUi, setErroUi] = useState('')
+  const [previewCliente, setPreviewCliente] = useState(false)
   const clienteNome = formatNomeEmpresa(projeto?.clientes?.nome_fantasia || projeto?.clientes?.nome) || 'Cliente'
 
   const carregar = useCallback(async () => {
@@ -141,6 +143,16 @@ export default function Mapeamentos({ projeto }) {
 
   if (!isPolimata) return <VisaoCliente projeto={projeto} />
 
+  if (previewCliente) return (
+    <div>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '10px 20px', background: 'rgba(0,32,62,0.04)', borderBottom: '1px solid rgba(0,32,62,0.10)', fontFamily: 'Montserrat' }}>
+        <span style={{ fontSize: 12, fontWeight: 600, color: AZUL }}>👁 Pré-visualização — assim o cliente vê este projeto</span>
+        <button onClick={() => setPreviewCliente(false)} style={{ ...btnPrim, padding: '8px 18px' }}>← Voltar à visão admin</button>
+      </div>
+      <VisaoCliente projeto={projeto} />
+    </div>
+  )
+
   const areaAtual = areaId ? areas.find((a) => a.id === areaId) : null
   const listaArea = areaId ? lista.filter((m) => m.area_id === areaId) : lista
   const sel = listaArea.find((m) => m.id === selId) || null
@@ -154,6 +166,7 @@ export default function Mapeamentos({ projeto }) {
           <div style={{ fontSize: 12, color: '#6B7280', marginTop: 4 }}>{areaId ? 'Grave ou agende a entrevista e gere POP, fluxograma BPMN e matriz de riscos.' : 'Cadastre os processos a mapear, defina prazos e acompanhe a evolução.'}</div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
+          <button onClick={() => setPreviewCliente(true)} style={btnGhost}>👁 Ver como cliente</button>
           <ConectarCalendario perfil={perfil} />
           {areaId ? <button onClick={() => setModalNovo(true)} style={btnPrim}>🎙 Novo mapeamento</button> : <button onClick={() => setPlanejar(true)} style={btnPrim}>＋ Cadastrar processo</button>}
         </div>
