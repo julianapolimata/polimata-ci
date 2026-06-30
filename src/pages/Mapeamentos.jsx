@@ -14,7 +14,7 @@ import { gerarFluxoDrawio } from '../lib/mapeamento/gerarFluxoDrawio'
 import { prepararAudio } from '../lib/mapeamento/audio'
 import { etapaAtualLabel } from '../lib/mapeamento/cronograma'
 import { VisaoCliente, BlocoConsultor, ResumoProjeto } from '../components/mapeamento/CronogramaUI'
-import { ConectarCalendario, AgendarEntrevista } from '../components/mapeamento/AgendarUI'
+import { ConectarCalendario, ReunioesProcesso } from '../components/mapeamento/AgendarUI'
 
 const COBRE = '#A6512F', AZUL = '#00203E'
 
@@ -352,12 +352,10 @@ function Detalhe({ map, projeto, perfil, clienteNome, invocar, carregar }) {
       )}
       {processando && <div style={{ background: 'rgba(234,179,8,0.08)', color: '#92400E', padding: '12px 16px', borderRadius: 8, fontSize: 12, marginBottom: 14 }}>⏳ Processando — esta página atualiza sozinha. Pode levar alguns minutos.</div>}
 
-      {semAudio && (
-        <div style={{ marginBottom: 8 }}>
-          <AgendarEntrevista map={map} perfil={perfil} onAgendado={carregar} />
-          <CapturaAudio map={map} projeto={projeto} invocar={invocar} carregar={carregar} />
-        </div>
-      )}
+      <div style={{ marginBottom: 8 }}>
+        <ReunioesProcesso map={map} perfil={perfil} carregar={carregar} />
+        {semAudio && <CapturaAudio map={map} projeto={projeto} invocar={invocar} carregar={carregar} />}
+      </div>
 
       {pronto && (
         <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 18, padding: '14px 16px', background: '#F3EEE4', borderRadius: 10 }}>
