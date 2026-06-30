@@ -23,7 +23,7 @@ function progresso(map) {
   return { st, done, atual, pct: Math.round((done / 6) * 100), vigente: st[5].estado === 'concluido' }
 }
 
-export default function CronogramaJira({ lista, areas, projeto, carregar, onEditar, onMover, duracaoPadrao, onDuracaoPadrao }) {
+export default function CronogramaJira({ lista, projeto, carregar, onEditar, onAbrir, onMover, duracaoPadrao, onDuracaoPadrao }) {
   const [zoom, setZoom] = useState('mes')
   const [collapsed, setCollapsed] = useState({})
 
@@ -54,16 +54,17 @@ export default function CronogramaJira({ lista, areas, projeto, carregar, onEdit
   const X = (t) => ((t - start) / DAY) * pxd
 
   const cor = (p) => sc[p.id].atrasado ? VERMELHO : (sc[p.id].prog.vigente ? VERDE : COBRE)
-  const areaNome = (id) => areas.find((a) => a.id === id)?.nome
-  const gruposIds = [...areas.map((a) => a.id), null].filter((id) => ordered.some((p) => (p.area_id || null) === (id || null)))
+  const grupos = []
+  ordered.forEach((p) => { const g = p.area_nome || null; if (!grupos.some((x) => x === g)) grupos.push(g) })
 
   // linhas (área header + processos) com posição vertical
   const rows = []; let y = 0; const tops = {}
-  gruposIds.forEach((aid) => {
-    rows.push({ type: 'area', aid, nome: areaNome(aid) || 'Sem área' })
+  grupos.forEach((g) => {
+    const key = g || 'sem'
+    rows.push({ type: 'area', aid: key, nome: g || 'Sem área' })
     y += AH
-    if (!collapsed[aid || 'sem']) {
-      ordered.filter((p) => (p.area_id || null) === (aid || null)).forEach((p) => {
+    if (!collapsed[key]) {
+      ordered.filter((p) => (p.area_nome || null) === g).forEach((p) => {
         rows.push({ type: 'proc', p, top: y }); tops[p.id] = y + PH / 2; y += PH
       })
     }
@@ -145,7 +146,7 @@ export default function CronogramaJira({ lista, areas, projeto, carregar, onEdit
               return (
                 <div key={idx}>
                   <div style={{ position: 'absolute', top: r.top, left: LBL, right: 0, height: PH, borderTop: '1px solid rgba(0,32,62,0.06)' }} />
-                  <div title={`${p.nome_processo} — ${fmt(s.start)} a ${fmt(s.end)}`} style={{ position: 'absolute', top: r.top + (PH - 22) / 2, left: LBL + bx, width: bw, height: 22, border: '1px solid ' + c, borderRadius: 5, overflow: 'hidden', display: 'flex', zIndex: 2, boxSizing: 'border-box' }}>
+                  <div onClick={() => onAbrir && onAbrir(p)} title={`${p.nome_processo} — ${fmt(s.start)} a ${fmt(s.end)}`} style={{ position: 'absolute', top: r.top + (PH - 22) / 2, left: LBL + bx, width: bw, height: 22, border: '1px solid ' + c, borderRadius: 5, overflow: 'hidden', display: 'flex', zIndex: 2, boxSizing: 'border-box', cursor: 'pointer' }}>
                     {[0, 1, 2, 3, 4, 5].map((i) => {
                       const est = s.prog.st[i].estado
                       const fill = est === 'concluido' ? c : (est === 'andamento' || est === 'ajustes' ? c : 'transparent')
@@ -172,23 +173,23 @@ export default function CronogramaJira({ lista, areas, projeto, carregar, onEdit
               }
               const p = r.p, lbl = ETAPAS[Math.max(sc[p.id].prog.atual, 0)]?.label || (sc[p.id].prog.vigente ? 'Vigente' : ETAPAS[0].label)
               return (
-                <div key={idx} style={{ height: PH, display: 'flex', alignItems: 'center', gap: 6, padding: '0 8px 0 14px', boxSizing: 'border-box', borderTop: '1px solid rgba(0,32,62,0.06)' }}>
+                <div key={idx} onClick={() => onAbrir && onAbrir(p)} style={{ height: PH, display: 'flex', alignItems: 'center', gap: 6, padding: '0 8px 0 14px', boxSizing: 'border-box', borderTop: '1px solid rgba(0,32,62,0.06)', cursor: 'pointer' }}>
                   <div style={{ display: 'flex', flexDirection: 'column', flexShrink: 0 }}>
-                    <button onClick={() => onMover && onMover(p, -1)} title="Subir" style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#9CA3AF', fontSize: 10, lineHeight: 1, padding: 0 }}>▲</button>
-                    <button onClick={() => onMover && onMover(p, 1)} title="Descer" style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#9CA3AF', fontSize: 10, lineHeight: 1, padding: 0 }}>▼</button>
+                    <button onClick={(ev) => { ev.stopPropagation(); onMover && onMover(p, -1) }} title="Subir" style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#9CA3AF', fontSize: 10, lineHeight: 1, padding: 0 }}>▲</button>
+                    <button onClick={(ev) => { ev.stopPropagation(); onMover && onMover(p, 1) }} title="Descer" style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#9CA3AF', fontSize: 10, lineHeight: 1, padding: 0 }}>▼</button>
                   </div>
                   <div style={{ minWidth: 0, flex: 1 }}>
                     <div style={{ fontSize: 12.5, fontWeight: 600, color: AZUL, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.nome_processo}</div>
                     <div style={{ fontSize: 10.5, color: '#9CA3AF', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{Math.max(p.duracao_dias ?? duracaoPadrao ?? 30, 1)} dias · {lbl}</div>
                   </div>
-                  {onEditar && <button onClick={() => onEditar(p)} title="Editar processo" style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, color: COBRE, flexShrink: 0 }}>✎</button>}
+                  {onEditar && <button onClick={(ev) => { ev.stopPropagation(); onEditar(p) }} title="Editar processo" style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, color: COBRE, flexShrink: 0 }}>✎</button>}
                 </div>
               )
             })}
           </div>
         </div>
       </div>
-      <div style={{ fontSize: 10.5, color: '#9CA3AF', marginTop: 8 }}>A linha vermelha marca hoje. As setas mostram a dependência em cascata: cada processo começa quando o anterior termina. Use ▲▼ para reordenar a sequência.</div>
+      <div style={{ fontSize: 10.5, color: '#9CA3AF', marginTop: 8 }}>A linha vermelha marca hoje. As setas mostram a dependência em cascata: cada processo começa quando o anterior termina. Use ▲▼ para reordenar a sequência. Clique num processo para abrir (gravar/agendar/documentos).</div>
     </div>
   )
 }

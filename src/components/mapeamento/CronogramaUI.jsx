@@ -193,7 +193,6 @@ export function BlocoConsultor({ map, onMudou }) {
 // ─── Visão do cliente (página inteira) ────────────────────────────────────────
 export function VisaoCliente({ projeto }) {
   const [lista, setLista] = useState([])
-  const [areas, setAreas] = useState([])
   const [loading, setLoading] = useState(true)
   const [selId, setSelId] = useState(null)
   const clienteNome = formatNomeEmpresa(projeto?.clientes?.nome_fantasia || projeto?.clientes?.nome) || 'Cliente'
@@ -204,10 +203,6 @@ export function VisaoCliente({ projeto }) {
     setLista(data || []); setLoading(false)
   }, [projeto?.id])
   useEffect(() => { setLoading(true); carregar() }, [carregar])
-  useEffect(() => {
-    if (!projeto?.id) return
-    supabase.from('areas').select('id, nome').eq('projeto_id', projeto.id).order('ordem').then(({ data }) => setAreas(data || []))
-  }, [projeto?.id])
 
   const sel = lista.find((m) => m.id === selId) || null
 
@@ -236,7 +231,7 @@ export function VisaoCliente({ projeto }) {
               return (
                 <tr key={m.id} onClick={() => setSelId(m.id === selId ? null : m.id)} style={{ borderTop: '1px solid rgba(0,32,62,0.06)', cursor: 'pointer', background: m.id === selId ? 'rgba(204,145,94,0.07)' : 'transparent' }}>
                   <td style={{ padding: '11px 14px', fontWeight: 600, color: AZUL }}>{m.nome_processo}</td>
-                  <td style={{ padding: '11px 14px' }}>{areas.find((a) => a.id === m.area_id)?.nome || '—'}</td>
+                  <td style={{ padding: '11px 14px' }}>{m.area_nome || '—'}</td>
                   <td style={{ padding: '11px 14px' }}>
                     <span style={{ fontSize: 10, fontWeight: 700, color: aprovavel ? '#92400E' : (m.etapa === 'vigente' ? '#15803D' : '#0E7490'), background: aprovavel ? 'rgba(234,179,8,0.15)' : (m.etapa === 'vigente' ? 'rgba(34,197,94,0.12)' : 'rgba(6,182,212,0.10)'), padding: '3px 10px', borderRadius: 999, textTransform: 'uppercase', letterSpacing: 0.4 }}>{etapaAtualLabel(m)}</span>
                   </td>

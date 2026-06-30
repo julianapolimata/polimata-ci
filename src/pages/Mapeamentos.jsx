@@ -138,8 +138,6 @@ export default function Mapeamentos({ projeto }) {
   }, [projeto?.id])
 
   useEffect(() => { setLoading(true); carregar() }, [carregar])
-  useEffect(() => { if (projeto?.id) supabase.from('areas').select('id, nome').eq('projeto_id', projeto.id).order('ordem').then(({ data }) => setAreas(data || [])) }, [projeto?.id])
-  useEffect(() => { setSelId(null) }, [areaId])
   useEffect(() => { if (!lista.some((m) => EM_PROCESSO.includes(m.status))) return; const t = setInterval(carregar, 6000); return () => clearInterval(t) }, [lista, carregar])
 
   const invocar = async (id, etapa = 'completo') => {
@@ -193,45 +191,43 @@ export default function Mapeamentos({ projeto }) {
     </div>
   )
 
-  const areaAtual = areaId ? areas.find((a) => a.id === areaId) : null
-  const listaArea = areaId ? lista.filter((m) => m.area_id === areaId) : lista
-  const sel = listaArea.find((m) => m.id === selId) || null
+  const areasNomes = [...new Set(lista.map((m) => m.area_nome).filter(Boolean))].sort()
+  const sel = lista.find((m) => m.id === selId) || null
 
   return (
     <div style={{ padding: '28px 32px', fontFamily: 'Montserrat' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 22, gap: 16, flexWrap: 'wrap' }}>
         <div>
           <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: 1.6, textTransform: 'uppercase', color: COBRE }}>Polímata · Mapeamento</div>
-          <div style={{ fontSize: 22, fontWeight: 300, color: AZUL, fontFamily: 'Raleway, Montserrat' }}>{areaId ? (areaAtual?.nome || 'Área') : 'Cronograma'}</div>
-          <div style={{ fontSize: 12, color: '#6B7280', marginTop: 4 }}>{areaId ? 'Grave ou agende a entrevista e gere POP, fluxograma BPMN e matriz de riscos.' : 'Cadastre os processos a mapear, defina prazos e acompanhe a evolução.'}</div>
+          <div style={{ fontSize: 22, fontWeight: 300, color: AZUL, fontFamily: 'Raleway, Montserrat' }}>Cronograma</div>
+          <div style={{ fontSize: 12, color: '#6B7280', marginTop: 4 }}>Cadastre os processos, defina o setor e o prazo, e clique num processo para gravar/agendar e gerar os documentos.</div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
           <button onClick={() => setPreviewCliente(true)} style={btnGhost}>👁 Ver como cliente</button>
           <ConectarCalendario perfil={perfil} />
-          {areaId ? <button onClick={() => setModalNovo(true)} style={btnPrim}>🎙 Novo mapeamento</button> : <button onClick={() => setPlanejar(true)} style={btnPrim}>＋ Cadastrar processo</button>}
+          <button onClick={() => setPlanejar(true)} style={btnPrim}>＋ Cadastrar processo</button>
         </div>
       </div>
 
       {erroUi && <div style={{ background: 'rgba(239,68,68,0.10)', color: '#991B1B', padding: '10px 14px', borderRadius: 8, fontSize: 12, marginBottom: 14 }}>{erroUi}</div>}
 
-      {areaId ? <AreaWorkspace lista={listaArea} loading={loading} selId={selId} setSelId={setSelId} onEditar={setEditProc} /> : <CronogramaView lista={lista} areas={areas} loading={loading} navigate={navigate} onEditar={setEditProc} projeto={projeto} carregar={carregar} onMover={moverProcesso} duracaoPadrao={padraoDur} onDuracaoPadrao={setDuracaoPadrao} />}
+      <CronogramaView lista={lista} loading={loading} onEditar={setEditProc} onAbrir={setSelId} projeto={projeto} carregar={carregar} onMover={moverProcesso} duracaoPadrao={padraoDur} onDuracaoPadrao={setDuracaoPadrao} />
 
       {sel && <Detalhe map={sel} projeto={projeto} perfil={perfil} clienteNome={clienteNome} invocar={invocar} carregar={carregar} onEditar={setEditProc} />}
 
-      {modalNovo && <ModalNovo projeto={projeto} areas={areas} areaFixa={areaId} perfil={perfil} onFechar={() => setModalNovo(false)} onCriado={(id) => { setModalNovo(false); setSelId(id); recomputarCascata() }} invocar={invocar} />}
-      {planejar && <PlanejarModal projeto={projeto} areas={areas} perfil={perfil} onFechar={() => setPlanejar(false)} onCriado={() => { setPlanejar(false); recomputarCascata() }} />}
-      {editProc && <PlanejarModal projeto={projeto} areas={areas} perfil={perfil} processo={editProc} onFechar={() => setEditProc(null)} onCriado={() => { setEditProc(null); recomputarCascata() }} />}
+      {planejar && <PlanejarModal projeto={projeto} areasNomes={areasNomes} perfil={perfil} onFechar={() => setPlanejar(false)} onCriado={() => { setPlanejar(false); recomputarCascata() }} />}
+      {editProc && <PlanejarModal projeto={projeto} areasNomes={areasNomes} perfil={perfil} processo={editProc} onFechar={() => setEditProc(null)} onCriado={() => { setEditProc(null); recomputarCascata() }} />}
     </div>
   )
 }
 
-function CronogramaView({ lista, areas, loading, navigate, onEditar, projeto, carregar, onMover, duracaoPadrao, onDuracaoPadrao }) {
+function CronogramaView({ lista, loading, onEditar, onAbrir, projeto, carregar, onMover, duracaoPadrao, onDuracaoPadrao }) {
   return (
     <>
       <ResumoProjeto lista={lista} />
       {loading ? <div style={{ padding: 24, textAlign: 'center', color: '#6B7280' }}>Carregando…</div>
         : lista.length === 0 ? <div style={{ background: '#fff', borderRadius: 12, border: '1px solid rgba(0,32,62,0.08)', padding: 36, textAlign: 'center', color: '#6B7280' }}>Nenhum processo cadastrado. Clique em <b>Cadastrar processo</b> para planejar o que será mapeado, com início e prazo.</div>
-        : <CronogramaJira lista={lista} areas={areas} projeto={projeto} carregar={carregar} onEditar={onEditar} onMover={onMover} duracaoPadrao={duracaoPadrao} onDuracaoPadrao={onDuracaoPadrao} />}
+        : <CronogramaJira lista={lista} projeto={projeto} carregar={carregar} onEditar={onEditar} onAbrir={onAbrir} onMover={onMover} duracaoPadrao={duracaoPadrao} onDuracaoPadrao={onDuracaoPadrao} />}
     </>
   )
 }
@@ -477,11 +473,11 @@ function Detalhe({ map, projeto, perfil, clienteNome, invocar, carregar, onEdita
   )
 }
 
-function PlanejarModal({ projeto, areas, perfil, processo, onFechar, onCriado }) {
+function PlanejarModal({ projeto, areasNomes, perfil, processo, onFechar, onCriado }) {
   const editando = !!processo
   const podeExcluir = editando && perfil?.papel === 'admin_polimata'
   const [nome, setNome] = useState(processo?.nome_processo || '')
-  const [areaId, setAreaId] = useState(processo?.area_id || '')
+  const [areaNome, setAreaNome] = useState(processo?.area_nome || '')
   const [inicio, setInicio] = useState(processo?.data_inicio || '')
   const [duracao, setDuracao] = useState(processo?.duracao_dias ?? '')
   const [salvando, setSalvando] = useState(false), [erro, setErro] = useState('')
@@ -489,7 +485,7 @@ function PlanejarModal({ projeto, areas, perfil, processo, onFechar, onCriado })
   const salvar = async () => {
     if (!nome.trim()) { setErro('Informe o nome do processo.'); return }
     setSalvando(true); setErro('')
-    const campos = { area_id: areaId || null, nome_processo: nome.trim(), sigla_processo: siglaDeNome(nome), data_inicio: inicio || null, duracao_dias: duracao === '' ? null : Math.max(Number(duracao) || 1, 1) }
+    const campos = { area_nome: areaNome.trim() || null, nome_processo: nome.trim(), sigla_processo: siglaDeNome(nome), data_inicio: inicio || null, duracao_dias: duracao === '' ? null : Math.max(Number(duracao) || 1, 1) }
     const { error } = editando
       ? await supabase.from('mapeamentos').update(campos).eq('id', processo.id)
       : await supabase.from('mapeamentos').insert({ projeto_id: projeto.id, ...campos, status: 'rascunho', criado_por: perfil?.id || null })
@@ -510,7 +506,7 @@ function PlanejarModal({ projeto, areas, perfil, processo, onFechar, onCriado })
         <div style={{ flex: 1 }}><Campo label="Início"><input type="date" style={inp} value={inicio} onChange={(e) => setInicio(e.target.value)} /></Campo></div>
         {editando && <div style={{ flex: 1 }}><Campo label="Duração (dias)"><input type="number" min={1} style={inp} value={duracao} onChange={(e) => setDuracao(e.target.value)} placeholder="padrão do projeto" /></Campo></div>}
       </div>
-      <Campo label="Área"><select style={inp} value={areaId} onChange={(e) => setAreaId(e.target.value)}><option value="">—</option>{areas.map((a) => <option key={a.id} value={a.id}>{a.nome}</option>)}</select></Campo>
+      <Campo label="Área / setor"><input style={inp} value={areaNome} onChange={(e) => setAreaNome(e.target.value)} list="map-areas-list" placeholder="ex.: Comercial, Suprimentos" autoComplete="off" /><datalist id="map-areas-list">{(areasNomes || []).map((a) => <option key={a} value={a} />)}</datalist></Campo>
       {podeExcluir && <button onClick={excluir} disabled={excluindo} style={{ marginTop: 6, background: 'transparent', border: '1px solid rgba(239,68,68,0.4)', color: '#991B1B', borderRadius: 8, padding: '8px 14px', fontSize: 12, fontWeight: 600, cursor: excluindo ? 'wait' : 'pointer', fontFamily: 'Montserrat' }}>{excluindo ? 'Excluindo…' : '🗑 Excluir processo'}</button>}
     </Modal>
   )
