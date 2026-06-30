@@ -9,6 +9,7 @@ const ANO_ATUAL = new Date().getFullYear()
 const NAVY = '#00203E', COBRE = '#CC915E', VERDE = '#22B98A', RED = '#A32D2D'
 const COBRE_L = 'rgba(204,145,94,0.4)', VERDE_L = 'rgba(34,185,138,0.4)'
 const AMBER = '#E0972F'
+const fmtC = (v) => v == null ? '—' : (Math.abs(v) >= 1e6 ? 'R$ ' + (v / 1e6).toFixed(1).replace('.', ',') + 'M' : 'R$ ' + Math.round(v / 1e3) + 'k')
 const corCons = (pct, pace) => { const r = pace ? pct / pace : 0; if (pct > 100) return RED; if (r <= 1.05) return VERDE; if (r <= 1.45) return AMBER; return RED }
 const corReceita = (pct, pace) => { const r = pace ? pct / pace : 0; if (r >= 0.95) return VERDE; if (r >= 0.7) return AMBER; return RED }
 const polar = (cx, cy, r, deg) => { const a = deg * Math.PI / 180; return [cx + r * Math.cos(a), cy - r * Math.sin(a)] }
@@ -84,27 +85,30 @@ function BateriaHero({ pct, pace, real, orc, inv }) {
         <rect x="10" y="18" width={(WB - 8) * fill} height={HB - 8} rx="7" fill={col} />
         <line x1={paceX} y1="9" x2={paceX} y2={HB + 19} stroke={NAVY} strokeWidth="1.5" strokeDasharray="4 3" />
         <text x={paceX} y="92" textAnchor="middle" fontSize="9.5" fill={NAVY}>ritmo {pace.toFixed(0)}%</text>
-        <text x={6 + WB / 2} y="53" textAnchor="middle" fontSize="22" fontWeight="700" fontFamily="'Raleway', sans-serif" fill={fill > 0.42 ? '#fff' : NAVY}>{pct.toFixed(0)}%</text>
+        <text x={6 + WB / 2} y="53" textAnchor="middle" fontSize="22" fontWeight="700" fontFamily="'Raleway', sans-serif" fill={NAVY} stroke="#fff" strokeWidth="3.5" paintOrder="stroke">{pct.toFixed(0)}%</text>
       </svg>
       <div style={{ fontSize: 12, color: 'var(--lt-text3)', marginTop: 4 }}>{fmtBRL(real)} de {fmtBRL(orc)} consumidos</div>
     </div>
   )
 }
 
-function Anel({ nome, pct, pace, real, orc, onClick }) {
-  const R = 34, C = 2 * Math.PI * R, col = corCons(pct, pace)
-  const dash = Math.min(Math.max(pct, 0), 100) / 100 * C
-  const pt = polar(48, 48, R, 90 - pace / 100 * 360)
+function Bullet({ nome, pct, pace, real, orc, onClick }) {
+  const col = corCons(pct, pace)
+  const over = pct > 100
+  const fillW = Math.min(Math.max(pct, 0), 100)
+  const paceX = Math.min(Math.max(pace, 0), 100)
   return (
-    <div onClick={onClick} style={{ width: 118, textAlign: 'center', cursor: onClick ? 'pointer' : 'default' }}>
-      <svg width="96" height="96" viewBox="0 0 96 96" role="img" aria-label={`${nome}: ${pct.toFixed(0)}% do orçado anual`}>
-        <circle cx="48" cy="48" r={R} fill="none" stroke="var(--lt-bg2, #eee)" strokeWidth="9" />
-        <circle cx="48" cy="48" r={R} fill="none" stroke={col} strokeWidth="9" strokeLinecap="round" strokeDasharray={`${dash.toFixed(1)} ${C.toFixed(1)}`} transform="rotate(-90 48 48)" />
-        <circle cx={pt[0].toFixed(1)} cy={pt[1].toFixed(1)} r="3.4" fill={NAVY} />
-        <text x="48" y="53" textAnchor="middle" fontSize="17" fontWeight="700" fontFamily="'Raleway', sans-serif" fill="var(--lt-text)">{pct.toFixed(0)}%</text>
-      </svg>
-      <div style={{ fontSize: 11.5, fontWeight: 600, lineHeight: 1.2, color: 'var(--lt-text)', minHeight: 28, marginTop: 2 }}>{nome}</div>
-      <div style={{ fontSize: 10.5, color: 'var(--lt-text3)' }}>{fmtBRL(real)} / {fmtBRL(orc)}</div>
+    <div onClick={onClick} title={`${nome}: ${fmtBRL(real)} de ${fmtBRL(orc)} orçado`} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '7px 0', borderBottom: '1px solid var(--lt-brd)', fontSize: 12.5, cursor: onClick ? 'pointer' : 'default' }}>
+      <span style={{ width: 156, flex: 'none', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontWeight: 600 }}>{nome}</span>
+      <span style={{ flex: 1, position: 'relative', height: 18, background: 'var(--lt-bg2, #eee)', borderRadius: 4, minWidth: 80 }}>
+        <span style={{ position: 'absolute', left: 0, top: 0, height: '100%', width: fillW + '%', background: col, borderRadius: 4 }} />
+        <span title={`ritmo do ano ${pace.toFixed(0)}%`} style={{ position: 'absolute', left: `calc(${paceX}% - 1px)`, top: -3, height: 24, width: 2, background: 'var(--lt-text)' }} />
+        {over && <span style={{ position: 'absolute', right: 4, top: 0, height: '100%', display: 'flex', alignItems: 'center', fontSize: 11, fontWeight: 700, color: '#fff' }}>▸</span>}
+      </span>
+      <span style={{ width: 150, flex: 'none', textAlign: 'right' }}>
+        <span style={{ fontWeight: 700, color: over ? RED : 'var(--lt-text)' }}>{pct.toFixed(0)}%</span>
+        <span style={{ color: 'var(--lt-text3)', fontSize: 11 }}> · {fmtC(real)}/{fmtC(orc)}</span>
+      </span>
     </div>
   )
 }
@@ -269,7 +273,7 @@ export default function DashboardExec({ projeto }) {
     let lancs = []
     try {
       const { data } = await supabase.from('orc_realizado').select('competencia, valor, conta_erp, detalhe, parceiro, documento, situacao')
-        .eq('projeto_id', projeto.id).eq('categoria_id', c.id).gte('competencia', compIni).lte('competencia', compFim).order('competencia')
+        .eq('projeto_id', projeto.id).eq('categoria_id', c.id).eq('em_quarentena', false).gte('competencia', compIni).lte('competencia', compFim).order('competencia')
       lancs = data || []
     } catch (e) { /* segue */ }
     setModal({ titulo: c.nome + ' · composição', corpo: (<>
@@ -343,6 +347,13 @@ export default function DashboardExec({ projeto }) {
             title={(id === 'comparativo' && !temOrcado) ? 'Disponível quando houver orçado cadastrado' : ''}>{lbl}</button>
         ))}
       </div>
+
+      {(d.importacoes && d.importacoes[0]) || W.incompleto >= 0 ? (
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', marginBottom: 10, fontSize: 11, color: 'var(--lt-text3)' }}>
+          {d.importacoes && d.importacoes[0] && <span><i>Última importação:</i> {d.importacoes[0].arquivo_nome || '—'}{d.importacoes[0].criado_em ? ' · ' + new Date(d.importacoes[0].criado_em).toLocaleDateString('pt-BR') : ''}</span>}
+          {W.incompleto >= 0 && <span style={{ background: 'rgba(204,145,94,0.15)', color: '#A6512F', padding: '2px 8px', borderRadius: 999, fontWeight: 700 }}>{MESES_ABREV[W.incompleto]} parcial</span>}
+        </div>
+      ) : null}
 
       {libOpen && (
         <Card titulo="Indicadores do topo" extra={<span style={{ fontSize: 11, color: 'var(--lt-text3)' }}>ligue/desligue · ⓘ explica cada um</span>}>
@@ -434,8 +445,8 @@ export default function DashboardExec({ projeto }) {
             {W.consumoCats.length > 0 && (
               <>
                 <div style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--lt-text)', margin: '20px 0 12px' }}>Por categoria <span style={{ fontWeight: 400, color: 'var(--lt-text3)', fontSize: 11 }}>· % do orçado anual consumido · clique p/ explodir</span></div>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
-                  {W.consumoCats.map(c => <Anel key={c.id} nome={c.nome} pct={c.orcAno ? c.realYtd / c.orcAno * 100 : 0} pace={paceP} real={c.realYtd} orc={c.orcAno} onClick={() => drill(c)} />)}
+                <div>
+                  {W.consumoCats.map(c => <Bullet key={c.id} nome={c.nome} pct={c.orcAno ? c.realYtd / c.orcAno * 100 : 0} pace={paceP} real={c.realYtd} orc={c.orcAno} onClick={() => drill(c)} />)}
                 </div>
               </>
             )}

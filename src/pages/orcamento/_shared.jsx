@@ -112,6 +112,7 @@ export function useOrcDados(projeto, ano) {
   const [centros, setCentros] = useState([])
   const [cenarios, setCenarios] = useState([])   // orc_orcamentos do ano
   const [realizado, setRealizado] = useState([]) // todos os anos (p/ histórico)
+  const [importacoes, setImportacoes] = useState([])
   const [loading, setLoading] = useState(true)
   const [erro, setErro] = useState('')
 
@@ -119,22 +120,23 @@ export function useOrcDados(projeto, ano) {
     if (!projeto?.id) return
     setLoading(true)
     try {
-      const [cat, cc, orc] = await Promise.all([
+      const [cat, cc, orc, imp] = await Promise.all([
         supabase.from('orc_categorias').select('*').eq('projeto_id', projeto.id).order('ordem').order('nome'),
         supabase.from('orc_centros_custo').select('*').eq('projeto_id', projeto.id).order('ordem').order('codigo'),
         supabase.from('orc_orcamentos').select('*').eq('projeto_id', projeto.id).eq('ano', ano).order('versao'),
+        supabase.from('orc_importacoes').select('*').eq('projeto_id', projeto.id).order('criado_em', { ascending: false }),
       ])
       // realizado pode passar de 1000 linhas (limite por requisição do Supabase) → pagina
       const COLS = 'id, categoria_id, centro_custo_id, competencia, valor, origem, detalhe, conta_erp, situacao, tipo_mov'
       const PAG = 1000; let todos = [], ini = 0
       for (;;) {
-        const { data, error } = await supabase.from('orc_realizado').select(COLS).eq('projeto_id', projeto.id).order('id').range(ini, ini + PAG - 1)
+        const { data, error } = await supabase.from('orc_realizado').select(COLS).eq('projeto_id', projeto.id).eq('em_quarentena', false).order('id').range(ini, ini + PAG - 1)
         if (error) { setErro(error.message); break }
         todos = todos.concat(data || [])
         if (!data || data.length < PAG) break
         ini += PAG
       }
-      setCategorias(cat.data || []); setCentros(cc.data || []); setCenarios(orc.data || []); setRealizado(todos)
+      setCategorias(cat.data || []); setCentros(cc.data || []); setCenarios(orc.data || []); setRealizado(todos); setImportacoes(imp.data || [])
       if (cat.error) setErro(cat.error.message)
     } catch (e) { setErro(String(e.message || e)) } finally { setLoading(false) }
   }, [projeto?.id, ano])
@@ -155,7 +157,7 @@ export function useOrcDados(projeto, ano) {
     categorias.filter(c => c.ativo).sort((a, b) => (TIPO_ORD[a.tipo] - TIPO_ORD[b.tipo]) || a.ordem - b.ordem || a.nome.localeCompare(b.nome, 'pt-BR')),
   [categorias])
 
-  return { categorias, catsAtivas, centros, cenarios, realizado, realPorCat, loading, erro, setErro, reload }
+  return { categorias, catsAtivas, centros, cenarios, realizado, importacoes, realPorCat, loading, erro, setErro, reload }
 }
 
 /** Itens de um orçamento/cenário: map catId -> {valores:[12], sugerido:[12], just, conf, status} */

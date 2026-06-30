@@ -67,7 +67,13 @@ export default function ImportarTitulos({ projeto }) {
       // ── RESULTADO (por competência) ──
       let resumoRes = ''
       if (destino === 'realizado') {
-        const resRows = prev.gravaveis.filter(l => l.competencia).map(l => ({ projeto_id: projeto.id, categoria_id: l.categoria_id, competencia: primeiroDia(l.competencia), valor: l.valor, origem: 'import', conta_erp: l.codigo, detalhe: l.documento, tipo_mov: l.tipo === 'entrada' ? 'Receber' : 'Pagar', parceiro: l.parceiro, documento: l.documento }))
+        const seen = new Set()
+        const resRows = prev.gravaveis.filter(l => l.competencia).map(l => {
+          const comp = primeiroDia(l.competencia)
+          const k = [l.codigo, comp, l.valor, l.documento || '', l.parceiro || ''].join('|')
+          const dup = seen.has(k); seen.add(k)
+          return { projeto_id: projeto.id, categoria_id: l.categoria_id, competencia: comp, valor: l.valor, origem: 'import', conta_erp: l.codigo, detalhe: l.documento, tipo_mov: l.tipo === 'entrada' ? 'Receber' : 'Pagar', parceiro: l.parceiro, documento: l.documento, em_quarentena: dup, quarentena_motivo: dup ? 'duplicado no arquivo importado' : null }
+        })
         const comps = [...new Set(resRows.map(r => r.competencia))]
         if (comps.length) await supabase.from('orc_realizado').delete().eq('projeto_id', projeto.id).eq('origem', 'import').in('competencia', comps)
         await chunkInsert('orc_realizado', resRows)
