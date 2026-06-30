@@ -129,13 +129,20 @@ async function estruturar(map: Record<string, unknown>, transcricao: string) {
 
   await setStatus(id, { status: "estruturando", erro: null });
 
+  const respList = Array.isArray(map.respostas_lacunas)
+    ? (map.respostas_lacunas as Array<{ pergunta?: string; resposta?: string }>).filter((r) => (r?.resposta ?? "").trim())
+    : [];
+  const blocoRespostas = respList.length
+    ? `\n\nESCLARECIMENTOS DO CONSULTOR (respostas às perguntas/lacunas levantadas antes — trate como fatos confirmados e NÃO as repita em "lacunas"):\n${respList.map((r) => `- P: ${r.pergunta ?? ""}\n  R: ${r.resposta}`).join("\n")}`
+    : "";
+
   const userMsg = `Processo declarado: ${map.nome_processo ?? "(não informado)"}
 Sigla do processo: ${map.sigla_processo ?? "(definir)"}
 
 TRANSCRIÇÃO DA ENTREVISTA:
 """
 ${transcricao}
-"""
+"""${blocoRespostas}
 
 Estruture conforme exatamente este schema JSON:
 ${SCHEMA_JSON}`;

@@ -310,6 +310,49 @@ function CapturaAudio({ map, projeto, invocar, carregar }) {
   )
 }
 
+function LacunasResponder({ map, carregar, invocar }) {
+  const lacunas = (map.estrutura?.lacunas || []).filter(Boolean)
+  const [resp, setResp] = useState({})
+  const [salvando, setSalvando] = useState(false)
+  const [reestrut, setReestrut] = useState(false)
+  useEffect(() => {
+    const prev = Array.isArray(map.respostas_lacunas) ? map.respostas_lacunas : []
+    const m = {}; prev.forEach((r) => { if (r?.pergunta) m[r.pergunta] = r.resposta || '' })
+    setResp(m)
+  }, [map.id, map.respostas_lacunas])
+  if (!lacunas.length) return null
+  const montar = () => {
+    const prev = Array.isArray(map.respostas_lacunas) ? map.respostas_lacunas : []
+    const atuais = lacunas.map((q) => ({ pergunta: q, resposta: (resp[q] || '').trim() })).filter((r) => r.resposta)
+    const extras = prev.filter((r) => r?.pergunta && !lacunas.includes(r.pergunta) && (r.resposta || '').trim())
+    return [...extras, ...atuais]
+  }
+  const salvar = async (reestruturar) => {
+    reestruturar ? setReestrut(true) : setSalvando(true)
+    try {
+      await supabase.from('mapeamentos').update({ respostas_lacunas: montar() }).eq('id', map.id)
+      if (reestruturar) await invocar(map.id, 'estruturar'); else carregar()
+    } finally { reestruturar ? setReestrut(false) : setSalvando(false) }
+  }
+  const respondidas = lacunas.filter((q) => (resp[q] || '').trim()).length
+  return (
+    <div style={{ background: 'rgba(204,145,94,0.08)', border: '1px solid rgba(204,145,94,0.25)', borderRadius: 10, padding: '14px 16px', marginBottom: 18 }}>
+      <div style={{ fontSize: 11, fontWeight: 700, color: COBRE, textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 4 }}>Perguntas para esclarecer ({respondidas}/{lacunas.length} respondidas)</div>
+      <div style={{ fontSize: 11.5, color: '#6B7280', marginBottom: 12 }}>Responda o que conseguir. Ao reestruturar, a IA incorpora as respostas e refaz POP, fluxograma e matriz.</div>
+      {lacunas.map((q, i) => (
+        <div key={i} style={{ marginBottom: 12 }}>
+          <div style={{ fontSize: 12.5, color: AZUL, fontWeight: 500, marginBottom: 4 }}>{i + 1}. {q}</div>
+          <textarea value={resp[q] || ''} onChange={(ev) => setResp((st) => ({ ...st, [q]: ev.target.value }))} rows={2} placeholder="Sua resposta…" style={{ width: '100%', boxSizing: 'border-box', fontFamily: 'Montserrat', fontSize: 12, lineHeight: 1.5, padding: 10, borderRadius: 8, border: '1px solid rgba(0,32,62,0.15)', resize: 'vertical' }} />
+        </div>
+      ))}
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+        <button onClick={() => salvar(false)} disabled={salvando || reestrut} style={{ background: 'rgba(204,145,94,0.12)', color: COBRE, border: '1px solid rgba(204,145,94,0.35)', borderRadius: 8, padding: '9px 16px', fontSize: 12, fontWeight: 600, fontFamily: 'Montserrat', cursor: (salvando || reestrut) ? 'wait' : 'pointer' }}>{salvando ? 'Salvando…' : 'Salvar respostas'}</button>
+        <button onClick={() => salvar(true)} disabled={salvando || reestrut || respondidas === 0} style={{ background: `linear-gradient(135deg, ${COBRE}, #CC915E)`, color: '#fff', border: 'none', borderRadius: 8, padding: '9px 16px', fontSize: 12, fontWeight: 600, fontFamily: 'Montserrat', cursor: respondidas === 0 ? 'not-allowed' : 'pointer', opacity: respondidas === 0 ? 0.5 : 1 }}>{reestrut ? 'Reestruturando…' : '↻ Salvar e reestruturar'}</button>
+      </div>
+    </div>
+  )
+}
+
 function Detalhe({ map, projeto, perfil, clienteNome, invocar, carregar }) {
   const [transcricao, setTranscricao] = useState(map.transcricao || '')
   const [salvando, setSalvando] = useState(false)
@@ -372,12 +415,7 @@ function Detalhe({ map, projeto, perfil, clienteNome, invocar, carregar }) {
           <span><b>{e.atores?.length || 0}</b> atores</span>
         </div>
       )}
-      {pronto && e.lacunas?.length > 0 && (
-        <div style={{ background: 'rgba(204,145,94,0.08)', border: '1px solid rgba(204,145,94,0.25)', borderRadius: 10, padding: '12px 16px', marginBottom: 18 }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: COBRE, textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 6 }}>Lacunas — validar com o entrevistado</div>
-          {e.lacunas.map((l, i) => <div key={i} style={{ fontSize: 12, color: '#1F2937', padding: '3px 0' }}>{i + 1}. {l}</div>)}
-        </div>
-      )}
+      {pronto && <LacunasResponder map={map} carregar={carregar} invocar={invocar} />}
 
       {(map.transcricao || pronto || map.status === 'transcrito') && (
         <div>

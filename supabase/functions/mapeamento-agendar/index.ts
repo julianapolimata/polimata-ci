@@ -1,5 +1,6 @@
 // mapeamento-agendar — agenda a entrevista no Google Calendar (via Nylas), cria
 // link do Meet, envia convite ao entrevistado e anexa o Notetaker (bot que grava).
+// Cada entrevista vira uma linha em mapeamento_reunioes (um processo pode ter várias).
 // Body: { mapeamento_id, grant_id, inicio (ISO), duracao_min, participantes: string[], titulo? }
 // Secrets: NYLAS_API_KEY, NYLAS_API_URI, SUPABASE_*
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
@@ -29,8 +30,9 @@ Deno.serve(async (req: Request) => {
 
   const start = Math.floor(new Date(inicio).getTime() / 1000);
   const end = start + (Number(duracao_min) || 60) * 60;
+  const tituloFinal = titulo || `Entrevista de mapeamento — ${map.nome_processo ?? "Processo"}`;
   const evt = {
-    title: titulo || `Entrevista de mapeamento — ${map.nome_processo ?? "Processo"}`,
+    title: tituloFinal,
     when: { start_time: start, end_time: end },
     participants: (participantes ?? []).filter(Boolean).map((e) => ({ email: e })),
     conferencing: { provider: "Google Meet", autocreate: {} },
@@ -47,6 +49,21 @@ Deno.serve(async (req: Request) => {
   const meetUrl = d?.conferencing?.details?.url ?? null;
   const notetakerId = d?.notetaker?.id ?? d?.notetaker_id ?? null;
 
+  // Nova tabela: uma reunião por linha (permite várias entrevistas no mesmo processo)
+  const { data: reuniao, error: insErr } = await admin.from("mapeamento_reunioes").insert({
+    mapeamento_id,
+    titulo: tituloFinal,
+    grant_id,
+    event_id: d.id ?? null,
+    meet_url: meetUrl,
+    notetaker_id: notetakerId,
+    inicio,
+    duracao_min: Number(duracao_min) || 60,
+    status: "agendada",
+  }).select("id").single();
+  if (insErr) return json({ error: "Falha ao registrar reunião", detail: insErr.message }, 500);
+
+  // Mantém os campos reuniao_* no mapeamento como "última reunião" (compatibilidade)
   await admin.from("mapeamentos").update({
     reuniao_event_id: d.id ?? null,
     reuniao_grant_id: grant_id,
@@ -56,5 +73,5 @@ Deno.serve(async (req: Request) => {
     reuniao_status: "agendada",
   }).eq("id", mapeamento_id);
 
-  return json({ ok: true, event_id: d.id ?? null, meet_url: meetUrl, notetaker_id: notetakerId });
+  return json({ ok: true, reuniao_id: reuniao?.id ?? null, event_id: d.id ?? null, meet_url: meetUrl, notetaker_id: notetakerId });
 });
