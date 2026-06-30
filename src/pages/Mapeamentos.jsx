@@ -123,6 +123,8 @@ export default function Mapeamentos({ projeto }) {
   const [modalNovo, setModalNovo] = useState(false)
   const [planejar, setPlanejar] = useState(false)
   const [editProc, setEditProc] = useState(null)
+  const [padraoDur, setPadraoDur] = useState(projeto?.mapeamento_duracao_padrao || 30)
+  const padraoRef = useRef(projeto?.mapeamento_duracao_padrao || 30)
   const [selId, setSelId] = useState(null)
   const [erroUi, setErroUi] = useState('')
   const [previewCliente, setPreviewCliente] = useState(false)
@@ -150,7 +152,7 @@ export default function Mapeamentos({ projeto }) {
   const persistirOrdem = useCallback(async (orderedArr) => {
     let cursor = orderedArr[0]?.data_inicio ? msLocal(orderedArr[0].data_inicio) : Date.now()
     const ups = orderedArr.map((pr, i) => {
-      const dur = Math.max(pr.duracao_dias || 5, 1)
+      const dur = Math.max(pr.duracao_dias ?? padraoRef.current ?? 30, 1)
       const startMs = cursor, endMs = startMs + dur * DIA_MS
       const patch = { ordem: i + 1, prazo: isoLocal(endMs) }
       if (i > 0) patch.data_inicio = isoLocal(startMs)
@@ -173,6 +175,11 @@ export default function Mapeamentos({ projeto }) {
     const t = ord[i]; ord[i] = ord[j]; ord[j] = t
     await persistirOrdem(ord)
   }, [lista, persistirOrdem])
+  const setDuracaoPadrao = useCallback(async (n) => {
+    padraoRef.current = n; setPadraoDur(n)
+    if (projeto?.id) await supabase.from('projetos').update({ mapeamento_duracao_padrao: n }).eq('id', projeto.id)
+    recomputarCascata()
+  }, [projeto?.id, recomputarCascata])
 
   if (!isPolimata) return <VisaoCliente projeto={projeto} />
 
@@ -207,7 +214,7 @@ export default function Mapeamentos({ projeto }) {
 
       {erroUi && <div style={{ background: 'rgba(239,68,68,0.10)', color: '#991B1B', padding: '10px 14px', borderRadius: 8, fontSize: 12, marginBottom: 14 }}>{erroUi}</div>}
 
-      {areaId ? <AreaWorkspace lista={listaArea} loading={loading} selId={selId} setSelId={setSelId} onEditar={setEditProc} /> : <CronogramaView lista={lista} areas={areas} loading={loading} navigate={navigate} onEditar={setEditProc} projeto={projeto} carregar={carregar} onMover={moverProcesso} />}
+      {areaId ? <AreaWorkspace lista={listaArea} loading={loading} selId={selId} setSelId={setSelId} onEditar={setEditProc} /> : <CronogramaView lista={lista} areas={areas} loading={loading} navigate={navigate} onEditar={setEditProc} projeto={projeto} carregar={carregar} onMover={moverProcesso} duracaoPadrao={padraoDur} onDuracaoPadrao={setDuracaoPadrao} />}
 
       {sel && <Detalhe map={sel} projeto={projeto} perfil={perfil} clienteNome={clienteNome} invocar={invocar} carregar={carregar} onEditar={setEditProc} />}
 
@@ -218,13 +225,13 @@ export default function Mapeamentos({ projeto }) {
   )
 }
 
-function CronogramaView({ lista, areas, loading, navigate, onEditar, projeto, carregar, onMover }) {
+function CronogramaView({ lista, areas, loading, navigate, onEditar, projeto, carregar, onMover, duracaoPadrao, onDuracaoPadrao }) {
   return (
     <>
       <ResumoProjeto lista={lista} />
       {loading ? <div style={{ padding: 24, textAlign: 'center', color: '#6B7280' }}>Carregando…</div>
         : lista.length === 0 ? <div style={{ background: '#fff', borderRadius: 12, border: '1px solid rgba(0,32,62,0.08)', padding: 36, textAlign: 'center', color: '#6B7280' }}>Nenhum processo cadastrado. Clique em <b>Cadastrar processo</b> para planejar o que será mapeado, com início e prazo.</div>
-        : <CronogramaJira lista={lista} areas={areas} projeto={projeto} carregar={carregar} onEditar={onEditar} onMover={onMover} />}
+        : <CronogramaJira lista={lista} areas={areas} projeto={projeto} carregar={carregar} onEditar={onEditar} onMover={onMover} duracaoPadrao={duracaoPadrao} onDuracaoPadrao={onDuracaoPadrao} />}
     </>
   )
 }
@@ -476,13 +483,13 @@ function PlanejarModal({ projeto, areas, perfil, processo, onFechar, onCriado })
   const [nome, setNome] = useState(processo?.nome_processo || '')
   const [areaId, setAreaId] = useState(processo?.area_id || '')
   const [inicio, setInicio] = useState(processo?.data_inicio || '')
-  const [duracao, setDuracao] = useState(processo?.duracao_dias || 5)
+  const [duracao, setDuracao] = useState(processo?.duracao_dias ?? '')
   const [salvando, setSalvando] = useState(false), [erro, setErro] = useState('')
   const [excluindo, setExcluindo] = useState(false)
   const salvar = async () => {
     if (!nome.trim()) { setErro('Informe o nome do processo.'); return }
     setSalvando(true); setErro('')
-    const campos = { area_id: areaId || null, nome_processo: nome.trim(), sigla_processo: siglaDeNome(nome), data_inicio: inicio || null, duracao_dias: Math.max(Number(duracao) || 5, 1) }
+    const campos = { area_id: areaId || null, nome_processo: nome.trim(), sigla_processo: siglaDeNome(nome), data_inicio: inicio || null, duracao_dias: duracao === '' ? null : Math.max(Number(duracao) || 1, 1) }
     const { error } = editando
       ? await supabase.from('mapeamentos').update(campos).eq('id', processo.id)
       : await supabase.from('mapeamentos').insert({ projeto_id: projeto.id, ...campos, status: 'rascunho', criado_por: perfil?.id || null })
@@ -501,7 +508,7 @@ function PlanejarModal({ projeto, areas, perfil, processo, onFechar, onCriado })
       <Campo label="Nome do processo *"><input style={inp} value={nome} onChange={(e) => setNome(e.target.value)} placeholder="ex.: Compras, Contas a Pagar" /></Campo>
       <div style={{ display: 'flex', gap: 12 }}>
         <div style={{ flex: 1 }}><Campo label="Início"><input type="date" style={inp} value={inicio} onChange={(e) => setInicio(e.target.value)} /></Campo></div>
-        <div style={{ flex: 1 }}><Campo label="Duração (dias)"><input type="number" min={1} style={inp} value={duracao} onChange={(e) => setDuracao(e.target.value)} /></Campo></div>
+        {editando && <div style={{ flex: 1 }}><Campo label="Duração (dias)"><input type="number" min={1} style={inp} value={duracao} onChange={(e) => setDuracao(e.target.value)} placeholder="padrão do projeto" /></Campo></div>}
       </div>
       <Campo label="Área"><select style={inp} value={areaId} onChange={(e) => setAreaId(e.target.value)}><option value="">—</option>{areas.map((a) => <option key={a.id} value={a.id}>{a.nome}</option>)}</select></Campo>
       {podeExcluir && <button onClick={excluir} disabled={excluindo} style={{ marginTop: 6, background: 'transparent', border: '1px solid rgba(239,68,68,0.4)', color: '#991B1B', borderRadius: 8, padding: '8px 14px', fontSize: 12, fontWeight: 600, cursor: excluindo ? 'wait' : 'pointer', fontFamily: 'Montserrat' }}>{excluindo ? 'Excluindo…' : '🗑 Excluir processo'}</button>}
@@ -510,7 +517,7 @@ function PlanejarModal({ projeto, areas, perfil, processo, onFechar, onCriado })
 }
 
 function ModalNovo({ projeto, areas, areaFixa, perfil, onFechar, onCriado, invocar }) {
-  const [nome, setNome] = useState(''), [areaId, setAreaId] = useState(areaFixa || ''), [inicio, setInicio] = useState(''), [duracao, setDuracao] = useState(5)
+  const [nome, setNome] = useState(''), [areaId, setAreaId] = useState(areaFixa || ''), [inicio, setInicio] = useState('')
   const [arquivo, setArquivo] = useState(null), [blobGravado, setBlobGravado] = useState(null)
   const [enviando, setEnviando] = useState(false), [etapaEnvio, setEtapaEnvio] = useState(''), [erro, setErro] = useState('')
   const grav = useGravador()
@@ -520,7 +527,7 @@ function ModalNovo({ projeto, areas, areaFixa, perfil, onFechar, onCriado, invoc
     if (!base) { setErro('Grave ou anexe o áudio da entrevista.'); return }
     setEnviando(true); setErro('')
     try {
-      const { data: row, error: insErr } = await supabase.from('mapeamentos').insert({ projeto_id: projeto.id, area_id: areaId || null, nome_processo: nome.trim(), sigla_processo: siglaDeNome(nome), data_inicio: inicio || null, duracao_dias: Math.max(Number(duracao) || 5, 1), status: 'rascunho', criado_por: perfil?.id || null }).select().single()
+      const { data: row, error: insErr } = await supabase.from('mapeamentos').insert({ projeto_id: projeto.id, area_id: areaId || null, nome_processo: nome.trim(), sigla_processo: siglaDeNome(nome), data_inicio: inicio || null, status: 'rascunho', criado_por: perfil?.id || null }).select().single()
       if (insErr) throw insErr
       await enviarAudio(row.id, projeto.id, base, arquivo?.name, setEtapaEnvio)
       await invocar(row.id, 'completo')
@@ -532,7 +539,7 @@ function ModalNovo({ projeto, areas, areaFixa, perfil, onFechar, onCriado, invoc
       <Campo label="Nome do processo *"><input style={inp} value={nome} onChange={(e) => setNome(e.target.value)} placeholder="ex.: Compras, Faturamento" /></Campo>
       <div style={{ display: 'flex', gap: 12 }}>
         <div style={{ flex: 1 }}><Campo label="Início"><input type="date" style={inp} value={inicio} onChange={(e) => setInicio(e.target.value)} /></Campo></div>
-        <div style={{ flex: 1 }}><Campo label="Duração (dias)"><input type="number" min={1} style={inp} value={duracao} onChange={(e) => setDuracao(e.target.value)} /></Campo></div>
+        
       </div>
       {!areaFixa && <Campo label="Área"><select style={inp} value={areaId} onChange={(e) => setAreaId(e.target.value)}><option value="">—</option>{areas.map((a) => <option key={a.id} value={a.id}>{a.nome}</option>)}</select></Campo>}
       <Campo label="Áudio da entrevista *">

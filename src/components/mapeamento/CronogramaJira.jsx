@@ -23,7 +23,7 @@ function progresso(map) {
   return { st, done, atual, pct: Math.round((done / 6) * 100), vigente: st[5].estado === 'concluido' }
 }
 
-export default function CronogramaJira({ lista, areas, projeto, carregar, onEditar, onMover }) {
+export default function CronogramaJira({ lista, areas, projeto, carregar, onEditar, onMover, duracaoPadrao, onDuracaoPadrao }) {
   const [zoom, setZoom] = useState('mes')
   const [collapsed, setCollapsed] = useState({})
 
@@ -35,7 +35,7 @@ export default function CronogramaJira({ lista, areas, projeto, carregar, onEdit
   let curP = anchor, curF = anchor, fimPlan = anchor, fimPrev = anchor
   const sc = {}
   ordered.forEach((p) => {
-    const dur = Math.max(p.duracao_dias || 5, 1)
+    const dur = Math.max(p.duracao_dias ?? duracaoPadrao ?? 30, 1)
     const pStart = curP, pEnd = pStart + dur * DAY; curP = pEnd; fimPlan = pEnd
     const prog = progresso(p)
     const fStart = curF, plannedEnd = fStart + dur * DAY
@@ -103,6 +103,11 @@ export default function CronogramaJira({ lista, areas, projeto, carregar, onEdit
       <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 12, marginBottom: 12 }}>
         <div style={{ display: 'inline-flex', border: '1px solid rgba(0,32,62,0.15)', borderRadius: 8, overflow: 'hidden' }}>
           {zBtn('semana', 'Semana')}{zBtn('mes', 'Mês')}{zBtn('tri', 'Trimestre')}
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12.5, color: '#6B7280' }}>
+          Prazo médio por processo:
+          <input type="number" min={1} defaultValue={duracaoPadrao || 30} key={duracaoPadrao} onBlur={(ev) => { const v = Math.max(Number(ev.target.value) || 1, 1); if (onDuracaoPadrao && v !== (duracaoPadrao || 30)) onDuracaoPadrao(v) }} style={{ width: 58, fontFamily: 'Montserrat', fontSize: 13, padding: '6px 8px', borderRadius: 8, border: '1px solid rgba(0,32,62,0.15)' }} />
+          dias
         </div>
         <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 16, fontSize: 12.5 }}>
           <span style={{ color: '#6B7280' }}>Prazo final: <b style={{ color: AZUL }}>{fmt(fimPrev)} {new Date(fimPrev).getFullYear()}</b></span>
@@ -174,7 +179,7 @@ export default function CronogramaJira({ lista, areas, projeto, carregar, onEdit
                   </div>
                   <div style={{ minWidth: 0, flex: 1 }}>
                     <div style={{ fontSize: 12.5, fontWeight: 600, color: AZUL, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.nome_processo}</div>
-                    <div style={{ fontSize: 10.5, color: '#9CA3AF', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{Math.max(p.duracao_dias || 5, 1)} dias · {lbl}</div>
+                    <div style={{ fontSize: 10.5, color: '#9CA3AF', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{Math.max(p.duracao_dias ?? duracaoPadrao ?? 30, 1)} dias · {lbl}</div>
                   </div>
                   {onEditar && <button onClick={() => onEditar(p)} title="Editar processo" style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, color: COBRE, flexShrink: 0 }}>✎</button>}
                 </div>
