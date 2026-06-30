@@ -1,7 +1,7 @@
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
 import { useEffect, useState, useMemo, lazy, Suspense } from 'react'
-import { Routes, Route, useNavigate, useLocation } from 'react-router-dom'
+import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom'
 import AdminPanel from './AdminPanel'
 import NotificacoesPanel from '../components/NotificacoesPanel'
 import Hub from './Hub'
@@ -264,7 +264,11 @@ export default function Dashboard() {
   if (isAdmin && location.pathname.startsWith('/admin')) {
     return <AdminPanel />
   }
-  // Hub de produtos — porta de entrada do Polímata App
+  // Hub de produtos — porta de entrada do Polímata App. CLIENTE NUNCA vê o Hub.
+  if (modulo === 'hub' && isCliente) {
+    const destinoCli = projetoAtivo ? ROTA_BASE_MODULO[produtoModulo(projetoAtivo.produto)] : (projetos[0] ? ROTA_BASE_MODULO[produtoModulo(projetos[0].produto)] : '/ci')
+    return <Navigate to={destinoCli} replace />
+  }
   if (modulo === 'hub') {
     return <Hub onProjetos={() => { try { localStorage.removeItem('polimata_projeto_ativo_id') } catch (e) {} ; setProjetoAtivo(null); navigate('/ci') }} onAbrirModulo={(rota) => { if (projetoAtivo && produtoModulo(projetoAtivo.produto) !== moduloDaRota(rota)) { try { localStorage.removeItem('polimata_projeto_ativo_id') } catch (e) {} ; setProjetoAtivo(null) } navigate(rota) }} />
   }
@@ -322,7 +326,7 @@ export default function Dashboard() {
           </div>
         )}
         <nav style={{ flex: 1, overflowY: 'auto', padding: '8px 0', display: 'flex', flexDirection: 'column', gap: 1 }}>
-          {isAdmin && <SideNavItem icon="⌂" label="Hub de produtos" active={false} onClick={() => navigate('/')} open={sidebarOpen} />}
+          {isAdmin && !isCliente && <SideNavItem icon="⌂" label="Hub de produtos" active={false} onClick={() => navigate('/')} open={sidebarOpen} />}
           {moduloView === 'ci' && (<>
           {sidebarOpen && <div className="sb-sep">Dashboards</div>}
           <SideNavItem icon="📊" label="Dashboard" active={location.pathname === '/ci'} onClick={() => navigate('/ci')} open={sidebarOpen} />
@@ -344,7 +348,7 @@ export default function Dashboard() {
           <SideNavItem icon="📄" label="Relatórios" active={location.pathname === '/relatorios'} onClick={() => navigate('/relatorios')} open={sidebarOpen} />
           {projetoAtivo?.f1_tem_teste !== false && <SideNavItem icon="📝" label="Solicitações" active={location.pathname === '/solicitacoes'} onClick={() => navigate('/solicitacoes')} open={sidebarOpen} />}
           {['admin_polimata', 'consultor_polimata'].includes(perfil?.papel) && <SideNavItem icon="📁" label="Documentos" active={location.pathname === '/documentos'} onClick={() => navigate('/documentos')} open={sidebarOpen} />}
-          {isAdmin && (<>{sidebarOpen && <div className="sb-sep">Administração</div>}
+          {isAdmin && !isCliente && (<>{sidebarOpen && <div className="sb-sep">Administração</div>}
             <SideNavItem icon="📥" label="Manutenção MRC" active={location.pathname === '/importar-mrc'} onClick={() => navigate('/importar-mrc')} open={sidebarOpen} /></>)}
           </>)}
           {moduloView === 'mapeamento' && (<>
@@ -428,8 +432,8 @@ export default function Dashboard() {
           <Route path="/relatorios" element={<Relatorios projeto={projetoAtivo} areasCalc={areasCalc} todosControles={todosControles} clienteNome={formatNomeEmpresa(projetoAtivo?.clientes?.nome_fantasia || projetoAtivo?.clientes?.nome) || ''} projetoNome={projetoAtivo?.nome || ''} />} />
           <Route path="/solicitacoes" element={<Solicitacoes projeto={projetoAtivo} />} />
           <Route path="/documentos" element={<Documentos projeto={projetoAtivo} />} />
-          <Route path="/mapeamentos" element={<Mapeamentos projeto={projetoAtivo} />} />
-          <Route path="/mapeamentos/area/:areaId" element={<Mapeamentos projeto={projetoAtivo} />} />
+          <Route path="/mapeamentos" element={<Mapeamentos projeto={projetoAtivo} simularCliente={simularCliente} onSimular={setSimularCliente} />} />
+          <Route path="/mapeamentos/area/:areaId" element={<Mapeamentos projeto={projetoAtivo} simularCliente={simularCliente} onSimular={setSimularCliente} />} />
           <Route path="/planejamento" element={<Planejamento projeto={projetoAtivo} />} />
           <Route path="/orcamento" element={<OrcDashboard projeto={projetoAtivo} />} />
           <Route path="/orcamento/analise" element={<OrcAnalise projeto={projetoAtivo} />} />

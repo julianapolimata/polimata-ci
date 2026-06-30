@@ -112,7 +112,7 @@ const btnGhost = { background: '#fff', color: COBRE, border: `1px solid ${COBRE}
 const th = { textAlign: 'left', padding: '10px 14px', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.6, color: AZUL }
 const inp = { width: '100%', boxSizing: 'border-box', fontFamily: 'Montserrat', fontSize: 13, padding: '10px 12px', borderRadius: 8, border: '1px solid rgba(0,32,62,0.15)' }
 
-export default function Mapeamentos({ projeto }) {
+export default function Mapeamentos({ projeto, simularCliente, onSimular }) {
   const { perfil } = useAuth()
   const { areaId } = useParams()
   const navigate = useNavigate()
@@ -127,7 +127,6 @@ export default function Mapeamentos({ projeto }) {
   const padraoRef = useRef(projeto?.mapeamento_duracao_padrao || 30)
   const [selId, setSelId] = useState(null)
   const [erroUi, setErroUi] = useState('')
-  const [previewCliente, setPreviewCliente] = useState(false)
   const clienteNome = formatNomeEmpresa(projeto?.clientes?.nome_fantasia || projeto?.clientes?.nome) || 'Cliente'
 
   const carregar = useCallback(async () => {
@@ -181,11 +180,11 @@ export default function Mapeamentos({ projeto }) {
 
   if (!isPolimata) return <VisaoCliente projeto={projeto} />
 
-  if (previewCliente) return (
+  if (simularCliente) return (
     <div>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '10px 20px', background: 'rgba(0,32,62,0.04)', borderBottom: '1px solid rgba(0,32,62,0.10)', fontFamily: 'Montserrat' }}>
         <span style={{ fontSize: 12, fontWeight: 600, color: AZUL }}>👁 Pré-visualização — assim o cliente vê este projeto</span>
-        <button onClick={() => setPreviewCliente(false)} style={{ ...btnPrim, padding: '8px 18px' }}>← Voltar à visão admin</button>
+        <button onClick={() => onSimular && onSimular(false)} style={{ ...btnPrim, padding: '8px 18px' }}>← Voltar à visão admin</button>
       </div>
       <VisaoCliente projeto={projeto} />
     </div>
@@ -203,7 +202,7 @@ export default function Mapeamentos({ projeto }) {
           <div style={{ fontSize: 12, color: '#6B7280', marginTop: 4 }}>Cadastre os processos, defina o setor e o prazo, e clique num processo para gravar/agendar e gerar os documentos.</div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
-          <button onClick={() => setPreviewCliente(true)} style={btnGhost}>👁 Ver como cliente</button>
+          <button onClick={() => onSimular && onSimular(true)} style={btnGhost}>👁 Ver como cliente</button>
           <ConectarCalendario perfil={perfil} />
           <button onClick={() => setPlanejar(true)} style={btnPrim}>＋ Cadastrar processo</button>
         </div>
