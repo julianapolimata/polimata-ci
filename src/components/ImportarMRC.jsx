@@ -102,6 +102,9 @@ export default function ImportarMRC({ projetoId, projeto, areas, onImported, all
   const [modoConsultor, setModoConsultor] = useState('unico') // 'unico' | 'por_area'
   const [consultorUnico, setConsultorUnico] = useState('')
   const [consultoresPorArea, setConsultoresPorArea] = useState({}) // { areaId: consultorId }
+  // ── Subprocessos cadastrados no projeto (validação na importação) ──
+  const [subprocessos, setSubprocessos] = useState([])
+  const [subprocMap, setSubprocMap] = useState({}) // { key: { action:'existing'|'create', targetId } }
 
   // Limpar Base state (atua SEMPRE no projeto ativo — sem lista de projetos)
   const [lbConfirm, setLbConfirm] = useState('')
@@ -129,12 +132,45 @@ export default function ImportarMRC({ projetoId, projeto, areas, onImported, all
       .then(({ data }) => { if (data) setConsultores(data) })
   }, [])
 
+  // Carregar subprocessos cadastrados nas áreas do projeto
+  const areaIdsKey = (areas || []).map(a => a.id).join(',')
+  useEffect(() => {
+    const ids = (areas || []).map(a => a.id)
+    if (!ids.length) { setSubprocessos([]); return }
+    supabase.from('subprocessos').select('id, area_id, nome, ordem').in('area_id', ids)
+      .then(({ data }) => setSubprocessos(data || []))
+  }, [areaIdsKey])
+
   if (!isAdmin && !allowNonAdmin) return null
 
   const isTodasAreas = areaSelecionada === '__todas__'
   const areaNome = isTodasAreas ? 'Todas as áreas' : (areas?.find(a => a.id === areaSelecionada)?.nome || '')
   const faseLabel = TODAS_FASES.find(f => f.codigo === faseSelecionada)?.label || ''
   const fasesDisponiveis = getFasesDisponiveis(projeto?.num_fases)
+
+  // ── Conferência de subprocessos: nomes no arquivo que não constam no cadastro ──
+  const normNome = v => (v ?? '').toString().trim().toLowerCase()
+  const subprocByArea = {}
+  subprocessos.forEach(sp => { (subprocByArea[sp.area_id] = subprocByArea[sp.area_id] || []).push(sp) })
+  const findSubproc = (areaId, nome) => (subprocByArea[areaId] || []).find(sp => normNome(sp.nome) === normNome(nome))
+  const rowAreaObj = (row) => {
+    if (!isTodasAreas) return (areas || []).find(a => a.id === areaSelecionada) || null
+    const nm = cleanVal(row[PREVIEW_COL_PROCESSO]); if (!nm) return null
+    return (areas || []).find(a => normNome(a.nome) === normNome(nm)) || null
+  }
+  const subprocPendentes = []
+  if (preview && areaSelecionada) {
+    const seen = new Set()
+    preview.rows.forEach(row => {
+      const nome = cleanVal(row[4]); if (!nome) return
+      const ar = rowAreaObj(row); if (!ar) return
+      if (findSubproc(ar.id, nome)) return
+      const key = ar.id + '||' + normNome(nome)
+      if (seen.has(key)) return
+      seen.add(key); subprocPendentes.push({ key, areaId: ar.id, areaNome: ar.nome, nome })
+    })
+  }
+  const subprocResolvidos = subprocPendentes.every(pd => { const r = subprocMap[pd.key]; return r && (r.action === 'create' || (r.action === 'existing' && r.targetId)) })
 
 
   // ── Ler Excel e preview ──
@@ -185,6 +221,26 @@ export default function ImportarMRC({ projetoId, projeto, areas, onImported, all
     const isDiag = projeto?.f1_tem_teste === false
     const colMap = isDiag ? COL_MAP_DIAG : COL_MAP
     try {
+      // Pré-criar subprocessos marcados como "criar novo" e montar o resolvedor de subprocesso_id
+      const createdSubproc = {}; const ordemCounter = {}
+      for (const pd of subprocPendentes) {
+        const r = subprocMap[pd.key]
+        if (r?.action === 'create') {
+          if (ordemCounter[pd.areaId] == null) ordemCounter[pd.areaId] = (subprocByArea[pd.areaId] || []).reduce((m, sp) => Math.max(m, sp.ordem || 0), 0)
+          ordemCounter[pd.areaId] += 1
+          const { data: novo, error: spErr } = await supabase.from('subprocessos').insert({ area_id: pd.areaId, nome: pd.nome, ordem: ordemCounter[pd.areaId] }).select('id, nome').single()
+          if (spErr) throw new Error(`Erro ao criar subprocesso "${pd.nome}": ${spErr.message}`)
+          createdSubproc[pd.key] = { id: novo.id, nome: novo.nome }
+        }
+      }
+      const resolveSubproc = (row, areaId) => {
+        const nome = cleanVal(row[4]); if (!nome || !areaId) return null
+        const found = findSubproc(areaId, nome); if (found) return { id: found.id, nome: found.nome }
+        const key = areaId + '||' + normNome(nome); const r = subprocMap[key]
+        if (r?.action === 'existing' && r.targetId) { const t = subprocessos.find(sp => sp.id === r.targetId); return { id: r.targetId, nome: t?.nome || nome } }
+        if (r?.action === 'create' && createdSubproc[key]) return createdSubproc[key]
+        return null
+      }
       if (isTodasAreas) {
         // Importar para todas as áreas — apaga TUDO do projeto e insere sem area_id específico
         const { error: delError } = await supabase.from('mrc').delete().eq('projeto_id', projetoId)
@@ -217,6 +273,7 @@ export default function ImportarMRC({ projetoId, projeto, areas, onImported, all
           })
           // Normaliza Ref. Risco: se vier sem sigla (ex.: R.05) ou com codigo de controle, deriva do Ref. Controle (C.SIGLA.NN -> R.SIGLA.NN)
           if (reg.rr && reg.rc && !/^R\.[A-Za-z]/.test(reg.rr) && /^C\.[A-Za-z0-9]/.test(reg.rc)) reg.rr = 'R' + reg.rc.slice(1).replace(/\s/g, '')
+          const sp = resolveSubproc(row, reg.area_id); if (sp) { reg.subprocesso_id = sp.id; reg.sub = sp.nome }
           return reg
         })
         const batchSize = 50; let inserted = 0
@@ -250,6 +307,7 @@ export default function ImportarMRC({ projetoId, projeto, areas, onImported, all
           })
           // Normaliza Ref. Risco: se vier sem sigla (ex.: R.05) ou com codigo de controle, deriva do Ref. Controle (C.SIGLA.NN -> R.SIGLA.NN)
           if (reg.rr && reg.rc && !/^R\.[A-Za-z]/.test(reg.rr) && /^C\.[A-Za-z0-9]/.test(reg.rc)) reg.rr = 'R' + reg.rc.slice(1).replace(/\s/g, '')
+          const sp = resolveSubproc(row, areaObj.id); if (sp) { reg.subprocesso_id = sp.id; reg.sub = sp.nome }
           return reg
         })
         const batchSize = 50; let inserted = 0
@@ -263,7 +321,8 @@ export default function ImportarMRC({ projetoId, projeto, areas, onImported, all
         if (gerente) await supabase.from('areas').update({ gerente }).eq('id', areaObj.id)
         setResultado({ ok: true, msg: `${inserted} controles importados para "${areaObj.nome}" (${faseLabel}) e já entraram na fila de revisão.${gerente ? ` Gerente atualizado: ${gerente}.` : ''}` })
       }
-      setFile(null); setPreview(null)
+      setFile(null); setPreview(null); setSubprocMap({})
+      { const ids2 = (areas || []).map(a => a.id); if (ids2.length) supabase.from('subprocessos').select('id, area_id, nome, ordem').in('area_id', ids2).then(({ data }) => setSubprocessos(data || [])) }
       if (onImported) onImported()
     } catch (err) { setErro(err.message); setResultado({ ok: false, msg: err.message }) }
     setImporting(false)
@@ -452,6 +511,29 @@ export default function ImportarMRC({ projetoId, projeto, areas, onImported, all
           </div>
         )}
 
+        {/* Step 5.5 — Conferência de subprocessos não cadastrados */}
+        {preview && subprocPendentes.length > 0 && (
+          <div style={{ marginBottom: 14 }}>
+            <div style={{ ...label, color: '#DC2626' }}>⚠ Subprocessos não cadastrados — indique onde alocar</div>
+            <div style={{ fontSize: 11, color: 'var(--lt-text2)', marginBottom: 8, lineHeight: 1.5 }}>{subprocPendentes.length} subprocesso(s) do arquivo não estão cadastrados no projeto. Aloque cada um a um subprocesso existente ou crie um novo. A importação fica bloqueada até resolver todos.</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, maxHeight: 260, overflow: 'auto', padding: 12, border: '1px solid rgba(239,68,68,0.35)', borderRadius: 6, background: 'rgba(239,68,68,0.05)' }}>
+              {subprocPendentes.map(pd => {
+                const r = subprocMap[pd.key]; const val = r ? (r.action === 'create' ? '__create__' : (r.targetId || '')) : ''
+                return (
+                  <div key={pd.key} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', alignItems: 'center', gap: 10 }}>
+                    <div style={{ fontSize: 11.5, color: 'var(--lt-text2)' }}><strong>{pd.nome}</strong>{isTodasAreas && <span style={{ color: 'var(--lt-text3)' }}> · {pd.areaNome}</span>}</div>
+                    <select value={val} onChange={e => { const v = e.target.value; setSubprocMap(prev => ({ ...prev, [pd.key]: v === '__create__' ? { action: 'create' } : { action: 'existing', targetId: v } })) }} style={{ ...selectS, maxWidth: '100%' }}>
+                      <option value="">— Selecione —</option>
+                      {(subprocByArea[pd.areaId] || []).map(sp => <option key={sp.id} value={sp.id}>{sp.nome}</option>)}
+                      <option value="__create__">➕ Criar novo: "{pd.nome}"</option>
+                    </select>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )}
+
         {/* Step 6 — Confirmar */}
         {preview && areaSelecionada && faseSelecionada && (
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(204,145,94,0.06)', border: '1px solid rgba(204,145,94,0.2)', borderRadius: 8, padding: '12px 16px', gap: 16 }}>
@@ -460,8 +542,8 @@ export default function ImportarMRC({ projetoId, projeto, areas, onImported, all
               <br />{isTodasAreas ? 'Todos os controles do projeto serão removidos.' : 'Todos os controles existentes dessa área serão removidos.'}
               {!isTodasAreas && preview.rows[0]?.[1] && <><br />Gerente será atualizado para: <strong>{preview.rows[0][1]}</strong></>}
             </div>
-            <button onClick={() => setShowConfirm(true)} disabled={importing} style={{ background: 'var(--copper)', color: '#fff', border: 'none', borderRadius: 6, padding: '10px 24px', fontSize: 12, fontWeight: 700, fontFamily: 'inherit', cursor: 'pointer', whiteSpace: 'nowrap', opacity: importing ? 0.5 : 1 }}>
-              {importing ? 'Importando...' : `Importar ${previewCount} controles`}
+            <button onClick={() => setShowConfirm(true)} disabled={importing || !subprocResolvidos} style={{ background: 'var(--copper)', color: '#fff', border: 'none', borderRadius: 6, padding: '10px 24px', fontSize: 12, fontWeight: 700, fontFamily: 'inherit', cursor: (importing || !subprocResolvidos) ? 'not-allowed' : 'pointer', whiteSpace: 'nowrap', opacity: (importing || !subprocResolvidos) ? 0.5 : 1 }}>
+              {importing ? 'Importando...' : (!subprocResolvidos ? 'Resolva os subprocessos acima' : `Importar ${previewCount} controles`)}
             </button>
           </div>
         )}
