@@ -292,7 +292,7 @@ const ModalRegistrarResultado = ({ row, projeto, onClose, onSaved, responsaveis 
             </div>
           )}
           <SecaoResultado resultado={resultado} handleResultadoChange={handleResultadoChange} />
-          <SecaoCenarioAtual cenarioAtual={cenarioAtual} setCenarioAtual={setCenarioAtual} />
+          {projeto?.f1_tem_teste === false && <SecaoCenarioAtual cenarioAtual={cenarioAtual} setCenarioAtual={setCenarioAtual} />}
           <SecaoInconsistencia showInconsistencia={showInconsistencia} showInconsistenciaAlert={showInconsistenciaAlert} inconsistencia={inconsistencia} setInconsistencia={setInconsistencia} resultado={resultado} />
           <SecaoMelhoria showDescMelhoria={showDescMelhoria} melhoria={melhoria} setMelhoria={setMelhoria} descMelhoria={descMelhoria} setDescMelhoria={setDescMelhoria} />
           <SecaoPA showPA={showPA} temPA={temPA} setTemPA={setTemPA} paDesc={paDesc} setPaDesc={setPaDesc} paResp={paResp} setPaResp={setPaResp} paPrazo={paPrazo} setPaPrazo={setPaPrazo} justificativaPA={justificativaPA} setJustificativaPA={setJustificativaPA} responsaveis={responsaveis} resultado={resultado} />

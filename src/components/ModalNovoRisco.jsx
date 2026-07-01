@@ -426,7 +426,7 @@ const ModalNovoRisco = ({ onClose, onSaved, areas, projeto, areaFixa, draft }) =
 
         {/* BODY */}
         <div style={{ flex: 1, padding: 24, overflowY: 'auto' }}>
-          <StepIdentificacao step={step} area={area} setArea={setArea} subprocesso={subprocesso} setSubprocesso={setSubprocesso} descRisco={descRisco} setDescRisco={setDescRisco} cenarioAtual={cenarioAtual} setCenarioAtual={setCenarioAtual} areas={areas} areaFixa={areaFixa} subprocessos={subprocessos} />
+          <StepIdentificacao step={step} area={area} setArea={setArea} subprocesso={subprocesso} setSubprocesso={setSubprocesso} descRisco={descRisco} setDescRisco={setDescRisco} cenarioAtual={cenarioAtual} setCenarioAtual={setCenarioAtual} areas={areas} areaFixa={areaFixa} subprocessos={subprocessos} isDiag={isDiag} />
 
           <StepCaracteristicas isAutomatic={isAutomatic} step={step} isDiag={isDiag} existencia={existencia} setExistencia={handleExistencia} descControle={descControle} setDescControle={setDescControle} cat={cat} setCat={setCat} freq={freq} setFreq={setFreq} nat={nat} setNat={setNat} car={car} setCar={setCar} sis={sis} setSis={setSis} chave={chave} setChave={setChave} quem={quem} setQuem={setQuem} quando={quando} setQuando={setQuando} porque={porque} setPorque={setPorque} como={como} setComo={setComo} onde={onde} setOnde={setOnde} resultadoPremissa={resultadoPremissa} setResultadoPremissa={setResultadoPremissa} dtImplementacao={dtImplementacao} setDtImplementacao={setDtImplementacao} recomendacao={recomendacao} setRecomendacao={setRecomendacao} sistemas={sistemas} />
 

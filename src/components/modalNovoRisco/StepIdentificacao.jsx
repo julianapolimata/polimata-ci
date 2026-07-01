@@ -1,7 +1,7 @@
 // StepIdentificacao — bloco JSX extraído de ModalNovoRisco.jsx em 22/mai/2026 (fatiamento Etapa 5).
 import React from 'react'
 
-export default function StepIdentificacao({ step, area, setArea, subprocesso, setSubprocesso, cenarioAtual, setCenarioAtual, descRisco, setDescRisco, areas, areaFixa, subprocessos }) {
+export default function StepIdentificacao({ step, area, setArea, subprocesso, setSubprocesso, cenarioAtual, setCenarioAtual, descRisco, setDescRisco, areas, areaFixa, subprocessos, isDiag }) {
   return (
     <>
           {/* ─────────── PASSO 1 ─────────── */}
@@ -88,7 +88,7 @@ export default function StepIdentificacao({ step, area, setArea, subprocesso, se
                 </select>
               </div>
 
-              <div style={{ marginBottom: '2rem' }}>
+              {isDiag && <div style={{ marginBottom: '2rem' }}>
                 <label style={{
                   display: 'block',
                   fontSize: '13px',
@@ -115,7 +115,7 @@ export default function StepIdentificacao({ step, area, setArea, subprocesso, se
                   }}
                   placeholder="Descreva como o processo é executado hoje."
                 />
-              </div>
+              </div>}
 
               <div style={{ marginBottom: '2rem' }}>
                 <label style={{
