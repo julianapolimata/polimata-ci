@@ -97,17 +97,19 @@ function NovoProjetoForm({ clientes, perfisPolimata, onSave, onCancel }) {
         <div className="cfg-form-sub" style={{marginTop:-6,marginBottom:4}}>Configurações que definem o escopo metodológico do projeto</div>
         <div className="cfg-row3">
           <div className="cfg-field"><label>Até qual fase o projeto vai?</label>
-            <select className="input-light" value={form.num_fases} onChange={e=>u('num_fases',parseInt(e.target.value))}>
+            <select className="input-light" value={form.num_fases} onChange={e=>{const n=parseInt(e.target.value);u('num_fases',n);if(n>=2)u('f1_tem_teste',true)}}>
               {[1,2,3,4,5].map(n => <option key={n} value={n}>{FASES_LABEL[n]}</option>)}
             </select>
             <span style={{fontSize:11,color:'var(--lt-text3)',marginTop:4,display:'block'}}>{FASES_DETALHE[form.num_fases]}</span>
           </div>
           <div className="cfg-field"><label>Inclui teste de efetividade?</label>
-            <select className="input-light" value={form.f1_tem_teste?'sim':'nao'} onChange={e=>u('f1_tem_teste',e.target.value==='sim')}>
+            <select className="input-light" value={form.f1_tem_teste?'sim':'nao'} disabled={form.num_fases !== 1} onChange={e=>u('f1_tem_teste',e.target.value==='sim')}>
               <option value="sim">Sim — F1 inclui teste</option>
-              <option value="nao">Não — diagnóstico apenas</option>
+              <option value="nao" disabled={form.num_fases !== 1}>Não — diagnóstico apenas</option>
             </select>
-            {!form.f1_tem_teste && <span style={{fontSize:11,color:'var(--copper)',marginTop:4,display:'block'}}>Sem régua de maturidade — entrega = mapa + criticidade + existência</span>}
+            {form.num_fases !== 1
+              ? <span style={{fontSize:11,color:'var(--lt-text3)',marginTop:4,display:'block'}}>A partir da Fase 2 o teste é obrigatório — "diagnóstico apenas" só existe em "Até Fase 1 - Diagnóstico Inicial".</span>
+              : (!form.f1_tem_teste && <span style={{fontSize:11,color:'var(--copper)',marginTop:4,display:'block'}}>Sem régua de maturidade — entrega = mapa + criticidade + existência</span>)}
           </div>
           <div className="cfg-field"><label>Matriz de Calor</label>
             <select className="input-light" value={form.matriz_tamanho} onChange={e=>u('matriz_tamanho',parseInt(e.target.value))}>

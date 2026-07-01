@@ -212,8 +212,8 @@ function AbaCaracteristicas({ dados, perfisPolimata = [], onUpdate, editando, se
           <div className="cfg-field"><label>Inclui teste de efetividade?</label>
             <select className="input-light" value={form.f1_tem_teste?'sim':'nao'} onChange={e=>u('f1_tem_teste',e.target.value==='sim')}>
               <option value="sim" disabled={dados.f1_tem_teste === false}>Sim — F1 inclui teste</option>
-              <option value="nao" disabled={!f1TestePodeMudarParaFalse}>
-                Não — diagnóstico apenas{!f1TestePodeMudarParaFalse?' (já há resultados)':''}
+              <option value="nao" disabled={!f1TestePodeMudarParaFalse || form.num_fases !== 1}>
+                Não — diagnóstico apenas{!f1TestePodeMudarParaFalse?' (já há resultados)':(form.num_fases!==1?' (só na Fase 1)':'')}
               </option>
             </select>
             {!form.f1_tem_teste && <span style={{fontSize:11,color:'var(--copper)',marginTop:4,display:'block'}}>Sem régua de maturidade — entrega = mapa + criticidade + existência</span>}
